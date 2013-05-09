@@ -72,7 +72,12 @@ class SilhouetteCameo:
   def write(s, string):
     # robocut/Plotter.cpp:73 says: Send in 4096 byte chunks. Not sure where I got this from, I'm not sure it is actually necessary.
     endpoint = 0x01
-    r = s.dev.write(endpoint, string, interface=0) 
+    chunksz = 4096
+    r = 0
+    o = 0
+    while o < len(string):
+      r += s.dev.write(endpoint, string[o:o+chunksz], interface=0) 
+      o += chunksz
     if r != len(string):
       raise ValueError('write %d bytes failed: r=%d' % (len(string), r))
       
@@ -171,4 +176,71 @@ class SilhouetteCameo:
     if resp != "    0,    0\x03":
       raise ValueError("setup: Invalid response from plotter.")
 
+  def page(s, mediawidth=210.0, mediaheight=297.0, margintop=5.0, marginright=0, cut=None):
+    """cut is a list of paths. A path is a sequence of 2-tupel, all measured in mm.
+       The tool is lowered at the beginning and raised at the end of each path.
+       Example: The letter Y can be represented with 
+                cut=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
+    """
+    # // Begin page definition.
+    regmark = False
+    s.write("FA\x03")
+    width  = int(0.5+20.*mediawidth)
+    height = int(0.5+20.*mediaheight)
+    top    = int(0.5+20.*margintop)
+    right  = int(0.5+20.*marginright)
+    if width < right: width=right
+    if height < top:  height=top
+
+    s.write("FU%d,%d\x03" % (height-top, width-right))
+    s.write("FM1\x03")          # // ?
+    if regmark:
+      raise ValueError("regmark code not impl. see robocut/Plotter.cpp:446")
+    else:
+      s.write("TB50,1\x03")     #; // ???
+
+    # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
+    s.write("FO%d\x03" % (height-top))
+
+    p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)
+
+    for cuts_i in cut:
+      if len(cuts_i) < 2: continue
+      x = cuts_i[0][0]*20. 
+      y = cuts_i[0][1]*20.
+    
+      if x < right: x = right
+      if x > width: x = width
+      if y < top:    y = top
+      if y > height: y = height
+
+      p += ",M%d,%d" % (int(0.5+width-x), int(0.5+y))
+      for j in range(1,len(cuts_i)):
+        x = cuts_i[j][0]*20.
+        y = cuts_i[j][1]*20.
+
+        draw = True
+        if x < right:
+          x = right
+          draw = False
+        if x > width:
+          x = width
+          draw = False
+        if y < top:
+          y = top
+          draw = False
+        if y > height:
+          y = height
+          draw = False
+
+        if draw:
+          p += ",D%d,%d" % (int(0.5+width-x), int(0.5+y))
+        else:
+          # // if outside the range just move
+          p += ",M%d,%d" % (int(0.5+width-x), int(0.5+y))
+
+    p += "&1,1,1,TB50,0\x03"   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
+    s.write(p)
+    s.write("FO0\x03")          # // Feed the page out.
+    s.write("H,")               # // Halt?
 
