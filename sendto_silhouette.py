@@ -7,6 +7,7 @@
 # - http://code.google.com/p/inkscape2tikz/
 # - http://wiki.inkscape.org/wiki/index.php/PythonEffectTutorial
 # - http://github.com/jnweiger/inkscape-gears-dev
+# - http://code.google.com/p/eggbotcode/
 #
 # 2013-05-09 jw, V0.1 -- initial draught
 
@@ -19,7 +20,7 @@ import inkex
 from simplestyle import *
 
 __version__ = '0.1'
-__author__ = 'Jürgen Weigert <jnweiger@gmail.com>'
+__author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 
 class SendtoSilhouette(inkex.Effect):
@@ -97,12 +98,33 @@ class SendtoSilhouette(inkex.Effect):
         else:
             return None
 
+    def effect(self):
+        s = ""
+        nodes = self.selected_sorted
+        # If no nodes is selected convert whole document. 
+        if len(nodes) == 0:
+            nodes = self.document.getroot()
+            graphics_state = GraphicsState(nodes)
+        else:
+            graphics_state = GraphicsState(None)
+	return { 'not_impl': True }
 
 
+    def convert(self, svg_file, **kwargs):
+        self.getoptions()
+        self.options.__dict__.update(kwargs)
+        self.parse(svg_file)
+        self.getselected()
+        self.getdocids()
+        output = self.effect()
+
+	# pump the output to the device
+        if not success:
+           logging.error('Failed to put output to device')
+        output = ""
+        return output
 
 
-saverFile = "/tmp/export.svg"
-
-svgfile = sys.argv[-1:][0]
-shutil.copy(svgfile, saverFile)
-print >>sys.stderr, "saved to "+saverFile
+if __name__ == '__main__':
+  e = SendtoSilhouette()
+  e.affect()
