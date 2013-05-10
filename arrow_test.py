@@ -5,6 +5,7 @@
 #
 # Requires: python-usb  # from Factory
 
+import time
 from Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
@@ -16,16 +17,12 @@ dev = SilhouetteCameo()
 
 state = dev.status()    # hint at loading paper, if not ready.
 for i in range(1,10):
-  if (st == 'ready'): break
+  if (state == 'ready'): break
   print "status=%s" % (state)
   time.sleep(5.0)
   state = dev.status()
 print "status=%s" % (state)
     
-  def home(s):
-    """Send the home command. Untested."""
-    s.write("TT\x03")
-print state
 print "device version: '%s'" % dev.get_version()
 
 dev.setup(media=113, pressure=0, trackenhancing=True)

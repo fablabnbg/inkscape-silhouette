@@ -3,7 +3,6 @@
 # modelled after https://github.com/nosliwneb/robocut.git 
 #
 import usb.core
-import time
     
 # taken from 
 #  robocut/CutDialog.ui
