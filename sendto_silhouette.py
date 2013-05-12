@@ -8,14 +8,18 @@
 # - http://wiki.inkscape.org/wiki/index.php/PythonEffectTutorial
 # - http://github.com/jnweiger/inkscape-gears-dev
 # - http://code.google.com/p/eggbotcode/
+# - http://www.bobcookdev.com/inkscape/better_dxf_output.zip
 #
 # 2013-05-09 jw, V0.1 -- initial draught
 
-import sys, os, shutil
+import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
 
 # We will use the inkex module with the predefined Effect base class.
 import inkex
+from silhouette.Path import *
+from silhouette.Graphtec import SilhouetteCameo
+
 # The simplestyle module provides functions for style parsing.
 from simplestyle import *
 
@@ -30,41 +34,58 @@ class SendtoSilhouette(inkex.Effect):
   def __init__(self):
     # Call the base class constructor.
     inkex.Effect.__init__(self)
+    self.cut = []
+    self.handle = 255
+    self.flatness = 0.1
+    self.tty = open("/dev/tty", 'w')
+    print >>self.tty, "__init__"
     
-    self.OptionParser.add_option('-x', '--x-off', action = 'store',
+    self.OptionParser.add_option('-x', '--x-off', '--x_off', action = 'store',
           type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
-    self.OptionParser.add_option('-y', '--y-off', action = 'store',
+    self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
     self.OptionParser.add_option('-t', '--tool', action = 'store',
           choices=('cut', 'pen'), dest = 'tool', default = 'cut', help="Optimize for pen or knive")
-    self.OptionParser.add_option('-m', '--media', '--media-id', action = 'store',
-	  choices=(100, 101, 102, 106, 111, 112, 113, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 300), 
-          dest = 'media', default = 132, help="113 = pen, 132 = printer paper, 300 = custom")
-    self.OptionParser.add_option('-s', '--speed', action = 'store',
-	  type = 'int', dest = 'speed', default = 10, help="[1..10], or 0 for media default")
-    self.OptionParser.add_option('-p', '--pressure', action = 'store',
-	  type = 'int', dest = 'pressure', default = 10, help="[1..33], or 0 for media default")
-    self.OptionParser.add_option('-b', '--bbox-only', action = 'store', type = 'inkbool',
-	  dest = 'bbox_only', default=False, help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id', 
+          action = 'store', dest = 'media', default = '132', 
+          choices=('100','101','102','106','111','112','113',
+             '120','121','122','123','124','125','126','127','128','129','130',
+             '131','132','133','134','135','136','137','138','300'), 
+          help="113 = pen, 132 = printer paper, 300 = custom")
+    self.OptionParser.add_option('-s', '--speed', 
+          action = 'store', dest = 'speed', type = 'int', default = 10, 
+          help="[1..10], or 0 for media default")
+    self.OptionParser.add_option('-p', '--pressure', 
+          action = 'store', dest = 'pressure', type = 'int', default = 10, 
+          help="[1..33], or 0 for media default")
+    self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
+          action = 'store', dest = 'bbox_only', type = 'inkbool', default = False, 
+          help='draft the objects bounding box instead of the objects')
 
+  def cut_line(self,layer,csp):
+    self.cut.append([(csp[0][0],csp[0][1]),(csp[1][0],csp[1][1])])
 
-    def parse(self, file_or_string=None):
-        """Parse document in specified file or on stdin"""
+  def cut_point(self,layer,x,y):
+    # cutting a point is pretty pointless, no? better_dxf_output.py has code for this...
+    pass
+
+  def parse(self, file_or_string=None):
+    """Parse document in specified file or on stdin"""
+    try:
+      if file_or_string:
         try:
-            if file_or_string:
-                try:
-                    stream = open(file_or_string, 'r')
-                except:
-                    stream = StringIO.StringIO(file_or_string)
-            else:
-                stream = open(self.args[-1], 'r')
+          stream = open(file_or_string, 'r')
         except:
-            stream = sys.stdin
-        self.document = inkex.etree.parse(stream)
-        stream.close()
+          stream = StringIO.StringIO(file_or_string)
+      else:
+        stream = open(self.args[-1], 'r')
+    except:
+      stream = sys.stdin
+    self.document = inkex.etree.parse(stream)
+    stream.close()
 
 
-    def getselected(self):
+  def getselected(self):
         """Get selected nodes in document order
 
         The nodes are stored in the selected dictionary and as a list of
@@ -81,7 +102,7 @@ class SendtoSilhouette(inkex.Effect):
                 self.selected[id] = node
                 self.selected_sorted.append(node)
 
-    def get_node_from_id(self, node_ref):
+  def get_node_from_id(self, node_ref):
         if node_ref.startswith('url('):
             node_id = re.findall(r'url\((.*?)\)', node_ref)
             if len(node_id) > 0:
@@ -98,33 +119,58 @@ class SendtoSilhouette(inkex.Effect):
         else:
             return None
 
-    def effect(self):
-        s = ""
-        nodes = self.selected_sorted
-        # If no nodes is selected convert whole document. 
-        if len(nodes) == 0:
-            nodes = self.document.getroot()
-            graphics_state = GraphicsState(nodes)
-        else:
-            graphics_state = GraphicsState(None)
-	return { 'not_impl': True }
+  def effect(self):
+    s = ""
+    print >>self.tty, "effect"
+    nodes = self.selected.keys()
+    # If no nodes are selected, then cut the whole document. 
+    if len(nodes) == 0: 
+      nodes = self.doc_ids.keys()
 
+    def getSelectedById(IDlist): # returns lxml elements that have an id in IDlist in the svg
+      ele=[]
+      svg = self.document.getroot()
+      for e in svg.iterfind('.//*[@id]'):
+        if IDlist is None or e.get('id') in IDlist:
+          ele.append(e)
+      return ele
 
-    def convert(self, svg_file, **kwargs):
-        self.getoptions()
-        self.options.__dict__.update(kwargs)
-        self.parse(svg_file)
-        self.getselected()
-        self.getdocids()
-        output = self.effect()
+    lxml_nodes = []
+    for node in getSelectedById(nodes):
+      tag = node.tag[node.tag.rfind("}")+1:]
+      if tag in ('grid','namedview','defs','metadata'): continue
+      lxml_nodes.append(node)
+    print >>self.tty, "Nodecount: %d\n" % len(lxml_nodes)
 
-	# pump the output to the device
-        if not success:
-           logging.error('Failed to put output to device')
-        output = ""
-        return output
+    # import xml.etree.ElementTree as ET
+    # ET.tostring(lxml_nodes[0])
 
+    ## This is from better_dxf_output.py: quite lousy implementation.
+    ## it silently ignores transformation on path objects and cannot really handle rects.
+    self.plot = Plot({
+      'scale':25.4/units['in'], 'margin':0, 'startPosition':(0,0), 
+      'smoothness':0.5*units['mm']})
+    self.plot.loadGraphic(lxml_nodes)
+    cut = self.plot.toCutList()
+    # print >>self.tty, self.plot.graphic, cut
+    ## FIXME: recursivelyTraverseSvg() from egbot.py looks much more mature.
 
-if __name__ == '__main__':
-  e = SendtoSilhouette()
-  e.affect()
+    dev = SilhouetteCameo()
+    print >>self.tty, dev.msg
+    state = dev.status()    # hint at loading paper, if not ready.
+    print >>self.tty, "status=%s" % (state)
+    print >>self.tty, "device version: '%s'" % dev.get_version()
+
+    dev.setup(media=113, pressure=10, speed=10)
+    bbox = dev.page(cut=cut, mediaheight=180, offset=(0,0),bboxonly=None)
+
+    # pump the output to the device
+    success = True
+    if not success:
+      logging.error('Failed to put output to device')
+    output = ""
+    return output
+
+e = SendtoSilhouette()
+e.affect()
+print >>e.tty, "done"

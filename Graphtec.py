@@ -2,7 +2,7 @@
 # driver for a Graphtec Silhouette Cameo plotter.
 # modelled after https://github.com/nosliwneb/robocut.git 
 #
-import usb.core
+import sys, usb.core
     
 # taken from 
 #  robocut/CutDialog.ui
@@ -92,12 +92,12 @@ class SilhouetteCameo:
 
     if dev is None:
       raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
-    print "%s found on usb bus=%d addr=%d" % (dev.hardware['name'], dev.bus, dev.address)
+    self.msg = "%s found on usb bus=%d addr=%d" % (dev.hardware['name'], dev.bus, dev.address)
 
     if dev.is_kernel_driver_active(0):
-      print "is_kernel_driver_active(0) returned nonzero"
+      print >>sys.stderr, "is_kernel_driver_active(0) returned nonzero"
       if dev.detach_kernel_driver(0):
-        print "detach_kernel_driver(0) returned nonzero"
+        print >>sys.stderr, "detach_kernel_driver(0) returned nonzero"
     dev.reset();
 
     dev.set_configuration()
@@ -185,7 +185,7 @@ class SilhouetteCameo:
           pen = False
       for i in MEDIA:
         if i[0] == media: 
-          print "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
+          print >>sys.stderr, "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
     if speed is not None: 
@@ -196,9 +196,9 @@ class SilhouetteCameo:
       s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
     if s.leftaligned:
-      print "Loaded media is expected left-aligned."
+      print >>sys.stderr, "Loaded media is expected left-aligned."
     else:
-      print "Loaded media is expected right-aligned."
+      print >>sys.stderr, "Loaded media is expected right-aligned."
 
     # robocut/Plotter.cpp:393 says:
     # // I think this sets the distance from the position of the plotter
@@ -255,7 +255,7 @@ class SilhouetteCameo:
       # marginleft += s.dev.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth =   s.dev.hardware['width_mm']
 
-    print "mediabox: (%g,%g)-(%g,%g)" % (mediawidth,mediaheight,marginleft,margintop)
+    print >>sys.stderr, "mediabox: (%g,%g)-(%g,%g)" % (mediawidth,mediaheight,marginleft,margintop)
 
     # // Begin page definition.
     s.write("FA\x03")

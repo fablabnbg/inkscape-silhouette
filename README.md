@@ -4,7 +4,7 @@ inkscape-silhouette
 An extension to drive a Silhoutte Cameo from within inkscape.
 100% pure python, (except maybe for the libusb backend)
 
-Feature: 
+Features: 
 * Coordinate system conforms to inkscape SVG (or HPGL)
 * Exact Margins. Can start at (0,0).
 * Pen mode used to avoid the precut movement of the knive.
@@ -17,5 +17,9 @@ Feature:
 * The standalone script arrow_test.py can be used to test drive
   the SilhoutteCameo class.
 
+Misfeatures:
+* Uses lousy path conversion from inkcut. Thought this was a nice tool. Sorry.
+* Plotter stops, when we send "too much" data. Is this the 4096 limit?
+
 TODO:
-* Actual inkscape integration. Hold your breath.
+* Rework everything with the eggbotcode path conversion.
