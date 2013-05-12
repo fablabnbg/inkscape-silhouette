@@ -89,7 +89,7 @@ class SilhouetteCameo:
 
     if dev is None:
       dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
-      dev.hardware = { 'name': 'Unknown Graphtec device' }
+      # dev.hardware = { 'name': 'Unknown Graphtec device' }
 
     if dev is None:
       raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
@@ -219,13 +219,20 @@ class SilhouetteCameo:
           print >>s.log, "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
+
     if speed is not None: 
       if speed < 1: speed = 1
       if speed > 10: speed = 10
       s.write("!%d\x03" % speed);
+      print >>s.log, "speed: %d" % speed
+
     if pressure is not None: 
+      if pressure <  1: pressure = 1
+      if pressure > 33: pressure = 33
       s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
+      print >>s.log, "pressure: %d" % pressure
+
     if s.leftaligned:
       print >>s.log, "Loaded media is expected left-aligned."
     else:
@@ -317,7 +324,7 @@ class SilhouetteCameo:
       # marginleft += s.dev.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth =   s.dev.hardware['width_mm']
 
-    print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (mediawidth,mediaheight,marginleft,margintop)
+    print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight)
 
     # // Begin page definition.
     s.write("FA\x03")   # query someting?

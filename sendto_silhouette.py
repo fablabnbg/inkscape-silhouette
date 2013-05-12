@@ -21,7 +21,7 @@ sys.path.append('/usr/share/inkscape/extensions')
 
 # We will use the inkex module with the predefined Effect base class.
 import inkex
-from silhouette.Path import *
+from silhouette.InkcutPath import *
 from silhouette.Graphtec import SilhouetteCameo
 
 # The simplestyle module provides functions for style parsing.
@@ -49,7 +49,7 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
     self.OptionParser.add_option('-t', '--tool', action = 'store',
-          choices=('cut', 'pen'), dest = 'tool', default = 'cut', help="Optimize for pen or knive")
+          choices=('cut', 'pen'), dest = 'tool', default = None, help="Optimize for pen or knive")
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id', 
           action = 'store', dest = 'media', default = '132', 
           choices=('100','101','102','106','111','112','113',
@@ -63,8 +63,12 @@ class SendtoSilhouette(inkex.Effect):
           action = 'store', dest = 'pressure', type = 'int', default = 10, 
           help="[1..33], or 0 for media default")
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
-          action = 'store', dest = 'bbox_only', type = 'inkbool', default = False, 
+          action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
           help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done', 
+          action = 'store', dest = 'wait_done', type = 'inkbool', default = False, 
+          help='After sending wait til device reports ready')
+
 
   def cut_line(self,layer,csp):
     self.cut.append([(csp[0][0],csp[0][1]),(csp[1][0],csp[1][1])])
@@ -159,22 +163,42 @@ class SendtoSilhouette(inkex.Effect):
     # print >>self.tty, self.plot.graphic, cut
     ## FIXME: recursivelyTraverseSvg() from egbot.py looks much more mature.
 
-    dev = SilhouetteCameo(log=self.tty)
+    try:
+      dev = SilhouetteCameo(log=self.tty)
+    except Exception as e:
+      print >>self.tty, e
+      print >>sys.stderr, e
+      return
+
     cut = dev.flip_cut(cut)
     state = dev.status()    # hint at loading paper, if not ready.
     print >>self.tty, "status=%s" % (state)
     print >>self.tty, "device version: '%s'" % dev.get_version()
 
-    dev.setup(media=113, pressure=10, speed=10)
-    bbox = dev.page(cut=cut, mediaheight=180, offset=(0,0),bboxonly=None)
-    if True:
+    if self.options.pressure == 0:     self.options.pressure = None
+    if self.options.speed == 0:        self.options.speed = None
+    pen=None
+    if self.options.tool == 'pen': pen=True
+    if self.options.tool == 'cut': pen=False
+    if self.options.bboxonly == False: self.options.bboxonly=None
+    dev.setup(media=self.options.media, pen=pen, 
+      pressure=self.options.pressure, speed=self.options.speed)
+    bbox = dev.page(cut=cut, mediaheight=180, 
+      offset=(self.options.x_off,self.options.y_off),
+      bboxonly=self.options.bboxonly)
+    print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
+      bbox['bbox']['llx']*bbox['unit'],
+      bbox['bbox']['ury']*bbox['unit'],
+      bbox['bbox']['urx']*bbox['unit'],
+      bbox['bbox']['lly']*bbox['unit'],
+      bbox['total'])
+    state = dev.status()
+    while self.options.wait_done and state == 'moving':
+      self.tty.write('.')
+      self.tty.flush()
       state = dev.status()
-      while state == 'moving':
-        self.tty.write('.')
-        self.tty.flush()
-        state = dev.status()
-        time.sleep(1)
-      print >>self.tty, "\nstatus=%s" % (state)
+      time.sleep(1)
+    print >>self.tty, "\nstatus=%s" % (state)
 
     # pump the output to the device
     success = True
