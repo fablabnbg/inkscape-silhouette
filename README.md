@@ -24,3 +24,6 @@ Misfeatures:
 
 TODO:
 * Rework everything with the eggbotcode path conversion.
+* Find out, if inkscape could keep the current selection, after running an extension.
+  It is not nice, that the selection gets deselected, and I have to close and reopen 
+  the extension dialogue to re-activate a selection.

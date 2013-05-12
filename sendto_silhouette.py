@@ -41,7 +41,10 @@ class SendtoSilhouette(inkex.Effect):
     self.cut = []
     self.handle = 255
     self.flatness = 0.1
-    self.tty = open("/dev/tty", 'w')
+    try:
+      self.tty = open("/dev/tty", 'w')
+    except:
+      self.tty = open("/dev/null", 'w')
     print >>self.tty, "__init__"
     
     self.OptionParser.add_option('-x', '--x-off', '--x_off', action = 'store',
