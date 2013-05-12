@@ -213,4 +213,4 @@ class SendtoSilhouette(inkex.Effect):
 e = SendtoSilhouette()
 start = time.time()
 e.affect()
-print >>e.tty, " done. %d sec" %s (int(time.time()-start+.5))
+print >>e.tty, " done. %d sec" % (int(time.time()-start+.5))
