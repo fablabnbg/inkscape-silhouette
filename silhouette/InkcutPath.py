@@ -554,7 +554,10 @@ class Graphic: # a group of paths
                                 raise AssertionError("Cannot handle '%s' objects, covert to path first."%(tag))
                         elif tag == 'g':
                                 if node.get("transform"):
-                                        simpletransform.applyTransformToNode(node.get("transform"),node)
+					# does it nale sense to apply the own transform??
+					# it fails when "translate(0,-2.5390623e-6)"
+					tr = simpletransform.parseTransform(node.get("transform"))
+                                        simpletransform.applyTransformToNode(tr,node)
                                 spl.extend(self.fromSVG(list(node)))
                         else:
                                 raise AssertionError("Cannot handle tag '%s'"%(tag))

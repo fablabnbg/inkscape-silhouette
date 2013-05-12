@@ -21,6 +21,11 @@ Features:
 
 Misfeatures:
 * Uses lousy path conversion from inkcut. Thought this was a nice tool. Sorry.
+  - transforms are missing most of the time.
+  - groups fail quite often, like this:
+     File "/usr/share/inkscape/extensions/simpletransform.py", line 83, in composeTransform
+         a11 = M1[0][0]*M2[0][0] + M1[0][1]*M2[1][0]
+	 TypeError: can't multiply sequence by non-int of type 'float'
 
 TODO:
 * Rework everything with the eggbotcode path conversion.
