@@ -2,7 +2,7 @@
 # driver for a Graphtec Silhouette Cameo plotter.
 # modelled after https://github.com/nosliwneb/robocut.git 
 #
-import sys, usb.core
+import sys, time, usb.core
     
 # taken from 
 #  robocut/CutDialog.ui
@@ -72,13 +72,14 @@ def _bbox_extend(bb, x, y):
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
 
 class SilhouetteCameo:
-  def __init__(self):
+  def __init__(self, log=sys.stderr):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width 
         (currently Cameo and Portrait). Otherwise it is right hand side. 
         Use setup() to specify your needs.
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
+    self.log = log
     dev = None
     for hardware in DEVICE:
       dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
@@ -92,12 +93,12 @@ class SilhouetteCameo:
 
     if dev is None:
       raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
-    self.msg = "%s found on usb bus=%d addr=%d" % (dev.hardware['name'], dev.bus, dev.address)
+    print >>self.log, "%s found on usb bus=%d addr=%d" % (dev.hardware['name'], dev.bus, dev.address)
 
     if dev.is_kernel_driver_active(0):
-      print >>sys.stderr, "is_kernel_driver_active(0) returned nonzero"
+      print >>self.log, "is_kernel_driver_active(0) returned nonzero"
       if dev.detach_kernel_driver(0):
-        print >>sys.stderr, "detach_kernel_driver(0) returned nonzero"
+        print >>self.log, "detach_kernel_driver(0) returned nonzero"
     dev.reset();
 
     dev.set_configuration()
@@ -110,17 +111,48 @@ class SilhouetteCameo:
     if 'width_mm' in self.dev.hardware: self.leftaligned = True 
 
   def write(s, string, timeout=1000):
-    """Send a command to the device. Long commands are sent in chunks of 4096 bytes."""
+    """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
+       A nonblocking read() is attempted before write(), to find spurious diagnostics."""
+
     # robocut/Plotter.cpp:73 says: Send in 4096 byte chunks. Not sure where I got this from, I'm not sure it is actually necessary.
+    try:
+      resp = s.read(timeout=10) # poll the inbound buffer
+      if resp:
+        print >>s.log, "response before write('%s'): '%s'" % (string, resp)
+    except:
+      pass
     endpoint = 0x01
     chunksz = 4096
     r = 0
     o = 0
+    msg=''
     while o < len(string):
-      r += s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 
-      o += chunksz
-    if r != len(string):
-      raise ValueError('write %d bytes failed: r=%d' % (len(string), r))
+      if o and s.log:
+        s.log.write(" %d%% %s\r" % (100.*o/len(string),msg))
+        s.log.flush()
+      chunk = string[o:o+chunksz]
+      try:
+        r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 
+      except Exception as e:
+        # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
+        # usb.core.USBError: [Errno 110] Operation timed 
+        # print >>s.log, "Write Exception: %s, %s errno=%s" % (type(e), e, e.errno)
+        import errno
+        if e.errno == errno.ETIMEDOUT:
+          time.sleep(1)
+          msg += 't'
+          continue
+      else:
+        if len(msg):
+          msg = ''
+          s.log.write("\n")
+
+      # print >>s.log, "write([%d:%d], len=%d) = %d" % (o,o+chunksz, len(chunk), r)
+      if r <= 0:
+        raise ValueError('write %d bytes failed: r=%d' % (len(chunk), r))
+      o += r
+    if o != len(string):
+      raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
       
   def read(s, size=64, timeout=5000):
     """Low level read method"""
@@ -136,12 +168,11 @@ class SilhouetteCameo:
     # Status request.
     s.write("\x1b\x05")
     resp = s.read(timeout=5000)
-    if len(resp) != 2:    raise ValueError('status response not 2 bytes: %s' % (resp))
-    if resp[1] != '\x03': raise ValueError('status response not terminated with 0x03: %s' % (resp[1]))
-    if resp[0] == '0': return "ready"
-    if resp[0] == '1': return "moving"
-    if resp[0] == '2': return "unloaded"
-    return resp[0]
+    if resp[-1] != '\x03': raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
+    if resp[:-1] == '0': return "ready"
+    if resp[:-1] == '1': return "moving"
+    if resp[:-1] == '2': return "unloaded"
+    return resp[:-1]
   
   def initialize(s):
     """Send the init command. Called by setup()."""
@@ -185,7 +216,7 @@ class SilhouetteCameo:
           pen = False
       for i in MEDIA:
         if i[0] == media: 
-          print >>sys.stderr, "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
+          print >>s.log, "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
     if speed is not None: 
@@ -196,9 +227,9 @@ class SilhouetteCameo:
       s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
     if s.leftaligned:
-      print >>sys.stderr, "Loaded media is expected left-aligned."
+      print >>s.log, "Loaded media is expected left-aligned."
     else:
-      print >>sys.stderr, "Loaded media is expected right-aligned."
+      print >>s.log, "Loaded media is expected right-aligned."
 
     # robocut/Plotter.cpp:393 says:
     # // I think this sets the distance from the position of the plotter
@@ -230,6 +261,37 @@ class SilhouetteCameo:
     if resp != "    0,    0\x03":
       raise ValueError("setup: Invalid response from plotter.")
 
+  def cut_bbox(s, cut):
+    """Find the bouding box of the cut, returns (xmin,ymin,xmax,ymax)"""
+    bb = {}
+    for path in cut:
+      for pt in path:
+        _bbox_extend(bb,pt[0],pt[1])
+    return bb
+
+  def flip_cut(s, cut):
+    """this returns a flipped copy of the cut about the x-axis, 
+       keeping min and max values as they are."""
+    bb = s.cut_bbox(cut)
+    new_cut = []
+    for path in cut:
+      new_path = []
+      for pt in path:
+        new_path.append((pt[0], bb['lly']+bb['ury']-pt[1]))
+      new_cut.append(new_path)
+    return new_cut
+
+  def mirror_cut(s, cut):
+    """this returns a mirrored copy of the cut about the x-axis, 
+       keeping min and max values as they are."""
+    bb = s.cut_bbox(cut)
+    new_cut = []
+    for path in cut:
+      new_path = []
+      for pt in path:
+        new_path.append((bb['llx']+bb['urx']-pt[0], pt[1]))
+      new_cut.append(new_path)
+    return new_cut
 
   def page(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, cut=None, offset=None, bboxonly=None):
     """cut is a list of paths. A path is a sequence of 2-tupel, all measured in mm.
@@ -255,10 +317,17 @@ class SilhouetteCameo:
       # marginleft += s.dev.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth =   s.dev.hardware['width_mm']
 
-    print >>sys.stderr, "mediabox: (%g,%g)-(%g,%g)" % (mediawidth,mediaheight,marginleft,margintop)
+    print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (mediawidth,mediaheight,marginleft,margintop)
 
     # // Begin page definition.
-    s.write("FA\x03")
+    s.write("FA\x03")   # query someting?
+    try:
+      resp = s.read(timeout=100)
+      if len(resp) > 1:
+        print >>s.log, "FA: '%s'" % (resp[:-1])
+    except:
+      pass
+
     width  = int(0.5+20.*mediawidth)
     height = int(0.5+20.*mediaheight)
     top    = int(0.5+20.*margintop)
@@ -273,7 +342,7 @@ class SilhouetteCameo:
         offset = (offset, 0)
       x_off += int(.5+offset[0]*20.)
       y_off += int(.5+offset[1]*20.)
-    # print("x_off=%d, y_off=%d" % (x_off,y_off))
+    # print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?

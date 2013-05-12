@@ -4,6 +4,7 @@
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
 #
 # code snippets visited to learn the extension 'effect' interface:
+# - http://sourceforge.net/projects/inkcut/
 # - http://code.google.com/p/inkscape2tikz/
 # - http://wiki.inkscape.org/wiki/index.php/PythonEffectTutorial
 # - http://github.com/jnweiger/inkscape-gears-dev
@@ -11,6 +12,9 @@
 # - http://www.bobcookdev.com/inkscape/better_dxf_output.zip
 #
 # 2013-05-09 jw, V0.1 -- initial draught
+# 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
+# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
+#                        improved logging, flipped y-axis.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -23,7 +27,7 @@ from silhouette.Graphtec import SilhouetteCameo
 # The simplestyle module provides functions for style parsing.
 from simplestyle import *
 
-__version__ = '0.1'
+__version__ = '0.3'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 
@@ -149,20 +153,28 @@ class SendtoSilhouette(inkex.Effect):
     ## it silently ignores transformation on path objects and cannot really handle rects.
     self.plot = Plot({
       'scale':25.4/units['in'], 'margin':0, 'startPosition':(0,0), 
-      'smoothness':0.5*units['mm']})
+      'smoothness':0.2*units['mm']})
     self.plot.loadGraphic(lxml_nodes)
     cut = self.plot.toCutList()
     # print >>self.tty, self.plot.graphic, cut
     ## FIXME: recursivelyTraverseSvg() from egbot.py looks much more mature.
 
-    dev = SilhouetteCameo()
-    print >>self.tty, dev.msg
+    dev = SilhouetteCameo(log=self.tty)
+    cut = dev.flip_cut(cut)
     state = dev.status()    # hint at loading paper, if not ready.
     print >>self.tty, "status=%s" % (state)
     print >>self.tty, "device version: '%s'" % dev.get_version()
 
     dev.setup(media=113, pressure=10, speed=10)
     bbox = dev.page(cut=cut, mediaheight=180, offset=(0,0),bboxonly=None)
+    if True:
+      state = dev.status()
+      while state == 'moving':
+        self.tty.write('.')
+        self.tty.flush()
+        state = dev.status()
+        time.sleep(1)
+      print >>self.tty, "\nstatus=%s" % (state)
 
     # pump the output to the device
     success = True
@@ -173,4 +185,4 @@ class SendtoSilhouette(inkex.Effect):
 
 e = SendtoSilhouette()
 e.affect()
-print >>e.tty, "done"
+print >>e.tty, " done."
