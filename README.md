@@ -17,18 +17,18 @@ Features:
 * The standalone script arrow_test.py can be used to test drive
   the SilhoutteCameo class.
 * Robust communication with the device. Small writes and timeouts are
-  handled gracefully.
+  handled gracefully. Timeouts will occur, when we travel far with low speed.
 * Multipass: Can repeat each stroke multiple times to enhance plot or 
   cut quality.
 
-Misfeatures:
-* Uses lousy path conversion from inkcut. Thought this was a nice tool. Sorry.
-  - transforms are missing most of the time.
+Misfeatures of InkCut that we do not 'feature':
+* transforms are missing most of the time.
 * Stars, polygons, and boxes are plotted not closed, the final stroke 
   is missing.
 
 TODO:
-* Rework everything with the eggbotcode path conversion.
-* Find out, if inkscape could keep the current selection, after running an extension.
-  It is not nice, that the selection gets deselected, and I have to close and reopen 
-  the extension dialogue to re-activate a selection.
+* Find out, if inkscape could keep the current selection, after running an
+  extension.  It is not nice, that the selection gets deselected, and I have
+  to close and reopen the extension dialogue to re-activate a selection.
+  Idea: Maybe add an option to auto-remember old selections, if it is still
+  the same document and there is no new selection.
