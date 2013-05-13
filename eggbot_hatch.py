@@ -212,7 +212,7 @@ def intersect( P1, P2, P3, P4 ):
 
 	return sa
 
-def trimmedLine(line, margin)
+def trimmedLine(line, margin):
 	'''
 	Takes a line of the form [[x1, y1], [x2, y2]] and returns a line segment of the same form.
 	the returned segment is within the original line, so that the following distance equations
@@ -230,9 +230,9 @@ def trimmedLine(line, margin)
 	x2 = line[1][0]
 	y2 = line[1][1]
 	llen = math.sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) )
-	ratio = llen/margin
-	if ratio >= 0.5: 
+	if llen <= 2.0 * margin:
 		return None
+	ratio = margin/llen
 	xs1 = x1 + ratio * (x2-x1)
 	xs2 = x2 - ratio * (x2-x1)
 	ys1 = y1 + ratio * (y2-y1)
@@ -325,7 +325,7 @@ def interstices( P1, P2, paths, hatches, margin=0 ):
 		y1 = P1[1] + sa[i][0] * ( P2[1] - P1[1] )
 		x2 = P1[0] + sa[i+1][0] * ( P2[0] - P1[0] )
 		y2 = P1[1] + sa[i+1][0] * ( P2[1] - P1[1] )
-		hatch = trimmedLine([[x1, y1], [x2, y2]], margin) )
+		hatch = trimmedLine([[x1, y1], [x2, y2]], margin)
 		if hatch is not None: 
 			hatches[sa[i][1]].append( hatch )
 
@@ -994,7 +994,7 @@ class Eggbot_Hatch( inkex.Effect ):
 
 		# Now loop over our hatch lines looking for intersections
 		for h in self.grid:
-			interstices( (h[0], h[1]), (h[2], h[3]), self.paths, self.hatches )
+			interstices( (h[0], h[1]), (h[2], h[3]), self.paths, self.hatches, self.options.hatchMargin )
 
 		# Target stroke width will be (doc width + doc height) / 2 / 1000
 		# stroke_width_target = ( self.docHeight + self.docWidth ) / 2000

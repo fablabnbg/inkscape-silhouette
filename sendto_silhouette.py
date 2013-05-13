@@ -186,7 +186,7 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.bboxonly == False: self.options.bboxonly=None
     dev.setup(media=self.options.media, pen=pen, 
       pressure=self.options.pressure, speed=self.options.speed)
-    bbox = dev.page(cut=cut, mediaheight=180, 
+    bbox = dev.page(cut=cut, mediaheight=990, 
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly)
     print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
@@ -213,4 +213,7 @@ class SendtoSilhouette(inkex.Effect):
 e = SendtoSilhouette()
 start = time.time()
 e.affect()
-print >>e.tty, " done. %d sec" % (int(time.time()-start+.5))
+ss = int(time.time()-start+.5)
+mm = int(ss/60)
+ss -= mm*60
+print >>e.tty, " done. %d min %d sec" % (mm,ss)
