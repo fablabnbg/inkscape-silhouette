@@ -15,6 +15,8 @@
 # 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
 # 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
 #                        improved logging, flipped y-axis.
+# 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected. 
+#                        Explicit multipass option added.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -27,7 +29,7 @@ from silhouette.Graphtec import SilhouetteCameo
 # The simplestyle module provides functions for style parsing.
 from simplestyle import *
 
-__version__ = '0.3'
+__version__ = '0.4'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 
@@ -47,30 +49,33 @@ class SendtoSilhouette(inkex.Effect):
       self.tty = open("/dev/null", 'w')
     print >>self.tty, "__init__"
     
-    self.OptionParser.add_option('-x', '--x-off', '--x_off', action = 'store',
-          type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
-    self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
-          type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
-    self.OptionParser.add_option('-t', '--tool', action = 'store',
-          choices=('cut', 'pen'), dest = 'tool', default = None, help="Optimize for pen or knive")
+    self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
+          action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
+          help='draft the objects bounding box instead of the objects')
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id', 
           action = 'store', dest = 'media', default = '132', 
           choices=('100','101','102','106','111','112','113',
              '120','121','122','123','124','125','126','127','128','129','130',
              '131','132','133','134','135','136','137','138','300'), 
           help="113 = pen, 132 = printer paper, 300 = custom")
-    self.OptionParser.add_option('-s', '--speed', 
-          action = 'store', dest = 'speed', type = 'int', default = 10, 
-          help="[1..10], or 0 for media default")
+    self.OptionParser.add_option('-M', '--multipass', 
+          action = 'store', dest = 'multipass', type = 'int', default = '1', 
+           help="[1..8], cut/draw each path object multiple times.")
     self.OptionParser.add_option('-p', '--pressure', 
           action = 'store', dest = 'pressure', type = 'int', default = 10, 
           help="[1..33], or 0 for media default")
-    self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
-          action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
-          help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('-s', '--speed', 
+          action = 'store', dest = 'speed', type = 'int', default = 10, 
+          help="[1..10], or 0 for media default")
+    self.OptionParser.add_option('-t', '--tool', action = 'store',
+          choices=('cut', 'pen'), dest = 'tool', default = None, help="Optimize for pen or knive")
     self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done', 
           action = 'store', dest = 'wait_done', type = 'inkbool', default = False, 
           help='After sending wait til device reports ready')
+    self.OptionParser.add_option('-x', '--x-off', '--x_off', action = 'store',
+          type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
+    self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
+          type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
 
 
   def cut_line(self,layer,csp):
@@ -131,12 +136,11 @@ class SendtoSilhouette(inkex.Effect):
             return None
 
   def effect(self):
-    s = ""
     print >>self.tty, "effect"
     nodes = self.selected.keys()
     # If no nodes are selected, then cut the whole document. 
-    if len(nodes) == 0: 
-      nodes = self.doc_ids.keys()
+    # if len(nodes) == 0: 
+    #   nodes = self.doc_ids.keys()[0]    # only the first. All other objects are children anyway.
 
     def getSelectedById(IDlist): # returns lxml elements that have an id in IDlist in the svg
       ele=[]
@@ -147,7 +151,11 @@ class SendtoSilhouette(inkex.Effect):
       return ele
 
     lxml_nodes = []
-    for node in getSelectedById(nodes):
+    if len(nodes):
+      selected = getSelectedById(nodes)
+    else:
+      selected = self.document.getroot()
+    for node in selected:
       tag = node.tag[node.tag.rfind("}")+1:]
       if tag in ('grid','namedview','defs','metadata'): continue
       lxml_nodes.append(node)
@@ -162,7 +170,7 @@ class SendtoSilhouette(inkex.Effect):
       'scale':25.4/units['in'], 'margin':0, 'startPosition':(0,0), 
       'smoothness':0.2*units['mm']})
     self.plot.loadGraphic(lxml_nodes)
-    cut = self.plot.toCutList()
+    cut = self.plot.toCutList(self.options.multipass)
     # print >>self.tty, self.plot.graphic, cut
     ## FIXME: recursivelyTraverseSvg() from egbot.py looks much more mature.
 

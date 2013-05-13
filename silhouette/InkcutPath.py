@@ -401,8 +401,8 @@ class Plot:
                 hpgl.extend(['IN'])
                 return ";".join(hpgl)+";"
  
-        def toCutList(self):
-                return self.graphic.toCutList()
+        def toCutList(self,multipass=1):
+                return self.graphic.toCutList(multipass)
 
 class Graphic: # a group of paths
         def __init__(self,svgElements):
@@ -570,10 +570,10 @@ class Graphic: # a group of paths
                         hpgl.extend(path.toHPGL())
                 return hpgl
 
-        def toCutList(self):
+        def toCutList(self, multipass=1):
                 cut = []
                 for path in self.paths:
-                        cut.extend(path.toCutList())
+                        cut.extend(path.toCutList(multipass))
                 return cut
 
 class Path: # a single path
@@ -889,14 +889,16 @@ class Path: # a single path
                         hpgl.append('PD%d,%d'%(round(line[1][0]*self.scale),round(line[1][1]*self.scale)))
                 return hpgl
 
-        def toCutList(self):
+        def toCutList(self, multipass=1):
                 # get final polyline
                 poly = self.toPolyline()
                 
                 cut = []
                 for line in poly:
                   cut.append((round(line[1][0]*self.scale, 4),round(line[1][1]*self.scale,4)))
-                return [ cut ]
+                path = []
+                for i in range(0,multipass): path.append(cut)
+                return path
 
 def addPoints(p0,p1):
         p=[]

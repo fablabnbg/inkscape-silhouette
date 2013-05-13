@@ -24,6 +24,7 @@
 
     <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
     <param name="wait_done" type="boolean" _gui-text="After sending wait til done">false</param>
+    <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
     
     <effect needs-live-preview="false" >
 	<object-type>all</object-type>
