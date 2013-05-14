@@ -19,6 +19,7 @@
 #                        Explicit multipass option added.
 #                        Emplying recursivelyTraverseSvg() from eggbotcode
 #                        TODO: coordinate system of page is not exact.
+# 2013-05-13 jw, v0.5 -- transporting docWidth/docHeight to dev.page()
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -36,12 +37,19 @@ from silhouette.Graphtec import SilhouetteCameo
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '0.4'
+__version__ = '0.5'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
 
+
+def px2mm(px):
+  '''
+  Convert inkscape pixels to mm. 
+  The default inkscape unit, called 'px' is 90dpi
+  '''
+  return px*25.4/90
 
 def distanceSquared( P1, P2 ):
   '''
@@ -566,14 +574,15 @@ class SendtoSilhouette(inkex.Effect):
     ## # print >>self.tty, self.plot.graphic, cut
     ## cut = dev.flip_cut(cut)
 
-    ## FIXME: recursivelyTraverseSvg() from egbot.py looks much more mature.
+    ## Do not use the code above: recursivelyTraverseSvg() from egbot.py
+    ## is much more mature.
 
     cut = []
     for pathlist in self.paths.values():
       for px_path in pathlist:
         mm_path = [] 
         for pt in px_path:
-          mm_path.append((pt[0]/3.5433070866, pt[1]/3.5433070866))
+          mm_path.append((px2mm(pt[0]), px2mm(pt[1]))
         for i in range(0,self.options.multipass): 
           cut.append(mm_path)
 
@@ -585,7 +594,9 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.bboxonly == False: self.options.bboxonly=None
     dev.setup(media=self.options.media, pen=pen, 
       pressure=self.options.pressure, speed=self.options.speed)
-    bbox = dev.page(cut=cut, mediaheight=990, 
+    bbox = dev.page(cut=cut, 
+      mediawidth=px2mm(self.docWidth), 
+      mediaheight=px2mm(self.docHeight), 
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly)
     print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
