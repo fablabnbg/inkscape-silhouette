@@ -582,7 +582,7 @@ class SendtoSilhouette(inkex.Effect):
       for px_path in pathlist:
         mm_path = [] 
         for pt in px_path:
-          mm_path.append((px2mm(pt[0]), px2mm(pt[1]))
+          mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
         for i in range(0,self.options.multipass): 
           cut.append(mm_path)
 
@@ -599,18 +599,22 @@ class SendtoSilhouette(inkex.Effect):
       mediaheight=px2mm(self.docHeight), 
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly)
-    print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
-      bbox['bbox']['llx']*bbox['unit'],
-      bbox['bbox']['ury']*bbox['unit'],
-      bbox['bbox']['urx']*bbox['unit'],
-      bbox['bbox']['lly']*bbox['unit'],
-      bbox['total'])
-    state = dev.status()
-    while self.options.wait_done and state == 'moving':
-      self.tty.write('.')
-      self.tty.flush()
+    if len(bbox['bbox'].keys()) == 0:
+      print >>self.tty, "empty page?"
+      print >>sys.stderr, "empty page?"
+    else:
+      print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
+        bbox['bbox']['llx']*bbox['unit'],
+        bbox['bbox']['ury']*bbox['unit'],
+        bbox['bbox']['urx']*bbox['unit'],
+        bbox['bbox']['lly']*bbox['unit'],
+        bbox['total'])
       state = dev.status()
-      time.sleep(1)
+      while self.options.wait_done and state == 'moving':
+        self.tty.write('.')
+        self.tty.flush()
+        state = dev.status()
+        time.sleep(1)
     print >>self.tty, "\nstatus=%s" % (state)
 
     # pump the output to the device
