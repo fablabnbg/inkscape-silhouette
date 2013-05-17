@@ -23,7 +23,7 @@
 # 2013-05-15 jw, v0.6 -- Replaced recursivelyTraverseSvg() and friends with the
 #                        versions from eggbot.py, those from eggbot_hatch.py
 #                        would only do closed paths. Makes sense for them, but
-#                        not for us. 
+#                        not for us.
 #                        Added dummy=True debugging aid to SilhouetteCameo()
 
 import sys, os, shutil, time, logging
