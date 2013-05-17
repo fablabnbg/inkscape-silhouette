@@ -72,7 +72,7 @@ def _bbox_extend(bb, x, y):
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr):
+  def __init__(self, log=sys.stderr, dummy=False):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width 
         (currently Cameo and Portrait). Otherwise it is right hand side. 
@@ -81,38 +81,46 @@ class SilhouetteCameo:
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
     dev = None
-    for hardware in DEVICE:
-      dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
-      if dev:
-        dev.hardware = hardware
-        break
 
-    if dev is None:
-      dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
-      # dev.hardware = { 'name': 'Unknown Graphtec device' }
+    if dummy is True:
+      self.hardware = { 'name': 'Crashtest Dummy Device' }
+    else:
+      for hardware in DEVICE:
+        dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
+        if dev:
+          self.hardware = hardware
+          break
 
-    if dev is None:
-      raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
-    print >>self.log, "%s found on usb bus=%d addr=%d" % (dev.hardware['name'], dev.bus, dev.address)
+      if dev is None:
+        dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
+        self.hardware = { 'name': 'Unknown Graphtec device' }
 
-    if dev.is_kernel_driver_active(0):
-      print >>self.log, "is_kernel_driver_active(0) returned nonzero"
-      if dev.detach_kernel_driver(0):
-        print >>self.log, "detach_kernel_driver(0) returned nonzero"
-    dev.reset();
+      if dev is None:
+        raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
+      print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
 
-    dev.set_configuration()
-    try:
-      dev.set_interface_altsetting()      # Probably not really necessary.
-    except usb.core.USBError:
-      pass
+      if dev.is_kernel_driver_active(0):
+        print >>self.log, "is_kernel_driver_active(0) returned nonzero"
+        if dev.detach_kernel_driver(0):
+          print >>self.log, "detach_kernel_driver(0) returned nonzero"
+      dev.reset();
+
+      dev.set_configuration()
+      try:
+        dev.set_interface_altsetting()      # Probably not really necessary.
+      except usb.core.USBError:
+        pass
+
     self.dev = dev
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
-    if 'width_mm' in self.dev.hardware: self.leftaligned = True 
+    if self.dev is None or 'width_mm' in self.hardware: 
+      self.leftaligned = True 
 
   def write(s, string, timeout=1000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
+
+    if s.dev is None: return None
 
     # robocut/Plotter.cpp:73 says: Send in 4096 byte chunks. Not sure where I got this from, I'm not sure it is actually necessary.
     try:
@@ -156,6 +164,7 @@ class SilhouetteCameo:
       
   def read(s, size=64, timeout=5000):
     """Low level read method"""
+    if s.dev is None: return None
     endpoint = 0x82
     data = s.dev.read(endpoint, size, timeout=timeout, interface=0) 
     if data is None:
@@ -165,6 +174,9 @@ class SilhouetteCameo:
   def status(s):
     """Query the device status. This can return one of the three strings
        'ready', 'moving', 'unloaded' or a raw (unknown) byte sequence."""
+
+    if s.dev is None: return 'none'
+
     # Status request.
     s.write("\x1b\x05")
     resp = s.read(timeout=5000)
@@ -186,6 +198,9 @@ class SilhouetteCameo:
 
   def get_version(s):
     """Retrieve the firmware version string from the device."""
+
+    if s.dev is None: return None
+
     s.write("FG\x03")
     resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     return resp[0:-2]   # chop of 0x03
@@ -201,11 +216,14 @@ class SilhouetteCameo:
        leftaligned: Loaded media is aligned left(=True) or right(=False), default: device dependant
     """
 
+    if leftaligned is not None:
+      s.leftaligned = leftaligned
+
+    if s.dev is None: return None
+
     s.initialize()
     s.home()
 
-    if leftaligned is not None:
-      s.leftaligned = leftaligned
     if media is not None: 
       if media < 100 or media > 300: media = 300
       s.write("FW%d\x03" % media);
@@ -315,14 +333,14 @@ class SilhouetteCameo:
     bbox = { }
     clipcount = 0
     total = 0
-    if margintop  is None and 'margin_top_mm'  in s.dev.hardware: margintop  = s.dev.hardware['margin_top_mm']
-    if marginleft is None and 'margin_left_mm' in s.dev.hardware: marginleft = s.dev.hardware['margin_left_mm']
+    if margintop  is None and 'margin_top_mm'  in s.hardware: margintop  = s.hardware['margin_top_mm']
+    if marginleft is None and 'margin_left_mm' in s.hardware: marginleft = s.hardware['margin_left_mm']
     if margintop  is None: margintop = 0
     if marginleft is None: marginleft = 0
 
-    if s.leftaligned and 'width_mm' in s.dev.hardware:
-      # marginleft += s.dev.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
-      mediawidth =   s.dev.hardware['width_mm']
+    if s.leftaligned and 'width_mm' in s.hardware:
+      # marginleft += s.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
+      mediawidth =   s.hardware['width_mm']
 
     print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight)
 
