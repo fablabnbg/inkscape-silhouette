@@ -24,6 +24,7 @@
 #                        versions from eggbot.py, those from eggbot_hatch.py
 #                        would only do closed paths. Makes sense for them, but
 #                        not for us. 
+#                        Added dummy=True debugging aid to SilhouetteCameo()
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -141,7 +142,6 @@ class SendtoSilhouette(inkex.Effect):
     inkex.Effect.__init__(self)
     self.cut = []
     self.handle = 255
-    self.flatness = 0.1
     self.pathcount = 0
     self.resumeMode = False
     self.bStopped = False
@@ -202,7 +202,8 @@ class SendtoSilhouette(inkex.Effect):
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
 
   def penUp(self):
-    # print >>self.tty, "\r penUp dummy";
+    # print >>self.tty, "\r penUp dummy"
+    pass
 
   def penDown(self):
     # print >>self.tty, "\r penDown (%g,%g)" % (self.fPrevX,self.fPrevY);
@@ -219,7 +220,7 @@ class SendtoSilhouette(inkex.Effect):
     if ( self.fPrevX is None ):
       return
     # assuming that penDown() was called before.
-    self.paths[-1].append((self.fPrevX,self.fPrevY))
+    self.paths[-1].append((self.fX,self.fY))
 
     # print >>self.tty, "\r plotLineAndTime((%g,%g)-(%g,%g)) " % (self.fPrevX,self.fPrevY, self.fX, self.fY);
 
