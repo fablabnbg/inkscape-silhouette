@@ -192,7 +192,7 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option( "-S", "--smoothness", action="store", type="float",
           dest="smoothness", default=.2, help="Smoothness of curves" )
     self.OptionParser.add_option('-t', '--tool', action = 'store',
-          choices=('cut', 'pen'), dest = 'tool', default = None, help="Optimize for pen or knive")
+          choices=('cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
     self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done', 
           action = 'store', dest = 'wait_done', type = 'inkbool', default = False, 
           help='After sending wait til device reports ready')
