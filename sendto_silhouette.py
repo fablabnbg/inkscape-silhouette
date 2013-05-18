@@ -25,7 +25,8 @@
 #                        would only do closed paths. Makes sense for them, but
 #                        not for us.
 #                        Added dummy=True debugging aid to SilhouetteCameo()
-# 2013-05-17 jw, v0.7 -- honor layer visibility by checking style="display:none"
+# 2013-05-17 jw, v0.7 -- Honor layer visibility by checking style="display:none"
+#                        penUP()/penDown() bugfix to avoid false connections between objects.
 #                        Added option reversetoggle, to cut the opposite direction.
 
 import sys, os, shutil, time, logging
