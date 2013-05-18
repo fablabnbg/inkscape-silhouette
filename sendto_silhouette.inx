@@ -24,7 +24,8 @@
     <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
     <param name="bbox_help" type="description">To see the used area, tick the checkmark below and use pressure=1 (or better remove tool)</param>
     <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
-    <param name="multipass" type="int" min="1" max="8" _gui-text="Passes per stroke (1=normal, 2..8 repeated)">1</param>
+    <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
+    <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
     
     <effect needs-live-preview="false" >
 	<object-type>all</object-type>

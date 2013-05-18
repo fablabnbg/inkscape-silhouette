@@ -25,6 +25,8 @@
 #                        would only do closed paths. Makes sense for them, but
 #                        not for us.
 #                        Added dummy=True debugging aid to SilhouetteCameo()
+# 2013-05-17 jw, v0.7 -- honor layer visibility by checking style="display:none"
+#                        Added option reversetoggle, to cut the opposite direction.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -36,13 +38,14 @@ from simpletransform import *
 import simplepath
 import cubicsuperpath
 import cspsubdiv
+import string   # for string.lstrip
 
 from silhouette.Graphtec import SilhouetteCameo
 ## from silhouette.InkcutPath import *
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '0.6'
+__version__ = '0.7'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -146,7 +149,7 @@ class SendtoSilhouette(inkex.Effect):
     self.resumeMode = False
     self.bStopped = False
     self.plotCurrentLayer = True
-    self.allLayers = True
+    self.allLayers = True               # True: all except hidden layers. False: only selected layers.
     self.step_scaling_factor = 1        # see also px2mm()
     self.ptFirst = None
     self.fPrevX = None
@@ -169,7 +172,7 @@ class SendtoSilhouette(inkex.Effect):
       self.tty = open("/dev/tty", 'w')
     except:
       self.tty = open("/dev/null", 'w')
-    print >>self.tty, "__init__"
+    # print >>self.tty, "__init__"
     
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
           action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
@@ -182,10 +185,13 @@ class SendtoSilhouette(inkex.Effect):
           help="113 = pen, 132 = printer paper, 300 = custom")
     self.OptionParser.add_option('-M', '--multipass', 
           action = 'store', dest = 'multipass', type = 'int', default = '1', 
-           help="[1..8], cut/draw each path object multiple times.")
+          help="[1..8], cut/draw each path object multiple times.")
     self.OptionParser.add_option('-p', '--pressure', 
           action = 'store', dest = 'pressure', type = 'int', default = 10, 
           help="[1..33], or 0 for media default")
+    self.OptionParser.add_option('-r', '--reversetoggle', 
+          action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
+          help="Cut each path the other direction. Affects every second pass when multipass.")
     self.OptionParser.add_option('-s', '--speed', 
           action = 'store', dest = 'speed', type = 'int', default = 10, 
           help="[1..10], or 0 for media default")
@@ -202,12 +208,15 @@ class SendtoSilhouette(inkex.Effect):
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
 
   def penUp(self):
-    # print >>self.tty, "\r penUp dummy"
-    pass
+    # print >>self.tty, "\r penUp", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
+    self.fPrevX = None              # flag that we are up
+    self.fPrevY = None
 
   def penDown(self):
-    # print >>self.tty, "\r penDown (%g,%g)" % (self.fPrevX,self.fPrevY);
-    self.paths.append([(self.fPrevX,self.fPrevY)])
+    # print >>self.tty, "\r penDown", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
+    self.paths.append([(self.fX,self.fY)])
+    self.fPrevX = self.fX       # flag that we are down
+    self.fPrevY = self.fY       
 
   def plotLineAndTime( self ):
     '''
@@ -278,6 +287,42 @@ class SendtoSilhouette(inkex.Effect):
                                         self.fPrevY = self.fY
 
 
+  def DoWePlotLayer( self, strLayerName ):
+                """
+                We are only plotting *some* layers. Check to see
+                whether or not we're going to plot this one.
+
+                First: scan first 4 chars of node id for first non-numeric character,
+                and scan the part before that (if any) into a number
+
+                Then, see if the number matches the layer.
+                """
+
+                TempNumString = 'x'
+                stringPos = 1
+                CurrentLayerName = string.lstrip( strLayerName ) #remove leading whitespace
+
+                # Look at layer name.  Sample first character, then first two, and
+                # so on, until the string ends or the string no longer consists of
+                # digit characters only.
+
+                MaxLength = len( CurrentLayerName )
+                if MaxLength > 0:
+                        while stringPos <= MaxLength:
+                                if str.isdigit( CurrentLayerName[:stringPos] ):
+                                        TempNumString = CurrentLayerName[:stringPos] # Store longest numeric string so far
+                                        stringPos = stringPos + 1
+                                else:
+                                        break
+
+                self.plotCurrentLayer = False    #Temporarily assume that we aren't plotting the layer
+                if ( str.isdigit( TempNumString ) ):
+                        if ( self.svgLayer == int( float( TempNumString ) ) ):
+                                self.plotCurrentLayer = True    #We get to plot the layer!
+                                self.LayersPlotted += 1
+                #Note: this function is only called if we are NOT plotting all layers.
+
+
   def recursivelyTraverseSvg( self, aNodeList,
                         matCurrent=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
                         parent_visibility='visible' ):
@@ -306,8 +351,13 @@ class SendtoSilhouette(inkex.Effect):
 
                                 self.penUp()
                                 if ( node.get( inkex.addNS( 'groupmode', 'inkscape' ) ) == 'layer' ):
+                                        if (node.get('style','') == 'display:none'):
+                                                self.plotCurrentLayer = False
+                                        else:
+                                                self.plotCurrentLayer = True
+
                                         if not self.allLayers:
-                                                #inkex.errormsg('Plotting layer named: ' + node.get(inkex.addNS('label', 'inkscape')))
+                                                # inkex.errormsg('Plotting layer named: ' + node.get(inkex.addNS('label', 'inkscape')))
                                                 self.DoWePlotLayer( node.get( inkex.addNS( 'label', 'inkscape' ) ) )
                                 self.recursivelyTraverseSvg( node, matNew, parent_visibility=v )
 
@@ -800,12 +850,15 @@ class SendtoSilhouette(inkex.Effect):
     ## Do not use the code above: recursivelyTraverseSvg() from egbot.py
     ## is much more mature.
 
+    # print >>self.tty, self.paths
     cut = []
     for px_path in self.paths:
       mm_path = [] 
       for pt in px_path:
         mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
       for i in range(0,self.options.multipass): 
+        if (self.options.reversetoggle):
+          mm_path = list(reversed(mm_path))
         cut.append(mm_path)
 
     if self.options.pressure == 0:     self.options.pressure = None

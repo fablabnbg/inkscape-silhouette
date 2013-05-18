@@ -19,12 +19,17 @@ Features:
 * Robust communication with the device. Small writes and timeouts are
   handled gracefully. Timeouts will occur, when we travel far with low speed.
 * Multipass: Can repeat each stroke multiple times to enhance plot or 
-  cut quality.
+  cut quality. This can also be used to attempt a cut without cutting mat, by
+  applying very little pressure.
+* reverse toggle options, to cut the opposite direction. This might also be 
+  helpful with mat-free cutting via multipass.
+* honors hidden layers.
 
 Misfeatures of InkCut that we do not 'feature':
 * transforms are missing most of the time.
 * Stars, polygons, and boxes are plotted not closed, the final stroke 
   is missing.
+* always plots layers, even if hidden.
 
 TODO:
 * Find out, if inkscape could keep the current selection, after running an
@@ -32,3 +37,8 @@ TODO:
   to close and reopen the extension dialogue to re-activate a selection.
   Idea: Maybe add an option to auto-remember old selections, if it is still
   the same document and there is no new selection.
+
+* Path sorting for monotonic cut. If we can limit backwards movement to only a few 
+  millimeters, and make the knive pull only towards the edges, we could do many 
+  more patterns without a cutting mat. The WC-Wunderbach-Wimpern font is especially 
+  well suited as a test-case.
