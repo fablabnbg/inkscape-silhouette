@@ -200,6 +200,9 @@ class SendtoSilhouette(inkex.Effect):
           dest="smoothness", default=.2, help="Smoothness of curves" )
     self.OptionParser.add_option('-t', '--tool', action = 'store',
           choices=('cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
+    self.OptionParser.add_option('-V', '--version', 
+          action = 'store_const', const=True, dest = 'version', default = False, 
+          help='Just print version number ("'+__version__+'") and exit.')
     self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done', 
           action = 'store', dest = 'wait_done', type = 'inkbool', default = False, 
           help='After sending wait til device reports ready')
@@ -790,6 +793,10 @@ class SendtoSilhouette(inkex.Effect):
 
 
   def effect(self):
+    if self.options.version:
+      print __version__
+      sys.exit(0)
+
     try:
       dev = SilhouetteCameo(log=self.tty, dummy=False)
     except Exception as e:
@@ -901,6 +908,7 @@ class SendtoSilhouette(inkex.Effect):
     return output
 
 e = SendtoSilhouette()
+
 start = time.time()
 e.affect()
 ss = int(time.time()-start+.5)

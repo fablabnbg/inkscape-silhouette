@@ -1,0 +1,40 @@
+			jw, Sat May 18 23:56:20 CEST 2013
+Goal:
+ Allow cutting of complex designs without a cutting mat and
+ without crumpling the paper.
+
+Rationale:
+ A cutting mat recommended, whenever the knive moves in a way so that the
+ paper becomes unstable due to the cuts. The cutting mat is sticky and keeps
+ the paper in place, even if the knive moves through a piece of paper that was
+ disconnected from the sheet by previous cuts.
+
+ After the design was cut, the paper needs to be peeled off the cutting mat.
+ This a manual process, that becomes especially tedious when a large number of small
+ disconnected holes were cut. E.g. text set in a a stencil font.
+
+ It is assumend that the ordering of cuts can be chosen to minimize the 
+ risk of breaking the paper without a cutting mat.
+
+ The sheet is transported by two rollers at the left and right edge of the paper.
+ As long as the paper is sufficiently stable, the cut force of the knive is
+ held by the traction of the transport rollers.
+
+ To reliably cut (any design) without relying on the extra stability 
+ of a cutting mat, the cuts must be organized in such a way, that always a sufficiently
+ stable portion of the paper is beetween rollers and knive.
+
+Observations:
+ * Cutting the paper only halfway through, is always safe. Cutting the same patch in 
+   multiple strokes increases the depth until we finally cut the paper completly through.
+   With this technique, the force at the point of the knive can be minimized. 
+ * The mechanics of a Silouhette Cameo allows to cut the same path multiple times. 
+   There is no visible offset introduced by going back and forth a sheet multiple times.
+   The machine also has a feature called Track Enhancement, to further reduce
+   ths risk of such offset in case the material is more difficult to handle
+   that ordinary printer paper. With Track Enhancement enabled, the sheet is rolled back 
+   and fort multiple times about its full length, before cutting is started. This visible
+   imprints the track of the transport rollers into the material, thus reducing the 
+   chance of slip.
+ * A narrow horizontally layed out serpentine path advancing downward the sheet 
+   can be cut without problems.
