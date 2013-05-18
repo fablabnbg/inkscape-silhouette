@@ -36,5 +36,10 @@ Observations:
    and fort multiple times about its full length, before cutting is started. This visible
    imprints the track of the transport rollers into the material, thus reducing the 
    chance of slip.
- * A narrow horizontally layed out serpentine path advancing downward the sheet 
-   can be cut without problems.
+ * See misc/narrow_serpentine.svg
+   - Sharp pointed turns do not work well. It is better to start a new cut in the middle 
+     of uncut paper end end the cut to meet another cut.
+   - A narrow horizontally layed out serpentine path advancing downward the sheet 
+     can be cut without much problems. We even introduce slight backwards movement, where
+     the knive cuts towards the nearest roller. 
+

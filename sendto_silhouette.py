@@ -40,6 +40,7 @@ import simplepath
 import cubicsuperpath
 import cspsubdiv
 import string   # for string.lstrip
+import gettext
 
 from silhouette.Graphtec import SilhouetteCameo
 ## from silhouette.InkcutPath import *
@@ -145,6 +146,7 @@ class SendtoSilhouette(inkex.Effect):
     # Call the base class constructor.
     inkex.Effect.__init__(self)
     self.cut = []
+    self.warnings = {}
     self.handle = 255
     self.pathcount = 0
     self.resumeMode = False
