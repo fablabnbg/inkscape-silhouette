@@ -4,6 +4,8 @@ inkscape-silhouette
 An extension to drive a Silhoutte Cameo from within inkscape.
 100% pure python, (except maybe for the libusb backend)
 
+Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
+
 Features: 
 * Coordinate system now conforms to inkscape SVG via flip_cut()
 * Exact Margins. Can start at (0,0).
