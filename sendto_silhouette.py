@@ -800,7 +800,7 @@ class SendtoSilhouette(inkex.Effect):
       sys.exit(0)
 
     try:
-      dev = SilhouetteCameo(log=self.tty, dummy=False)
+      dev = SilhouetteCameo(log=self.tty, dummy=True)
     except Exception as e:
       print >>self.tty, e
       print >>sys.stderr, e
