@@ -862,14 +862,23 @@ class SendtoSilhouette(inkex.Effect):
 
     # print >>self.tty, self.paths
     cut = []
+    pointcount = 0
     for px_path in self.paths:
       mm_path = [] 
       for pt in px_path:
         mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
+        pointcount += 1
       for i in range(0,self.options.multipass): 
         if (self.options.reversetoggle):
           mm_path = list(reversed(mm_path))
         cut.append(mm_path)
+
+    if dev.dev is None:
+      dumpname="/tmp/silhouette.dump"
+      o = open(dumpname, 'w')
+      print >>self.tty,    "dump written to ",dumpname," (",pointcount," points)"
+      print >>sys.stderr, "dump written to ",dumpname," (",pointcount," points)"
+      print >>o, cut
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
