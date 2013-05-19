@@ -28,8 +28,8 @@ Features:
 Misfeatures of InkCut that we do not 'feature':
 * transforms are missing most of the time.
 * Stars, polygons, and boxes are plotted not closed, the final stroke 
-  is missing.
-* always plots layers, even if hidden.
+  is missing. (Must be me, no?)
+* always plots all layers, even if hidden.
 
 TODO:
 * Find out, if inkscape could keep the current selection, after running an
