@@ -2,7 +2,12 @@
 #
 # detect sharp corners in a path.
 #
-# see http://nullege.com/codes/search/goocanvas.Ellipse
+# Reference Manual:
+# http://people.gnome.org/~gianmt/pygoocanvas/
+# https://developer.gnome.org/goocanvas/unstable/
+#
+# Examples:
+# http://nullege.com/codes/search/goocanvas.Ellipse
 
 import sys
 import gtk
@@ -147,11 +152,32 @@ def sharp_turn(A,B,C):
   return ccw_t(A,B,D) == ccw_t(C,B,D)
 
 
+def print_pdf(c):
+  # (x1,y1,x2,y2) = c.get_bounds()
+  scale= 72/25.4 # PDF is at 72DPI, so this is 12 inch wide.
+  width=300     # mm
+  height=400    # mm
+  width *= scale
+  height *= scale
+  surface = cairo.PDFSurface("output.pdf", width, height)
+  ctx = cairo.Context(surface)
+  ctx.scale(scale,scale)
+  # ctx.set_source_rgb(1,1,1)
+  # ctx.rectangle(0,0,width,height)
+  # ctx.fill()
+  # ctx.set_source_rgb(1,0,0)
+  # ctx.move_to(width/2,height/2)
+  # ctx.arc(width/2,height/2,512*0.25,0, 6)     # math.pi*2)
+  # ctx.fill()
+  c.render(ctx)
+  ctx.show_page()
+  print "output.pdf written"
 
 def scale_up(win, ev, c):
   s = c.get_scale()  
   if   chr(ev.keyval) == '+':  c.set_scale(s*1.2)
   elif chr(ev.keyval) == '-':  c.set_scale(s*.8)
+  elif chr(ev.keyval) == 'p':  print_pdf(c)
   else: gtk.main_quit()
   print c.get_scale()
 
