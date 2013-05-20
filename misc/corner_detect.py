@@ -246,7 +246,7 @@ def main ():
           continue
 
         if A is not None and sharp_turn(A,B,C):
-          Ellipse(parent=root, center_x=B[0], center_y=B[1], radius_x=.2, radius_y=.2, fill_color = '#FF7777', line_width = 0)
+          Ellipse(parent=root, center_x=B[0], center_y=B[1], radius_x=.25, radius_y=.25, fill_color = '#FF7777', line_width = 0.01)
 
         Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.2, radius_y=.2, line_width = 0.01)
         A = B
