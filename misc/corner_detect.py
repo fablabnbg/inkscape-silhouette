@@ -1,6 +1,13 @@
 #! /usr/bin/python
 #
 # detect sharp corners in a path.
+# (c) 2013 jnweiger@gmail.com, distribute under GPL-2.0
+# 
+# Usage: 
+#  '-'           zoom out
+#  '+'           zoom in
+#  LMB           drag the graphics around
+#  'p'           save 'output.pdf'
 #
 # Reference Manual:
 # http://people.gnome.org/~gianmt/pygoocanvas/
