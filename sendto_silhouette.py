@@ -28,6 +28,10 @@
 # 2013-05-17 jw, v0.7 -- Honor layer visibility by checking style="display:none"
 #                        penUP()/penDown() bugfix to avoid false connections between objects.
 #                        Added option reversetoggle, to cut the opposite direction.
+# 2013-05-19 jw, v0.8 -- Split GUI into two pages. Added dummy and mat-free checkboxes.
+#                        misc/corner_detect.py done, can now load a dump saved by dummy.
+#                        Udev rules and script added, so that we get a nice notify 
+#                        guiding users towards inkscape, when connecting a device.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -41,13 +45,14 @@ import cubicsuperpath
 import cspsubdiv
 import string   # for string.lstrip
 import gettext
+from optparse import SUPPRESS_HELP
 
 from silhouette.Graphtec import SilhouetteCameo
 ## from silhouette.InkcutPath import *
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '0.7'
+__version__ = '0.8'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -145,6 +150,7 @@ class SendtoSilhouette(inkex.Effect):
   def __init__(self):
     # Call the base class constructor.
     inkex.Effect.__init__(self)
+
     self.cut = []
     self.warnings = {}
     self.handle = 255
@@ -171,15 +177,25 @@ class SendtoSilhouette(inkex.Effect):
     self.docHeight = float( N_PAGE_HEIGHT )
     self.docTransform = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 
+    self.dumpname="/tmp/silhouette.dump"
+
     try:
       self.tty = open("/dev/tty", 'w')
     except:
       self.tty = open("/dev/null", 'w')
     # print >>self.tty, "__init__"
     
+    self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab', 
+          help=SUPPRESS_HELP)
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
           action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
           help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('--dummy', 
+          action = 'store', dest = 'dummy', type = 'inkbool', default = False,
+          help="Dump raw data to "+self.dumpname+" instead of cutting.")
+    self.OptionParser.add_option('--mat-free', '--mat_free', 
+          action = 'store', dest = 'mat_free', type = 'inkbool', default = False,
+          help="Optimize movements for cutting without a cutting mat.")
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id', 
           action = 'store', dest = 'media', default = '132', 
           choices=('100','101','102','106','111','112','113',
@@ -800,7 +816,7 @@ class SendtoSilhouette(inkex.Effect):
       sys.exit(0)
 
     try:
-      dev = SilhouetteCameo(log=self.tty, dummy=False)
+      dev = SilhouetteCameo(log=self.tty, dummy=self.options.dummy)
     except Exception as e:
       print >>self.tty, e
       print >>sys.stderr, e
@@ -874,10 +890,9 @@ class SendtoSilhouette(inkex.Effect):
         cut.append(mm_path)
 
     if dev.dev is None:
-      dumpname="/tmp/silhouette.dump"
-      o = open(dumpname, 'w')
-      print >>self.tty,    "dump written to ",dumpname," (",pointcount," points)"
-      print >>sys.stderr, "dump written to ",dumpname," (",pointcount," points)"
+      o = open(self.dumpname, 'w')
+      print >>self.tty,    "dump written to ",self.dumpname," (",pointcount," points )"
+      print >>sys.stderr, "dump written to ",self.dumpname," (",pointcount," points )"
       print >>o, cut
 
     if self.options.pressure == 0:     self.options.pressure = None

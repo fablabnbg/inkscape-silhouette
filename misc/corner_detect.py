@@ -4,6 +4,7 @@
 #
 # see http://nullege.com/codes/search/goocanvas.Ellipse
 
+import sys
 import gtk
 from goocanvas import *
 import cairo
@@ -111,6 +112,12 @@ cut = [[(9.115547484444443, 3.9047956222222213), (10.226748977499998,
 4.178705705468693)]]
 # cut = [[(6.447013888888888, 1.7197916666666666), (2.7447450608333335, 1.8781719273333333), (1.7712151617013887, 1.9675756834166662), (1.4375694444444445, 2.0637499999999998), (1.7712129392013884, 2.15725412703125), (2.7447391341666667, 2.240002452083333), (6.447013888888888, 2.38125)]]
 
+if len(sys.argv) > 1:
+  str=open(sys.argv[1]).readlines()
+  cut=eval("".join(str), {}, {})
+  print "loading from", sys.argv[1]
+
+
 ## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
 def ccw(A,B,C):
   return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
@@ -199,24 +206,27 @@ def main ():
         A = None
         B = None
         
+
       for C in path:
         if B is not None and dist_sq(B,C) < 0.01:
           # less than 0.1 mm distance: ignore the point as a duplicate.
           continue
 
         if A is not None and sharp_turn(A,B,C):
-          Ellipse(parent=root, center_x=B[0], center_y=B[1], radius_x=.1, radius_y=.1, fill_color = '#FF7777', line_width = 0)
+          Ellipse(parent=root, center_x=B[0], center_y=B[1], radius_x=.2, radius_y=.2, fill_color = '#FF7777', line_width = 0)
 
-        text = Text(parent=root, text=idx, font="3")
+        Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.2, radius_y=.2, line_width = 0.01)
+        A = B
+        B = C
+
+      p = Points(path)
+      poly = Polyline(parent=root, points=p, line_width=0.05, stroke_color="black")
+
+      for C in path:
+        text = Text(parent=root, text=idx, font="4", fill_color="blue")
         idx += 1
         text.translate(C[0]+random.uniform(-.1,0), C[1]+random.uniform(-.1,0))
         text.scale(.05,.05)
-
-        Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.1, radius_y=.1, line_width = 0.01)
-        A = B
-        B = C
-      p = Points(path)
-      poly = Polyline(parent=root, points=p, line_width=0.01)
       
                     
     win.add(canvas)

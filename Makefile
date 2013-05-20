@@ -2,7 +2,7 @@
 
 TARNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
-ALL=README.md *.py *.inx misc silhouette
+ALL=README.md *.png *.sh *.rules *.py *.inx misc silhouette
 VERS=$$(echo '<xml height="0"/>' | python ./sendto_silhouette.py --version)	
 
 clean:

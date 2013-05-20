@@ -1,0 +1,16 @@
+OPTIONS:="lastrule"
+OPTIONS:="last_rule"
+
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1121", ENV{silhouette_cameo}="yes", OPTIONS="last_rule"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1123", ENV{silhouette_portrait}="yes"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111d", ENV{silhouette_sd_2}="yes"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111c", ENV{silhouette_sd_1}="yes"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="110a", ENV{craftrobo_cc200_20}="yes"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111a", ENV{craftrobo_cc300_20}="yes"
+
+ENV{silhouette_cameo}=="yes",    RUN="/usr/lib/udev/silhouette-udev-notify.sh", OPTIONS:="lastrule"
+ENV{silhouette_portrait}=="yes", RUN="/usr/lib/udev/silhouette-udev-notify.sh"
+ENV{silhouette_sd_2}=="yes",     RUN="/usr/lib/udev/silhouette-udev-notify.sh"
+ENV{silhouette_sd_1}=="yes",     RUN="/usr/lib/udev/silhouette-udev-notify.sh"
+ENV{craftrobo_cc200_20}=="yes",  RUN="/usr/lib/udev/silhouette-udev-notify.sh"
+ENV{craftrobo_cc300_20}=="yes",  RUN="/usr/lib/udev/silhouette-udev-notify.sh"

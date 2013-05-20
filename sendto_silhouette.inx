@@ -1,39 +1,50 @@
 <inkscape-extension>
-    <_name>Send to Silhouette</_name>
-    <id>com.github.jnweiger.inskscape-silhouette</id>
-	<dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
-	<dependency type="executable" location="extensions">inkex.py</dependency>
-	<dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
+  <_name>Send to Silhouette</_name>
+  <id>com.github.jnweiger.inskscape-silhouette</id>
+  <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
+  <dependency type="executable" location="extensions">inkex.py</dependency>
+  <dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
+  <param name="active-tab" type="notebook">
+    <page name='silhouette' _gui-text='Silhouette'>
 
-    <param name="x_off" type="float" min="-999.0" max="999.0" _gui-text="X-Offset [mm]">0.0</param>
-    <param name="y_off" type="float" min="-999.0" max="999.0" _gui-text="Y-Offset [mm]">0.0</param>
-    <param name="tool" type="enum" _gui-text="Tool:">
+      <param name="x_off" type="float" min="-999.0" max="999.0" _gui-text="X-Offset [mm]">0.0</param>
+      <param name="y_off" type="float" min="-999.0" max="999.0" _gui-text="Y-Offset [mm]">0.0</param>
+      <param name="tool" type="enum" _gui-text="Tool:">
         <item value="default">Media default</item>
         <item value="pen">Pen</item>
         <item value="cut">Cut</item>
-    </param>
-    <param name="pen_help" type="description">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</param>
-    <param name="media_id" type="int" min="100" max="300" _gui-text="MediaID">300</param>
-    <param name="media_help" type="description">Media Ids are: 113 = pen, 132 = printer paper, 300 = custom</param>
+      </param>
+      <param name="pen_help" type="description">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</param>
+      <param name="media_id" type="int" min="100" max="300" _gui-text="MediaID">300</param>
+      <param name="media_help" type="description">Media Ids are: 113 = pen, 132 = printer paper, 300 = custom</param>
 
-    <param name="speed" type="int" min="0" max="10" _gui-text="Speed">10</param>
-    <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">10</param>
-    <param name="speed_help" type="description">Use speed=0, pressure=0 to take the media defaults.</param>
+      <param name="speed" type="int" min="0" max="10" _gui-text="Speed">10</param>
+      <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">10</param>
+      <param name="speed_help" type="description">Use speed=0, pressure=0 to take the media defaults.</param>
 
+      <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
+      <param name="bbox_help" type="description">To see the used area, tick the checkmark below and use pressure=1 (or better remove tool)</param>
+      <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
+      <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
+    </page>
 
-    <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
-    <param name="bbox_help" type="description">To see the used area, tick the checkmark below and use pressure=1 (or better remove tool)</param>
-    <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
-    <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
-    <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
-    
-    <effect needs-live-preview="false" >
-	<object-type>all</object-type>
-	<effects-menu>
-	      <submenu _name="Export"/>
-	</effects-menu>
-    </effect>
-    <script>
-        <command reldir="extensions" interpreter="python">sendto_silhouette.py</command>
-    </script>
+    <page name='advanced' _gui-text='Advanced'>
+      <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
+      <param name="wait_done_help" type="description">Keep dialog open until device becomes idle again.</param>
+      <param name="mat_free" type="boolean" _gui-text="Optimize for cutting without mat">true</param>
+      <param name="mat_free_help" type="description">Subdivide, sort, and choose cut directions, so that most a cutting mat is not needed in most cases.</param>
+      <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
+      <param name="dummy_help" type="description">Used for debugging and developent only!</param>
+    </page>
+  </param>
+
+  <effect needs-live-preview="false" >
+    <object-type>all</object-type>
+    <effects-menu>
+      <submenu _name="Export"/>
+    </effects-menu>
+  </effect>
+  <script>
+      <command reldir="extensions" interpreter="python">sendto_silhouette.py</command>
+  </script>
 </inkscape-extension>
