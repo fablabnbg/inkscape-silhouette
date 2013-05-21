@@ -22,6 +22,10 @@ from goocanvas import *
 import cairo
 import random
 
+sys.path.append('.')
+sys.path.append('..')
+from silhouette.Strategy import MatFree
+
 cut = [[(9.115547484444443, 3.9047956222222213), (10.226748977499998,
 7.4399208438888875), (10.565074486006942, 8.35713915909722),
 (10.744325588888888, 8.654524502222221), (10.74829029517361,
@@ -229,6 +233,10 @@ def main ():
     # text = Text(parent=root, text="Hello World", font="12")
     # text.rotate(30,0,10)
     # text.scale(.05,.05)
+
+    mf = MatFree()
+    xx = mf.apply(cut)
+    print mf.points[58]
 
     idx = 1
     A = None
