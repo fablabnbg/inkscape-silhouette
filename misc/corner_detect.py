@@ -234,7 +234,7 @@ def main ():
     # text.rotate(30,0,10)
     # text.scale(.05,.05)
 
-    mf = MatFree()
+    mf = MatFree('default')
     xx = mf.apply(cut)
     print mf.points[58]
 

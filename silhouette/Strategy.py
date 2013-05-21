@@ -23,23 +23,30 @@ presets = {
     'monotone_allow_back_travel': 10,
     'tool_pen': False
     },
+  'nop': {
+    'load_dedup': False
+  }
 }
 
 class MatFree:
   def __init__(self, preset="default", pen=False):
     """This initializer defines settings for the apply() method.
     """
+    self.load_dedup = True
+
     self.preset(preset)
+
     self.tool_pen = pen
     self.points = []
     self.points_dict = {}
-    self.points_last_idx = 0
     self.paths = []
 
   def list_presets(self):
     return copy.deepcopy(presets)
 
   def preset(self, pre_name):
+    if not pre_name in presets:
+      raise ValueError(pre_name+': no such preset. Try "'+'", "'.join(presets.keys())+'"')
     pre = presets[pre_name]
     for k in pre.keys():
       self.__dict__[k] = pre[k]
@@ -58,7 +65,7 @@ class MatFree:
           idx = len(self.points)
           self.points.append([point[0], point[1], { 'refcount': 0 }])
           self.points_dict[k] = idx
-        if len(new_path) == 0 or new_path[-1] != idx:
+        if len(new_path) == 0 or new_path[-1] != idx or self.load_dedup == False:
           # weed out repeated points
           new_path.append(idx)
           self.points[idx][2]['refcount'] += 1
