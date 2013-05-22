@@ -134,35 +134,6 @@ if len(sys.argv) > 1:
   print "loading from", sys.argv[1]
 
 
-## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-def ccw(A,B,C):
-  return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
-
-def ccw_t(A,B,C):
-  """same as ccw, but expecting tuples"""
-  return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
-
-def intersect(A,B,C,D):
-  return ccw_t(A,C,D) != ccw_t(B,C,D) and ccw_t(A,B,C) != ccw_t(A,B,D)
-
-def dist_sq(A,B):
-  return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
-
-def sharp_turn(A,B,C):
-  """Given the path from A to B to C as two line segments.
-     Return true, if the corner at B is more than +/- 90 degree.
-
-     Algorithm:
-     For the segment A-B, we construct the normal B-D. 
-     The we test, if points A and C lie on the same side of the line(!) B-D.
-     If so, it is a sharp turn.
-  """
-  dx = B[0]-A[0]
-  dy = B[1]-A[1]
-  D = (B[0]-dy, B[1]+dx)        # BD is now the normal to AB
-  return ccw_t(A,B,D) == ccw_t(C,B,D)
-
-
 def print_pdf(c):
   # (x1,y1,x2,y2) = c.get_bounds()
   scale= 72/25.4 # PDF is at 72DPI, so this is 12 inch wide.
@@ -235,30 +206,16 @@ def main ():
     # text.scale(.05,.05)
 
     mf = MatFree('default')
-    xx = mf.apply(cut)
-    print mf.points[58]
+    new_cut = mf.apply(cut)
 
     idx = 1
-    A = None
-    B = None 
-    for path in cut:
-      if B is not None and len(path) and dist_sq(B,path[0]) > 4:
-        # disconnect the path, if we jump more than 2mm
-        A = None
-        B = None
-        
-
+    for path in new_cut:
       for C in path:
-        if B is not None and dist_sq(B,C) < 0.01:
-          # less than 0.1 mm distance: ignore the point as a duplicate.
-          continue
-
-        if A is not None and sharp_turn(A,B,C):
-          Ellipse(parent=root, center_x=B[0], center_y=B[1], radius_x=.25, radius_y=.25, fill_color = '#FF7777', line_width = 0.01)
+        if 'sharp' in C.attr:
+          Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.25, radius_y=.25, fill_color = '#FF7777', line_width = 0.01)
+          
 
         Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.2, radius_y=.2, line_width = 0.01)
-        A = B
-        B = C
 
       p = Points(path)
       poly = Polyline(parent=root, points=p, line_width=0.05, stroke_color="black")

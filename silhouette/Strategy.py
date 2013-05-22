@@ -51,10 +51,34 @@ class MatFree:
     for k in pre.keys():
       self.__dict__[k] = pre[k]
 
-  def load(self, cut):
-    """load a sequence of paths, extracting points into a
-       seperate list, with attributes like refcount, etc...
+  def export(self):
+    """reverse of load(), except that the nodes are tuples of
+       [x, y, { ... attrs } ]
+       Most notable attributes:
+       - 'sharp', it is present on nodes where the path turns by more 
+          than 90 deg.
     """
+    cut = []
+    for path in self.paths:
+      new_path = []
+      for pt in path:
+        new_path.append(self.points[pt])
+      cut.append(new_path)
+    return cut
+
+  def load(self, cut):
+    """load a sequence of paths. 
+       Nodes are expected as tuples (x, y).
+       We extract points into a seperate list, with attributes as a third 
+       element to the tuple. Typical attributes to be added by other methods
+       are refcount (if commented in), sharp (by method mark_sharp_turns(), 
+       ...
+    """
+    class XY_a(tuple):
+      def __init__(self,t):
+        tuple.__init__(t)
+        self.attr = {}
+
     for path in cut:
       new_path = []
       for point in path:
@@ -63,12 +87,12 @@ class MatFree:
           idx = self.points_dict[k]
         else:
           idx = len(self.points)
-          self.points.append([point[0], point[1], { 'refcount': 0 }])
+          self.points.append(XY_a(point))
           self.points_dict[k] = idx
         if len(new_path) == 0 or new_path[-1] != idx or self.load_dedup == False:
           # weed out repeated points
           new_path.append(idx)
-          self.points[idx][2]['refcount'] += 1
+          # self.points[idx].attr['refcount'] += 1
       self.paths.append(new_path)
 
   def sharp_turn(s, A,B,C):
@@ -84,6 +108,7 @@ class MatFree:
     dy = B[1]-A[1]
     D = (B[0]-dy, B[1]+dx)        # BD is now the normal to AB
 
+    ## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
     def ccw_t(A,B,C):
       """same as ccw, but expecting tuples"""
       return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
@@ -115,17 +140,16 @@ class MatFree:
           continue
 
         if A is not None and s.sharp_turn(A,B,C):
-          B[2]['sharp'] = True
+          B.attr['sharp'] = True
 
         A = B
         B = C
       #
     #
 
-      
-    
+ 
   def apply(self, cut):
     self.load(cut)
     self.mark_sharp_turns()
-    print self.paths, self.points
+    return self.export()
 
