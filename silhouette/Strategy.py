@@ -70,8 +70,62 @@ class MatFree:
           new_path.append(idx)
           self.points[idx][2]['refcount'] += 1
       self.paths.append(new_path)
+
+  def sharp_turn(s, A,B,C):
+    """Given the path from A to B to C as two line segments.
+       Return true, if the corner at B is more than +/- 90 degree.
+
+       Algorithm:
+       For the segment A-B, we construct the normal B-D. 
+       The we test, if points A and C lie on the same side of the line(!) B-D.
+       If so, it is a sharp turn.
+    """
+    dx = B[0]-A[0]
+    dy = B[1]-A[1]
+    D = (B[0]-dy, B[1]+dx)        # BD is now the normal to AB
+
+    def ccw_t(A,B,C):
+      """same as ccw, but expecting tuples"""
+      return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
+
+    return ccw_t(A,B,D) == ccw_t(C,B,D)
+
+  def mark_sharp_turns(s):
+    """walk through all paths, and add an attribute { 'sharp': True } to the
+       points that respond true with the sharp_turn() method.
+    """
+    min_jump_sq = s.corner_detect_min_jump * s.corner_detect_min_jump
+    dup_eps_sq  = s.corner_detect_dup_epsilon * s.corner_detect_dup_epsilon
+    def dist_sq(A,B):
+      return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
+
+    idx = 1
+    A = None
+    B = None 
+    for path in s.paths:
+      if B is not None and len(path) and dist_sq(B,s. points[path[0]]) > min_jump_sq:
+        # disconnect the path, if we jump more than 2mm
+        A = None
+        B = None
+        
+      for iC in path:
+        C = s.points[iC]
+        if B is not None and dist_sq(B,C) < dup_eps_sq:
+          # less than 0.1 mm distance: ignore the point as a duplicate.
+          continue
+
+        if A is not None and s.sharp_turn(A,B,C):
+          B[2]['sharp'] = True
+
+        A = B
+        B = C
+      #
+    #
+
+      
     
   def apply(self, cut):
     self.load(cut)
+    self.mark_sharp_turns()
     print self.paths, self.points
 
