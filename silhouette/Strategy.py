@@ -13,7 +13,7 @@
 #    minimal backwards movement.
 #
 # 2013-05-21, jw, V0.1  -- initial draught.
-# 2013-05-23, jw, V0.2  -- dedup, subdivide, sharp turn detector added.
+# 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
 
 
 import copy
@@ -96,8 +96,9 @@ class MatFree:
         self.points[idx].attr['dup'] = 1
     else:
       idx = len(self.points)
-    self.points.append(XY_a((x,y)))
-    self.points_dict[k] = idx
+      self.points.append(XY_a((x,y)))
+      self.points_dict[k] = idx
+      self.points[idx].attr['id'] = idx
     return idx
 
   def load(self, cut):
@@ -105,7 +106,7 @@ class MatFree:
        Nodes are expected as tuples (x, y).
        We extract points into a seperate list, with attributes as a third 
        element to the tuple. Typical attributes to be added by other methods
-       are refcount (if commented in), sharp (by method mark_sharp_turns(), 
+       are refcount (if commented in), sharp (by method mark_sharp_links(), 
        ...
     """
 
@@ -122,6 +123,24 @@ class MatFree:
 
   def dist_sq(s, A,B):
     return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
+
+  def link_points(s):
+    """add links (back and forth) between connected points.
+    """
+    for path in s.paths:
+      A = None
+      for pt in path:
+        if A is not None:
+          if 'link' in s.points[A].attr:
+            s.points[A].attr['link'].append(pt)
+          else:
+            s.points[A].attr['link'] = [ pt ]
+
+          if 'link' in s.points[pt].attr:
+            s.points[pt].attr['link'].append(A)
+          else:
+            s.points[pt].attr['link'] = [ A ]
+        A = pt
 
   def subdivide_segments(s, maxlen):
     """Insert addtional points along the paths, so that
@@ -176,9 +195,56 @@ class MatFree:
 
     return ccw_t(A,B,D) == ccw_t(C,B,D)
 
-  def mark_sharp_turns(s):
+
+
+  def mark_sharp_links(s):
+    """walk all the points and check their links attributes, 
+       to see if there are connections that form a sharp angle.
+       This needs link_points() to be called earlier.
+       One sharp turn per point is enough to make us careful.
+       We don't track which pair of turns actually is a sharp turn, if there
+       are more than two links. Those cases are rare enough to allow the inefficiency.
+
+       TODO: can honor corner_detect_min_jump? Even if so, what should we do in the case
+       where multiple points are so close together that the paper is likely to tear?
+    """
+    for pt in s.points:
+      if 'sharp' in pt.attr:
+        ## shortcut existing flags. One sharp turn per point is enough to make us careful.
+        ## we don't want to track which pair of turns actually is a sharp turn, if there
+        ## are more than two links per point. Those cases are rare enough 
+        ## to handle them inefficiently.
+        continue
+      if 'link' in pt.attr:
+        ll = len(pt.attr['link'])
+        if ll > 4:
+          ## you cannot attach 5 lines to a point without creating one sharp angle.
+          pt.attr['sharp'] = True
+          continue
+        ## look at each pair of links once, check their angle.
+        for l1 in range(ll):
+          A = s.points[pt.attr['link'][l1]]
+          for l2 in range(l1+1, ll):
+            B = s.points[pt.attr['link'][l2]]
+            if s.sharp_turn(A,pt,B):
+              pt.attr['sharp'] = True
+          if 'sharp' in pt.attr:
+            break
+      else:
+        print "warning: no links in point %d. Run link_points() before mark_sharp_links()" % (pt.attr['id'])
+
+
+
+  def mark_sharp_paths(s):
     """walk through all paths, and add an attribute { 'sharp': True } to the
        points that respond true with the sharp_turn() method.
+
+       Caution: mark_sharp_paths() walks in the original order, which may be irrelevant 
+       after reordering.
+
+       This marks sharp turns only if paths are not intersecting or touching back. 
+       Assuming link counts <= 2. Use mark_sharp_links() for the general case.
+       Downside: mark_sharp_links() does not honor corner_detect_min_jump.
     """
     min_jump_sq = s.corner_detect_min_jump * s.corner_detect_min_jump
     dup_eps_sq  = s.corner_detect_dup_epsilon * s.corner_detect_dup_epsilon
@@ -209,7 +275,14 @@ class MatFree:
  
   def apply(self, cut):
     self.load(cut)
-    self.mark_sharp_turns()
     self.subdivide_segments(self.monotone_allow_back_travel)
+    self.link_points()
+    self.mark_sharp_links()
+    ## rules for ordering:
+    ## A) If one of my links is 'sharp' and 'seen', then never cut towards it.
+    ## B) When there are multiple links that are not 'seen', prefer to cut to one 
+    ##    that is 'sharp' if possible. Optional rule. It may help avoid some deadlocks caused by
+    ##    rule A) but not all.
+
     return self.export()
 

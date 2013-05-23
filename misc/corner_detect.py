@@ -26,7 +26,7 @@ sys.path.append('.')
 sys.path.append('..')
 from silhouette.Strategy import MatFree
 
-cut = [[(.1,.1), (50,1), (55,55), (1,30), (.1,.9)], [(1.115547484444443, .9047956222222213), (10.226748977499998,
+cut = [[(.1,.1), (50,1), (55,55), (3,30), (.1,.9)], [(1,31),(3,30),(44,44),(55,55)], [(1.115547484444443, .9047956222222213), (10.226748977499998,
 7.4399208438888875), (10.565074486006942, 8.35713915909722),
 (10.744325588888888, 8.654524502222221), (10.74829029517361,
 8.308048945104165), (10.576251919166666, 7.3462779936111104),
@@ -155,14 +155,36 @@ def print_pdf(c):
   ctx.show_page()
   print "output.pdf written"
 
-def scale_up(win, ev, c):
+def key_press(win, ev, c):
+  new_idx = None
   s = c.get_scale()  
   key = chr(ev.keyval & 0xff)
   if   key == '+':  c.set_scale(s*1.2)
   elif key == '-':  c.set_scale(s*.8)
   elif key == 'p':  print_pdf(c)
-  else: gtk.main_quit()
-  print c.get_scale()
+  elif key == 'f':  new_idx = c.cursor_idx + 1
+  elif key == 'F':  new_idx = c.cursor_idx + 20
+  elif key == 'a':  new_idx = c.cursor_idx + 1
+  elif key == 'b':  new_idx = c.cursor_idx - 1
+  elif key == 'B':  new_idx = c.cursor_idx - 20
+  elif key == 'r':  new_idx = 1
+  elif key == '0':  new_idx = 1
+  elif ev.keyval <= 255: gtk.main_quit()
+
+  if new_idx is not None and (new_idx < 1 or  new_idx >= len(c.points)):
+    new_idx = 1
+  else:
+    print c.get_scale()
+
+  if new_idx is not None:
+    c.cursor_idx = new_idx
+    cx = c.points[c.cursor_idx][0]
+    cy = c.points[c.cursor_idx][1]
+    # GooCanvas.CanvasAnimateType.FREEZE = 0 
+    c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
+    print new_idx, c.points[c.cursor_idx].attr
+  else:
+    c.cursor.stop_animation()
 
 def button_press(win, ev):
   win.click_x = ev.x
@@ -194,22 +216,17 @@ def main ():
     root = canvas.get_root_item()
 
     win.connect("destroy", gtk.main_quit)
-    win.connect("key-press-event", scale_up, canvas)
+    win.connect("key-press-event", key_press, canvas)
     win.connect("motion-notify-event", motion_notify, canvas)
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
-    
-    rect = Rect(parent=root, x=1, y=1, width=3,  height=2,
-                        fill_color = '#77ff77', stroke_color = 'black', line_width = .01)
-    
-    # text = Text(parent=root, text="Hello World", font="12")
-    # text.rotate(30,0,10)
-    # text.scale(.05,.05)
 
     mf = MatFree('default')
     new_cut = mf.apply(cut)
 
     idx = 1
+    canvas.points = [ None ]
+
     for path in new_cut:
       for C in path:
         if 'sharp' in C.attr:
@@ -224,9 +241,23 @@ def main ():
       for C in path:
         text = Text(parent=root, text=idx, font="4", fill_color="blue")
         idx += 1
+        canvas.points.append(C)         # store to allow cursor movement.
         text.translate(C[0]+random.uniform(-.1,0), C[1]+random.uniform(-.1,0))
         text.scale(.05,.05)
       
+    
+    if len(canvas.points) == 0:
+      rect = Rect(parent=root, x=1, y=1, width=3,  height=2,
+                  fill_color = '#77ff77', stroke_color = 'black', line_width = .01)
+    else:
+      cursor_p = Points([(-0.5,0),(0,0.5),(0.5,0),(0,-0.5),(-0.5,0)])
+      canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)
+      canvas.cursor.translate(canvas.points[1][0],canvas.points[1][1])
+      canvas.cursor_idx = 1
+    
+    # text = Text(parent=root, text="Hello World", font="12")
+    # text.rotate(30,0,10)
+    # text.scale(.05,.05)
                     
     win.add(canvas)
     win.show_all()
