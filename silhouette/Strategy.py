@@ -14,6 +14,7 @@
 #
 # 2013-05-21, jw, V0.1  -- initial draught.
 # 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
+#                          draft for walk_barrier() added.
 
 
 import copy
@@ -272,6 +273,39 @@ class MatFree:
       #
     #
 
+  def process_barrier(s, y_slice, max_y):
+    """process all lines that link points in y_slice
+    """
+    print "process_barrier limit=%g, points=%d" % (max_y, len(y_slice))
+    print "                max_y=%g" % (y_slice[-1][1])
+
+
+
+  def walk_barrier(s):
+    """move a barrier in ascending y direction. 
+       For each barrier position, only try to cut lines that are above the barrier.
+       Flip the sign for all link ends that were cut to negative. This flags them as done.
+       Add a 'seen' attribute to all nodes that have been visited once.
+       When no more cuts are possible, then move the barrier, try again.
+       A point that has all links with negative signs is removed.
+    """
+    ## first step sort the points into an additional list by ascending y.
+    def by_y(a):
+      return a[1]
+    sy = sorted(s.points, key=by_y)
+
+    barrier_increment = 3.0
+    barrier_y = barrier_increment
+    barrier_idx = 0     # pointing to the first element that is beyond.
+    while True:
+      while sy[barrier_idx][1] < barrier_y:
+        barrier_idx += 1
+        if barrier_idx >= len(sy):
+          break
+      s.process_barrier(sy[0:barrier_idx], barrier_y)       
+      if barrier_idx >= len(sy):
+        break
+      barrier_y += barrier_increment
  
   def apply(self, cut):
     self.load(cut)
@@ -283,6 +317,7 @@ class MatFree:
     ## B) When there are multiple links that are not 'seen', prefer to cut to one 
     ##    that is 'sharp' if possible. Optional rule. It may help avoid some deadlocks caused by
     ##    rule A) but not all.
+    self.walk_barrier()
 
     return self.export()
 
