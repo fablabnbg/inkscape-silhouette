@@ -13,18 +13,24 @@
 #    minimal backwards movement.
 #
 # 2013-05-21, jw, V0.1  -- initial draught.
+# 2013-05-23, jw, V0.2  -- dedup, subdivide, sharp turn detector added.
+
 
 import copy
+import math
 
 presets = {
   'default': {
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10,
-    'tool_pen': False
+    'tool_pen': False,
+    'verbose': True
     },
   'nop': {
-    'load_dedup': False
+    'do_dedup': False,
+    'do_subdivide': False,
+    'verbose': True
   }
 }
 
@@ -32,7 +38,9 @@ class MatFree:
   def __init__(self, preset="default", pen=False):
     """This initializer defines settings for the apply() method.
     """
-    self.load_dedup = True
+    self.verbose  = False
+    self.do_dedup = True
+    self.do_subdivide = True
 
     self.preset(preset)
 
@@ -66,6 +74,32 @@ class MatFree:
       cut.append(new_path)
     return cut
 
+  def pt2idx(self, x,y):
+    """all points have an index, if the index differs, the point 
+       is at a different locations. All points also have attributes
+       stored with in the point object itself. Points that appear for the second
+       time receive an attribute 'dup':1, which is incremented on further reoccurences.
+    """
+    class XY_a(tuple):
+      def __init__(self,t):
+        tuple.__init__(t)
+        self.attr = {}
+
+    k = str(x)+','+str(y)
+    if k in self.points_dict:
+      idx = self.points_dict[k]
+      if self.verbose:
+        print "%d found as dup" % idx
+      if 'dup' in self.points[idx].attr:
+        self.points[idx].attr['dup'] += 1
+      else:
+        self.points[idx].attr['dup'] = 1
+    else:
+      idx = len(self.points)
+    self.points.append(XY_a((x,y)))
+    self.points_dict[k] = idx
+    return idx
+
   def load(self, cut):
     """load a sequence of paths. 
        Nodes are expected as tuples (x, y).
@@ -74,26 +108,53 @@ class MatFree:
        are refcount (if commented in), sharp (by method mark_sharp_turns(), 
        ...
     """
-    class XY_a(tuple):
-      def __init__(self,t):
-        tuple.__init__(t)
-        self.attr = {}
 
     for path in cut:
       new_path = []
       for point in path:
-        k = str(point[0])+','+str(point[1])
-        if k in self.points_dict:
-          idx = self.points_dict[k]
-        else:
-          idx = len(self.points)
-          self.points.append(XY_a(point))
-          self.points_dict[k] = idx
-        if len(new_path) == 0 or new_path[-1] != idx or self.load_dedup == False:
+        idx = self.pt2idx(point[0], point[1])
+
+        if len(new_path) == 0 or new_path[-1] != idx or self.do_dedup == False:
           # weed out repeated points
           new_path.append(idx)
           # self.points[idx].attr['refcount'] += 1
       self.paths.append(new_path)
+
+  def dist_sq(s, A,B):
+    return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
+
+  def subdivide_segments(s, maxlen):
+    """Insert addtional points along the paths, so that
+       no segment is longer than maxlen
+    """
+    if s.do_subdivide == False:
+      return
+    maxlen_sq = maxlen * maxlen
+    for path_idx in range(len(s.paths)):
+      path = s.paths[path_idx]
+      new_path = []
+      for pt in path:
+        if len(new_path):
+          A = new_path[-1]
+          dist_sq = s.dist_sq(s.points[A], s.points[pt])
+          if dist_sq > maxlen_sq:
+            dist = math.sqrt(dist_sq)
+            nsub = int(dist/maxlen)
+            seg_len = dist/float(nsub+1)
+            dx = (s.points[pt][0] - s.points[A][0])/float(nsub+1)
+            dy = (s.points[pt][1] - s.points[A][1])/float(nsub+1)
+            if s.verbose:
+              print "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
+              print "dxdy", dx, dy, "to", (s.points[pt][0], s.points[pt][1]), "from", (s.points[A][0],s.points[A][1])
+            for subdiv in range(nsub):
+              sub_pt =s.pt2idx(s.points[A][0]+dx+subdiv*dx, 
+                               s.points[A][1]+dy+subdiv*dy)
+              new_path.append(sub_pt)
+              s.points[sub_pt].attr['sub'] = True
+              if s.verbose:
+                print "   sub", (s.points[sub_pt][0], s.points[sub_pt][1])
+        new_path.append(pt)
+      s.paths[path_idx] = new_path
 
   def sharp_turn(s, A,B,C):
     """Given the path from A to B to C as two line segments.
@@ -121,21 +182,19 @@ class MatFree:
     """
     min_jump_sq = s.corner_detect_min_jump * s.corner_detect_min_jump
     dup_eps_sq  = s.corner_detect_dup_epsilon * s.corner_detect_dup_epsilon
-    def dist_sq(A,B):
-      return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
 
     idx = 1
     A = None
     B = None 
     for path in s.paths:
-      if B is not None and len(path) and dist_sq(B,s. points[path[0]]) > min_jump_sq:
+      if B is not None and len(path) and s.dist_sq(B,s. points[path[0]]) > min_jump_sq:
         # disconnect the path, if we jump more than 2mm
         A = None
         B = None
         
       for iC in path:
         C = s.points[iC]
-        if B is not None and dist_sq(B,C) < dup_eps_sq:
+        if B is not None and s.dist_sq(B,C) < dup_eps_sq:
           # less than 0.1 mm distance: ignore the point as a duplicate.
           continue
 
@@ -151,5 +210,6 @@ class MatFree:
   def apply(self, cut):
     self.load(cut)
     self.mark_sharp_turns()
+    self.subdivide_segments(self.monotone_allow_back_travel)
     return self.export()
 

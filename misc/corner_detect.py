@@ -26,7 +26,7 @@ sys.path.append('.')
 sys.path.append('..')
 from silhouette.Strategy import MatFree
 
-cut = [[(9.115547484444443, 3.9047956222222213), (10.226748977499998,
+cut = [[(.1,.1), (50,1), (55,55), (1,30), (.1,.9)], [(1.115547484444443, .9047956222222213), (10.226748977499998,
 7.4399208438888875), (10.565074486006942, 8.35713915909722),
 (10.744325588888888, 8.654524502222221), (10.74829029517361,
 8.308048945104165), (10.576251919166666, 7.3462779936111104),
@@ -157,9 +157,10 @@ def print_pdf(c):
 
 def scale_up(win, ev, c):
   s = c.get_scale()  
-  if   chr(ev.keyval) == '+':  c.set_scale(s*1.2)
-  elif chr(ev.keyval) == '-':  c.set_scale(s*.8)
-  elif chr(ev.keyval) == 'p':  print_pdf(c)
+  key = chr(ev.keyval & 0xff)
+  if   key == '+':  c.set_scale(s*1.2)
+  elif key == '-':  c.set_scale(s*.8)
+  elif key == 'p':  print_pdf(c)
   else: gtk.main_quit()
   print c.get_scale()
 
