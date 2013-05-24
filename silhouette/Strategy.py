@@ -273,16 +273,87 @@ class MatFree:
       #
     #
 
-  def process_barrier(s, y_slice, max_y, left2right=True):
-    """process all lines that link points in y_slice
+  def process_barrier(s, y_slice, max_y, last_x=0.0):
+    """process all lines that link points in y_slice.
+       the slice is processed using a scan-strategy. Either left to right or
+       right to left. last_x is used to deceide if the the left or 
+       right end of the slice is nearest. We start at the nearer end, and
+       work our way to the farther end.
+
+       The final x-coordinate is returned, so that the caller can provide us
+       with its value on the next call.
     """
-    print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), left2right)
+    print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
     print "                max_y=%g" % (y_slice[-1][1])
+
+    min_x = None
+    max_x = None
+
+    todo = []
     for pt in y_slice:
+      if pt is None:            # all links to that point are done.
+        continue
       for iC in pt.attr['link']:
+        if iC < 0:              # this link is done.
+          continue
         C = s.points[iC]
         if C[1] <= max_y:
-          print "           line, ", pt, 'sharp' in pt.attr, C, 'sharp' in C.attr
+          todo.append((C,pt))
+          if min_x is None or min_x >  C[0]: min_x = C[0]
+          if min_y is None or min_y >  C[1]: min_y = C[1]
+          if min_x is None or min_x > pt[0]: min_x = pt[0]
+          if min_y is None or min_y > pt[1]: min_y = pt[1]
+    
+    left2right = decide_left2right(min_x, max_x, last_x)
+    xsign = -1.0
+    if left2right: xsign = 1.0
+    def dovetail_both_key(a):
+      return a[0][1]+a[1][1]+xsign*(a[0][0]+a[1][0])
+    todo.sort(key=dovetail_both_key)
+
+    for i in range(todo):
+      ## Flip the orientation of each line segment according to this strategy:
+      ## check 'sharp' both ends. (sharp is irrelevent without 'seen')
+      ##   if one has 'sharp' (and 'seen'), the other not, then cut towards the 'sharp' end.
+      ##   if none has that, cut according decide_left2right()
+      ##   if both have it, we must subdivide the line segment, and cut from the 
+      ##   midpoint to each end, in the order suggested by decide_left2right().
+TODO
+
+    left = 0
+    done = 0
+    #for pt_i in range(y_slice):
+    #  pt = y_slice[pt_i]
+    #  links_left = 0
+    #  for i in range(pt.attr['link']):
+    #    iC = pt.attr['link'][i]
+    #    if iC >= 0:
+    #      links_left += 1
+    #  if links_left == 0:       # mark point as done, when none left.
+    #    pt.attr['done'] = True
+    #    y_slice[pt_i] = None
+    #    done += 1
+    #  else:
+    #    left += 1
+
+    # return the last x coordinate of the last stroke
+    return todo[-1][-1][0]
+          
+
+  decide_left2right(min_x, max_x, last_x=0.0)
+    """given the current x coordinate of the cutting head and
+       the min and max coordinates we need to go through, compute the best scan direction, 
+       so that we minimize idle movements.
+       Returns True, if we should jump to the left end (aka min_x), then work our way to the right.
+       Returns False, if we should jump to the right end (aka max_x), then work our way to the left.
+       Caller ensures that max_x is >= min_x. ("The right end is to the right of the left end")
+    """
+    if min_x >= last_x: return True     # easy: all is to the right
+    if max_x <= last_x: return False    # easy: all is to the left.
+    if abs(last_x - min_x) < abs(max_x - last_x):
+      return True                       # the left edge (aka min_x) is nearer
+    else:
+      return False                      # the right edge (aka max_x) is nearer
 
 
   def walk_barrier(s):
@@ -294,14 +365,14 @@ class MatFree:
        A point that has all links with negative signs is removed.
     """
     ## first step sort the points into an additional list by ascending y.
-    def by_y(a):
+    def by_y_key(a):
       return a[1]
-    sy = sorted(s.points, key=by_y)
+    sy = sorted(s.points, key=by_y_key)
 
     barrier_increment = 3.0
     barrier_y = barrier_increment
     barrier_idx = 0     # pointing to the first element that is beyond.
-    dir_toggle = True
+    last_x = 0.0        # we start at home.
     while True:
       old_idx = barrier_idx
       while sy[barrier_idx][1] < barrier_y:
@@ -309,8 +380,7 @@ class MatFree:
         if barrier_idx >= len(sy):
           break
       if barrier_idx > old_idx:
-        s.process_barrier(sy[0:barrier_idx], barrier_y, left2right=dir_toggle)       
-        dir_toggle = not dir_toggle
+        last_x = s.process_barrier(sy[0:barrier_idx], barrier_y, last_x=last_x)       
       if barrier_idx >= len(sy):
         break
       barrier_y += barrier_increment
