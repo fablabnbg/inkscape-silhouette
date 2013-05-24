@@ -273,12 +273,16 @@ class MatFree:
       #
     #
 
-  def process_barrier(s, y_slice, max_y):
+  def process_barrier(s, y_slice, max_y, left2right=True):
     """process all lines that link points in y_slice
     """
-    print "process_barrier limit=%g, points=%d" % (max_y, len(y_slice))
+    print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), left2right)
     print "                max_y=%g" % (y_slice[-1][1])
-
+    for pt in y_slice:
+      for iC in pt.attr['link']:
+        C = s.points[iC]
+        if C[1] <= max_y:
+          print "           line, ", pt, 'sharp' in pt.attr, C, 'sharp' in C.attr
 
 
   def walk_barrier(s):
@@ -297,12 +301,16 @@ class MatFree:
     barrier_increment = 3.0
     barrier_y = barrier_increment
     barrier_idx = 0     # pointing to the first element that is beyond.
+    dir_toggle = True
     while True:
+      old_idx = barrier_idx
       while sy[barrier_idx][1] < barrier_y:
         barrier_idx += 1
         if barrier_idx >= len(sy):
           break
-      s.process_barrier(sy[0:barrier_idx], barrier_y)       
+      if barrier_idx > old_idx:
+        s.process_barrier(sy[0:barrier_idx], barrier_y, left2right=dir_toggle)       
+        dir_toggle = not dir_toggle
       if barrier_idx >= len(sy):
         break
       barrier_y += barrier_increment
