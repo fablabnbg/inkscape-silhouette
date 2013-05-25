@@ -9,4 +9,5 @@ clean:
 	rm -f *.orig */*.orig
 
 dist: clean
-	name=$(TARNAME)-$(VERS); tar jcvf $$name.tar.bz2 $(EXCL) --transform="s,^,$$name/," $(ALL)
+	name=$(TARNAME)-$(VERS); echo "$$name"; echo; \
+	tar jcvf $$name.tar.bz2 $(EXCL) --transform="s,^,$$name/," $(ALL)

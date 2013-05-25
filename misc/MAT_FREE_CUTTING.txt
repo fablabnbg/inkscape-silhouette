@@ -43,3 +43,16 @@ Observations:
      can be cut without much problems. We even introduce slight backwards movement, where
      the knive cuts towards the nearest roller. 
 
+Implementation with version 0.9
+-------------------------------
+A barrier moves downward the page, enabling points above the barrier.
+At each 'barrier_increment' line segments are drawn.
+Line segments are subdivisions of input paths so that a maximum segment length of 
+'monotone_allow_back_travel' is not exceeded. Drawing directions are chosen, so that 
+we always draw towards points with sharp edges. A point is marked having a sharp edge, if
+any two line segments meeting at the point form an angle of less than 90 degrees.
+An attempt is made to minimize idle sideways movement. 
+No attempt is currently made to avoid cutting towards the traction rollers or to 
+avoid cutting inwards from the edges. 
+
+Class MatFree() can be initialzed using parameter presets. This needs testing and tuning.

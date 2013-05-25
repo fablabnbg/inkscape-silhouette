@@ -29,7 +29,7 @@ presets = {
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10,
-    'tool_pen': False,
+    'barrier_increment': 3.0,
     'verbose': 1
     },
   'nop': {
@@ -40,16 +40,16 @@ presets = {
 }
 
 class MatFree:
-  def __init__(self, preset="default", pen=False):
+  def __init__(self, preset="default"):
     """This initializer defines settings for the apply() method.
     """
     self.verbose  = 0
     self.do_dedup = True
     self.do_subdivide = True
+    self.barrier_increment = 3.0
 
     self.preset(preset)
 
-    self.tool_pen = pen
     self.points = []
     self.points_dict = {}
     self.paths = []
@@ -450,8 +450,7 @@ class MatFree:
       return a[1]
     sy = sorted(s.points, key=by_y_key)
 
-    barrier_increment = 3.0
-    barrier_y = barrier_increment
+    barrier_y = s.barrier_increment
     barrier_idx = 0     # pointing to the first element that is beyond.
     last_x = 0.0        # we start at home.
     while True:
@@ -464,7 +463,7 @@ class MatFree:
         last_x = s.process_barrier(sy[0:barrier_idx], barrier_y, last_x=last_x)       
       if barrier_idx >= len(sy):
         break
-      barrier_y += barrier_increment
+      barrier_y += s.barrier_increment
  
   def apply(self, cut):
     self.load(cut)

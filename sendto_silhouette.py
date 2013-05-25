@@ -32,6 +32,8 @@
 #                        misc/corner_detect.py done, can now load a dump saved by dummy.
 #                        Udev rules and script added, so that we get a nice notify 
 #                        guiding users towards inkscape, when connecting a device.
+# 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy 
+#                        appears useful.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -48,11 +50,13 @@ import gettext
 from optparse import SUPPRESS_HELP
 
 from silhouette.Graphtec import SilhouetteCameo
+from silhouette.Strategy import MatFree
+
 ## from silhouette.InkcutPath import *
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '0.8'
+__version__ = '0.9'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -835,46 +839,10 @@ class SendtoSilhouette(inkex.Effect):
     else:
       # Traverse the entire document
       self.recursivelyTraverseSvg( self.document.getroot(), self.docTransform )
-    ## # -------------------------
-    ## nodes = self.selected.keys()
-    ## # If no nodes are selected, then cut the whole document. 
-    ## # if len(nodes) == 0: 
-    ## #   nodes = self.doc_ids.keys()[0]    # only the first. All other objects are children anyway.
 
-    ## def getSelectedById(IDlist): # returns lxml elements that have an id in IDlist in the svg
-    ##   ele=[]
-    ##   svg = self.document.getroot()
-    ##   for e in svg.iterfind('.//*[@id]'):
-    ##     if IDlist is None or e.get('id') in IDlist:
-    ##       ele.append(e)
-    ##   return ele
-
-    ## lxml_nodes = []
-    ## if len(nodes):
-    ##   selected = getSelectedById(nodes)
-    ## else:
-    ##   selected = self.document.getroot()
-    ## for node in selected:
-    ##   tag = node.tag[node.tag.rfind("}")+1:]
-    ##   if tag in ('grid','namedview','defs','metadata'): continue
-    ##   lxml_nodes.append(node)
-    ## print >>self.tty, "Nodecount: %d\n" % len(lxml_nodes)
-
-    ## # import xml.etree.ElementTree as ET
-    ## # ET.tostring(lxml_nodes[0])
-
-    ## ## This is from better_dxf_output.py: quite lousy implementation.
-    ## ## it silently ignores transformation on path objects and cannot really handle rects.
-    ## self.plot = Plot({
-    ##   'scale':25.4/units['in'], 'margin':0, 'startPosition':(0,0), 
-    ##   'smoothness':0.2*units['mm']})
-    ## self.plot.loadGraphic(lxml_nodes)
-    ## cut = self.plot.toCutList(self.options.multipass)
-    ## # print >>self.tty, self.plot.graphic, cut
-    ## cut = dev.flip_cut(cut)
-
-    ## Do not use the code above: recursivelyTraverseSvg() from egbot.py
-    ## is much more mature.
+    if self.options.mat_free:
+      mf = MatFree('default')
+      self.path = mf.apply(self.path)
 
     # print >>self.tty, self.paths
     cut = []
