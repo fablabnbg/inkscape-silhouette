@@ -15,6 +15,10 @@
 # 2013-05-21, jw, V0.1  -- initial draught.
 # 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
 #                          draft for walk_barrier() added.
+# 2013-05-25, jw, V0.3  -- corner_detect.py now jumps when not cutting.
+#                          Strategy.py: new code: mark_segment_done(), todo_append_or_extend().
+#                          completed process_barrier(), tested, debugged, verbose level reduced.
+#                          The current slicing and sharp corner strategy appears useful.
 
 
 import copy
@@ -26,12 +30,12 @@ presets = {
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10,
     'tool_pen': False,
-    'verbose': True
+    'verbose': 1
     },
   'nop': {
     'do_dedup': False,
     'do_subdivide': False,
-    'verbose': True
+    'verbose': 2
   }
 }
 
@@ -39,7 +43,7 @@ class MatFree:
   def __init__(self, preset="default", pen=False):
     """This initializer defines settings for the apply() method.
     """
-    self.verbose  = False
+    self.verbose  = 0
     self.do_dedup = True
     self.do_subdivide = True
 
@@ -107,7 +111,7 @@ class MatFree:
        Nodes are expected as tuples (x, y).
        We extract points into a seperate list, with attributes as a third 
        element to the tuple. Typical attributes to be added by other methods
-       are refcount (if commented in), sharp (by method mark_sharp_links(), 
+       are refcount (if commented in), sharp (by method mark_sharp_segs(), 
        ...
     """
 
@@ -126,21 +130,21 @@ class MatFree:
     return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
 
   def link_points(s):
-    """add links (back and forth) between connected points.
+    """add segments (back and forth) between connected points.
     """
     for path in s.paths:
       A = None
       for pt in path:
         if A is not None:
-          if 'link' in s.points[A].attr:
-            s.points[A].attr['link'].append(pt)
+          if 'seg' in s.points[A].attr:
+            s.points[A].attr['seg'].append(pt)
           else:
-            s.points[A].attr['link'] = [ pt ]
+            s.points[A].attr['seg'] = [ pt ]
 
-          if 'link' in s.points[pt].attr:
-            s.points[pt].attr['link'].append(A)
+          if 'seg' in s.points[pt].attr:
+            s.points[pt].attr['seg'].append(A)
           else:
-            s.points[pt].attr['link'] = [ A ]
+            s.points[pt].attr['seg'] = [ A ]
         A = pt
 
   def subdivide_segments(s, maxlen):
@@ -163,7 +167,7 @@ class MatFree:
             seg_len = dist/float(nsub+1)
             dx = (s.points[pt][0] - s.points[A][0])/float(nsub+1)
             dy = (s.points[pt][1] - s.points[A][1])/float(nsub+1)
-            if s.verbose:
+            if s.verbose > 1:
               print "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
               print "dxdy", dx, dy, "to", (s.points[pt][0], s.points[pt][1]), "from", (s.points[A][0],s.points[A][1])
             for subdiv in range(nsub):
@@ -171,7 +175,7 @@ class MatFree:
                                s.points[A][1]+dy+subdiv*dy)
               new_path.append(sub_pt)
               s.points[sub_pt].attr['sub'] = True
-              if s.verbose:
+              if s.verbose > 1:
                 print "   sub", (s.points[sub_pt][0], s.points[sub_pt][1])
         new_path.append(pt)
       s.paths[path_idx] = new_path
@@ -198,13 +202,13 @@ class MatFree:
 
 
 
-  def mark_sharp_links(s):
-    """walk all the points and check their links attributes, 
+  def mark_sharp_segs(s):
+    """walk all the points and check their segments attributes, 
        to see if there are connections that form a sharp angle.
        This needs link_points() to be called earlier.
        One sharp turn per point is enough to make us careful.
        We don't track which pair of turns actually is a sharp turn, if there
-       are more than two links. Those cases are rare enough to allow the inefficiency.
+       are more than two segs. Those cases are rare enough to allow the inefficiency.
 
        TODO: can honor corner_detect_min_jump? Even if so, what should we do in the case
        where multiple points are so close together that the paper is likely to tear?
@@ -213,26 +217,26 @@ class MatFree:
       if 'sharp' in pt.attr:
         ## shortcut existing flags. One sharp turn per point is enough to make us careful.
         ## we don't want to track which pair of turns actually is a sharp turn, if there
-        ## are more than two links per point. Those cases are rare enough 
+        ## are more than two segments per point. Those cases are rare enough 
         ## to handle them inefficiently.
         continue
-      if 'link' in pt.attr:
-        ll = len(pt.attr['link'])
+      if 'seg' in pt.attr:
+        ll = len(pt.attr['seg'])
         if ll > 4:
           ## you cannot attach 5 lines to a point without creating one sharp angle.
           pt.attr['sharp'] = True
           continue
-        ## look at each pair of links once, check their angle.
+        ## look at each pair of segments once, check their angle.
         for l1 in range(ll):
-          A = s.points[pt.attr['link'][l1]]
+          A = s.points[pt.attr['seg'][l1]]
           for l2 in range(l1+1, ll):
-            B = s.points[pt.attr['link'][l2]]
+            B = s.points[pt.attr['seg'][l2]]
             if s.sharp_turn(A,pt,B):
               pt.attr['sharp'] = True
           if 'sharp' in pt.attr:
             break
       else:
-        print "warning: no links in point %d. Run link_points() before mark_sharp_links()" % (pt.attr['id'])
+        print "warning: no segments in point %d. Run link_points() before mark_sharp_segs()" % (pt.attr['id'])
 
 
 
@@ -244,8 +248,8 @@ class MatFree:
        after reordering.
 
        This marks sharp turns only if paths are not intersecting or touching back. 
-       Assuming link counts <= 2. Use mark_sharp_links() for the general case.
-       Downside: mark_sharp_links() does not honor corner_detect_min_jump.
+       Assuming segment counts <= 2. Use mark_sharp_segs() for the general case.
+       Downside: mark_sharp_segs() does not honor corner_detect_min_jump.
     """
     min_jump_sq = s.corner_detect_min_jump * s.corner_detect_min_jump
     dup_eps_sq  = s.corner_detect_dup_epsilon * s.corner_detect_dup_epsilon
@@ -273,74 +277,151 @@ class MatFree:
       #
     #
 
+
+  def todo_append_or_extend(s, seg):
+    """adds a segment to the todo list. The segment extends the previous segment, 
+       if the last point if the previous segment is identical with our first 
+       point.  If the segment has no sharp points, we double check if extend 
+       would work with the inverted segment. (FIXME: this possibility should 
+       be detected earlier)
+       Otherwise, the segment is appended as a new path.
+    """
+    if not 'todo' in s.__dict__: s.todo = []
+    if len(s.todo) and s.verbose > 1:
+      print "todo_append...", s.todo[-1][-1], seg
+    if len(s.todo) > 0 and s.todo[-1][-1].attr['id'] == seg[0].attr['id']:
+      s.todo[-1].extend(seg[1:])
+      if s.verbose > 1:
+        print "... extend"
+    elif len(s.todo) > 0 and s.todo[-1][-1].attr['id'] == seg[-1].attr['id']:
+      ## check if we can turn it around
+      if 'sharp' not in s.todo[-1][-1].attr and 'sharp' not in seg[-1].attr and 'sharp' not in seg[0].attr:
+        s.todo[-1].extend(list(reversed(seg))[1:])
+        if s.verbose > 1:
+          print "... extend reveresed"
+      else:
+        s.todo.append(seg)
+        if s.verbose > 1:
+          print "... append"
+    else:
+      s.todo.append(seg)
+      if s.verbose > 1:
+        print "... append"
+
+
+  def mark_segment_done(s, A,B):
+    """process_barrier ignores points and segments that have already been done.
+       We call process_barrier() repeatedly, but we want each segment only once.
+       Also, a point with a sharp turn can be the start of a segment only once. 
+       All its other segments need to be drawn towards such a point.
+       mark_segment_done() places the needed markers for this logic.
+    """
+    A.attr['seen'] = True
+    B.attr['seen'] = True
+    iA = A.attr['id']
+    iB = B.attr['id']
+    a_seg_todo = False
+    b_seg_todo = False
+    for iS in range(len(A.attr['seg'])):
+      if A.attr['seg'][iS] == iB: A.attr['seg'][iS] = -iB or -1000000000
+      if A.attr['seg'][iS] >= 0: a_seg_todo = True
+    for iS in range(len(B.attr['seg'])):
+      if B.attr['seg'][iS] == iA: B.attr['seg'][iS] = -iA or -1000000000
+      if B.attr['seg'][iS] >= 0: b_seg_todo = True
+
+    # CAUTION: is this really helpful?:
+    ## it prevents points from a slice to go into process_barrier()'s segment list,
+    ## but it also hides information....
+    if not a_seg_todo: s.points[iA] = None
+    if not b_seg_todo: s.points[iB] = None
+
+
   def process_barrier(s, y_slice, max_y, last_x=0.0):
-    """process all lines that link points in y_slice.
-       the slice is processed using a scan-strategy. Either left to right or
+    """process all lines that segment points in y_slice.
+       the slice is examined using a scan-strategy. Either left to right or
        right to left. last_x is used to deceide if the the left or 
        right end of the slice is nearest. We start at the nearer end, and
        work our way to the farther end.
+       All line segments that are below max_y are promoted into the todo list, 
+       with a carefully chosen ordering and direction. todo_append_or_extend()
+       is used to merge segments into longer paths where possible.
 
        The final x-coordinate is returned, so that the caller can provide us
        with its value on the next call.
     """
-    print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
-    print "                max_y=%g" % (y_slice[-1][1])
+    if s.verbose:
+      print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
+      print "                max_y=%g" % (y_slice[-1][1])
 
     min_x = None
     max_x = None
 
-    todo = []
+    segments = []
     for pt in y_slice:
-      if pt is None:            # all links to that point are done.
+      if pt is None:            # all segments to that point are done.
         continue
-      for iC in pt.attr['link']:
-        if iC < 0:              # this link is done.
+      for iC in pt.attr['seg']:
+        if iC < 0:              # this segment is done.
           continue
         C = s.points[iC]
-        if C[1] <= max_y:
-          todo.append((C,pt))
-          if min_x is None or min_x >  C[0]: min_x = C[0]
-          if min_y is None or min_y >  C[1]: min_y = C[1]
+        if C is not None and C[1] <= max_y:
+          if s.verbose > 1:
+            print "   segments.append", C, pt
+          segments.append((C,pt))
+          if min_x is None or min_x >  C[0]: min_x =  C[0]
           if min_x is None or min_x > pt[0]: min_x = pt[0]
-          if min_y is None or min_y > pt[1]: min_y = pt[1]
+          if max_x is None or max_x <  C[0]: max_x =  C[0]
+          if max_x is None or max_x < pt[0]: max_x = pt[0]
+          s.mark_segment_done(C,pt)
+        #
+      #
+    #
     
-    left2right = decide_left2right(min_x, max_x, last_x)
+    left2right = s.decide_left2right(min_x, max_x, last_x)
     xsign = -1.0
     if left2right: xsign = 1.0
     def dovetail_both_key(a):
       return a[0][1]+a[1][1]+xsign*(a[0][0]+a[1][0])
-    todo.sort(key=dovetail_both_key)
+    segments.sort(key=dovetail_both_key)
 
-    for i in range(todo):
+    for segment in segments:
       ## Flip the orientation of each line segment according to this strategy:
       ## check 'sharp' both ends. (sharp is irrelevent without 'seen')
       ##   if one has 'sharp' (and 'seen'), the other not, then cut towards the 'sharp' end.
-      ##   if none has that, cut according decide_left2right()
+      ##   if none has that, cut according to decide_left2right()
       ##   if both have it, we must subdivide the line segment, and cut from the 
-      ##   midpoint to each end, in the order suggested by decide_left2right().
-TODO
-
-    left = 0
-    done = 0
-    #for pt_i in range(y_slice):
-    #  pt = y_slice[pt_i]
-    #  links_left = 0
-    #  for i in range(pt.attr['link']):
-    #    iC = pt.attr['link'][i]
-    #    if iC >= 0:
-    #      links_left += 1
-    #  if links_left == 0:       # mark point as done, when none left.
-    #    pt.attr['done'] = True
-    #    y_slice[pt_i] = None
-    #    done += 1
-    #  else:
-    #    left += 1
-
+      ##   midpoint to each end, in the order indicated by decide_left2right().
+      A = segment[0]
+      B = segment[1]
+      if 'sharp' in A.attr and 'seen' in A.attr:
+        if 'sharp' in B.attr and 'seen' in B.attr:              # both sharp
+          iM = pt2idx((A[0]+B[0])*.5, (A[1]+B[1])*.5 )
+          M = s.points[iM]
+          if xsign*A[0] <= xsign*B[0]:
+            s.todo_append_or_extend([M, A])
+            s.todo_append_or_extend([M, B])
+          else:
+            s.todo_append_or_extend([M, B])
+            s.todo_append_or_extend([M, A])
+        else:                                                   # only A sharp
+          s.todo_append_or_extend([B, A])
+      else:
+        if 'sharp' in B.attr and 'seen' in B.attr:              # only B sharp
+          s.todo_append_or_extend([A, B])
+        else:                                                   # none sharp
+          if xsign*A[0] <= xsign*B[0]:
+            s.todo_append_or_extend([A, B])
+          else:
+            s.todo_append_or_extend([B, A])
+          #
+        #
+      #
+          
     # return the last x coordinate of the last stroke
-    return todo[-1][-1][0]
+    return s.todo[-1][-1][0]
           
 
-  decide_left2right(min_x, max_x, last_x=0.0)
+  def decide_left2right(s, min_x, max_x, last_x=0.0):
     """given the current x coordinate of the cutting head and
        the min and max coordinates we need to go through, compute the best scan direction, 
        so that we minimize idle movements.
@@ -359,10 +440,10 @@ TODO
   def walk_barrier(s):
     """move a barrier in ascending y direction. 
        For each barrier position, only try to cut lines that are above the barrier.
-       Flip the sign for all link ends that were cut to negative. This flags them as done.
+       Flip the sign for all segment ends that were cut to negative. This flags them as done.
        Add a 'seen' attribute to all nodes that have been visited once.
        When no more cuts are possible, then move the barrier, try again.
-       A point that has all links with negative signs is removed.
+       A point that has all segments with negative signs is removed.
     """
     ## first step sort the points into an additional list by ascending y.
     def by_y_key(a):
@@ -389,13 +470,8 @@ TODO
     self.load(cut)
     self.subdivide_segments(self.monotone_allow_back_travel)
     self.link_points()
-    self.mark_sharp_links()
-    ## rules for ordering:
-    ## A) If one of my links is 'sharp' and 'seen', then never cut towards it.
-    ## B) When there are multiple links that are not 'seen', prefer to cut to one 
-    ##    that is 'sharp' if possible. Optional rule. It may help avoid some deadlocks caused by
-    ##    rule A) but not all.
+    self.mark_sharp_segs()
     self.walk_barrier()
 
-    return self.export()
+    return self.todo
 

@@ -7,7 +7,10 @@ An extension to drive a Silhoutte Cameo from within inkscape.
 Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
 
 Features: 
-* Coordinate system now conforms to inkscape SVG via flip_cut()
+* Path sorting for monotonic cut. We limit backwards movement to only a few 
+  millimeters, and make the knive pull only towards sharp edges so that most
+  designs can be done without a cutting mat!
+* Coordinate system conforms to inkscape SVG.
 * Exact Margins. Can start at (0,0).
 * Pen mode used to avoid the precut movement of the knive.
   Those movements are visible a) at the left hand side, when 
@@ -40,7 +43,7 @@ TODO:
   Idea: Maybe add an option to auto-remember old selections, if it is still
   the same document and there is no new selection.
 
-* Path sorting for monotonic cut. If we can limit backwards movement to only a few 
-  millimeters, and make the knive pull only towards the edges, we could do many 
-  more patterns without a cutting mat. The WC-Wunderbach-Wimpern font is especially 
+* test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially 
   well suited as a test-case.
+
+* Implement paper-zip as a seperate inkscape extension. 

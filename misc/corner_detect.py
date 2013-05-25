@@ -177,12 +177,20 @@ def key_press(win, ev, c):
     print c.get_scale()
 
   if new_idx is not None:
+    jumpto = True
+    if key == 'f':
+      jumpto = c.points[new_idx][1]
+    elif key == 'b':
+      jumpto = c.points[c.cursor_idx][1]
     c.cursor_idx = new_idx
-    cx = c.points[c.cursor_idx][0]
-    cy = c.points[c.cursor_idx][1]
+    cx = c.points[c.cursor_idx][0][0]
+    cy = c.points[c.cursor_idx][0][1]
     # GooCanvas.CanvasAnimateType.FREEZE = 0 
-    c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
-    print new_idx, c.points[c.cursor_idx].attr
+    if jumpto:
+      c.cursor.set_simple_transform(cx,cy, 1, 0.)
+    else:
+      c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
+    print new_idx, c.points[c.cursor_idx][0].attr
   else:
     c.cursor.stop_animation()
 
@@ -238,10 +246,12 @@ def main ():
       p = Points(path)
       poly = Polyline(parent=root, points=p, line_width=0.05, stroke_color="black")
 
+      jumpto = True
       for C in path:
         text = Text(parent=root, text=idx, font="4", fill_color="blue")
         idx += 1
-        canvas.points.append(C)         # store to allow cursor movement.
+        canvas.points.append((C,jumpto))         # store to allow cursor movement.
+        jumpto = False
         text.translate(C[0]+random.uniform(-.1,0), C[1]+random.uniform(-.1,0))
         text.scale(.05,.05)
       
@@ -252,7 +262,7 @@ def main ():
     else:
       cursor_p = Points([(-0.5,0),(0,0.5),(0.5,0),(0,-0.5),(-0.5,0)])
       canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)
-      canvas.cursor.translate(canvas.points[1][0],canvas.points[1][1])
+      canvas.cursor.translate(canvas.points[1][0][0],canvas.points[1][0][1])
       canvas.cursor_idx = 1
     
     # text = Text(parent=root, text="Hello World", font="12")
