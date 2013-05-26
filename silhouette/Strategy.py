@@ -14,7 +14,7 @@
 #
 # 2013-05-21, jw, V0.1  -- initial draught.
 # 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
-#                          draft for walk_barrier() added.
+#                          draft for scan_barrier() added.
 # 2013-05-25, jw, V0.3  -- corner_detect.py now jumps when not cutting.
 #                          Strategy.py: new code: mark_segment_done(), todo_append_or_extend().
 #                          completed process_barrier(), tested, debugged, verbose level reduced.
@@ -32,12 +32,22 @@ import sys      # only for debug printing.
 
 presets = {
   'default': {
+    'pyramid_algorithm': False,
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10.0,
     'barrier_increment': 10.0,
     'overshoot': 0.2,     # works well with 80g paper
     'tool_pen': False,
+    'verbose': 1
+    },
+  'pyramid': {
+    'pyramid_algorithm': True,
+    'monotone_allow_back_travel': 10.0,
+    'barrier_increment': 10.0,
+    'overshoot': 0.2,     # works well with 80g paper
+    'tool_pen': False,
+    'do_slicing': False,
     'verbose': 1
     },
   'nop': {
@@ -67,6 +77,7 @@ class MatFree:
     self.do_slicing = True
     self.tool_pen = False
     self.barrier_increment = 3.0
+    self.monotone_allow_back_travel = 3.0
     self.input_scale = scale
 
     self.preset(preset)
@@ -476,8 +487,28 @@ class MatFree:
     else:
       return False                      # the right edge (aka max_x) is nearer
 
+  def pyramid_barrier(s):
+    """Move a barrier in ascending y direction.
+       For each barrier position, find connected segments that are as high above the barrier 
+       as possible. A pyramidonal shadow (opening 45 deg in each direction) is cast upward
+       to see if a point is acceptable for the next line segment. If the shadow touches other points,
+       that still have line segment not yet done, we must chose one of these points first.
 
-  def walk_barrier(s):
+       While obeying this shadow rule, we also sweep left and right through the data, similar to the
+       scan_barrier() algorithm below.
+    """
+    if not s.do_slicing:
+      s.todo = []
+      for path in s.paths:
+        s.todo.append([])
+        for idx in path:
+          s.todo[-1].append(s.points[idx])
+          if idx == 33: print s.points[idx].attr
+        #
+      #
+      return
+
+  def scan_barrier(s):
     """move a barrier in ascending y direction. 
        For each barrier position, only try to cut lines that are above the barrier.
        Flip the sign for all segment ends that were cut to negative. This flags them as done.
@@ -485,9 +516,21 @@ class MatFree:
        When no more cuts are possible, then move the barrier, try again.
        A point that has all segments with negative signs is removed.
 
-       Input is read from s.paths[], output is placed into s.todo[] 
+       Input is read from s.paths[] -- having lists of point indices.
+       The output is placed into s.todo[] as lists of XY_a() objects
        by calling process_barrier() and friends.
     """
+
+    if not s.do_slicing:
+      s.todo = []
+      for path in s.paths:
+        s.todo.append([])
+        for idx in path:
+          s.todo[-1].append(s.points[idx])
+        #
+      #
+      return
+          
     ## first step sort the points into an additional list by ascending y.
     def by_y_key(a):
       return a[1]
@@ -538,13 +581,15 @@ class MatFree:
 
   def apply(self, cut):
     self.load(cut)
-    self.subdivide_segments(self.monotone_allow_back_travel)
-    self.link_points()
-    self.mark_sharp_segs()
-    if self.do_slicing:
-      self.walk_barrier()
+    if 'pyramid_algorithm' in self.__dict__:
+      self.link_points()
+      self.mark_sharp_segs()
+      self.pyramid_barrier() 
     else:
-      self.todo = self.paths
+      self.subdivide_segments(self.monotone_allow_back_travel)
+      self.link_points()
+      self.mark_sharp_segs()
+      self.scan_barrier()
     if self.tool_pen == False and self.overshoot > 0.0:
       self.todo = self.apply_overshoot(self.todo, self.overshoot, self.overshoot)
 
