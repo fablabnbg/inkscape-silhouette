@@ -19,34 +19,43 @@
 #                          Strategy.py: new code: mark_segment_done(), todo_append_or_extend().
 #                          completed process_barrier(), tested, debugged, verbose level reduced.
 #                          The current slicing and sharp corner strategy appears useful.
-
+# 2013-05-26, jw, V1.0  -- adopted version number from inkscape_silhouette package.
+#                          improved path extension logic in todo_append_or_extend(), 
+#                          much better, but still not perfect.
+#                          Verbose printf's to stderr, so that inkscape survives.  
 
 import copy
 import math
+import sys      # only for debug printing.
 
 presets = {
   'default': {
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
-    'monotone_allow_back_travel': 10,
-    'barrier_increment': 3.0,
+    'monotone_allow_back_travel': 10.0,
+    'barrier_increment': 10.0,
     'verbose': 1
     },
   'nop': {
     'do_dedup': False,
     'do_subdivide': False,
+    'do_slicing': False,
     'verbose': 2
   }
 }
 
 class MatFree:
-  def __init__(self, preset="default"):
+  def __init__(self, preset="default", scale=1.0):
     """This initializer defines settings for the apply() method.
+       A scale factor is applied to convert input data units to mm.
+       This is needed, as the length units used in presets are mm.
     """
     self.verbose  = 0
     self.do_dedup = True
     self.do_subdivide = True
+    self.do_slicing = True
     self.barrier_increment = 3.0
+    self.input_scale = scale
 
     self.preset(preset)
 
@@ -94,7 +103,7 @@ class MatFree:
     if k in self.points_dict:
       idx = self.points_dict[k]
       if self.verbose:
-        print "%d found as dup" % idx
+        print >>sys.stderr, "%d found as dup" % idx
       if 'dup' in self.points[idx].attr:
         self.points[idx].attr['dup'] += 1
       else:
@@ -118,7 +127,7 @@ class MatFree:
     for path in cut:
       new_path = []
       for point in path:
-        idx = self.pt2idx(point[0], point[1])
+        idx = self.pt2idx(self.input_scale * point[0], self.input_scale * point[1])
 
         if len(new_path) == 0 or new_path[-1] != idx or self.do_dedup == False:
           # weed out repeated points
@@ -126,8 +135,10 @@ class MatFree:
           # self.points[idx].attr['refcount'] += 1
       self.paths.append(new_path)
 
+
   def dist_sq(s, A,B):
     return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
+
 
   def link_points(s):
     """add segments (back and forth) between connected points.
@@ -146,6 +157,7 @@ class MatFree:
           else:
             s.points[pt].attr['seg'] = [ A ]
         A = pt
+
 
   def subdivide_segments(s, maxlen):
     """Insert addtional points along the paths, so that
@@ -168,17 +180,18 @@ class MatFree:
             dx = (s.points[pt][0] - s.points[A][0])/float(nsub+1)
             dy = (s.points[pt][1] - s.points[A][1])/float(nsub+1)
             if s.verbose > 1:
-              print "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
-              print "dxdy", dx, dy, "to", (s.points[pt][0], s.points[pt][1]), "from", (s.points[A][0],s.points[A][1])
+              print >>sys.stderr, "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
+              print >>sys.stderr, "dxdy", dx, dy, "to", (s.points[pt][0], s.points[pt][1]), "from", (s.points[A][0],s.points[A][1])
             for subdiv in range(nsub):
               sub_pt =s.pt2idx(s.points[A][0]+dx+subdiv*dx, 
                                s.points[A][1]+dy+subdiv*dy)
               new_path.append(sub_pt)
               s.points[sub_pt].attr['sub'] = True
               if s.verbose > 1:
-                print "   sub", (s.points[sub_pt][0], s.points[sub_pt][1])
+                print >>sys.stderr, "   sub", (s.points[sub_pt][0], s.points[sub_pt][1])
         new_path.append(pt)
       s.paths[path_idx] = new_path
+
 
   def sharp_turn(s, A,B,C):
     """Given the path from A to B to C as two line segments.
@@ -236,7 +249,7 @@ class MatFree:
           if 'sharp' in pt.attr:
             break
       else:
-        print "warning: no segments in point %d. Run link_points() before mark_sharp_segs()" % (pt.attr['id'])
+        print >>sys.stderr, "warning: no segments in point %d. Run link_points() before mark_sharp_segs()" % (pt.attr['id'])
 
 
 
@@ -282,31 +295,47 @@ class MatFree:
     """adds a segment to the todo list. The segment extends the previous segment, 
        if the last point if the previous segment is identical with our first 
        point.  If the segment has no sharp points, we double check if extend 
-       would work with the inverted segment. (FIXME: this possibility should 
+       would work with the inverted segment. Optionally also flipping around 
+       the previous segment if it would help. (FIXME: this possibility should 
        be detected earlier)
        Otherwise, the segment is appended as a new path.
     """
     if not 'todo' in s.__dict__: s.todo = []
     if len(s.todo) and s.verbose > 1:
-      print "todo_append...", s.todo[-1][-1], seg
+      print >>sys.stderr, "todo_append...", s.todo[-1][-1], seg
+    if (len(s.todo) > 0 and len(s.todo[-1]) >= 2 and 
+         'sharp' not in s.todo[-1][0] and
+         'sharp' not in s.todo[-1][-1]):
+      # we could flip around the previous segment, if needed:
+      if (s.todo[-1][0].attr['id'] == seg[0].attr['id'] or
+          s.todo[-1][0].attr['id'] == seg[-1].attr['id']):
+        # yes, flipping the previous segment, will help below. do it.
+        s.todo[-1] = list(reversed(s.todo[-1]))
+        if s.verbose:
+          print >>sys.stderr, "late flip ", len(s.todo), len(s.todo[-1])
+      #
+    #
+
     if len(s.todo) > 0 and s.todo[-1][-1].attr['id'] == seg[0].attr['id']:
       s.todo[-1].extend(seg[1:])
       if s.verbose > 1:
-        print "... extend"
+        print >>sys.stderr, "... extend"
     elif len(s.todo) > 0 and s.todo[-1][-1].attr['id'] == seg[-1].attr['id']:
       ## check if we can turn it around
       if 'sharp' not in s.todo[-1][-1].attr and 'sharp' not in seg[-1].attr and 'sharp' not in seg[0].attr:
         s.todo[-1].extend(list(reversed(seg))[1:])
         if s.verbose > 1:
-          print "... extend reveresed"
+          print >>sys.stderr, "... extend reveresed"
       else:
         s.todo.append(seg)
         if s.verbose > 1:
-          print "... append"
+          print >>sys.stderr, "... append"
+      #
     else:
       s.todo.append(seg)
       if s.verbose > 1:
-        print "... append"
+        print >>sys.stderr, "... append"
+    #
 
 
   def mark_segment_done(s, A,B):
@@ -350,8 +379,8 @@ class MatFree:
        with its value on the next call.
     """
     if s.verbose:
-      print "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
-      print "                max_y=%g" % (y_slice[-1][1])
+      print >>sys.stderr, "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
+      print >>sys.stderr, "                max_y=%g" % (y_slice[-1][1])
 
     min_x = None
     max_x = None
@@ -366,7 +395,7 @@ class MatFree:
         C = s.points[iC]
         if C is not None and C[1] <= max_y:
           if s.verbose > 1:
-            print "   segments.append", C, pt
+            print >>sys.stderr, "   segments.append", C, pt
           segments.append((C,pt))
           if min_x is None or min_x >  C[0]: min_x =  C[0]
           if min_x is None or min_x > pt[0]: min_x = pt[0]
@@ -395,7 +424,7 @@ class MatFree:
       B = segment[1]
       if 'sharp' in A.attr and 'seen' in A.attr:
         if 'sharp' in B.attr and 'seen' in B.attr:              # both sharp
-          iM = pt2idx((A[0]+B[0])*.5, (A[1]+B[1])*.5 )
+          iM = s.pt2idx((A[0]+B[0])*.5, (A[1]+B[1])*.5 )
           M = s.points[iM]
           if xsign*A[0] <= xsign*B[0]:
             s.todo_append_or_extend([M, A])
@@ -419,7 +448,7 @@ class MatFree:
           
     # return the last x coordinate of the last stroke
     return s.todo[-1][-1][0]
-          
+
 
   def decide_left2right(s, min_x, max_x, last_x=0.0):
     """given the current x coordinate of the cutting head and
@@ -444,6 +473,9 @@ class MatFree:
        Add a 'seen' attribute to all nodes that have been visited once.
        When no more cuts are possible, then move the barrier, try again.
        A point that has all segments with negative signs is removed.
+
+       Input is read from s.paths[], output is placed into s.todo[] 
+       by calling process_barrier() and friends.
     """
     ## first step sort the points into an additional list by ascending y.
     def by_y_key(a):
@@ -464,13 +496,18 @@ class MatFree:
       if barrier_idx >= len(sy):
         break
       barrier_y += s.barrier_increment
+    #
  
+
   def apply(self, cut):
     self.load(cut)
     self.subdivide_segments(self.monotone_allow_back_travel)
     self.link_points()
     self.mark_sharp_segs()
-    self.walk_barrier()
+    if self.do_slicing:
+      self.walk_barrier()
+    else:
+      self.todo = self.paths
 
     return self.todo
 

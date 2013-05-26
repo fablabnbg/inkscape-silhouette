@@ -34,6 +34,7 @@
 #                        guiding users towards inkscape, when connecting a device.
 # 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy 
 #                        appears useful.
+# 2013-05-26 jw, v1.0 -- Some tuning done. fixed preset scaling, improved path recombination.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -56,7 +57,7 @@ from silhouette.Strategy import MatFree
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '0.9'
+__version__ = '1.0'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -841,8 +842,9 @@ class SendtoSilhouette(inkex.Effect):
       self.recursivelyTraverseSvg( self.document.getroot(), self.docTransform )
 
     if self.options.mat_free:
-      mf = MatFree('default')
-      self.path = mf.apply(self.path)
+      mf = MatFree('default', scale=px2mm(1.0))
+      mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
+      self.paths = mf.apply(self.paths)
 
     # print >>self.tty, self.paths
     cut = []
@@ -850,7 +852,10 @@ class SendtoSilhouette(inkex.Effect):
     for px_path in self.paths:
       mm_path = [] 
       for pt in px_path:
-        mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
+        if self.options.mat_free:
+          mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
+        else:
+          mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
         pointcount += 1
       for i in range(0,self.options.multipass): 
         if (self.options.reversetoggle):

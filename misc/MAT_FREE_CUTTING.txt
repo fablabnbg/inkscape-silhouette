@@ -42,6 +42,8 @@ Observations:
    - A narrow horizontally layed out serpentine path advancing downward the sheet 
      can be cut without much problems. We even introduce slight backwards movement, where
      the knive cuts towards the nearest roller. 
+ * When interrupting a path, to cut something else, and resuming the path, we should
+   create a slight overlap (1mm from the provios path segment, where we left off.)
 
 Implementation with version 0.9
 -------------------------------

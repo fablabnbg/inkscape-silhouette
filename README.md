@@ -45,5 +45,8 @@ TODO:
 
 * test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially 
   well suited as a test-case.
+* improve MatFree cutting by overlapping interrupted paths slightly.
+  (e.g. continue a path by 1mm more than planned.)
 
 * Implement paper-zip as a seperate inkscape extension. 
+
