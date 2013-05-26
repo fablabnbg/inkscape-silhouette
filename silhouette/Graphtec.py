@@ -72,7 +72,7 @@ def _bbox_extend(bb, x, y):
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr, dummy=False):
+  def __init__(self, log=sys.stderr, dummy=False, progress_cb=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width 
         (currently Cameo and Portrait). Otherwise it is right hand side. 
@@ -80,6 +80,7 @@ class SilhouetteCameo:
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
+    self.progress_cb = progress_cb
     dev = None
 
     if dummy is True:
@@ -116,7 +117,7 @@ class SilhouetteCameo:
     if self.dev is None or 'width_mm' in self.hardware: 
       self.leftaligned = True 
 
-  def write(s, string, timeout=1000):
+  def write(s, string, timeout=3000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
@@ -135,9 +136,12 @@ class SilhouetteCameo:
     o = 0
     msg=''
     while o < len(string):
-      if o and s.log:
-        s.log.write(" %d%% %s\r" % (100.*o/len(string),msg))
-        s.log.flush()
+      if o:
+        if s.progress_cb:
+          s.progress_cb(o,len(string),msg)
+        elif s.log:
+          s.log.write(" %d%% %s\r" % (100.*o/len(string),msg))
+          s.log.flush()
       chunk = string[o:o+chunksz]
       try:
         r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 

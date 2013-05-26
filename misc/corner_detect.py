@@ -238,7 +238,7 @@ def main ():
     for path in new_cut:
       for C in path:
         if 'sharp' in C.attr:
-          Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.25, radius_y=.25, fill_color = '#FF7777', line_width = 0.01)
+          Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.25, radius_y=.25, fill_color_rgba = 0xFF666644, line_width = 0.01)
           
 
         Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.2, radius_y=.2, line_width = 0.01)

@@ -23,6 +23,8 @@
 #                          improved path extension logic in todo_append_or_extend(), 
 #                          much better, but still not perfect.
 #                          Verbose printf's to stderr, so that inkscape survives.  
+# 2013-05-26, jw, V1.1  -- path_overshoot() added, this improves quality 
+#                          and the paper now comes apart by itself.
 
 import copy
 import math
@@ -34,18 +36,27 @@ presets = {
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10.0,
     'barrier_increment': 10.0,
+    'overshoot': 0.2,     # works well with 80g paper
+    'tool_pen': False,
     'verbose': 1
     },
   'nop': {
     'do_dedup': False,
     'do_subdivide': False,
     'do_slicing': False,
+    'overshoot': 0,
+    'tool_pen': False,
     'verbose': 2
   }
 }
 
+class XY_a(tuple):
+  def __init__(self,t):
+    tuple.__init__(t)
+    self.attr = {}
+
 class MatFree:
-  def __init__(self, preset="default", scale=1.0):
+  def __init__(self, preset="default", scale=1.0, pen=None):
     """This initializer defines settings for the apply() method.
        A scale factor is applied to convert input data units to mm.
        This is needed, as the length units used in presets are mm.
@@ -54,10 +65,14 @@ class MatFree:
     self.do_dedup = True
     self.do_subdivide = True
     self.do_slicing = True
+    self.tool_pen = False
     self.barrier_increment = 3.0
     self.input_scale = scale
 
     self.preset(preset)
+
+    if pen is not None:
+      self.tool_pen = pen
 
     self.points = []
     self.points_dict = {}
@@ -94,10 +109,6 @@ class MatFree:
        stored with in the point object itself. Points that appear for the second
        time receive an attribute 'dup':1, which is incremented on further reoccurences.
     """
-    class XY_a(tuple):
-      def __init__(self,t):
-        tuple.__init__(t)
-        self.attr = {}
 
     k = str(x)+','+str(y)
     if k in self.points_dict:
@@ -499,6 +510,32 @@ class MatFree:
     #
  
 
+  def apply_overshoot(s, paths, start_travel, end_travel):
+    """Extrapolate path in the todo list by the give travel at start and/or end
+       Paths are extended linear, curves are not taken into accound.
+       The intended effect is that interrupted cuts actually overlap at the 
+       split point. The knive may otherwise leave some uncut material around 
+       the split point.
+    """
+    def extend_b(A,B,travel):
+      d = math.sqrt(s.dist_sq(A,B))
+      if d < 0.000001: return B         # cannot extrapolate if A == B
+      ratio = travel/d
+      dx = B[0]-A[0]
+      dy = B[1]-A[1]
+      C = XY_a((B[0]+dx*ratio,  B[1]+dy*ratio))
+      if 'sharp' in B.attr: C.attr['sharp'] = True
+      return C
+
+    for path in paths:
+      if start_travel > 0.0:
+        path[0] = extend_b(path[1],path[0], start_travel)
+      if end_travel > 0.0:
+        path[-1] = extend_b(path[-2],path[-1], end_travel)
+
+    return paths
+
+
   def apply(self, cut):
     self.load(cut)
     self.subdivide_segments(self.monotone_allow_back_travel)
@@ -508,6 +545,8 @@ class MatFree:
       self.walk_barrier()
     else:
       self.todo = self.paths
+    if self.tool_pen == False and self.overshoot > 0.0:
+      self.todo = self.apply_overshoot(self.todo, self.overshoot, self.overshoot)
 
     return self.todo
 

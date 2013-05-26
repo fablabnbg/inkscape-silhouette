@@ -35,6 +35,10 @@
 # 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy 
 #                        appears useful.
 # 2013-05-26 jw, v1.0 -- Some tuning done. fixed preset scaling, improved path recombination.
+# 2013-05-26 jw, v1.1 -- Strategy.MatFree.path_overshoot() added. With 0.2mm overshoot 
+#                        the paper now comes apart almost by itself. great.
+#                        Buffer percent estimation added. We now have an estimate
+#                        how long the buffered data will need.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -57,7 +61,7 @@ from silhouette.Strategy import MatFree
 ## # The simplestyle module provides functions for style parsing.
 ## from simplestyle import *
 
-__version__ = '1.0'
+__version__ = '1.1'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -820,8 +824,21 @@ class SendtoSilhouette(inkex.Effect):
       print __version__
       sys.exit(0)
 
+    def write_progress(done, total, msg):
+      if not 'write_start_tstamp' in self.__dict__:
+        self.write_start_tstamp = time.time()
+        self.device_buffer_perc = 0.0
+      perc = 100.*done/total
+      if time.time() - self.write_start_tstamp < 1.0:
+        self.device_buffer_perc = perc
+      buf = ""
+      if self.device_buffer_perc > 1.0:
+        buf = " (+%d%%)" % (self.device_buffer_perc+.5)
+      self.tty.write("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5, buf, msg))
+      self.tty.flush()
+
     try:
-      dev = SilhouetteCameo(log=self.tty, dummy=self.options.dummy)
+      dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, dummy=self.options.dummy)
     except Exception as e:
       print >>self.tty, e
       print >>sys.stderr, e
@@ -841,8 +858,12 @@ class SendtoSilhouette(inkex.Effect):
       # Traverse the entire document
       self.recursivelyTraverseSvg( self.document.getroot(), self.docTransform )
 
+    self.pen=None
+    if self.options.tool == 'pen': self.pen=True
+    if self.options.tool == 'cut': self.pen=False
+
     if self.options.mat_free:
-      mf = MatFree('default', scale=px2mm(1.0))
+      mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
 
@@ -870,11 +891,8 @@ class SendtoSilhouette(inkex.Effect):
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
-    pen=None
-    if self.options.tool == 'pen': pen=True
-    if self.options.tool == 'cut': pen=False
     if self.options.bboxonly == False: self.options.bboxonly=None
-    dev.setup(media=self.options.media, pen=pen, 
+    dev.setup(media=self.options.media, pen=self.pen, 
       pressure=self.options.pressure, speed=self.options.speed)
     bbox = dev.page(cut=cut, 
       mediawidth=px2mm(self.docWidth), 
@@ -885,18 +903,37 @@ class SendtoSilhouette(inkex.Effect):
       print >>self.tty, "empty page?"
       print >>sys.stderr, "empty page?"
     else:
-      print >>self.tty, " 100%%, bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
+      write_progress(1,1, "bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
         bbox['bbox']['llx']*bbox['unit'],
         bbox['bbox']['ury']*bbox['unit'],
         bbox['bbox']['urx']*bbox['unit'],
         bbox['bbox']['lly']*bbox['unit'],
-        bbox['total'])
+        bbox['total']))
+      print >>self.tty, ""
       state = dev.status()
+      write_duration = time.time() - self.write_start_tstamp
+      # we took write_duration seconds for actualy cutting
+      # 100-device_buffer_perc percent of all data.
+      # Thus we can compute the average write speed like this:
+      if write_duration > 1.0:
+        percent_per_sec = (100.0-self.device_buffer_perc) / write_duration
+      else:
+        percent_per_sec = 1000.     # unreliable data
+        
+      wait_sec = 1
+      while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
+        wait_sec *= 2
+      dots = '.'
       while self.options.wait_done and state == 'moving':
-        self.tty.write('.')
-        self.tty.flush()
+        time.sleep(wait_sec)
+        self.device_buffer_perc -= wait_sec * percent_per_sec
+        if self.device_buffer_perc < 0.0:
+          self.device_buffer_perc = 0.0
+        write_progress(1,1, dots)
+        dots += '.'
         state = dev.status()
-        time.sleep(1)
+      self.device_buffer_perc = 0.0
+      write_progress(1,1, dots)
     print >>self.tty, "\nstatus=%s" % (state)
 
     # pump the output to the device
@@ -914,3 +951,4 @@ ss = int(time.time()-start+.5)
 mm = int(ss/60)
 ss -= mm*60
 print >>e.tty, " done. %d min %d sec" % (mm,ss)
+sys.exit(0)    # helps to keep the selection
