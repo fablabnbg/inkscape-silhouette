@@ -57,10 +57,6 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-## from silhouette.InkcutPath import *
-## # The simplestyle module provides functions for style parsing.
-## from simplestyle import *
-
 __version__ = '1.1'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 

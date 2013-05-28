@@ -14,10 +14,10 @@
 #
 # 2013-05-21, jw, V0.1  -- initial draught.
 # 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
-#                          draft for scan_barrier() added.
+#                          draft for simple_barrier() added.
 # 2013-05-25, jw, V0.3  -- corner_detect.py now jumps when not cutting.
 #                          Strategy.py: new code: mark_segment_done(), todo_append_or_extend().
-#                          completed process_barrier(), tested, debugged, verbose level reduced.
+#                          completed process_simple_barrier(), tested, debugged, verbose level reduced.
 #                          The current slicing and sharp corner strategy appears useful.
 # 2013-05-26, jw, V1.0  -- adopted version number from inkscape_silhouette package.
 #                          improved path extension logic in todo_append_or_extend(), 
@@ -25,6 +25,7 @@
 #                          Verbose printf's to stderr, so that inkscape survives.  
 # 2013-05-26, jw, V1.1  -- path_overshoot() added, this improves quality 
 #                          and the paper now comes apart by itself.
+#                          Added algorithm prose for process_pyramids_barrier()
 
 import copy
 import math
@@ -32,7 +33,7 @@ import sys      # only for debug printing.
 
 presets = {
   'default': {
-    'pyramid_algorithm': False,
+    'pyramids_algorithm': False,
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10.0,
@@ -41,13 +42,12 @@ presets = {
     'tool_pen': False,
     'verbose': 1
     },
-  'pyramid': {
-    'pyramid_algorithm': True,
+  'pyramids': {
+    'pyramids_algorithm': True,
     'monotone_allow_back_travel': 10.0,
-    'barrier_increment': 10.0,
     'overshoot': 0.2,     # works well with 80g paper
     'tool_pen': False,
-    'do_slicing': False,
+    'do_slicing': True,
     'verbose': 1
     },
   'nop': {
@@ -361,8 +361,8 @@ class MatFree:
 
 
   def mark_segment_done(s, A,B):
-    """process_barrier ignores points and segments that have already been done.
-       We call process_barrier() repeatedly, but we want each segment only once.
+    """process_simple_barrier ignores points and segments that have already been done.
+       We call process_simple_barrier() repeatedly, but we want each segment only once.
        Also, a point with a sharp turn can be the start of a segment only once. 
        All its other segments need to be drawn towards such a point.
        mark_segment_done() places the needed markers for this logic.
@@ -381,13 +381,90 @@ class MatFree:
       if B.attr['seg'][iS] >= 0: b_seg_todo = True
 
     # CAUTION: is this really helpful?:
-    ## it prevents points from a slice to go into process_barrier()'s segment list,
+    ## it prevents points from a slice to go into process_simple_barrier()'s segment list,
     ## but it also hides information....
     if not a_seg_todo: s.points[iA] = None
     if not b_seg_todo: s.points[iB] = None
 
+  def process_pyramids_barrier(s, y_slice, max_y, last_x=0.0):
+    """ finding the next point involves overshadowing other points.
+        Our assumption is, that it is save to cut the paper at point A, 
+        whenever there is a triangle sitting on the baseline (where the 
+        transport rollers are) with 2x 45 degree coming from both sides, 
+        meeting at 90 degrees at point A, so that the inside of the 
+        triangle is free of any cuts.
 
-  def process_barrier(s, y_slice, max_y, last_x=0.0):
+        We prefer to cut away from the rollers, if possible, but that is 
+        subordinate rule -- applicable, whenever the cut direction can 
+        be freely chosen. If point A is already part of a cut, then we cut the
+        path A-B always towards A, never starting at A.
+
+        A horizontal barrier Y_bar exists, that limits our downwards movement temporarily.
+        We assume to be called again with lowered Y_bar (increased max_y, it counts downwards).
+
+        Another barrier Xf_bar is a forward slanted 45 degree barrier that is swept sideways. 
+        Points become eligible, if they are above Y_bar and behind Xf_bar.
+
+        We start with the sideways barrier from left to right aka increasing x.
+        In this case 'behind' means to the left of Xf_bar. (Every second sweep
+        will be the opposite direction, but below only left to right is
+        discussed).
+        The very first point that is behind Xf_bar is the starting point A. Then we iterate:
+
+        From any previous point A, we prefer to follow a line segment to reach 
+        the next point B.  Segments are eligible, if their B is rightward from A, 
+        (B.x greater or equal A.x). We chose the segment with the lowest B.y coordinate
+        if there is any choice and check the following conditions:
+
+        a) B is below Y_bar. 
+           Compute point C as the intersection of Y_bar with A-B. Replace 
+           the segment A-B by segments A-C, C-B. Let B and C swap names.
+        b) B is 45 degrees or more downwards from A (B.x-A.x < B.y-A.y) 
+           We make an extra check to see if B would overshadow any point in the other 
+           direction. Temporarily apply a backwards slanted barrier Xb_bar in A. 
+           While moving the barrier to B, stop at the first point D that it hits, if any.
+           If so, position Xb_bar in D, compute point E as the intersection of Xb_bar 
+           with A-B. Replace the segment A-B by segments A-E, E-B. 
+           If we have a point C remembered from a), then replace segments E-B, B-C with E-C 
+           and garbage collect point B. 
+           Let B and E swap names.
+
+        If we now have no B, then we simply move the sideways barrier to reveal our 
+        next A -- very likely a jump rather than a cut. If no todo segments are left in 
+        the old A, drop that old A. Iterate.
+
+        But if we have a B, then we tentatively advance Xf_bar from A to B and 
+        record all new points F[] in the order we pass them. We don't care about them, if 
+        they are all 'below' (on the right hand side of) segment A-B.
+        For the first point F, that has ccw(A,B,F) == True, we position Xf_bar in F, if any.
+        If so, we compute point G as the intersection of Xf_bar with A-B. Replace the segment 
+        A-B by segments A-G, G-B. We cut segment A-G. We make F our next A - very likely a jump.
+        If no todo segments are left in the old A, drop that old A. Iterate.
+
+        If iteration exhausts, we are done with this processing sweep and report back the lowest remaining
+        min_y coordinate of all points we left behind with segments todo. The next sweep will go the 
+        other direction.
+
+        Caller should call us again with direction toggled the other way, and possibly advancing max_y 
+        = min_y + monotone_allow_back_travel. The variable barrier_increment is not used here, as we compute the
+        increment.
+
+        In the above context, 'cutting' a segment means, to add it to the cut list to deactivate its seg[] entries 
+        in the endpoints. Endpoints without active segments do not contribute to the min_y computation above, 
+        they are dropped.
+
+        When all points are dropped, we did our final sweep and return min_y = None.
+        It is caller's responsibility to check the direction of each cut in the cut list with regards to 
+        sharp points and cutting-towards-the-rollers.
+
+        Assert that we cut at least one segment per sweep or drop at least one point per sweep. 
+        Also the number of added segments and points should be less than what we eventually cut and drop.
+        If not, the above algorithm may never end.
+    """
+    TODO
+
+
+  def process_simple_barrier(s, y_slice, max_y, last_x=0.0):
     """process all lines that segment points in y_slice.
        the slice is examined using a scan-strategy. Either left to right or
        right to left. last_x is used to deceide if the the left or 
@@ -401,7 +478,7 @@ class MatFree:
        with its value on the next call.
     """
     if s.verbose:
-      print >>sys.stderr, "process_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
+      print >>sys.stderr, "process_simple_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
       print >>sys.stderr, "                max_y=%g" % (y_slice[-1][1])
 
     min_x = None
@@ -487,7 +564,7 @@ class MatFree:
     else:
       return False                      # the right edge (aka max_x) is nearer
 
-  def pyramid_barrier(s):
+  def pyramids_barrier(s):
     """Move a barrier in ascending y direction.
        For each barrier position, find connected segments that are as high above the barrier 
        as possible. A pyramidonal shadow (opening 45 deg in each direction) is cast upward
@@ -495,7 +572,7 @@ class MatFree:
        that still have line segment not yet done, we must chose one of these points first.
 
        While obeying this shadow rule, we also sweep left and right through the data, similar to the
-       scan_barrier() algorithm below.
+       simple_barrier() algorithm below.
     """
     if not s.do_slicing:
       s.todo = []
@@ -508,7 +585,29 @@ class MatFree:
       #
       return
 
-  def scan_barrier(s):
+    ## first step sort the points into an additional list by ascending y.
+    def by_y_key(a):
+      return a[1]
+    sy = sorted(s.points, key=by_y_key)
+
+    min_y = 0
+    barrier_y = min_y + s.monotone_allow_back_travel
+    barrier_idx = 0     # pointing to the first element that is beyond.
+    dir_toggle = True
+    while True:
+      while sy[barrier_idx][1] < barrier_y:
+        barrier_idx += 1
+        if barrier_idx >= len(sy):
+          break
+      min_y = s.process_pyramids_barrier(sy[0:barrier_idx], barrier_y, left2right=dir_toggle)
+      dir_toggle = not dir_toggle
+      if min_y is None:
+        break
+      barrier_y = min_y + s.monotone_allow_back_travel
+    #
+
+
+  def simple_barrier(s):
     """move a barrier in ascending y direction. 
        For each barrier position, only try to cut lines that are above the barrier.
        Flip the sign for all segment ends that were cut to negative. This flags them as done.
@@ -518,7 +617,7 @@ class MatFree:
 
        Input is read from s.paths[] -- having lists of point indices.
        The output is placed into s.todo[] as lists of XY_a() objects
-       by calling process_barrier() and friends.
+       by calling process_simple_barrier() and friends.
     """
 
     if not s.do_slicing:
@@ -546,7 +645,7 @@ class MatFree:
         if barrier_idx >= len(sy):
           break
       if barrier_idx > old_idx:
-        last_x = s.process_barrier(sy[0:barrier_idx], barrier_y, last_x=last_x)       
+        last_x = s.process_simple_barrier(sy[0:barrier_idx], barrier_y, last_x=last_x)       
       if barrier_idx >= len(sy):
         break
       barrier_y += s.barrier_increment
@@ -581,15 +680,15 @@ class MatFree:
 
   def apply(self, cut):
     self.load(cut)
-    if 'pyramid_algorithm' in self.__dict__:
+    if 'pyramids_algorithm' in self.__dict__:
       self.link_points()
       self.mark_sharp_segs()
-      self.pyramid_barrier() 
+      self.pyramids_barrier() 
     else:
       self.subdivide_segments(self.monotone_allow_back_travel)
       self.link_points()
       self.mark_sharp_segs()
-      self.scan_barrier()
+      self.simple_barrier()
     if self.tool_pen == False and self.overshoot > 0.0:
       self.todo = self.apply_overshoot(self.todo, self.overshoot, self.overshoot)
 

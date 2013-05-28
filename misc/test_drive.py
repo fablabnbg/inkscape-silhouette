@@ -228,7 +228,7 @@ def main ():
     win = gtk.Window()
 
     canvas = Canvas(units='mm', scale=10)
-    canvas.set_size_request(600, 450)
+    canvas.set_size_request(800, 600)
     # canvas.set_bounds(0, 0, 120., 90.)
     root = canvas.get_root_item()
 
@@ -238,7 +238,7 @@ def main ():
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
 
-    mf = MatFree(preset='pyramid')
+    mf = MatFree(preset='pyramids')
     new_cut = mf.apply(cut)
 
     idx = 1
