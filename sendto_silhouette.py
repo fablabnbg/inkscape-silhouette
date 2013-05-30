@@ -39,6 +39,8 @@
 #                        the paper now comes apart almost by itself. great.
 #                        Buffer percent estimation added. We now have an estimate
 #                        how long the buffered data will need.
+# 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
+#                         
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -57,7 +59,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.1'
+__version__ = '1.2'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
@@ -192,6 +194,9 @@ class SendtoSilhouette(inkex.Effect):
     
     self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab', 
           help=SUPPRESS_HELP)
+    self.OptionParser.add_option('-a', '--autocrop',
+          action = 'store', dest = 'autocrop', type = 'inkbool', default = False, 
+          help='trim away top and left margin (before adding offsets)')
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
           action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
           help='draft the objects bounding box instead of the objects')
@@ -363,6 +368,9 @@ class SendtoSilhouette(inkex.Effect):
                 handled include text.  Unhandled elements should be converted to
                 paths in Inkscape.
                 """
+                if not self.plotCurrentLayer:
+                  return        # saves us a lot of time ...
+
                 for node in aNodeList:
                         # Ignore invisible nodes
                         v = node.get( 'visibility', parent_visibility )
@@ -709,8 +717,19 @@ class SendtoSilhouette(inkex.Effect):
                         elif node.tag == inkex.addNS( 'desc', 'svg' ) or node.tag == 'desc':
                                 pass
                         elif node.tag == inkex.addNS( 'text', 'svg' ) or node.tag == 'text':
-                                if not self.warnings.has_key( 'text' ):
-                                        inkex.errormsg( gettext.gettext( 'Warning: unable to draw text; ' +
+                                texts = []
+                                plaintext = ''
+                                if self.plotCurrentLayer:
+                                  for tnode in node.iterfind('.//'): # all subtree
+                                    if tnode is not None and tnode.text is not None:
+                                      texts.append(tnode.text)
+                                if len(texts):
+                                  plaintext = "', '".join(texts)
+                                  print >>self.tty, "Text ignored: '%s'" % (plaintext)
+                                  plaintext = "\n".join(texts)+"\n"
+
+                                if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
+                                        inkex.errormsg( plaintext + gettext.gettext( 'Warning: unable to draw text; ' +
                                                 'please convert it to a path first.  Consider using the ' +
                                                 'Hershey Text extension which is located under the '+
                                                 '"Render" category of extensions.' ) )
@@ -890,6 +909,20 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.bboxonly == False: self.options.bboxonly=None
     dev.setup(media=self.options.media, pen=self.pen, 
       pressure=self.options.pressure, speed=self.options.speed)
+
+    if self.options.autocrop:
+      # this takes much longer, if we have a complext drawing
+      bbox = dev.page(cut=cut, 
+        mediawidth=px2mm(self.docWidth), 
+        mediaheight=px2mm(self.docHeight), 
+        bboxonly=False)         # only return the bbox, do not draw it.
+      if len(bbox['bbox'].keys()):
+        print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
+          bbox['bbox']['llx']*bbox['unit'],
+          bbox['bbox']['ury']*bbox['unit'])
+        self.options.x_off -= bbox['bbox']['llx']*bbox['unit']
+        self.options.y_off -= bbox['bbox']['ury']*bbox['unit']
+      
     bbox = dev.page(cut=cut, 
       mediawidth=px2mm(self.docWidth), 
       mediaheight=px2mm(self.docHeight), 
