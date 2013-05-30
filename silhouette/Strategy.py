@@ -62,8 +62,42 @@ presets = {
 
 class XY_a(tuple):
   def __init__(self,t):
+    #super(XY_a, self).__init__(tuple(t))
     tuple.__init__(t)
     self.attr = {}
+  @property
+  def x(self):
+    return self[0]
+  @property
+  def y(self):
+    return self[1]
+  ## does not work because tuples are immutable:
+  # @x.setter
+  # def x(self, value):
+  #   super(XY_a,self)[0] = value
+
+class Barrier:
+  def __init__(self, key, points):
+    """Initialize a barrier by sorting the points according to the given
+       sort key. The barrier is placed on the first point, and can be 
+       moved by next(n=1) prev(n=1), first(), last(), pos(idx), or 
+       find(point). All these method return an index into the sorted list 
+       that can be used in pos(idx) or slice(idx1, idx2).
+    """
+    pass
+
+  def slice(self, idx1, idx2):
+    """return an ordered subset of the points between idx1 and idx2 
+       (both inclusive).
+       If idx2 is less than idx1, then the returned list is reverse sorted.
+    """
+    pass
+  
+  def __iter__(self):
+    """ An iterator for advancing next(). Quite useless?
+    """
+    pass
+
 
 class MatFree:
   def __init__(self, preset="default", scale=1.0, pen=None):
@@ -386,7 +420,7 @@ class MatFree:
     if not a_seg_todo: s.points[iA] = None
     if not b_seg_todo: s.points[iB] = None
 
-  def process_pyramids_barrier(s, y_slice, max_y, last_x=0.0):
+  def process_pyramids_barrier(s, y_slice, max_y, left2right=True):
     """ finding the next point involves overshadowing other points.
         Our assumption is, that it is save to cut the paper at point A, 
         whenever there is a triangle sitting on the baseline (where the 
@@ -441,27 +475,31 @@ class MatFree:
         A-B by segments A-G, G-B. We cut segment A-G. We make F our next A - very likely a jump.
         If no todo segments are left in the old A, drop that old A. Iterate.
 
-        If iteration exhausts, we are done with this processing sweep and report back the lowest remaining
-        min_y coordinate of all points we left behind with segments todo. The next sweep will go the 
-        other direction.
+        If iteration exhausts, we are done with this processing sweep and
+        report back the lowest remaining min_y coordinate of all points we left
+        behind with segments todo. The next sweep will go the other direction.
 
-        Caller should call us again with direction toggled the other way, and possibly advancing max_y 
-        = min_y + monotone_allow_back_travel. The variable barrier_increment is not used here, as we compute the
+        Caller should call us again with direction toggled the other way, and
+        possibly advancing max_y = min_y + monotone_allow_back_travel. The
+        variable barrier_increment is not used here, as we compute the
         increment.
 
-        In the above context, 'cutting' a segment means, to add it to the cut list to deactivate its seg[] entries 
-        in the endpoints. Endpoints without active segments do not contribute to the min_y computation above, 
-        they are dropped.
+        In the above context, 'cutting' a segment means, to add it to the cut
+        list to deactivate its seg[] entries in the endpoints. Endpoints
+        without active segments do not contribute to the min_y computation
+        above, they are dropped.
 
-        When all points are dropped, we did our final sweep and return min_y = None.
-        It is caller's responsibility to check the direction of each cut in the cut list with regards to 
-        sharp points and cutting-towards-the-rollers.
+        When all points are dropped, we did our final sweep and return min_y =
+        None.  It is caller's responsibility to check the direction of each cut
+        in the cut list with regards to sharp points and cutting-towards-the-rollers.
 
-        Assert that we cut at least one segment per sweep or drop at least one point per sweep. 
-        Also the number of added segments and points should be less than what we eventually cut and drop.
+        Assert that we cut at least one segment per sweep or drop at least one
+        point per sweep.  Also the number of added segments and points should
+        be less than what we eventually cut and drop.  
         If not, the above algorithm may never end.
     """
-    TODO
+    print y_slice, max_y
+    return max_y - 1
 
 
   def process_simple_barrier(s, y_slice, max_y, last_x=0.0):
@@ -574,8 +612,8 @@ class MatFree:
        While obeying this shadow rule, we also sweep left and right through the data, similar to the
        simple_barrier() algorithm below.
     """
+    s.todo = []
     if not s.do_slicing:
-      s.todo = []
       for path in s.paths:
         s.todo.append([])
         for idx in path:
@@ -595,13 +633,14 @@ class MatFree:
     barrier_idx = 0     # pointing to the first element that is beyond.
     dir_toggle = True
     while True:
+      print "barrier_idx:", barrier_idx, len(sy), barrier_y
       while sy[barrier_idx][1] < barrier_y:
         barrier_idx += 1
         if barrier_idx >= len(sy):
           break
       min_y = s.process_pyramids_barrier(sy[0:barrier_idx], barrier_y, left2right=dir_toggle)
       dir_toggle = not dir_toggle
-      if min_y is None:
+      if min_y is None or barrier_idx >= len(sy):
         break
       barrier_y = min_y + s.monotone_allow_back_travel
     #
