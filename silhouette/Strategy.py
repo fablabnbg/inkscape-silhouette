@@ -26,6 +26,9 @@
 # 2013-05-26, jw, V1.1  -- path_overshoot() added, this improves quality 
 #                          and the paper now comes apart by itself.
 #                          Added algorithm prose for process_pyramids_barrier()
+# 2013-05-31, jw, V1.3  -- renamed sharp_turn() to sharp_turn_90, added sharp_turn_45(), sharp_turn_63()
+#                          Using .x, .y syntax provided by class XY_a() instead of [0], [1] everywhere.
+#                          ccw() and sharp_turn*() now global. No class needed.
 
 import copy
 import math
@@ -37,6 +40,7 @@ presets = {
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
     'monotone_allow_back_travel': 10.0,
+    'sharp_turn_fwd_ratio': 0.0,
     'barrier_increment': 10.0,
     'overshoot': 0.2,     # works well with 80g paper
     'tool_pen': False,
@@ -45,6 +49,7 @@ presets = {
   'pyramids': {
     'pyramids_algorithm': True,
     'monotone_allow_back_travel': 10.0,
+    'sharp_turn_fwd_ratio': 0.5,
     'overshoot': 0.2,     # works well with 80g paper
     'tool_pen': False,
     'do_slicing': True,
@@ -59,6 +64,98 @@ presets = {
     'verbose': 2
   }
 }
+
+## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
+def ccw(A,B,C):
+  return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
+
+
+def sharp_turn_90(A,B,C):
+  """Given the path from A to B to C as two line segments.
+     Return true, if the corner at B is more than +/- 90 degree.
+
+     Algorithm:
+     For the segment A-B, we construct the normal B-D. 
+     The we test, if points A and C lie on the same side of the line(!) B-D.
+     If so, it is a sharp turn.
+
+     This 90 deg algoritm is a simplified (and faster) version of the general case
+     sharp_turn() using a fwd_ratio.
+  """
+  dx = B.x-A.x
+  dy = B.y-A.y
+  D = XY_a((B.x-dy, B.y+dx))        # BD is now the normal to AB
+
+  return ccw(A,B,D) == ccw(C,B,D)
+
+
+def sharp_turn_116(A,B,C):
+  """ A sharp turn of more than 116.565 degree.
+  """
+  return sharp_turn(A,B,C, -0.5)
+
+
+def sharp_turn_63(A,B,C):
+  """ A sharp turn of more than 63.435 degree.
+  """
+  return sharp_turn(A,B,C, 0.5)
+
+
+def sharp_turn_45(A,B,C):
+  """ A sharp turn of more than 45 degree.
+  """
+  return sharp_turn(A,B,C, 1.0)
+
+
+def sharp_turn_26(A,B,C):
+  """ A sharp turn of more than 26.565 degree.
+  """
+  return sharp_turn(A,B,C, 2.0)
+
+
+def sharp_turn(A,B,C,fwd_ratio):
+  """Given the path from A to B to C as two line segments.
+     Return true, if the corner at B is more than +/- cotan(fwd_ratio) degree.
+     fwd_ratio is the number of units we continue forward, for one unit we deviate sideways.
+     Examples: fwd_ratio=0: 90 deg. fwd_ratio=0.5: 63.435 deg
+               fwd_ratio=1: 45 deg, fwd_ratio=2: 26.565 deg
+               fwd_ratio=-.5: 116.565 deg.
+
+     Algorithm:
+     First we test if C is on the left or right of A-B. 
+     We will place D on the same side and remember the side for later.
+     For the segment A-B, we construct the normal B-D. 
+     Then we extend A-B to E so that distance |B-E| == |B-D|.
+     Now we use the weighted vector sum [BE]*fwd_ratio + [BD]*1 == [BF] to create 
+     the desired angle A-B-F
+
+     If C is left of AB and C is left of BF, then it is a sharp turn; or
+     If C is right of AB and C is right of BF, then it is a sharp turn; 
+     else not.
+
+  """
+  if fwd_ratio == 0.0: return sharp_turn_90(A,B,C)      # short cut.
+
+  dx = B.x-A.x
+  dy = B.y-A.y
+
+  dx_be = dx
+  dy_be = dy
+
+  ccw_abc = ccw(A,B,C)
+  if ccw_abc:
+    # D = (B.x-dy, B.y+dx)        # BD is now the normal to AB ...
+    dx_bd = -dy
+    dy_bd = +dx
+  else:
+    # D = (B.x+dy, B.y-dx)        # ... and C, D are on the same side of AB
+    dx_bd = +dy
+    dy_bd = -dx
+  F = XY_a((B.x+fwd_ratio*dx_be+1*dx_bd, B.y+fwd_ratio*dy_be+1*dy_bd))
+
+  return ccw(B,F,C) == ccw_abc
+
+
 
 class XY_a(tuple):
   def __init__(self,t):
@@ -112,7 +209,9 @@ class MatFree:
     self.tool_pen = False
     self.barrier_increment = 3.0
     self.monotone_allow_back_travel = 3.0
+    self.sharp_turn_fwd_ratio = 0.99     # 0.5 == 63 deg
     self.input_scale = scale
+    self.pyramids_algorithm = False
 
     self.preset(preset)
 
@@ -193,7 +292,7 @@ class MatFree:
 
 
   def dist_sq(s, A,B):
-    return (B[0]-A[0])*(B[0]-A[0]) + (B[1]-A[1])*(B[1]-A[1])
+    return (B.x-A.x)*(B.x-A.x) + (B.y-A.y)*(B.y-A.y)
 
 
   def link_points(s):
@@ -233,41 +332,21 @@ class MatFree:
             dist = math.sqrt(dist_sq)
             nsub = int(dist/maxlen)
             seg_len = dist/float(nsub+1)
-            dx = (s.points[pt][0] - s.points[A][0])/float(nsub+1)
-            dy = (s.points[pt][1] - s.points[A][1])/float(nsub+1)
+            dx = (s.points[pt].x - s.points[A].x)/float(nsub+1)
+            dy = (s.points[pt].y - s.points[A].y)/float(nsub+1)
             if s.verbose > 1:
               print >>sys.stderr, "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
-              print >>sys.stderr, "dxdy", dx, dy, "to", (s.points[pt][0], s.points[pt][1]), "from", (s.points[A][0],s.points[A][1])
+              print >>sys.stderr, "dxdy", dx, dy, "to", (s.points[pt].x, s.points[pt].y), "from", (s.points[A].x,s.points[A].y)
             for subdiv in range(nsub):
-              sub_pt =s.pt2idx(s.points[A][0]+dx+subdiv*dx, 
-                               s.points[A][1]+dy+subdiv*dy)
+              sub_pt =s.pt2idx(s.points[A].x+dx+subdiv*dx, 
+                               s.points[A].y+dy+subdiv*dy)
               new_path.append(sub_pt)
               s.points[sub_pt].attr['sub'] = True
               if s.verbose > 1:
-                print >>sys.stderr, "   sub", (s.points[sub_pt][0], s.points[sub_pt][1])
+                print >>sys.stderr, "   sub", (s.points[sub_pt].x, s.points[sub_pt].y)
         new_path.append(pt)
       s.paths[path_idx] = new_path
 
-
-  def sharp_turn(s, A,B,C):
-    """Given the path from A to B to C as two line segments.
-       Return true, if the corner at B is more than +/- 90 degree.
-
-       Algorithm:
-       For the segment A-B, we construct the normal B-D. 
-       The we test, if points A and C lie on the same side of the line(!) B-D.
-       If so, it is a sharp turn.
-    """
-    dx = B[0]-A[0]
-    dy = B[1]-A[1]
-    D = (B[0]-dy, B[1]+dx)        # BD is now the normal to AB
-
-    ## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-    def ccw_t(A,B,C):
-      """same as ccw, but expecting tuples"""
-      return (C[1]-A[1])*(B[0]-A[0]) > (B[1]-A[1])*(C[0]-A[0])
-
-    return ccw_t(A,B,D) == ccw_t(C,B,D)
 
 
 
@@ -291,16 +370,17 @@ class MatFree:
         continue
       if 'seg' in pt.attr:
         ll = len(pt.attr['seg'])
-        if ll > 4:
-          ## you cannot attach 5 lines to a point without creating one sharp angle.
-          pt.attr['sharp'] = True
-          continue
+        # if ll > 4:
+        #   ## You cannot attach 5 lines to a point without creating one sharp angle.
+        #   ## This is true for sharp turn defined as >90 degree.
+        #   pt.attr['sharp'] = True
+        #   continue
         ## look at each pair of segments once, check their angle.
         for l1 in range(ll):
           A = s.points[pt.attr['seg'][l1]]
           for l2 in range(l1+1, ll):
             B = s.points[pt.attr['seg'][l2]]
-            if s.sharp_turn(A,pt,B):
+            if sharp_turn(A,pt,B, s.sharp_turn_fwd_ratio):
               pt.attr['sharp'] = True
           if 'sharp' in pt.attr:
             break
@@ -327,7 +407,7 @@ class MatFree:
     A = None
     B = None 
     for path in s.paths:
-      if B is not None and len(path) and s.dist_sq(B,s. points[path[0]]) > min_jump_sq:
+      if B is not None and len(path) and s.dist_sq(B, s.points[path[0]]) > min_jump_sq:
         # disconnect the path, if we jump more than 2mm
         A = None
         B = None
@@ -338,7 +418,7 @@ class MatFree:
           # less than 0.1 mm distance: ignore the point as a duplicate.
           continue
 
-        if A is not None and s.sharp_turn(A,B,C):
+        if A is not None and sharp_turn(A,B,C, s.sharp_turn_fwd_ratio):
           B.attr['sharp'] = True
 
         A = B
@@ -517,7 +597,7 @@ class MatFree:
     """
     if s.verbose:
       print >>sys.stderr, "process_simple_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
-      print >>sys.stderr, "                max_y=%g" % (y_slice[-1][1])
+      print >>sys.stderr, "                max_y=%g" % (y_slice[-1].y)
 
     min_x = None
     max_x = None
@@ -530,14 +610,14 @@ class MatFree:
         if iC < 0:              # this segment is done.
           continue
         C = s.points[iC]
-        if C is not None and C[1] <= max_y:
+        if C is not None and C.y <= max_y:
           if s.verbose > 1:
             print >>sys.stderr, "   segments.append", C, pt
           segments.append((C,pt))
-          if min_x is None or min_x >  C[0]: min_x =  C[0]
-          if min_x is None or min_x > pt[0]: min_x = pt[0]
-          if max_x is None or max_x <  C[0]: max_x =  C[0]
-          if max_x is None or max_x < pt[0]: max_x = pt[0]
+          if min_x is None or min_x >  C.x: min_x =  C.x
+          if min_x is None or min_x > pt.x: min_x = pt.x
+          if max_x is None or max_x <  C.x: max_x =  C.x
+          if max_x is None or max_x < pt.x: max_x = pt.x
           s.mark_segment_done(C,pt)
         #
       #
@@ -547,7 +627,7 @@ class MatFree:
     xsign = -1.0
     if left2right: xsign = 1.0
     def dovetail_both_key(a):
-      return a[0][1]+a[1][1]+xsign*(a[0][0]+a[1][0])
+      return a[0].y+a[1].y+xsign*(a[0].x+a[1].x)
     segments.sort(key=dovetail_both_key)
 
     for segment in segments:
@@ -561,9 +641,9 @@ class MatFree:
       B = segment[1]
       if 'sharp' in A.attr and 'seen' in A.attr:
         if 'sharp' in B.attr and 'seen' in B.attr:              # both sharp
-          iM = s.pt2idx((A[0]+B[0])*.5, (A[1]+B[1])*.5 )
+          iM = s.pt2idx((A.x+B.x)*.5, (A.y+B.y)*.5 )
           M = s.points[iM]
-          if xsign*A[0] <= xsign*B[0]:
+          if xsign*A.x <= xsign*B.x:
             s.todo_append_or_extend([M, A])
             s.todo_append_or_extend([M, B])
           else:
@@ -575,7 +655,7 @@ class MatFree:
         if 'sharp' in B.attr and 'seen' in B.attr:              # only B sharp
           s.todo_append_or_extend([A, B])
         else:                                                   # none sharp
-          if xsign*A[0] <= xsign*B[0]:
+          if xsign*A.x <= xsign*B.x:
             s.todo_append_or_extend([A, B])
           else:
             s.todo_append_or_extend([B, A])
@@ -584,7 +664,8 @@ class MatFree:
       #
           
     # return the last x coordinate of the last stroke
-    return s.todo[-1][-1][0]
+    if not 'todo' in s.__dict__: return 0
+    return s.todo[-1][-1].x
 
 
   def decide_left2right(s, min_x, max_x, last_x=0.0):
@@ -625,7 +706,7 @@ class MatFree:
 
     ## first step sort the points into an additional list by ascending y.
     def by_y_key(a):
-      return a[1]
+      return a.y
     sy = sorted(s.points, key=by_y_key)
 
     min_y = 0
@@ -634,7 +715,7 @@ class MatFree:
     dir_toggle = True
     while True:
       print "barrier_idx:", barrier_idx, len(sy), barrier_y
-      while sy[barrier_idx][1] < barrier_y:
+      while sy[barrier_idx].y < barrier_y:
         barrier_idx += 1
         if barrier_idx >= len(sy):
           break
@@ -671,7 +752,7 @@ class MatFree:
           
     ## first step sort the points into an additional list by ascending y.
     def by_y_key(a):
-      return a[1]
+      return a.y
     sy = sorted(s.points, key=by_y_key)
 
     barrier_y = s.barrier_increment
@@ -679,7 +760,7 @@ class MatFree:
     last_x = 0.0        # we start at home.
     while True:
       old_idx = barrier_idx
-      while sy[barrier_idx][1] < barrier_y:
+      while sy[barrier_idx].y < barrier_y:
         barrier_idx += 1
         if barrier_idx >= len(sy):
           break
@@ -702,9 +783,9 @@ class MatFree:
       d = math.sqrt(s.dist_sq(A,B))
       if d < 0.000001: return B         # cannot extrapolate if A == B
       ratio = travel/d
-      dx = B[0]-A[0]
-      dy = B[1]-A[1]
-      C = XY_a((B[0]+dx*ratio,  B[1]+dy*ratio))
+      dx = B.x-A.x
+      dy = B.y-A.y
+      C = XY_a((B.x+dx*ratio,  B.y+dy*ratio))
       if 'sharp' in B.attr: C.attr['sharp'] = True
       return C
 
@@ -719,7 +800,7 @@ class MatFree:
 
   def apply(self, cut):
     self.load(cut)
-    if 'pyramids_algorithm' in self.__dict__:
+    if self.pyramids_algorithm:
       self.link_points()
       self.mark_sharp_segs()
       self.pyramids_barrier() 

@@ -134,8 +134,12 @@ cut_stars = [[(.1,.1), (50,1), (55,55), (3,30), (.1,.9)], [(1,31),(3,30),(44,44)
 (19.650427213333334, 4.178705705468693), (19.650427213333334,
 4.178705705468693)]]
 cut_1_sharp_turn = [[(6.447013888888888, 1.7197916666666666), (2.7447450608333335, 1.8781719273333333), (1.7712151617013887, 1.9675756834166662), (1.4375694444444445, 2.0637499999999998), (1.7712129392013884, 2.15725412703125), (2.7447391341666667, 2.240002452083333), (6.447013888888888, 2.38125)]]
+cut_2_sharp_turn = [[(1,2.1), (2,2), (2.5,1)], [(1,3.1), (2,3), (3,2.5)],
+                    [(1,4.1), (2,4), (3,4.5)], [(1,5.1), (2,5), (2.5,6)]]
 
-cut = cut_vertical_zigzag
+#cut = cut_vertical_zigzag
+#cut = cut_stars
+cut = cut_2_sharp_turn
 
 if len(sys.argv) > 1:
   str=open(sys.argv[1]).readlines()
@@ -176,12 +180,15 @@ def key_press(win, ev, c):
   elif key == 'a':  new_idx = c.cursor_idx + 1
   elif key == 'b':  new_idx = c.cursor_idx - 1
   elif key == 'B':  new_idx = c.cursor_idx - 20
-  elif key == 'r':  new_idx = 1
-  elif key == '0':  new_idx = 1
+  elif key == 'r':  new_idx = 0
+  elif key == '0':  new_idx = 0
   elif ev.keyval <= 255: gtk.main_quit()
 
   if new_idx is not None and (new_idx < 1 or  new_idx >= len(c.points)):
     new_idx = 1
+    for a in c.arrows:
+      a.remove()
+    c.arrow = []
   else:
     print c.get_scale()
 
@@ -191,13 +198,19 @@ def key_press(win, ev, c):
       jumpto = c.points[new_idx][1]
     elif key == 'b':
       jumpto = c.points[c.cursor_idx][1]
+    ox = c.points[c.cursor_idx][0].x
+    oy = c.points[c.cursor_idx][0].y
     c.cursor_idx = new_idx
-    cx = c.points[c.cursor_idx][0][0]
-    cy = c.points[c.cursor_idx][0][1]
+    cx = c.points[c.cursor_idx][0].x
+    cy = c.points[c.cursor_idx][0].y
     # GooCanvas.CanvasAnimateType.FREEZE = 0 
     if jumpto:
       c.cursor.set_simple_transform(cx,cy, 1, 0.)
     else:
+      if key == 'f':
+        ## place forward pointing arrows
+        p = Points([(ox,oy),(cx,cy)])
+        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.2, end_arrow="True", stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
     print new_idx, c.points[c.cursor_idx][0].attr
   else:
@@ -238,19 +251,20 @@ def main ():
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
 
-    mf = MatFree(preset='pyramids')
+    mf = MatFree(preset='default')
     new_cut = mf.apply(cut)
 
-    idx = 1
     canvas.points = [ None ]
+    canvas.arrows = [ ]
 
+    idx = 1
     for path in new_cut:
       for C in path:
         if 'attr' in C.__dict__ and 'sharp' in C.attr:
-          Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.25, radius_y=.25, fill_color_rgba = 0xFF666644, line_width = 0.01)
+          Ellipse(parent=root, center_x=C.x, center_y=C.y, radius_x=.25, radius_y=.25, fill_color_rgba = 0xFF666644, line_width = 0.01)
           
 
-        Ellipse(parent=root, center_x=C[0], center_y=C[1], radius_x=.2, radius_y=.2, line_width = 0.01)
+        Ellipse(parent=root, center_x=C.x, center_y=C.y, radius_x=.2, radius_y=.2, line_width = 0.01)
 
       p = Points(path)
       poly = Polyline(parent=root, points=p, line_width=0.05, stroke_color="black")
@@ -261,7 +275,7 @@ def main ():
         idx += 1
         canvas.points.append((C,jumpto))         # store to allow cursor movement.
         jumpto = False
-        text.translate(C[0]+random.uniform(-.1,0), C[1]+random.uniform(-.1,0))
+        text.translate(C.x+random.uniform(-.1,0), C.y+random.uniform(-.1,0))
         text.scale(.05,.05)
       
     
@@ -271,7 +285,7 @@ def main ():
     else:
       cursor_p = Points([(-0.5,0),(0,0.5),(0.5,0),(0,-0.5),(-0.5,0)])
       canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)
-      canvas.cursor.translate(canvas.points[1][0][0],canvas.points[1][0][1])
+      canvas.cursor.translate(canvas.points[1][0].x,canvas.points[1][0].y)
       canvas.cursor_idx = 1
     
     # text = Text(parent=root, text="Hello World", font="12")

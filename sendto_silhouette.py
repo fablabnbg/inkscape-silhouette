@@ -40,7 +40,8 @@
 #                        Buffer percent estimation added. We now have an estimate
 #                        how long the buffered data will need.
 # 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
-#                         
+# 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
+#                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -59,7 +60,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.2'
+__version__ = '1.3'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200
