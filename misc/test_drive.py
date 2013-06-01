@@ -210,7 +210,9 @@ def key_press(win, ev, c):
       if key == 'f':
         ## place forward pointing arrows
         p = Points([(ox,oy),(cx,cy)])
-        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.3, end_arrow="True", stroke_color_rgba=0x00000033))
+        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.25, 
+                end_arrow=True, arrow_width=3, arrow_tip_length=2, arrow_length=2, 
+                stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
     print new_idx, c.points[c.cursor_idx][0].attr
   else:

@@ -113,7 +113,7 @@ class XY_a(tuple):
   def __init__(self,t):
     #super(XY_a, self).__init__(tuple(t))
     tuple.__init__(t)
-    self.attr = {}
+    self.attr = self.__dict__
   @property
   def x(self):
     return self[0]
