@@ -253,6 +253,7 @@ def main ():
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
 
+    #mf = MatFree(preset='default')
     mf = MatFree(preset='pyramids')
     new_cut = mf.apply(cut)
 

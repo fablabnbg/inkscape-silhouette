@@ -390,6 +390,62 @@ class MatFree:
     if not a_seg_todo: s.points[iA] = None
     if not b_seg_todo: s.points[iB] = None
 
+  def shortcut_segment(self, A, B, C):
+    """ Asuming [AC],[CB] are segments (in A.seg, B.seg, C.seg)
+        we remove C as the intermediate link and direcly connect [AB]
+        This removes C from self.points (by replacing with None) if
+        C has no other segments.
+        This is the opposite of subdivide_segment()
+    """
+    raise ValueError("shortcut_segment not implemented. A,B,C: ", A, B, C)
+
+  def subdivide_segment(self, A, B, C):
+    """ Asuming [AB] is a segment (A.seg has B and B.seg has A),
+        we insert C as an intermediate link [AC],[CB].
+        This also adds C to self.points .
+    """
+    a_seg_idx = None
+    print "A,B,C: ", A.attr, B.attr, C.attr
+    for n in range(0,len(A.seg)):
+      if A.seg[n] == B.id:
+        a_seg_idx = n
+        break
+
+    b_seg_idx = None
+    for n in range(0,len(B.seg)):
+      if B.seg[n] == A.id:
+        b_seg_idx = n
+        break
+    if b_seg_idx is None or a_seg_idx is None:
+      raise ValueError("A,B not linked???")
+    C.sub = True
+    C.id = len(self.points)
+    self.points.append(C)
+    A.seg[a_seg_idx] = C.id
+    B.seg[b_seg_idx] = C.id
+    C.seg = [A.id,B.id]
+    return C.id
+ 
+
+  def unlink_segment(s, A, B):
+    """remove the segment [AB] from the s.points list. 
+       A segment is removed, by replacing its slot with a negative number.
+       If now A or B are without other active segments, A and/or B are dropped
+       entirely from s.points .
+    """
+    raise ValueError("unlink_segment not impleented")
+    #  if B.seg[iS] == iA: B.seg[iS] = -iA or -1000000000
+
+  def output_add(s, A, B, cut=False):
+    """If cut=True, output the segment [AB] as a cut.
+       Otherwise jump to B, starting a new path there.
+       A is passed so that we can check that this is really the last point
+       we have visited. If not, a jump to A is inserted, before the cut.
+       If cut is False, we can directly jump the output list to B.
+    """
+    print "output: cut=", cut, A, B
+      
+
   def process_pyramids_barrier(s, y_slice, max_y, left2right=True):
     """ finding the next point involves overshadowing other points.
         Our assumption is, that it is save to cut the paper at point A, 
@@ -421,16 +477,17 @@ class MatFree:
         if there is any choice and check the following conditions:
 
         a) B is below Y_bar. 
-           Compute point C as the intersection of Y_bar with A-B. Replace 
-           the segment A-B by segments A-C, C-B. Let B and C swap names.
+           Compute point C as the intersection of Y_bar with [AB]. Replace 
+           the segment [AB] by segments [AC], [CB]. Let B and C swap names.
         b) B is 45 degrees or more downwards from A (B.x-A.x < B.y-A.y) 
            We make an extra check to see if B would overshadow any point in the other 
            direction. Temporarily apply a backwards slanted barrier Xb_bar in A. 
-           While moving the barrier to B, stop at the first point D that it hits, if any.
+           While moving the barrier to B, stop at the first point D to the left of AB 
+           (i.e. ccw(A,B,D) == True) it hits, if any.
            If so, position Xb_bar in D, compute point E as the intersection of Xb_bar 
-           with A-B. Replace the segment A-B by segments A-E, E-B. 
-           If we have a point C remembered from a), then replace segments E-B, B-C with E-C 
-           and garbage collect point B. 
+           with A-B. Replace the segment [AB] by segments [AE], [EB]. 
+           If we have a point C remembered from a), then replace segments [EB], [BC] with [EC]
+           and garbage collect point B and swap back roles B and C.
            Let B and E swap names.
 
         If we now have no B, then we simply move the sideways barrier to reveal our 
@@ -439,10 +496,10 @@ class MatFree:
 
         But if we have a B, then we tentatively advance Xf_bar from A to B and 
         record all new points F[] in the order we pass them. We don't care about them, if 
-        they are all 'below' (on the right hand side of) segment A-B.
+        they are all 'below' (on the right hand side of) segment [AB].
         For the first point F, that has ccw(A,B,F) == True, we position Xf_bar in F, if any.
-        If so, we compute point G as the intersection of Xf_bar with A-B. Replace the segment 
-        A-B by segments A-G, G-B. We cut segment A-G. We make F our next A - very likely a jump.
+        If so, we compute point G as the intersection of Xf_bar with [AB]. Replace the segment 
+        [AB] by segments [AG], [GB]. We cut segment [AG]. We make F our next A - very likely a jump.
         If no todo segments are left in the old A, drop that old A. Iterate.
 
         If iteration exhausts, we are done with this processing sweep and
@@ -469,11 +526,118 @@ class MatFree:
         If not, the above algorithm may never end.
 
     """
-    Xf_bar = Barrier(y_slice, key=lambda a: a[0]-a[1])
-    y_slice[0].speed = 21
-    if 'speed' in y_slice[0].attr:
-      print "yes"
-    print y_slice, max_y, y_slice[0].attr, y_slice[0].seg
+    Xf_bar = Barrier(y_slice, key=lambda a: a[0]+a[1])        # forward:   / moving ->
+    Xb_bar = Barrier(y_slice, key=lambda a: -a[0]+a[1])       # backwards: \ moving <-
+
+    if not left2right:                                        # forward:   \ moving <-
+      Xf_bar,Xb_bar = Xb_bar,Xf_bar                           # backwards: / moving ->
+
+    A = Xf_bar.point()
+    while True:
+      if A is None:
+        if Xf_bar.next() is None: break
+        A = Xf_bar.point()
+        continue
+
+      B = None
+      a_todo = 0
+      for Bi in A.seg:
+        if Bi >= 0:                              # segment already done
+          a_todo += 1
+          pt = s.points[Bi]
+          if (left2right and pt.x >= A.x) or (not left2right and pt.x <= A.x):
+            if B is None or pt.y < B.y:         # find lowest y
+              B = pt
+      if B is None:
+        if a_todo == 0:
+          s.points[A.id] = None                 # drop A
+        continue                                # just advance Xf_bar: jump
+      print "segment to check a), b)", A, B
+
+      if False:                                  # fake to trigger check a)
+        b_id = B.id
+        B = XY_a((1.3,20-2.1))                  
+        B.id = b_id
+        B.seg = [1,2,A.id,3,4]
+        print "faked segment to check a), b)", A, B
+      #
+
+      C = None
+      E = None
+      if B.y > max_y:                           # check a)
+        C = XY_a((intersect_y(A,B, max_y), max_y))
+        ## same, but more expensive:
+        # C2 = intersect_lines(A,B,XY_a((0,max_y)),XY_a((.5,max_y)))
+        print "B below barrier, C=", C
+        s.subdivide_segment(A,B,C)
+        B,C = C,B
+        # print A.seg, B.seg, C.seg
+      #
+
+      # All of the following shortens [AB] sufficiently, so that B does not 
+      # cast shadow upwards on any other point: \B/ 
+      # Such a point would become our B.
+      # This asserts that there is no other point, whose pyramid would bury B.
+
+      if B.x-A.x < B.y-A.y:                     # check b)
+        Xb_a_idx = Xb_bar.find(A, start=0)
+        Xb_b_idx = Xb_bar.find(B)
+        print "check b), moving Xb_bar from A to B", Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
+        D = None
+        for n in range(Xb_a_idx, Xb_b_idx+1):   # sweep from A to B
+          pt = Xb_bar.point(n)
+          if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == True:      
+            D = pt                              # found a D that is clearly left of AB.
+            break
+          else:
+            print "backsweep ignoring pt", pt, Xb_bar.key(pt)
+        #
+        if D is not None:                       # compute intersection of Xb_bar with [AB]
+          E = intersect_lines(D,XY_a((D.x+1,D.y+1)),A,B,limit2=True)
+          if E is None: raise ValueError("finding a shadowed D failed:", A, B, D)
+          E = XY_a(E)
+          s.subdivide_segment(A,B,E)
+          if C is not None:
+            s.shortcut_segment(E,C,B)           # replace segments [EB], [BC] with [EC]
+            B,C = C,B
+          B,E = E,B
+
+      # tentatively advance Xf_bar from A to B
+      Xf_a_idx = Xf_bar.pos()                   # unused, we never move back to A.
+      Xf_b_idx = Xf_bar.find(B)
+      print "line A,B:", A, B, Xf_a_idx, Xf_b_idx, Xf_bar.point(Xf_b_idx)
+      F = None
+      Xf_f_idx = None
+      for n in range(Xb_a_idx, Xb_b_idx+1):     # sweep from A to B
+        pt = Xf_bar.point(n)
+        if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == False:      
+          F = pt                                # found an F that is clearly right of AB.
+          Xf_f_idx = n
+          break
+        else:
+          print "forward sweep ignoring pt", pt, Xf_bar.key(pt)
+      #
+      if F is not None:                       # compute intersection of Xb_bar with [AB]
+        G = intersect_lines(F,XY_a((F.x-1,F.y+1)),A,B,limit2=True)
+        if G is None: raise ValueError("finding a shadowed G failed:", A, B, F)
+        G = XY_a(G)
+        s.subdivide_segment(A,B,G)
+        if E is not None:
+          pass
+          ## FIXME: should s.shortcut_segment(...E) something here.
+        s.output_add(A,G,cut=True)
+        s.unlink_segment(A,G)
+        Xf_bar.pos(Xf_f_idx-1)                # so that next() will run into F
+      #
+      else:
+        s.output_add(A,B,cut=True)
+        s.unlink_segment(A,B)
+        Xf_bar.pos(Xf_b_idx-1)                # so that next() will run into B
+      sys.exit(0)
+    #
+
+    ##  barrier has moved all the way to the other end.
+    print y_slice, max_y, A.attr, A.seg
     if max_y > 20: return None
     return max_y - 1
 
