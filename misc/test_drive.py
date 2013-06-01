@@ -137,9 +137,9 @@ cut_1_sharp_turn = [[(6.447013888888888, 1.7197916666666666), (2.744745060833333
 cut_2_sharp_turn = [[(1,2.1), (2,2), (2.5,1)], [(1,3.1), (2,3), (3,2.5)],
                     [(1,4.1), (2,4), (3,4.5)], [(1,5.1), (2,5), (2.5,6)]]
 
-#cut = cut_vertical_zigzag
+cut = cut_vertical_zigzag
 #cut = cut_stars
-cut = cut_2_sharp_turn
+#cut = cut_2_sharp_turn
 
 if len(sys.argv) > 1:
   str=open(sys.argv[1]).readlines()
@@ -210,7 +210,7 @@ def key_press(win, ev, c):
       if key == 'f':
         ## place forward pointing arrows
         p = Points([(ox,oy),(cx,cy)])
-        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.2, end_arrow="True", stroke_color_rgba=0x00000033))
+        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.3, end_arrow="True", stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
     print new_idx, c.points[c.cursor_idx][0].attr
   else:
@@ -251,7 +251,7 @@ def main ():
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
 
-    mf = MatFree(preset='default')
+    mf = MatFree(preset='pyramids')
     new_cut = mf.apply(cut)
 
     canvas.points = [ None ]
@@ -279,9 +279,10 @@ def main ():
         text.scale(.05,.05)
       
     
-    if len(canvas.points) == 0:
+    if len(canvas.points) <= 1:
       rect = Rect(parent=root, x=1, y=1, width=3,  height=2,
                   fill_color = '#77ff77', stroke_color = 'black', line_width = .01)
+      print "Dummy rectangle drawn. No points in canvas."
     else:
       cursor_p = Points([(-0.5,0),(0,0.5),(0.5,0),(0,-0.5),(-0.5,0)])
       canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)

@@ -1,6 +1,6 @@
 # (c) 2013 jw@suse.de
 #
-# cut strategy algorithms for a Graphtec Silhouette Cameo plotter.
+# Strategy.py -- cut strategy algorithms for a Graphtec Silhouette Cameo plotter.
 #
 # In order to support operation without a cutting mat, a strategic
 # rearrangement of cuts is helpful.
@@ -29,10 +29,14 @@
 # 2013-05-31, jw, V1.3  -- renamed sharp_turn() to sharp_turn_90, added sharp_turn_45(), sharp_turn_63()
 #                          Using .x, .y syntax provided by class XY_a() instead of [0], [1] everywhere.
 #                          ccw() and sharp_turn*() now global. No class needed.
+#                          Using class Barrier from Geomentry in the main loop of pyramids_barrier()
 
 import copy
 import math
 import sys      # only for debug printing.
+
+from silhouette.Geometry import *
+
 
 presets = {
   'default': {
@@ -64,137 +68,6 @@ presets = {
     'verbose': 2
   }
 }
-
-## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-def ccw(A,B,C):
-  return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
-
-
-def sharp_turn_90(A,B,C):
-  """Given the path from A to B to C as two line segments.
-     Return true, if the corner at B is more than +/- 90 degree.
-
-     Algorithm:
-     For the segment A-B, we construct the normal B-D. 
-     The we test, if points A and C lie on the same side of the line(!) B-D.
-     If so, it is a sharp turn.
-
-     This 90 deg algoritm is a simplified (and faster) version of the general case
-     sharp_turn() using a fwd_ratio.
-  """
-  dx = B.x-A.x
-  dy = B.y-A.y
-  D = XY_a((B.x-dy, B.y+dx))        # BD is now the normal to AB
-
-  return ccw(A,B,D) == ccw(C,B,D)
-
-
-def sharp_turn_116(A,B,C):
-  """ A sharp turn of more than 116.565 degree.
-  """
-  return sharp_turn(A,B,C, -0.5)
-
-
-def sharp_turn_63(A,B,C):
-  """ A sharp turn of more than 63.435 degree.
-  """
-  return sharp_turn(A,B,C, 0.5)
-
-
-def sharp_turn_45(A,B,C):
-  """ A sharp turn of more than 45 degree.
-  """
-  return sharp_turn(A,B,C, 1.0)
-
-
-def sharp_turn_26(A,B,C):
-  """ A sharp turn of more than 26.565 degree.
-  """
-  return sharp_turn(A,B,C, 2.0)
-
-
-def sharp_turn(A,B,C,fwd_ratio):
-  """Given the path from A to B to C as two line segments.
-     Return true, if the corner at B is more than +/- cotan(fwd_ratio) degree.
-     fwd_ratio is the number of units we continue forward, for one unit we deviate sideways.
-     Examples: fwd_ratio=0: 90 deg. fwd_ratio=0.5: 63.435 deg
-               fwd_ratio=1: 45 deg, fwd_ratio=2: 26.565 deg
-               fwd_ratio=-.5: 116.565 deg.
-
-     Algorithm:
-     First we test if C is on the left or right of A-B. 
-     We will place D on the same side and remember the side for later.
-     For the segment A-B, we construct the normal B-D. 
-     Then we extend A-B to E so that distance |B-E| == |B-D|.
-     Now we use the weighted vector sum [BE]*fwd_ratio + [BD]*1 == [BF] to create 
-     the desired angle A-B-F
-
-     If C is left of AB and C is left of BF, then it is a sharp turn; or
-     If C is right of AB and C is right of BF, then it is a sharp turn; 
-     else not.
-
-  """
-  if fwd_ratio == 0.0: return sharp_turn_90(A,B,C)      # short cut.
-
-  dx = B.x-A.x
-  dy = B.y-A.y
-
-  dx_be = dx
-  dy_be = dy
-
-  ccw_abc = ccw(A,B,C)
-  if ccw_abc:
-    # D = (B.x-dy, B.y+dx)        # BD is now the normal to AB ...
-    dx_bd = -dy
-    dy_bd = +dx
-  else:
-    # D = (B.x+dy, B.y-dx)        # ... and C, D are on the same side of AB
-    dx_bd = +dy
-    dy_bd = -dx
-  F = XY_a((B.x+fwd_ratio*dx_be+1*dx_bd, B.y+fwd_ratio*dy_be+1*dy_bd))
-
-  return ccw(B,F,C) == ccw_abc
-
-
-
-class XY_a(tuple):
-  def __init__(self,t):
-    #super(XY_a, self).__init__(tuple(t))
-    tuple.__init__(t)
-    self.attr = {}
-  @property
-  def x(self):
-    return self[0]
-  @property
-  def y(self):
-    return self[1]
-  ## does not work because tuples are immutable:
-  # @x.setter
-  # def x(self, value):
-  #   super(XY_a,self)[0] = value
-
-class Barrier:
-  def __init__(self, key, points):
-    """Initialize a barrier by sorting the points according to the given
-       sort key. The barrier is placed on the first point, and can be 
-       moved by next(n=1) prev(n=1), first(), last(), pos(idx), or 
-       find(point). All these method return an index into the sorted list 
-       that can be used in pos(idx) or slice(idx1, idx2).
-    """
-    pass
-
-  def slice(self, idx1, idx2):
-    """return an ordered subset of the points between idx1 and idx2 
-       (both inclusive).
-       If idx2 is less than idx1, then the returned list is reverse sorted.
-    """
-    pass
-  
-  def __iter__(self):
-    """ An iterator for advancing next(). Quite useless?
-    """
-    pass
-
 
 class MatFree:
   def __init__(self, preset="default", scale=1.0, pen=None):
@@ -291,10 +164,6 @@ class MatFree:
       self.paths.append(new_path)
 
 
-  def dist_sq(s, A,B):
-    return (B.x-A.x)*(B.x-A.x) + (B.y-A.y)*(B.y-A.y)
-
-
   def link_points(s):
     """add segments (back and forth) between connected points.
     """
@@ -327,9 +196,9 @@ class MatFree:
       for pt in path:
         if len(new_path):
           A = new_path[-1]
-          dist_sq = s.dist_sq(s.points[A], s.points[pt])
-          if dist_sq > maxlen_sq:
-            dist = math.sqrt(dist_sq)
+          dist_a_pt_sq = dist_sq(s.points[A], s.points[pt])
+          if dist_a_pt_sq > maxlen_sq:
+            dist = math.sqrt(dist_a_pt_sq)
             nsub = int(dist/maxlen)
             seg_len = dist/float(nsub+1)
             dx = (s.points[pt].x - s.points[A].x)/float(nsub+1)
@@ -407,14 +276,14 @@ class MatFree:
     A = None
     B = None 
     for path in s.paths:
-      if B is not None and len(path) and s.dist_sq(B, s.points[path[0]]) > min_jump_sq:
+      if B is not None and len(path) and dist_sq(B, s.points[path[0]]) > min_jump_sq:
         # disconnect the path, if we jump more than 2mm
         A = None
         B = None
         
       for iC in path:
         C = s.points[iC]
-        if B is not None and s.dist_sq(B,C) < dup_eps_sq:
+        if B is not None and dist_sq(B,C) < dup_eps_sq:
           # less than 0.1 mm distance: ignore the point as a duplicate.
           continue
 
@@ -579,6 +448,7 @@ class MatFree:
         If not, the above algorithm may never end.
     """
     print y_slice, max_y
+    if max_y > 20: return None
     return max_y - 1
 
 
@@ -704,25 +574,21 @@ class MatFree:
       #
       return
 
-    ## first step sort the points into an additional list by ascending y.
-    def by_y_key(a):
-      return a.y
-    sy = sorted(s.points, key=by_y_key)
+    Y_bar = Barrier(s.points, key=lambda a: a[1])
 
     min_y = 0
     barrier_y = min_y + s.monotone_allow_back_travel
-    barrier_idx = 0     # pointing to the first element that is beyond.
     dir_toggle = True
+    len_todo = len(s.todo)
     while True:
-      print "barrier_idx:", barrier_idx, len(sy), barrier_y
-      while sy[barrier_idx].y < barrier_y:
-        barrier_idx += 1
-        if barrier_idx >= len(sy):
-          break
-      min_y = s.process_pyramids_barrier(sy[0:barrier_idx], barrier_y, left2right=dir_toggle)
-      dir_toggle = not dir_toggle
-      if min_y is None or barrier_idx >= len(sy):
+      Y_bar.find((0, barrier_y))
+      min_y = s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
+      if len(s.todo) == len_todo:
+        raise ValueError("todo list unchanged after process_pyramids_barrier(): "+str(len_todo))
+      len_todo = len(s.todo)
+      if min_y is None:
         break
+      dir_toggle = not dir_toggle
       barrier_y = min_y + s.monotone_allow_back_travel
     #
 
@@ -780,7 +646,7 @@ class MatFree:
        the split point.
     """
     def extend_b(A,B,travel):
-      d = math.sqrt(s.dist_sq(A,B))
+      d = math.sqrt(dist_sq(A,B))
       if d < 0.000001: return B         # cannot extrapolate if A == B
       ratio = travel/d
       dx = B.x-A.x

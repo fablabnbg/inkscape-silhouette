@@ -41,7 +41,8 @@
 #                        how long the buffered data will need.
 # 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
 # 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
-#                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax
+#                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax.
+#                        Split Geometry.py from Strategy.py; class Barrier implemented.
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')
@@ -135,20 +136,6 @@ def subdivideCubicPath( sp, flat, i=1 ):
                 p = [one[2], one[3], two[1]]
                 sp[i:1] = [p]
 
-
-def distanceSquared( P1, P2 ):
-
-        '''
-        Pythagorean distance formula WITHOUT the square root.  Since
-        we just want to know if the distance is less than some fixed
-        fudge factor, we can just square the fudge factor once and run
-        with it rather than compute square roots over and over.
-        '''
-
-        dx = P2[0] - P1[0]
-        dy = P2[1] - P1[1]
-
-        return ( dx * dx + dy * dy )
 
 
 class SendtoSilhouette(inkex.Effect):
