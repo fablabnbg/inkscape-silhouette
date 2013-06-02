@@ -229,6 +229,11 @@ class XY_a(tuple):
   # def x(self, value):
   #   super(XY_a,self)[0] = value
 
+  def att(self):        # a getter that hides the attr reference inside attr.
+    _a = self.attr.copy()
+    del(_a['attr'])
+    return _a
+
 
 class Barrier:
   def __init__(self, points, key):
@@ -237,6 +242,7 @@ class Barrier:
        moved by next(n=1) prev(n=1), first(), last(), pos(idx), or 
        find(point). All these method return an index into the sorted list 
        that can be used in pos(idx) or pslice(idx1, idx2).
+       Additional points can be added to an existing barrier with insert(point).
     """
     self.key=key
     self.points = sorted(points, key=key)
@@ -295,6 +301,8 @@ class Barrier:
   def pslice(self, first=0, last=None):
     """Returns a list of points that are beween the given indices. Ends inclusive.
        Last defaults to the current barrier position.
+       First defaults to 0, thus pslpice() without parameters returns the slice that 
+       the barrier has passed.
     """
     if last is None: last = self.idx
     return self.points[first:last+1]
@@ -316,6 +324,7 @@ class Barrier:
        If the targetpoint is beyond the the end, the barrier remains at the last point.
        Note: 'point(find(target)) == target' may or may not be true.
     """
+    ## SPEEDUP: uses a linear search. Look into bisect, just as with insert().
     saved_idx = self.idx
     if start is not None: self.idx = start
 
@@ -342,13 +351,46 @@ class Barrier:
     return self.idx     # stick at last point.
 
 
-  def slice(self, idx1, idx2):
-    """return an ordered subset of the points between idx1 and idx2 
-       (both inclusive).
-       If idx2 is less than idx1, then the returned list is reverse sorted.
+  def ahead(self, point):
+    """Return True if the given point is ahead of the current barrier position.
+       Returns False if the point is exactly at the barrier or behind.
+       The point need not belong to self.points . Calling ahead() is faster than 
+       find() when the exact index position for the point is not needed.
     """
-    pass
+    return self.key(point) > self.key(self.points[self.idx])
   
+  def insert(self, point):
+    """Insert a new point into the given barrier, while keeping the sort order.
+       Returns False if it is inserted in a position ahead of the 
+       current barrier position (to be reached with next() ).
+       Otherwise the current barrier position is incremented to refer to the same
+       element and True is returned.
+    """
+    ## SPEEDUP: A sequential scan is used.
+    ##  * Should use bisect and __cmp__, __lt__, __eq__.
+    ##  * Should call find() for doing all the bisecting.
+    ## http://bugs.python.org/issue4356 asks for adding a key= parameter to bisect, 
+    ## one of the reasons says: 
+    ##   The lack of key may as well encourage you to continue using linear searches, 
+    ##   or other sub-optimal solutions.
+    ## I chose the linear search for simplicity, as I fear hidden complexity while
+    ## tweaking compare functions.
+
+    insert_idx = len(self.points)       # if none is before, let insert become append.
+    insert_key = self.key(point)
+    for i in range(0,len(self.points)):
+      if self.key(self.points[i]) > insert_key:
+        insert_idx = i
+        break
+
+    # print "Barrier.insert", point, insert_idx, self.points
+    self.points.insert(insert_idx, point)
+    if insert_idx > self.idx:
+      return False      # ahead
+    self.idx += 1
+    return True         # behind.
+  
+
   def __iter__(self):
     """ An iterator for advancing next(). Quite useless?
     """

@@ -137,7 +137,7 @@ cut_1_sharp_turn = [[(6.447013888888888, 1.7197916666666666), (2.744745060833333
 cut_2_sharp_turn = [[(1,2.1), (2,2), (2.5,1)], [(1,3.1), (2,3), (3,2.5)],
                     [(1,4.1), (2,4), (3,4.5)], [(1,5.1), (2,5), (2.5,6)]]
 
-cut = cut_vertical_zigzag
+cut = cut_vertical_zigzag + [[(10,0.2),(12,0.3),(11,0.8)]]
 #cut = cut_stars
 #cut = cut_2_sharp_turn
 
@@ -214,7 +214,7 @@ def key_press(win, ev, c):
                 end_arrow=True, arrow_width=3, arrow_tip_length=2, arrow_length=2, 
                 stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
-    print new_idx, c.points[c.cursor_idx][0].attr
+    print new_idx, c.points[c.cursor_idx][0], c.points[c.cursor_idx][0].att()
   else:
     c.cursor.stop_animation()
 
@@ -253,8 +253,9 @@ def main ():
     win.connect("button-press-event", button_press)
     win.connect("button-release-event", button_release)
 
-    #mf = MatFree(preset='default')
+    #mf = MatFree(preset='nop')
     mf = MatFree(preset='pyramids')
+    #mf = MatFree(preset='default')
     new_cut = mf.apply(cut)
 
     canvas.points = [ None ]

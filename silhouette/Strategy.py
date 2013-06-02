@@ -16,7 +16,7 @@
 # 2013-05-23, jw, V0.2  -- dedup, subdivide, two options for sharp turn detectors added.
 #                          draft for simple_barrier() added.
 # 2013-05-25, jw, V0.3  -- corner_detect.py now jumps when not cutting.
-#                          Strategy.py: new code: mark_segment_done(), append_or_extend_simple().
+#                          Strategy.py: new code: unlink_segment(), append_or_extend_simple().
 #                          completed process_simple_barrier(), tested, debugged, verbose level reduced.
 #                          The current slicing and sharp corner strategy appears useful.
 # 2013-05-26, jw, V1.0  -- adopted version number from inkscape_silhouette package.
@@ -52,7 +52,7 @@ presets = {
     },
   'pyramids': {
     'pyramids_algorithm': True,
-    'monotone_allow_back_travel': 10.0,
+    'monotone_allow_back_travel': 5.0,
     'sharp_turn_fwd_ratio': 0.5,
     'overshoot': 0.2,     # works well with 80g paper
     'tool_pen': False,
@@ -350,7 +350,7 @@ class MatFree:
        Otherwise, the segment is appended as a new path.
     """
     if not 'output' in s.__dict__: s.output = []
-    if len(s.output) and s.verbose > 1:
+    if len(s.output) and s.verbose > 2:
       print >>sys.stderr, "append_or_extend_simple...", s.output[-1][-1], seg
 
     if len(s.output) > 0 and s.output[-1][-1].id == seg[0].id:
@@ -364,12 +364,17 @@ class MatFree:
     #
 
 
-  def mark_segment_done(s, A,B):
-    """process_simple_barrier ignores points and segments that have already been done.
-       We call process_simple_barrier() repeatedly, but we want each segment only once.
-       Also, a point with a sharp turn can be the start of a segment only once. 
-       All its other segments need to be drawn towards such a point.
-       mark_segment_done() places the needed markers for this logic.
+
+  def unlink_segment(s, A, B):
+    """Remove the segment [AB] from the s.points list. 
+       The segment is removed, by replacing its slot with a negative number.
+       The endpoints are marked with seen=True so that in case of a sharp turn, 
+       we know we can no longer start there.
+       If now A or B are without other active segments, A and/or B are dropped
+       entirely from s.points .
+
+       process_simple_barrier() and process_pyramids_barrier() ignore points and segments 
+       that have already been done. This asserts progress in the algorithms.
     """
     A.seen = True
     B.seen = True
@@ -390,6 +395,8 @@ class MatFree:
     if not a_seg_todo: s.points[iA] = None
     if not b_seg_todo: s.points[iB] = None
 
+
+
   def shortcut_segment(self, A, B, C):
     """ Asuming [AC],[CB] are segments (in A.seg, B.seg, C.seg)
         we remove C as the intermediate link and direcly connect [AB]
@@ -405,7 +412,7 @@ class MatFree:
         This also adds C to self.points .
     """
     a_seg_idx = None
-    print "A,B,C: ", A.attr, B.attr, C.attr
+    print >>sys.stderr, "subdivide_segment A,B,C: ", A.att(), B.att(), C.att()
     for n in range(0,len(A.seg)):
       if A.seg[n] == B.id:
         a_seg_idx = n
@@ -427,23 +434,28 @@ class MatFree:
     return C.id
  
 
-  def unlink_segment(s, A, B):
-    """remove the segment [AB] from the s.points list. 
-       A segment is removed, by replacing its slot with a negative number.
-       If now A or B are without other active segments, A and/or B are dropped
-       entirely from s.points .
-    """
-    raise ValueError("unlink_segment not impleented")
-    #  if B.seg[iS] == iA: B.seg[iS] = -iA or -1000000000
-
   def output_add(s, A, B, cut=False):
     """If cut=True, output the segment [AB] as a cut.
        Otherwise jump to B, starting a new path there.
        A is passed so that we can check that this is really the last point
        we have visited. If not, a jump to A is inserted, before the cut.
        If cut is False, we can directly jump the output list to B.
+
+       This is a simpler version of append_or_extend_simple(), which recombines
+       segments, into paths. We don't.
     """
-    print "output: cut=", cut, A, B
+    if not 'output' in s.__dict__: s.output = []
+    if s.verbose >= 1:
+      if len(s.output):
+        print >>sys.stderr, "output_add", s.output[-1][-1], A, B
+      else:
+        print >>sys.stderr, "output_add", None, A, B
+
+    if cut:
+      s.output.append([A,B])
+    else:
+      s.output.append([A])      # quite useless....
+      s.output.append([B])
       
 
   def process_pyramids_barrier(s, y_slice, max_y, left2right=True):
@@ -535,9 +547,11 @@ class MatFree:
     A = Xf_bar.point()
     while True:
       if A is None:
-        if Xf_bar.next() is None: break
+        Ai = Xf_bar.next()
+        if Ai is None: break
         A = Xf_bar.point()
         continue
+      print >>sys.stderr, "process_pyramids_barrier", A, A.att()
 
       B = None
       a_todo = 0
@@ -545,12 +559,33 @@ class MatFree:
         if Bi >= 0:                              # segment already done
           a_todo += 1
           pt = s.points[Bi]
-          if (left2right and pt.x >= A.x) or (not left2right and pt.x <= A.x):
-            if B is None or pt.y < B.y:         # find lowest y
-              B = pt
+          if left2right:
+            if pt.x >= A.x:
+              if B is None or not ccw(A,B,pt):   # find the leftmost of all [AB]
+                B = pt
+          else: # not left2right 
+            if pt.x <= A.x:
+              if B is None or ccw(A,B,pt):       # find the rightmost of all [AB]
+                B = pt
+
       if B is None:
+        print "no more forward segments", A, a_todo
+        Xb_bar.find(A, start=0)
         if a_todo == 0:
           s.points[A.id] = None                 # drop A
+        while True:
+          Ai = Xf_bar.next()
+          A = None
+          print >>sys.stderr, "xx next Ai candidate", Ai
+          if Ai is None: break
+          A = Xf_bar.point()
+          print >>sys.stderr, "xx next A candidate", A
+          if A is None: break
+          if not Xb_bar.ahead(A): 
+            break
+          else:
+            print >>sys.stderr, "process_pyramids_barrier jump: Ignored A, ahead of Xb_bar", A
+        print >>sys.stderr, "process_pyramids_barrier jump to next A", A
         continue                                # just advance Xf_bar: jump
       print "segment to check a), b)", A, B
 
@@ -570,6 +605,8 @@ class MatFree:
         # C2 = intersect_lines(A,B,XY_a((0,max_y)),XY_a((.5,max_y)))
         print "B below barrier, C=", C
         s.subdivide_segment(A,B,C)
+        Xf_bar.insert(C)
+        Xb_bar.insert(C)
         B,C = C,B
         # print A.seg, B.seg, C.seg
       #
@@ -597,10 +634,13 @@ class MatFree:
           if E is None: raise ValueError("finding a shadowed D failed:", A, B, D)
           E = XY_a(E)
           s.subdivide_segment(A,B,E)
+          Xf_bar.insert(E)
+          Xb_bar.insert(E)
           if C is not None:
             s.shortcut_segment(E,C,B)           # replace segments [EB], [BC] with [EC]
             B,C = C,B
           B,E = E,B
+
 
       # tentatively advance Xf_bar from A to B
       Xf_a_idx = Xf_bar.pos()                   # unused, we never move back to A.
@@ -608,7 +648,7 @@ class MatFree:
       print "line A,B:", A, B, Xf_a_idx, Xf_b_idx, Xf_bar.point(Xf_b_idx)
       F = None
       Xf_f_idx = None
-      for n in range(Xb_a_idx, Xb_b_idx+1):     # sweep from A to B
+      for n in range(Xf_a_idx, Xf_b_idx+1):     # sweep from A to B (inclusive)
         pt = Xf_bar.point(n)
         if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == False:      
           F = pt                                # found an F that is clearly right of AB.
@@ -622,24 +662,27 @@ class MatFree:
         if G is None: raise ValueError("finding a shadowed G failed:", A, B, F)
         G = XY_a(G)
         s.subdivide_segment(A,B,G)
+        Xf_bar.insert(G)
+        Xb_bar.insert(G)
         if E is not None:
           pass
           ## FIXME: should s.shortcut_segment(...E) something here.
         s.output_add(A,G,cut=True)
         s.unlink_segment(A,G)
-        Xf_bar.pos(Xf_f_idx-1)                # so that next() will run into F
+        Xf_bar.pos(Xf_f_idx)                 # advance
+        A = Xf_bar.point()
       #
       else:
         s.output_add(A,B,cut=True)
         s.unlink_segment(A,B)
-        Xf_bar.pos(Xf_b_idx-1)                # so that next() will run into B
-      sys.exit(0)
-    #
+        Xf_bar.pos(Xf_b_idx)                  # advance
+        A = Xf_bar.point()
 
+      if len(s.output) > 4:
+        sys.exit(0)
+    #
     ##  barrier has moved all the way to the other end.
-    print y_slice, max_y, A.attr, A.seg
-    if max_y > 20: return None
-    return max_y - 1
+    print >>sys.stderr, "barrier moved all the way", Xf_bar.points, max_y, A.att() if A else None, A.seg if A else None
 
 
   def process_simple_barrier(s, y_slice, max_y, last_x=0.0):
@@ -678,7 +721,7 @@ class MatFree:
           if min_x is None or min_x > pt.x: min_x = pt.x
           if max_x is None or max_x <  C.x: max_x =  C.x
           if max_x is None or max_x < pt.x: max_x = pt.x
-          s.mark_segment_done(C,pt)
+          s.unlink_segment(C,pt)
         #
       #
     #
@@ -759,27 +802,31 @@ class MatFree:
         s.output.append([])
         for idx in path:
           s.output[-1].append(s.points[idx])
-          if idx == 33: print s.points[idx].attr
+          # if idx == 33: print s.points[idx].att()
         #
       #
       return
 
-    Y_bar = Barrier(s.points, key=lambda a: a[1])
 
     min_y = 0
-    barrier_y = min_y + s.monotone_allow_back_travel
     dir_toggle = True
     len_output = len(s.output)
     while True:
-      Y_bar.find((0, barrier_y))
-      min_y = s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
-      if len(s.output) == len_output:
-        raise ValueError("output list unchanged after process_pyramids_barrier(): "+str(len_output))
-      len_output = len(s.output)
-      if min_y is None:
-        break
-      dir_toggle = not dir_toggle
+      ## always recreate the barrier, so that newly added subdivision points are seen.
+      Y_bar = Barrier(s.points, key=lambda a: a[1] if a else 0)
+      while Y_bar.point() is None:                        # skip forward dropped points
+        print >>sys.stderr, "Y_bar skipping idx", Y_bar.pos()
+        if Y_bar.next() is None:                          # next() returns an idx, except when hitting the end.
+          break
+      min_y = Y_bar.point().y
       barrier_y = min_y + s.monotone_allow_back_travel
+      print >>sys.stderr, "y-slice between", min_y, barrier_y
+      if len(s.output) > 2: sys.exit(0)
+      y_max_idx = Y_bar.find((0, barrier_y))
+      s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
+      print >>sys.stderr, "process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points)
+      print >>sys.stderr, "output so far: ", s.output
+      dir_toggle = not dir_toggle
     #
 
 
