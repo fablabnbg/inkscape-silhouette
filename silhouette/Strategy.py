@@ -450,6 +450,10 @@ class MatFree:
         print >>sys.stderr, "output_add", s.output[-1][-1], A, B
       else:
         print >>sys.stderr, "output_add", None, A, B
+    #
+    print >>sys.stderr, "...................................."
+    if len(s.output) > 5:
+      sys.exit(2)
 
     if cut:
       s.output.append([A,B])
@@ -538,8 +542,8 @@ class MatFree:
         If not, the above algorithm may never end.
 
     """
-    Xf_bar = Barrier(y_slice, key=lambda a: a[0]+a[1])        # forward:   / moving ->
-    Xb_bar = Barrier(y_slice, key=lambda a: -a[0]+a[1])       # backwards: \ moving <-
+    Xf_bar = Barrier(y_slice, key=lambda a:  a[0]+a[1] if a else 0) # forward:   / moving ->
+    Xb_bar = Barrier(y_slice, key=lambda a: -a[0]+a[1] if a else 0) # backwards: \ moving <-
 
     if not left2right:                                        # forward:   \ moving <-
       Xf_bar,Xb_bar = Xb_bar,Xf_bar                           # backwards: / moving ->
@@ -551,7 +555,7 @@ class MatFree:
         if Ai is None: break
         A = Xf_bar.point()
         continue
-      print >>sys.stderr, "process_pyramids_barrier", A, A.att()
+      print >>sys.stderr, "process_pyramids_barrier", left2right, A, A.att()
 
       B = None
       a_todo = 0
@@ -616,7 +620,9 @@ class MatFree:
       # Such a point would become our B.
       # This asserts that there is no other point, whose pyramid would bury B.
 
-      if B.x-A.x < B.y-A.y:                     # check b)
+      print "urks.", B.x-A.x, B.y-A.y
+      # check b)
+      if ((left2right and B.x-A.x < B.y-A.y) or (not left2right and A.x-B.x < B.y-A.y)):                     
         Xb_a_idx = Xb_bar.find(A, start=0)
         Xb_b_idx = Xb_bar.find(B)
         print "check b), moving Xb_bar from A to B", Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
@@ -641,7 +647,6 @@ class MatFree:
             B,C = C,B
           B,E = E,B
 
-
       # tentatively advance Xf_bar from A to B
       Xf_a_idx = Xf_bar.pos()                   # unused, we never move back to A.
       Xf_b_idx = Xf_bar.find(B)
@@ -650,7 +655,8 @@ class MatFree:
       Xf_f_idx = None
       for n in range(Xf_a_idx, Xf_b_idx+1):     # sweep from A to B (inclusive)
         pt = Xf_bar.point(n)
-        if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == False:      
+        if pt is None: continue
+        if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == (not left2right):      
           F = pt                                # found an F that is clearly right of AB.
           Xf_f_idx = n
           break
@@ -658,7 +664,8 @@ class MatFree:
           print "forward sweep ignoring pt", pt, Xf_bar.key(pt)
       #
       if F is not None:                       # compute intersection of Xb_bar with [AB]
-        G = intersect_lines(F,XY_a((F.x-1,F.y+1)),A,B,limit2=True)
+        _F_back = (F.x-1,F.y+1) if left2right else (F.x+1,F.y+1)
+        G = intersect_lines(F,XY_a(_F_back),A,B,limit2=True)
         if G is None: raise ValueError("finding a shadowed G failed:", A, B, F)
         G = XY_a(G)
         s.subdivide_segment(A,B,G)
@@ -678,9 +685,6 @@ class MatFree:
         Xf_bar.pos(Xf_b_idx)                  # advance
         A = Xf_bar.point()
 
-      if len(s.output) > 4:
-        sys.exit(0)
-    #
     ##  barrier has moved all the way to the other end.
     print >>sys.stderr, "barrier moved all the way", Xf_bar.points, max_y, A.att() if A else None, A.seg if A else None
 
@@ -821,7 +825,6 @@ class MatFree:
       min_y = Y_bar.point().y
       barrier_y = min_y + s.monotone_allow_back_travel
       print >>sys.stderr, "y-slice between", min_y, barrier_y
-      if len(s.output) > 2: sys.exit(0)
       y_max_idx = Y_bar.find((0, barrier_y))
       s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
       print >>sys.stderr, "process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points)
