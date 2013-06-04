@@ -43,7 +43,7 @@ presets = {
     'pyramids_algorithm': False,
     'corner_detect_min_jump': 2,
     'corner_detect_dup_epsilon': 0.1,
-    'monotone_allow_back_travel': 10.0,
+    'monotone_back_travel': 10.0,
     'sharp_turn_fwd_ratio': 0.0,
     'barrier_increment': 10.0,
     'overshoot': 0.2,     # works well with 80g paper
@@ -52,9 +52,10 @@ presets = {
     },
   'pyramids': {
     'pyramids_algorithm': True,
-    'monotone_allow_back_travel': 5.0,
+    'monotone_back_travel': 5.0,
     'sharp_turn_fwd_ratio': 0.5,
     'overshoot': 0.2,     # works well with 80g paper
+    'min_subdivide':0.5,
     'tool_pen': False,
     'do_slicing': True,
     'verbose': 1
@@ -80,9 +81,12 @@ class MatFree:
     self.do_subdivide = True
     self.do_slicing = True
     self.tool_pen = False
-    self.barrier_increment = 3.0
-    self.monotone_allow_back_travel = 3.0
-    self.sharp_turn_fwd_ratio = 0.99     # 0.5 == 63 deg
+    self.barrier_increment = 3.0        # used only in simple_barrier()
+    self.overshoot = 0.0
+    self.min_subdivide = 0.5            # may subdivide. if needed.
+    self.min_segmentlen = 0.1           # drop segments shorter than this.
+    self.monotone_back_travel = 3.0     # used in both, simple_barrier() and pyramids_barrier()
+    self.sharp_turn_fwd_ratio = 0.99    # 0.5 == 63 deg, 1.0 == 45 deg
     self.input_scale = scale
     self.pyramids_algorithm = False
 
@@ -90,6 +94,11 @@ class MatFree:
 
     if pen is not None:
       self.tool_pen = pen
+
+    self.min_subdivide_sq = self.min_subdivide * self.min_subdivide
+
+    # this avoids a busyloop after hitting Y_bar:
+    if self.min_segmentlen < 0.001: self.min_segmentlen = 0.001
 
     self.points = []
     self.points_dict = {}
@@ -148,7 +157,7 @@ class MatFree:
        Nodes are expected as tuples (x, y).
        We extract points into a seperate list, with attributes as a third 
        element to the tuple. Typical attributes to be added by other methods
-       are refcount (if commented in), sharp (by method mark_sharp_segs(), 
+       id, seg[] by method link_points(), sharp by method mark_sharp_segs(), 
        ...
     """
 
@@ -269,6 +278,8 @@ class MatFree:
        Assuming segment counts <= 2. Use mark_sharp_segs() for the general case.
        Downside: mark_sharp_segs() does not honor corner_detect_min_jump.
     """
+    ## Caution: unused code, but some nice ideas here: min_jump and dup_epsilon.  
+    ## We keept this code around for reference.
     min_jump_sq = s.corner_detect_min_jump * s.corner_detect_min_jump
     dup_eps_sq  = s.corner_detect_dup_epsilon * s.corner_detect_dup_epsilon
 
@@ -412,7 +423,7 @@ class MatFree:
         This also adds C to self.points .
     """
     a_seg_idx = None
-    print >>sys.stderr, "subdivide_segment A,B,C: ", A.att(), B.att(), C.att()
+    print >>sys.stderr, "subdivide_segment A,B,C: ", A,A.att(), B,B.att(), C,C.att()
     for n in range(0,len(A.seg)):
       if A.seg[n] == B.id:
         a_seg_idx = n
@@ -451,8 +462,8 @@ class MatFree:
       else:
         print >>sys.stderr, "output_add", None, A, B
     #
-    print >>sys.stderr, "...................................."
-    if len(s.output) > 5:
+    print >>sys.stderr, "\t...................................."
+    if len(s.output) > 14:
       sys.exit(2)
 
     if cut:
@@ -505,25 +516,38 @@ class MatFree:
            If we have a point C remembered from a), then replace segments [EB], [BC] with [EC]
            and garbage collect point B and swap back roles B and C.
            Let B and E swap names.
+        c) B is more than 45 degrees upwards from A. This overshadows A. But we ignore 
+           that A may have more segments to be done. We keep that B and consider 
+           the issue with A unsolvable.
+           Note that 'advancing' from A to B in this case is actually backwards in 
+           Xf_bar's view.
 
         If we now have no B, then we simply move the sideways barrier to reveal our 
         next A -- very likely a jump rather than a cut. If no todo segments are left in 
         the old A, drop that old A. Iterate.
 
-        But if we have a B, then we tentatively advance Xf_bar from A to B and 
-        record all new points F[] in the order we pass them. We don't care about them, if 
-        they are all 'below' (on the right hand side of) segment [AB].
-        For the first point F, that has ccw(A,B,F) == True, we position Xf_bar in F, if any.
-        If so, we compute point G as the intersection of Xf_bar with [AB]. Replace the segment 
-        [AB] by segments [AG], [GB]. We cut segment [AG]. We make F our next A - very likely a jump.
-        If no todo segments are left in the old A, drop that old A. Iterate.
+        But if we have a B and it is not case c), then we tentatively advance Xf_bar 
+        from A to B and record all new points F[] in the order we pass them. We
+        don't care about them, if they are all 'below' (on the right hand side
+        of) segment [AB].  For the first point F, that has ccw(A,B,F) == True,
+        we position Xf_bar in F, if any.  If so, we compute point G as the
+        intersection of Xf_bar with [AB]. Replace the segment [AB] by segments
+        [AG], [GB]. We cut segment [AG]. We make F our next A - very likely a
+        jump.  If no todo segments are left in the old A, drop that old A.
+        Iterate.
+
+        Exception for all subdivide actions above: if the segment is shorter than 
+        self.min_subdivide, then just keep it as is.
+        If subdividing produces segments shorter than self.min_segmentlen, then we later 
+        garbage collect such segments. overshoot shoud be more than min_segmentlen to 
+        compensate for this.
 
         If iteration exhausts, we are done with this processing sweep and
         report back the lowest remaining min_y coordinate of all points we left
         behind with segments todo. The next sweep will go the other direction.
 
         Caller should call us again with direction toggled the other way, and
-        possibly advancing max_y = min_y + monotone_allow_back_travel. The
+        possibly advancing max_y = min_y + monotone_back_travel. The
         variable barrier_increment is not used here, as we compute the
         increment.
 
@@ -563,6 +587,10 @@ class MatFree:
         if Bi >= 0:                              # segment already done
           a_todo += 1
           pt = s.points[Bi]
+          if A.y+s.min_segmentlen >= max_y and pt.y > A.y:
+            continue                             # Do not look downward when close to max_y.
+                                                 # This avoids a busyloop after hitting Y_bar:
+                                                 # ... subdiv, advance, retry, hit, subdiv, ...
           if left2right:
             if pt.x >= A.x:
               if B is None or not ccw(A,B,pt):   # find the leftmost of all [AB]
@@ -601,9 +629,11 @@ class MatFree:
         print "faked segment to check a), b)", A, B
       #
 
+      subdividable_ab = bool(dist_sq(A,B) > s.min_subdivide_sq)
+
       C = None
       E = None
-      if B.y > max_y:                           # check a)
+      if subdividable_ab and B.y > max_y:        # check a)
         C = XY_a((intersect_y(A,B, max_y), max_y))
         ## same, but more expensive:
         # C2 = intersect_lines(A,B,XY_a((0,max_y)),XY_a((.5,max_y)))
@@ -620,11 +650,11 @@ class MatFree:
       # Such a point would become our B.
       # This asserts that there is no other point, whose pyramid would bury B.
 
-      print "urks.", B.x-A.x, B.y-A.y
       # check b)
-      if ((left2right and B.x-A.x < B.y-A.y) or (not left2right and A.x-B.x < B.y-A.y)):                     
-        Xb_a_idx = Xb_bar.find(A, start=0)
-        Xb_b_idx = Xb_bar.find(B)
+      if (subdividable_ab and (
+          (left2right and B.x-A.x < B.y-A.y) or (not left2right and A.x-B.x < B.y-A.y))):                     
+        Xb_a_idx = Xb_bar.find(A, start=0)      # could also use lookup() here. It does not matter.
+        Xb_b_idx = Xb_bar.find(B)               # could also use lookup() here. It does not matter.
         print "check b), moving Xb_bar from A to B", Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
         D = None
         for n in range(Xb_a_idx, Xb_b_idx+1):   # sweep from A to B
@@ -649,19 +679,22 @@ class MatFree:
 
       # tentatively advance Xf_bar from A to B
       Xf_a_idx = Xf_bar.pos()                   # unused, we never move back to A.
-      Xf_b_idx = Xf_bar.find(B)
+      Xf_b_idx = Xf_bar.lookup(lambda b: b.id==B.id if b else False) 
+      if Xf_b_idx is None:                      # Should never happen!
+        print "Xf_bar.lookup(B)=None. B=",B     # Okayish fallback, but find() may return
+        Xf_b_idx = Xf_bar.find(B)               # a different point with the same key().
       print "line A,B:", A, B, Xf_a_idx, Xf_b_idx, Xf_bar.point(Xf_b_idx)
       F = None
       Xf_f_idx = None
       for n in range(Xf_a_idx, Xf_b_idx+1):     # sweep from A to B (inclusive)
         pt = Xf_bar.point(n)
         if pt is None: continue
-        if pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == (not left2right):      
+        if subdividable_ab and pt.id != A.id and pt.id != B.id and ccw(A,B,pt) == (not left2right):      
           F = pt                                # found an F that is clearly right of AB.
           Xf_f_idx = n
           break
         else:
-          print "forward sweep ignoring pt", pt, Xf_bar.key(pt)
+          print "forward sweep ignoring pt", n, pt, Xf_bar.key(pt)
       #
       if F is not None:                       # compute intersection of Xb_bar with [AB]
         _F_back = (F.x-1,F.y+1) if left2right else (F.x+1,F.y+1)
@@ -676,7 +709,7 @@ class MatFree:
           ## FIXME: should s.shortcut_segment(...E) something here.
         s.output_add(A,G,cut=True)
         s.unlink_segment(A,G)
-        Xf_bar.pos(Xf_f_idx)                 # advance
+        Xf_bar.pos(Xf_f_idx)                 # advance to F, further up on the same barrier as G
         A = Xf_bar.point()
       #
       else:
@@ -684,6 +717,7 @@ class MatFree:
         s.unlink_segment(A,B)
         Xf_bar.pos(Xf_b_idx)                  # advance
         A = Xf_bar.point()
+      print >>sys.stderr, "advanced A to",A
 
     ##  barrier has moved all the way to the other end.
     print >>sys.stderr, "barrier moved all the way", Xf_bar.points, max_y, A.att() if A else None, A.seg if A else None
@@ -812,23 +846,30 @@ class MatFree:
       return
 
 
-    min_y = 0
     dir_toggle = True
-    len_output = len(s.output)
+    old_min_y = -1e10
+    old_len_output = len(s.output)
     while True:
       ## always recreate the barrier, so that newly added subdivision points are seen.
       Y_bar = Barrier(s.points, key=lambda a: a[1] if a else 0)
       while Y_bar.point() is None:                        # skip forward dropped points
-        print >>sys.stderr, "Y_bar skipping idx", Y_bar.pos()
+        # print >>sys.stderr, "Y_bar skipping idx", Y_bar.pos()
         if Y_bar.next() is None:                          # next() returns an idx, except when hitting the end.
           break
       min_y = Y_bar.point().y
-      barrier_y = min_y + s.monotone_allow_back_travel
-      print >>sys.stderr, "y-slice between", min_y, barrier_y
+      barrier_y = min_y + s.monotone_back_travel
+      print >>sys.stderr, "\t>>>>>>>>>>>>>>> new Y-slice between", min_y, barrier_y
       y_max_idx = Y_bar.find((0, barrier_y))
       s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
-      print >>sys.stderr, "process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points)
-      print >>sys.stderr, "output so far: ", s.output
+      # print >>sys.stderr, "process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points)
+      # print >>sys.stderr, "output so far: ", s.output
+
+      if old_len_output == len(s.output) and old_min_y == min_y:
+        print >>sys.stderr, "pyramids_barrier aborted: no progress, stuck at min_y=",min_y
+        break;
+
+      old_len_output = len(s.output)
+      old_min_y = min_y
       dir_toggle = not dir_toggle
     #
 
@@ -911,7 +952,7 @@ class MatFree:
       self.mark_sharp_segs()
       self.pyramids_barrier() 
     else:
-      self.subdivide_segments(self.monotone_allow_back_travel)
+      self.subdivide_segments(self.monotone_back_travel)
       self.link_points()
       self.mark_sharp_segs()
       self.simple_barrier()

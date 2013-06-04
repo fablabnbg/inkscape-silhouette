@@ -314,7 +314,23 @@ class Barrier:
     if idx is None: return self.points[self.idx]
     return self.points[idx]
 
-  def find(self, targetpoint, backwards=False, start=None):
+  def lookup(self, match):
+    """Locate a point A where match(A) returns True.
+       The index of the first point that matches is returned. 
+       If there were no matches, None is returned.
+
+       This is different than find(), as it does not alter self.idx, always searches the full 
+       range, and uses a user provided predicate match instead of self.key() with a point.
+       Use lookup() when one particular point is sought, and find() 
+       could return another point that happens to share the same key() value.
+    """
+    ## SPEEDUP:  provide the lambda function to __init__ and build a hash 
+    ## that we can lookup by value here. (Would need a rebuild after insert(), but hey).
+    for i in range(0, len(self.points)):
+      if match(self.points[i]): return i
+    return None
+
+  def find(self, targetpoint, backwards=False, start=None, id=None):
     """Advance the barrier so that it cuts through targetpoint. This
        targetpoint need not be amongst the set of points for which the barrier
        was created. The index of the last point (from the set) that is still
@@ -332,7 +348,6 @@ class Barrier:
     if backwards == True:
       for i in reversed(range(0, self.idx+1)):
         if self.key(self.points[i]) <= key_limit:
-          self.idx = prev_idx
           return self.idx
       self.idx = 0
       return self.idx     # stick at first point.
