@@ -50,3 +50,9 @@ TODO:
 
 * Implement paper-zip as a seperate inkscape extension. 
 
+REFERENCES:
+There is very little documentation about extensions. If so, its often historic.
+* http://wiki.inkscape.org/wiki/index.php/Extensions
+* http://wiki.inkscape.org/wiki/index.php/INX_Parameters
+* http://wiki.inkscape.org/wiki/index.php/ExtensionsSystem
+

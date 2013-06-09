@@ -31,9 +31,9 @@
 #                          ccw() and sharp_turn*() now global. No class needed.
 #                          Using class Barrier from Geomentry in the main loop of pyramids_barrier()
 
-import copy
-import math
-import sys      # only for debug printing.
+import copy     # deepcopy
+import math     # sqrt
+import sys      # maxsize
 
 from silhouette.Geometry import *
 
@@ -394,10 +394,10 @@ class MatFree:
     a_seg_todo = False
     b_seg_todo = False
     for iS in range(len(A.seg)):
-      if A.seg[iS] == iB: A.seg[iS] = -iB or -1000000000
+      if A.seg[iS] == iB: A.seg[iS] = -iB or -sys.maxsize
       if A.seg[iS] >= 0: a_seg_todo = True
     for iS in range(len(B.seg)):
-      if B.seg[iS] == iA: B.seg[iS] = -iA or -1000000000
+      if B.seg[iS] == iA: B.seg[iS] = -iA or -sys.maxsize
       if B.seg[iS] >= 0: b_seg_todo = True
 
     # CAUTION: is this really helpful?:
@@ -415,7 +415,37 @@ class MatFree:
         C has no other segments.
         This is the opposite of subdivide_segment()
     """
-    raise ValueError("shortcut_segment not implemented. A,B,C: ", A, B, C)
+    a_seg_idx = None
+    for n in range(0,len(A.seg)):
+      if A.seg[n] == C.id:
+        a_seg_idx = n
+        break
+    b_seg_idx = None
+    for n in range(0,len(B.seg)):
+      if B.seg[n] == C.id:
+        b_seg_idx = n
+        break
+    c_a_seg_idx = None
+    for n in range(0,len(C.seg)):
+      if C.seg[n] == A.id:
+        c_a_seg_idx = n
+        break
+    c_b_seg_idx = None
+    for n in range(0,len(C.seg)):
+      if C.seg[n] == B.id:
+        c_b_seg_idx = n
+        break
+    if None in (a_seg_idx, b_seg_idx, c_a_seg_idx, c_b_seg_idx):
+      raise ValueError("shortcut_segment cannot find [AC] and [CB] seg.", a_seg_idx, b_seg_idx, c_a_seg_idx, c_b_seg_idx)
+    A.seg[a_seg_idx] = B.id
+    B.seg[b_seg_idx] = A.id
+    C.seg[c_a_seg_idx] = -A.id or -sys.maxsize
+    C.seg[c_b_seg_idx] = -B.id or -sys.maxsize
+    if len(C.seg) == 2:
+      C.attr['obsolete'] = True
+      self.points[C.id] = None
+      print >> sys.stderr, "shortcut_segment: point C obsoleted. A,B,C:", A, B, C, C.att()
+
 
   def subdivide_segment(self, A, B, C):
     """ Asuming [AB] is a segment (A.seg has B and B.seg has A),
@@ -454,6 +484,11 @@ class MatFree:
 
        This is a simpler version of append_or_extend_simple(), which recombines
        segments, into paths. We don't.
+
+       Caller is responsible to postprocess afterwards:
+       * remove pathological short segments.
+       * flip segments so that we can
+       * recombine segments into paths.
     """
     if not 'output' in s.__dict__: s.output = []
     if s.verbose >= 1:
@@ -463,7 +498,7 @@ class MatFree:
         print >>sys.stderr, "output_add", None, A, B
     #
     print >>sys.stderr, "\t...................................."
-    if len(s.output) > 14:
+    if len(s.output) > 24:
       sys.exit(2)
 
     if cut:
@@ -655,7 +690,7 @@ class MatFree:
           (left2right and B.x-A.x < B.y-A.y) or (not left2right and A.x-B.x < B.y-A.y))):                     
         Xb_a_idx = Xb_bar.find(A, start=0)      # could also use lookup() here. It does not matter.
         Xb_b_idx = Xb_bar.find(B)               # could also use lookup() here. It does not matter.
-        print "check b), moving Xb_bar from A to B", Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
+        print "check b), moving Xb_bar from A to B", A, B, Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
         D = None
         for n in range(Xb_a_idx, Xb_b_idx+1):   # sweep from A to B
           pt = Xb_bar.point(n)
@@ -699,7 +734,7 @@ class MatFree:
       if F is not None:                       # compute intersection of Xb_bar with [AB]
         _F_back = (F.x-1,F.y+1) if left2right else (F.x+1,F.y+1)
         G = intersect_lines(F,XY_a(_F_back),A,B,limit2=True)
-        if G is None: raise ValueError("finding a shadowed G failed:", A, B, F)
+        if G is None: raise ValueError("finding a shadowed G failed:", A, B, F, _F_back)
         G = XY_a(G)
         s.subdivide_segment(A,B,G)
         Xf_bar.insert(G)

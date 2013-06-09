@@ -43,6 +43,7 @@
 # 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
 #                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax.
 #                        Split Geometry.py from Strategy.py; class Barrier implemented.
+#
 
 import sys, os, shutil, time, logging
 sys.path.append('/usr/share/inkscape/extensions')

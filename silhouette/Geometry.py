@@ -134,14 +134,17 @@ def intersect_lines(A,B,C,D, limit1=False, limit2=False):
   def _in_segment(A,B,x,y):
     """ simplified segment test, 
         knowing that point (x,y) is colinar to AB.
+
+        We apply tolerance _eps, so that points that are "exactly" on the endpoint
+        are safely included.
     """
     # print "intersect_lines:_in_segment", A, B, x, y
     if (abs(A.x-B.x) > _eps):            # AB is not vertial, test x-coordinate
-      if A.x <= x and x <= B.x: return True
-      if A.x >= x and x >= B.x: return True
+      if A.x <= x+_eps and x-_eps <= B.x: return True
+      if A.x >= x-_eps and x+_eps >= B.x: return True
     else:                               # test y-coordinate
-      if A.y <= y and y <= B.y: return True
-      if A.y >= y and y >= B.y: return True
+      if A.y <= y+_eps and y-_eps <= B.y: return True
+      if A.y >= y-_eps and y+_eps >= B.y: return True
     return False                        # No, (x,y) is outside of [AB].
 
   # from http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=geometry2
