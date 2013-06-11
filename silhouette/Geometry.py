@@ -215,10 +215,34 @@ def intersect_y(A,B,y_boundary, limit=False):
   """
   return _intersect_y5(A.x, A.y, B.x, B.y, y_boundary, limit)
 
+class XY_Grid_Factory:
+  def __init__(self, spacing=0.5):
+    self.serial = 0
+    # seperatly aplied to x and y
+    self.min_dist = spacing if spacing > _eps else _eps
+    self.near = {}
+  
+  def XY_a(self, t):
+    x0 = int(float(t[0])/self.min_dist)
+    y0 = int(float(t[1])/self.min_dist)
+    h0 = str(x0+0)+'/'+str(y0+0)
+    h1 = str(x0+1)+'/'+str(y0+0)
+    h2 = str(x0+0)+'/'+str(y0+1)
+    h3 = str(x0+1)+'/'+str(y0+1)
+    if h0 in self.near: return self.near[h0]
+    if h1 in self.near: return self.near[h1]
+    if h2 in self.near: return self.near[h2]
+    if h3 in self.near: return self.near[h3]
+    xy = XY_a(((x0+0.5)*self.min_dist, (y0+0.5)*self.min_dist))
+    self.near[h0] = self.near[h1] = self.near[h2] = self.near[h3] = xy
+    xy.serial = self.serial
+    self.serial += 1
+    return xy
+    
 
 class XY_a(tuple):
   def __init__(self,t):
-    #super(XY_a, self).__init__(tuple(t))
+    # super(XY_a, self).__init__(tuple(t))
     tuple.__init__(t)
     self.attr = self.__dict__
   @property

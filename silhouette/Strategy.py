@@ -451,9 +451,16 @@ class MatFree:
     """ Asuming [AB] is a segment (A.seg has B and B.seg has A),
         we insert C as an intermediate link [AC],[CB].
         This also adds C to self.points .
+        Returns True, if subdivision was done. 
+        Returns False, if [AB] was shorter than min_subdivide.
     """
-    a_seg_idx = None
     print >>sys.stderr, "subdivide_segment A,B,C: ", A,A.att(), B,B.att(), C,C.att()
+    if dist_sq(A, B) < self.min_subdivide_sq:
+      print >>sys.stderr, " ---- too short, nothing done."
+      # should be caught earlier!
+      sys.exit(0)
+
+    a_seg_idx = None
     for n in range(0,len(A.seg)):
       if A.seg[n] == B.id:
         a_seg_idx = n
@@ -472,7 +479,7 @@ class MatFree:
     A.seg[a_seg_idx] = C.id
     B.seg[b_seg_idx] = C.id
     C.seg = [A.id,B.id]
-    return C.id
+    return True
  
 
   def output_add(s, A, B, cut=False):
@@ -498,7 +505,7 @@ class MatFree:
         print >>sys.stderr, "output_add", None, A, B
     #
     print >>sys.stderr, "\t...................................."
-    if len(s.output) > 24:
+    if len(s.output) > 30:
       sys.exit(2)
 
     if cut:
@@ -507,6 +514,15 @@ class MatFree:
       s.output.append([A])      # quite useless....
       s.output.append([B])
       
+
+  def _dump_all(s):
+    """ dump all points in a readable way.
+    """
+    for iP in range(0,len(s.points)):
+      pt = s.points[iP]
+      if pt is None: continue
+      a = pt.att() if pt else None
+      print iP, ": ", pt, a
 
   def process_pyramids_barrier(s, y_slice, max_y, left2right=True):
     """ finding the next point involves overshadowing other points.
@@ -729,7 +745,7 @@ class MatFree:
           Xf_f_idx = n
           break
         else:
-          print "forward sweep ignoring pt", n, pt, Xf_bar.key(pt)
+          print "forward sweep ignoring pt", n, pt, pt.id, Xf_bar.key(pt)
       #
       if F is not None:                       # compute intersection of Xb_bar with [AB]
         _F_back = (F.x-1,F.y+1) if left2right else (F.x+1,F.y+1)
