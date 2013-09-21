@@ -6,7 +6,25 @@ An extension to drive a Silhoutte Cameo from within inkscape.
 
 Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
 
-Features: 
+Installation
+------------
+
+Copy the the folder silhouette and the two files sendto_silhouette.inx and 
+sendto_silhouette.py to your computer:
+
+Linux:
+*  ~/.config/inkscape/extensions/ or
+*  /usr/share/inkscape/extensions/
+
+Windows (untested): 
+*  C:\Program Files\Inkscape\share\extensions\ .
+
+Mac OS X (untested, usb.core.find() does not find any devices???): 
+*  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
+
+Features
+--------
+
 * Path sorting for monotonic cut. We limit backwards movement to only a few 
   millimeters, and make the knive pull only towards sharp edges so that most
   designs can be done without a cutting mat!
@@ -30,13 +48,17 @@ Features:
   helpful with mat-free cutting via multipass.
 * honors hidden layers.
 
-Misfeatures of InkCut that we do not 'feature':
+Misfeatures of InkCut that we do not 'feature'
+----------------------------------------------
+
 * transforms are missing most of the time.
 * Stars, polygons, and boxes are plotted not closed, the final stroke 
   is missing. (Must be me, no?)
 * always plots all layers, even if hidden.
 
-TODO:
+TODO
+----
+
 * Find out, if inkscape could keep the current selection, after running an
   extension.  It is not nice, that the selection gets deselected, and I have
   to close and reopen the extension dialogue to re-activate a selection.
@@ -50,7 +72,9 @@ TODO:
 
 * Implement paper-zip as a seperate inkscape extension. 
 
-REFERENCES:
+REFERENCES
+----------
+
 There is very little documentation about extensions. If so, its often historic.
 * http://wiki.inkscape.org/wiki/index.php/Extensions
 * http://wiki.inkscape.org/wiki/index.php/INX_Parameters
