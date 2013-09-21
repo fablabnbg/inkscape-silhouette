@@ -19,8 +19,24 @@ Linux:
 Windows (untested): 
 *  C:\Program Files\Inkscape\share\extensions\ .
 
-Mac OS X (untested, usb.core.find() does not find any devices???): 
+Mac OS X (untested)
+*  easy_install lxml
+*  easy_install pyusb
 *  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
+*  Read the eror message 'no backend available'
+*  work some unknown magic, so that devices are found.
+
+Troubleshooting
+---------------
+
+ python
+ >>> import usb.core
+ >>> usb.core.find()
+ <usb.core.Device object at 0xb720fb8c>
+ >>> 
+
+If this reports no usb.core.Device to you, please help troubleshoot.
+
 
 Features
 --------
@@ -51,7 +67,7 @@ Features
 Misfeatures of InkCut that we do not 'feature'
 ----------------------------------------------
 
-* transforms are missing most of the time.
+* object transforms are missing most of the time.
 * Stars, polygons, and boxes are plotted not closed, the final stroke 
   is missing. (Must be me, no?)
 * always plots all layers, even if hidden.
