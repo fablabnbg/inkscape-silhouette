@@ -43,6 +43,7 @@
 # 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
 #                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax.
 #                        Split Geometry.py from Strategy.py; class Barrier implemented.
+# 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
 #
 
 import sys, os, shutil, time, logging
@@ -62,7 +63,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.3'
+__version__ = '1.4'
 __author__ = 'Juergen Weigert <jnweiger@gmail.com>'
 
 N_PAGE_WIDTH = 3200

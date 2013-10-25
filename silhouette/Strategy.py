@@ -798,6 +798,8 @@ class MatFree:
     for pt in y_slice:
       if pt is None:            # all segments to that point are done.
         continue
+      if not 'seg' in pt.attr:  # shit happens
+        continue
       for iC in pt.seg:
         if iC < 0:              # this segment is done.
           continue
