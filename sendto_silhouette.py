@@ -11,6 +11,10 @@
 # - http://code.google.com/p/eggbotcode/
 # - http://www.bobcookdev.com/inkscape/better_dxf_output.zip
 #
+# Porting to OSX
+# - https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
+# - https://github.com/pmonta/gerber2graphtec/blob/master/README
+#
 # 2013-05-09 jw, V0.1 -- initial draught
 # 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
 # 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
@@ -44,10 +48,22 @@
 #                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax.
 #                        Split Geometry.py from Strategy.py; class Barrier implemented.
 # 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
+# 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
+#                        working code on windows and macosx too. Still linux only.
 #
 
 import sys, os, shutil, time, logging
-sys.path.append('/usr/share/inkscape/extensions')
+
+sys_platform = sys.platform.lower()
+if sys_platform.startswith('win'):
+  sys.path.append('C:\Program Files\Inkscape\share\extensions')
+
+elif sys_platform.startswith('darwin'):
+  sys.path.append('/Applications/Inkscape.app/Contents/Resources/extensions')
+
+else:   # linux
+  # if sys_platform.startswith('linux'):
+  sys.path.append('/usr/share/inkscape/extensions')
 
 # We will use the inkex module with the predefined Effect base class.
 import inkex
@@ -63,8 +79,8 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.4'
-__author__ = 'Juergen Weigert <jnweiger@gmail.com>'
+__version__ = '1.5'
+__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800

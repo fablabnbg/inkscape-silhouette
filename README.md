@@ -18,6 +18,7 @@ Linux:
 
 Windows (untested): 
 *  C:\Program Files\Inkscape\share\extensions\ .
+*  install the device driver on the install cd, which they provide really just to quiet the win messages that you get. This indeed made the device a printer.
 
 Mac OS X (untested)
 *  easy_install lxml
@@ -25,6 +26,15 @@ Mac OS X (untested)
 *  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
 *  Read the eror message 'no backend available'
 *  work some unknown magic, so that devices are found.
+
+* Ideas taken from https://github.com/pmonta/gerber2graphtec
+**  install XCode and macports
+**  port install gerbv
+**  port install pstoedit
+**  port install libusb
+**  Download and install this package: http://pypi.python.org/pypi/libusb1 with the usual "python setup.py install" installation method.
+**  https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
+
 
 Troubleshooting
 ---------------

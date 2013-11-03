@@ -1,9 +1,19 @@
 # (c) 2013 jw@suse.de
 # driver for a Graphtec Silhouette Cameo plotter.
 # modelled after https://github.com/nosliwneb/robocut.git 
+# https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 #
-import sys, time, usb.core
-    
+import sys, time 
+
+sys_platform = sys.platform.lower()
+if sys_platform.startswith('win'):
+  import usb.core
+elif sys_platform.startswith('darwin'):
+  import usb1
+  usb1ctx = usb1.USBContext()
+else:   # if sys_platform.startswith('linux'):
+  import usb.core
+
 # taken from 
 #  robocut/CutDialog.ui
 #  robocut/CutDialog.cpp
@@ -87,30 +97,55 @@ class SilhouetteCameo:
       self.hardware = { 'name': 'Crashtest Dummy Device' }
     else:
       for hardware in DEVICE:
-        dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
+        if sys_platforms.startswith('win'):
+          print >>self.log, "device lookup under windows not implemented. Help adding code!"
+          dev = None
+
+        elif sys_platforms.startswith('darwin'):
+          dev = usb1ctx.openByVendorIDAndProductID(hardware['vendor_id'], hardware['product_id'])
+
+        else:   # linux
+          dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
         if dev:
           self.hardware = hardware
           break
 
       if dev is None:
-        dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
-        self.hardware = { 'name': 'Unknown Graphtec device' }
+        if sys_platform.startswith('win'): 
+          print >>self.log, "device fallback under windows not implemented. Help adding code!"
+
+        elif sys_platform.startswith('darwin'):
+          print >>self.log, "device fallback under macosx not implemented. Help adding code!"
+
+        else:   # linux
+          dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
+          self.hardware = { 'name': 'Unknown Graphtec device' }
 
       if dev is None:
         raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
       print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
 
-      if dev.is_kernel_driver_active(0):
-        print >>self.log, "is_kernel_driver_active(0) returned nonzero"
-        if dev.detach_kernel_driver(0):
-          print >>self.log, "detach_kernel_driver(0) returned nonzero"
-      dev.reset();
+      if sys_platforms.startswith('win'):
+        print >>self.log, "device init under windows not implemented. Help adding code!"
 
-      dev.set_configuration()
-      try:
-        dev.set_interface_altsetting()      # Probably not really necessary.
-      except usb.core.USBError:
-        pass
+      elif sys_platforms.startswith('darwin'):
+        dev.claimInterface(0)
+        print >>self.log, "device write under macosx not implemented? Check the code!"
+        # usb_enpoint = 1
+        # dev.bulkWrite(usb_endpoint, data)
+
+      else:     # linux
+        if dev.is_kernel_driver_active(0):
+          print >>self.log, "is_kernel_driver_active(0) returned nonzero"
+          if dev.detach_kernel_driver(0):
+            print >>self.log, "detach_kernel_driver(0) returned nonzero"
+        dev.reset();
+
+        dev.set_configuration()
+        try:
+          dev.set_interface_altsetting()      # Probably not really necessary.
+        except usb.core.USBError:
+          pass
 
     self.dev = dev
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
