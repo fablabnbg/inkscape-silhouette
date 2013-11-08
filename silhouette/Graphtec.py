@@ -97,11 +97,11 @@ class SilhouetteCameo:
       self.hardware = { 'name': 'Crashtest Dummy Device' }
     else:
       for hardware in DEVICE:
-        if sys_platforms.startswith('win'):
+        if sys_platform.startswith('win'):
           print >>self.log, "device lookup under windows not implemented. Help adding code!"
           dev = None
 
-        elif sys_platforms.startswith('darwin'):
+        elif sys_platform.startswith('darwin'):
           dev = usb1ctx.openByVendorIDAndProductID(hardware['vendor_id'], hardware['product_id'])
 
         else:   # linux
@@ -125,10 +125,10 @@ class SilhouetteCameo:
         raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
       print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
 
-      if sys_platforms.startswith('win'):
+      if sys_platform.startswith('win'):
         print >>self.log, "device init under windows not implemented. Help adding code!"
 
-      elif sys_platforms.startswith('darwin'):
+      elif sys_platform.startswith('darwin'):
         dev.claimInterface(0)
         print >>self.log, "device write under macosx not implemented? Check the code!"
         # usb_enpoint = 1
