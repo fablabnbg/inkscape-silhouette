@@ -12,7 +12,12 @@ elif sys_platform.startswith('darwin'):
   import usb1
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
-  import usb.core
+  try:
+    import usb.core
+  except:
+    print >>sys.stderr, "The python usb module could not be found. Try"
+    print >>sys.stderr, "\t sudo zypper in python-usb"
+    sys.exit(0)
 
 # taken from 
 #  robocut/CutDialog.ui
@@ -122,7 +127,7 @@ class SilhouetteCameo:
           self.hardware = { 'name': 'Unknown Graphtec device' }
 
       if dev is None:
-        raise ValueError('No Graphtec Silhouette devices found. Check USB and Power')
+        raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.')
       print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
 
       if sys_platform.startswith('win'):
