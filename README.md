@@ -15,15 +15,17 @@ sendto_silhouette.py to your computer:
 Linux:
 *  ~/.config/inkscape/extensions/ or
 *  /usr/share/inkscape/extensions/
+* and run '''sudo zypper in python-usb'''
+
 
 Windows (untested): 
 *  C:\Program Files\Inkscape\share\extensions\ .
 *  install the device driver on the install cd, which they provide really just to quiet the win messages that you get. This indeed made the device a printer.
 
 Mac OS X (untested)
+*  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
 *  easy_install lxml
 *  easy_install pyusb
-*  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
 *  Read the eror message 'no backend available'
 *  work some unknown magic, so that devices are found.
 
@@ -84,6 +86,8 @@ Misfeatures of InkCut that we do not 'feature'
 
 TODO
 ----
+
+* Implement the triangle in a square test cut.
 
 * Find out, if inkscape could keep the current selection, after running an
   extension.  It is not nice, that the selection gets deselected, and I have
