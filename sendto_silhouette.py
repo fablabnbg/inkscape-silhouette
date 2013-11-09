@@ -50,7 +50,7 @@
 # 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
 # 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
 #                        working code on windows and macosx too. Still linux only.
-#
+# 2013-11-08 jw, v1.6 -- supporting mm in getLength().
 
 import sys, os, shutil, time, logging
 
@@ -79,7 +79,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.5'
+__version__ = '1.6'
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
@@ -99,7 +99,7 @@ def parseLengthWithUnits( str ):
         '''
         Parse an SVG value which may or may not have units attached
         This version is greatly simplified in that it only allows: no units,
-        units of px, and units of %.  Everything else, it returns None for.
+        units of px, mm, and %.  Everything else, it returns None for.
         There is a more general routine to consider in scour.py if more
         generality is ever needed.
         '''
@@ -108,10 +108,12 @@ def parseLengthWithUnits( str ):
         s = str.strip()
         if s[-2:] == 'px':
                 s = s[:-2]
+        elif s[-2:] == 'mm':
+                u = 'mm'
+                s = s[:-2]
         elif s[-1:] == '%':
                 u = '%'
                 s = s[:-1]
-
         try:
                 v = float( s )
         except:
@@ -791,17 +793,21 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 str = self.document.getroot().get( name )
+                print >>self.tty, "getLength.str", str
                 if str:
                         v, u = parseLengthWithUnits( str )
+                        print >>self.tty, "parseLengthWithUnits: ", str, u, v
                         if not v:
                                 # Couldn't parse the value
                                 return None
                         elif ( u == '' ) or ( u == 'px' ):
                                 return v
+                        elif u == 'mm':
+                                return v*90./25.4       # inverse of px2mm
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
-                                # Unsupported units
+                                print >>sys.stderr, "unknown unit ", u
                                 return None
                 else:
                         # No width specified; assume the default value
@@ -817,7 +823,9 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 self.docHeight = self.getLength( 'height', N_PAGE_HEIGHT )
+                print >>self.tty, "7 self.docWidth=", self.docWidth
                 self.docWidth = self.getLength( 'width', N_PAGE_WIDTH )
+                print >>self.tty, "8 self.docWidth=", self.docWidth
                 if ( self.docHeight == None ) or ( self.docWidth == None ):
                         return False
                 else:
