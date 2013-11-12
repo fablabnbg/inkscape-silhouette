@@ -19,8 +19,15 @@ Linux:
 
 
 Windows (untested): 
-*  C:\Program Files\Inkscape\share\extensions\ .
-*  install the device driver on the install cd, which they provide really just to quiet the win messages that you get. This indeed made the device a printer.
+    * Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
+    * Download and install the free test version of **winzip** from http://www.winzip.com
+    * Navigate to your Downloads folder and double-click on **inkscape-silhouette-master.zip**
+    * Click open the **inkscape-silhouette-master** folder.
+    * Select the following three items (with Ctrl-Click): **silhouette**, **sendto_silhouette.inx**, and **sendto_silhouette.py**
+    * Extract to My Computer **C:\Program Files\Inkscape\share\extensions**
+    * untested: if you have a Silhouette Studio CD, install the device driver. Then your Silhouette Cameo may show up as a printer device and the extension could now work. If not, installing pywinusb might help.
+    * Restart inkscape
+
 
 Mac OS X (untested)
 *  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
