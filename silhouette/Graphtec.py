@@ -3,7 +3,7 @@
 # modelled after https://github.com/nosliwneb/robocut.git 
 # https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 #
-import sys, time 
+import sys, time
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -87,18 +87,26 @@ def _bbox_extend(bb, x, y):
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr, dummy=False, progress_cb=None):
+  def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width 
         (currently Cameo and Portrait). Otherwise it is right hand side. 
         Use setup() to specify your needs.
+
+        If no_device is True, the usb device is not actually opened, and all
+        generated data is discarded.
+
+        The progress_cb is called with the following parameters:
+        int(strokes_done), int(strikes_total), str(status_flags)
+        The status_flags contain 't' when there was a (non-fatal) write timeout
+        on the device.
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
     self.progress_cb = progress_cb
     dev = None
 
-    if dummy is True:
+    if no_device is True:
       self.hardware = { 'name': 'Crashtest Dummy Device' }
     else:
       for hardware in DEVICE:
@@ -140,10 +148,23 @@ class SilhouetteCameo:
         # dev.bulkWrite(usb_endpoint, data)
 
       else:     # linux
-        if dev.is_kernel_driver_active(0):
-          print >>self.log, "is_kernel_driver_active(0) returned nonzero"
-          if dev.detach_kernel_driver(0):
-            print >>self.log, "detach_kernel_driver(0) returned nonzero"
+        try:
+          if dev.is_kernel_driver_active(0):
+            print >>self.log, "is_kernel_driver_active(0) returned nonzero"
+            if dev.detach_kernel_driver(0):
+              print >>self.log, "detach_kernel_driver(0) returned nonzero"
+        except usb.core.USBError as e:
+          print(e)
+          if e.errno == 13:
+            print("""
+If you are not running as root, this might be a udev issue.
+Try a file /etc/udev/rules.d/99-graphtec-silhouette.rules
+with the following example syntax:
+SUBSYSTEM=="usb", ATTR{idVendor}=="%04x", ATTR{idProduct}=="%04x", MODE="666"
+
+Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_id'], self.hardware['product_id']))
+          sys.exit(0)
+          
         dev.reset();
 
         dev.set_configuration()
@@ -362,17 +383,23 @@ class SilhouetteCameo:
       new_cut.append(new_path)
     return new_cut
 
-  def page(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, cut=None, offset=None, bboxonly=None):
-    """cut is a list of paths. A path is a sequence of 2-tupel, all measured in mm.
+  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=None):
+    """plot sends the pathlist to the device (real or dummy) and computes the
+       bounding box of the pathlist, which is returned.
+
+       Each path in pathlist is rendered as a connected stroke (aka "pen_down"
+       mode). Movements between paths are not rendered (aka "pen_up" mode). 
+
+       A path is a sequence of 2-tupel, all measured in mm.
            The tool is lowered at the beginning and raised at the end of each path.
        offset = (X_MM, Y_MM) can be specified, to easily move the design to the 
            desired position.  The top and left media margin is always added to the 
            origin. Default: margin only.
        bboxonly:  True for drawing the bounding instead of the actual cut design; 
                   False for not moving at all (just return the bounding box). 
-                  Default: None for normal cutting.
-       Example: The letter Y can be represented with 
-                cut=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
+                  Default: None for normal cutting or drawing.
+       Example: The letter Y can be generated with 
+                pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
     bbox = { }
     clipcount = 0
@@ -425,7 +452,7 @@ class SilhouetteCameo:
 
     p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)
 
-    for path in cut:
+    for path in pathlist:
       if len(path) < 2: continue
       # x = path[len(path)-1][0]*20. + x_off
       # y = path[len(path)-1][1]*20. + y_off

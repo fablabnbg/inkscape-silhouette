@@ -23,12 +23,12 @@
 #                        Explicit multipass option added.
 #                        Emplying recursivelyTraverseSvg() from eggbotcode
 #                        TODO: coordinate system of page is not exact.
-# 2013-05-13 jw, v0.5 -- transporting docWidth/docHeight to dev.page()
+# 2013-05-13 jw, v0.5 -- transporting docWidth/docHeight to dev.plot()
 # 2013-05-15 jw, v0.6 -- Replaced recursivelyTraverseSvg() and friends with the
 #                        versions from eggbot.py, those from eggbot_hatch.py
 #                        would only do closed paths. Makes sense for them, but
 #                        not for us.
-#                        Added dummy=True debugging aid to SilhouetteCameo()
+#                        Added no_device=True debugging aid to SilhouetteCameo()
 # 2013-05-17 jw, v0.7 -- Honor layer visibility by checking style="display:none"
 #                        penUP()/penDown() bugfix to avoid false connections between objects.
 #                        Added option reversetoggle, to cut the opposite direction.
@@ -793,10 +793,10 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 str = self.document.getroot().get( name )
-                print >>self.tty, "getLength.str", str
+                # print >>self.tty, "getLength.str", str
                 if str:
                         v, u = parseLengthWithUnits( str )
-                        print >>self.tty, "parseLengthWithUnits: ", str, u, v
+                        # print >>self.tty, "parseLengthWithUnits: ", str, u, v
                         if not v:
                                 # Couldn't parse the value
                                 return None
@@ -867,7 +867,7 @@ class SendtoSilhouette(inkex.Effect):
       self.tty.flush()
 
     try:
-      dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, dummy=self.options.dummy)
+      dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, no_device=self.options.dummy)
     except Exception as e:
       print >>self.tty, e
       print >>sys.stderr, e
@@ -926,7 +926,7 @@ class SendtoSilhouette(inkex.Effect):
 
     if self.options.autocrop:
       # this takes much longer, if we have a complext drawing
-      bbox = dev.page(cut=cut, 
+      bbox = dev.plot(pathlist=cut, 
         mediawidth=px2mm(self.docWidth), 
         mediaheight=px2mm(self.docHeight), 
         bboxonly=False)         # only return the bbox, do not draw it.
@@ -937,7 +937,7 @@ class SendtoSilhouette(inkex.Effect):
         self.options.x_off -= bbox['bbox']['llx']*bbox['unit']
         self.options.y_off -= bbox['bbox']['ury']*bbox['unit']
       
-    bbox = dev.page(cut=cut, 
+    bbox = dev.plot(cut=cut, 
       mediawidth=px2mm(self.docWidth), 
       mediaheight=px2mm(self.docHeight), 
       offset=(self.options.x_off,self.options.y_off),
