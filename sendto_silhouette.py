@@ -51,6 +51,8 @@
 # 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
 #                        working code on windows and macosx too. Still linux only.
 # 2013-11-08 jw, v1.6 -- supporting mm in getLength().
+# 2013-12-16 jw, v1.7 -- https://github.com/jnweiger/inkscape-silhouette/issues/1
+#                        fixed. Silly copy/paste bug. Looks like I miss a testsuite.
 
 import sys, os, shutil, time, logging
 
@@ -79,7 +81,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.6'
+__version__ = '1.7'
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
@@ -937,7 +939,7 @@ class SendtoSilhouette(inkex.Effect):
         self.options.x_off -= bbox['bbox']['llx']*bbox['unit']
         self.options.y_off -= bbox['bbox']['ury']*bbox['unit']
       
-    bbox = dev.plot(cut=cut, 
+    bbox = dev.plot(pathlist=cut, 
       mediawidth=px2mm(self.docWidth), 
       mediaheight=px2mm(self.docHeight), 
       offset=(self.options.x_off,self.options.y_off),
