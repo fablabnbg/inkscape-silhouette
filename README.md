@@ -19,22 +19,24 @@ Linux:
 
 
 Windows (untested): 
-* Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
 * Download and install the free test version of **winzip** from http://www.winzip.com
+* Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
 * Navigate to your Downloads folder and double-click on **inkscape-silhouette-master.zip**
 * Click open the **inkscape-silhouette-master** folder.
 * Select the following three items (with Ctrl-Click): **silhouette**, **sendto_silhouette.inx**, and **sendto_silhouette.py**
 * Extract to My Computer **C:\Program Files\Inkscape\share\extensions**
 * untested: if you have a Silhouette Studio CD, install the device driver. Then your Silhouette Cameo may show up as a printer device and the extension could now work. If not, installing pywinusb might help.
 * The following tips are for a Windows-7 64-bit machine:
-** Download and install http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/ 
-** x86\libusb0_x86.dll: x86 32-bit library. Must be renamed to libusb0.dll 
-** On 64 bit, Installs to Windows\syswow64\libusb0.dll. 
-** On 32 bit, Installs to Windows\system32\libusb0.dll. 
-** X86 ONLY ARCHITECTURES: x86\libusb0.sys: x86 32-bit driver. Installs to Windows\system32\drivers\libusb0.sys
-** If you don't have python installed, then install the latest stable version. 
-** Download and unpack http://sourceforge.net/projects/pyusb/ 
-** cd ..\pyusb-1.0.0b1; python.exe setup.py install
+ * Download and install http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/ 
+ * x86\libusb0_x86.dll: x86 32-bit library. Must be renamed to libusb0.dll <br>
+   On 64 bit, Installs to Windows\syswow64\libusb0.dll. 
+   On 32 bit, Installs to Windows\system32\libusb0.dll. 
+ * X86 ONLY ARCHITECTURES:<br> 
+   x86\libusb0.sys: x86 32-bit driver.<br>
+   Installs to Windows\system32\drivers\libusb0.sys
+ * If you don't have python installed, then install the latest stable version. 
+ * Download and unpack http://sourceforge.net/projects/pyusb/ 
+ * cd ..\pyusb-1.0.0b1; python.exe setup.py install
 * Restart inkscape
 * An error message 'ImportError: No module named usb.core' means you are close, but pyusb was not correctly installed. Please check, if there are multiple python installations in your system, e.g. one that came with inkscape.
 
