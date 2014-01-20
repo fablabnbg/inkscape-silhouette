@@ -34,9 +34,10 @@ Windows (untested):
  * X86 ONLY ARCHITECTURES:<br> 
    x86\libusb0.sys: x86 32-bit driver.<br>
    Installs to Windows\system32\drivers\libusb0.sys
- * If you don't have python installed, then install the latest stable version. 
- * Download and unpack http://sourceforge.net/projects/pyusb/ 
- * cd ..\pyusb-1.0.0b1; python.exe setup.py install
+ * When you get a number of options, chose the printer option.
+* If you don't have python installed, then install the latest stable version. 
+* Download and unpack http://sourceforge.net/projects/pyusb/ 
+* cd ..\pyusb-1.0.0b1; python.exe setup.py install
 * Restart inkscape
 * An error message 'ImportError: No module named usb.core' means you are close, but pyusb was not correctly installed. Please check, if there are multiple python installations in your system, e.g. one that came with inkscape.
 
