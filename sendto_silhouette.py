@@ -199,7 +199,7 @@ class SendtoSilhouette(inkex.Effect):
     try:
       self.tty = open("/dev/tty", 'w')
     except:
-      self.tty = open("/dev/null", 'w')
+      self.tty = open(os.devnull, 'w')  # '/dev/null' for POSIX, 'nul' for Windows.
     # print >>self.tty, "__init__"
     
     self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab', 
