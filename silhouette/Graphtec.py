@@ -111,8 +111,8 @@ class SilhouetteCameo:
     else:
       for hardware in DEVICE:
         if sys_platform.startswith('win'):
-          print >>self.log, "device lookup under windows not implemented. Help adding code!"
-          dev = None
+          print >>self.log, "device lookup under windows not tested. Help adding code!"
+          dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
 
         elif sys_platform.startswith('darwin'):
           dev = usb1ctx.openByVendorIDAndProductID(hardware['vendor_id'], hardware['product_id'])
@@ -125,7 +125,9 @@ class SilhouetteCameo:
 
       if dev is None:
         if sys_platform.startswith('win'): 
-          print >>self.log, "device fallback under windows not implemented. Help adding code!"
+          print >>self.log, "device fallback under windows not tested. Help adding code!"
+          dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
+          self.hardware = { 'name': 'Unknown Graphtec device' }
 
         elif sys_platform.startswith('darwin'):
           print >>self.log, "device fallback under macosx not implemented. Help adding code!"
@@ -135,7 +137,10 @@ class SilhouetteCameo:
           self.hardware = { 'name': 'Unknown Graphtec device' }
 
       if dev is None:
-        raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.')
+        msg = ''
+        for dev in usb.core.find(find_all=True):
+          msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+        raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
       print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
 
       if sys_platform.startswith('win'):

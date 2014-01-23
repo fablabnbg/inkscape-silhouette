@@ -53,8 +53,11 @@
 # 2013-11-08 jw, v1.6 -- supporting mm in getLength().
 # 2013-12-16 jw, v1.7 -- https://github.com/jnweiger/inkscape-silhouette/issues/1
 #                        fixed. Silly copy/paste bug. Looks like I miss a testsuite.
+# 2014-01-23 jw, v1.8 -- improving portability by using os.devnull, os.path.join, tempfile.
+#                        Partial fixes for https://github.com/jnweiger/inkscape-silhouette/issues/2
+#                        Enumerating devices if none are found.
 
-import sys, os, shutil, time, logging
+import sys, os, shutil, time, logging, tempfile
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -194,7 +197,7 @@ class SendtoSilhouette(inkex.Effect):
     self.docHeight = float( N_PAGE_HEIGHT )
     self.docTransform = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 
-    self.dumpname="/tmp/silhouette.dump"
+    self.dumpname= os.path.join(tempfile.gettempdir(), "silhouette.dump")
 
     try:
       self.tty = open("/dev/tty", 'w')
