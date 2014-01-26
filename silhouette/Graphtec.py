@@ -15,9 +15,18 @@ else:   # if sys_platform.startswith('linux'):
   try:
     import usb.core
   except:
-    print >>sys.stderr, "The python usb module could not be found. Try"
-    print >>sys.stderr, "\t sudo zypper in python-usb"
+    try:
+      import usb
+    except:
+      print >>sys.stderr, "The python usb module could not be found. Try"
+      print >>sys.stderr, "\t sudo zypper in python-usb \t\t# if you run SUSE"
+      print >>sys.stderr, "\t sudo apt-get python-usb   \t\t# if you run Ubuntu"
+      sys.exit(0)
+    print >>sys.stderr, "Your python usb module appears to be 0.4.x or older -- We need version 1.x"
     sys.exit(0)
+    # try my own wrapper instead.
+    # import UsbCoreMini as usb
+    # forget this. old 0.4 PyUSB segfaults easily.
 
 # taken from 
 #  robocut/CutDialog.ui
@@ -128,13 +137,22 @@ class SilhouetteCameo:
           print >>self.log, "device fallback under windows not tested. Help adding code!"
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device' }
+	  if dev:
+	    self.hardware['name'] += " 0x%04x" % dev.idProduct
+	    self.hardware['product_id'] = dev.idProduct
+	    self.hardware['vendor_id'] = dev.idVendor
+
 
         elif sys_platform.startswith('darwin'):
           print >>self.log, "device fallback under macosx not implemented. Help adding code!"
 
         else:   # linux
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
-          self.hardware = { 'name': 'Unknown Graphtec device' }
+          self.hardware = { 'name': 'Unknown Graphtec device ' }
+	  if dev:
+	    self.hardware['name'] += " 0x%04x" % dev.idProduct
+	    self.hardware['product_id'] = dev.idProduct
+	    self.hardware['vendor_id'] = dev.idVendor
 
       if dev is None:
         msg = ''
@@ -214,7 +232,7 @@ Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_i
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
         # usb.core.USBError: [Errno 110] Operation timed 
-        # print >>s.log, "Write Exception: %s, %s errno=%s" % (type(e), e, e.errno)
+        #print >>s.log, "Write Exception: %s, %s errno=%s" % (type(e), e, e.errno)
         import errno
         if e.errno == errno.ETIMEDOUT:
           time.sleep(1)
