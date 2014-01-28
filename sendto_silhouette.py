@@ -56,6 +56,9 @@
 # 2014-01-23 jw, v1.8 -- improving portability by using os.devnull, os.path.join, tempfile.
 #                        Partial fixes for https://github.com/jnweiger/inkscape-silhouette/issues/2
 #                        Enumerating devices if none are found.
+# 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows. 
+#                        Experimental retry added when write returns 0. 
+#                        issues/2#issuecomment-33526659
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -84,7 +87,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.7'
+__version__ = '1.9'
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200

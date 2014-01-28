@@ -1,4 +1,4 @@
-# (c) 2013 jw@suse.de
+# (c) 2013,2014 jw@suse.de
 # driver for a Graphtec Silhouette Cameo plotter.
 # modelled after https://github.com/nosliwneb/robocut.git 
 # https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
@@ -137,10 +137,10 @@ class SilhouetteCameo:
           print >>self.log, "device fallback under windows not tested. Help adding code!"
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device' }
-	  if dev:
-	    self.hardware['name'] += " 0x%04x" % dev.idProduct
-	    self.hardware['product_id'] = dev.idProduct
-	    self.hardware['vendor_id'] = dev.idVendor
+          if dev:
+            self.hardware['name'] += " 0x%04x" % dev.idProduct
+            self.hardware['product_id'] = dev.idProduct
+            self.hardware['vendor_id'] = dev.idVendor
 
 
         elif sys_platform.startswith('darwin'):
@@ -149,10 +149,10 @@ class SilhouetteCameo:
         else:   # linux
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device ' }
-	  if dev:
-	    self.hardware['name'] += " 0x%04x" % dev.idProduct
-	    self.hardware['product_id'] = dev.idProduct
-	    self.hardware['vendor_id'] = dev.idVendor
+          if dev:
+            self.hardware['name'] += " 0x%04x" % dev.idProduct
+            self.hardware['product_id'] = dev.idProduct
+            self.hardware['vendor_id'] = dev.idVendor
 
       if dev is None:
         msg = ''
@@ -219,6 +219,7 @@ Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_i
     r = 0
     o = 0
     msg=''
+    retry = 0
     while o < len(string):
       if o:
         if s.progress_cb:
@@ -244,9 +245,16 @@ Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_i
           s.log.write("\n")
 
       # print >>s.log, "write([%d:%d], len=%d) = %d" % (o,o+chunksz, len(chunk), r)
-      if r <= 0:
+      if r == 0 and retry < 5:
+        time.sleep(1)
+        retry += 1
+        msg += 'r'
+      elif r <= 0:
         raise ValueError('write %d bytes failed: r=%d' % (len(chunk), r))
+      else:
+        retry = 0
       o += r
+
     if o != len(string):
       raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
       
@@ -439,7 +447,11 @@ Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_i
     print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight)
 
     # // Begin page definition.
-    s.write("FA\x03")   # query someting?
+    try:
+      s.write("FA\x03")   # query someting?
+    except Exception as e:
+      raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
+      
     try:
       resp = s.read(timeout=100)
       if len(resp) > 1:
