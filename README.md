@@ -2,7 +2,7 @@ inkscape-silhouette
 ===================
 
 An extension to drive a Silhoutte Cameo from within inkscape.
-100% pure python, (except maybe for the libusb backend)
+100% pure python, (except for the libusb backend)
 
 Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
 
@@ -13,12 +13,12 @@ Copy the the folder silhouette and the two files sendto_silhouette.inx and
 sendto_silhouette.py to your computer:
 
 openSUSE:
-* an automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger/inkscape-silhouette
+* An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger/inkscape-silhouette
 
 
 Linux:
-*  ~/.config/inkscape/extensions/ or
-*  /usr/share/inkscape/extensions/
+* ~/.config/inkscape/extensions/ or
+* /usr/share/inkscape/extensions/
 * and run '''sudo zypper in python-usb'''
 
 
