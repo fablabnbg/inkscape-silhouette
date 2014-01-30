@@ -12,6 +12,10 @@ Installation
 Copy the the folder silhouette and the two files sendto_silhouette.inx and 
 sendto_silhouette.py to your computer:
 
+openSUSE:
+* an automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger/inkscape-silhouette
+
+
 Linux:
 *  ~/.config/inkscape/extensions/ or
 *  /usr/share/inkscape/extensions/
