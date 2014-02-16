@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # 
 # sudo zypper in python-setuptools
+# http://docs.python.org/2/distutils/setupscript.html#installing-additional-files
 #
 import sys,os,glob,re
 
@@ -11,6 +12,7 @@ import sendto_silhouette	# for author(), version()
 
 e = sendto_silhouette.SendtoSilhouette()
 m = re.match('(.*)\s+<(.*)>', e.author())
+print ('.',['Makefile'] + glob.glob('silhouette-*')),('misc',glob.glob('misc/*'))
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -24,13 +26,15 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+
 setup(name='inkscape-silhouette',
       version = e.version(),
       description='Inkscape extension for driving a silhouette cameo',
       author=m.groups()[0],
       author_email=m.groups()[1],
       url='https://github.com/jnweiger/inkscape-silhouette',
-      scripts=['sendto_silhouette.py', 'sendto_silhouette.inx', 'README.md'], # + glob.glob(os.path.join('silhouette', '*.py')),
+      scripts=['sendto_silhouette.py', 'sendto_silhouette.inx', 'README.md'] +
+      		glob.glob('silhouette-*') + glob.glob('misc/*'),
       packages=['silhouette'],
       license='GPL-2.0',
       classifiers=[
