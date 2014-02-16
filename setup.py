@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-#
 # -*- coding: utf-8 -*-
-import sys 
+# 
+# sudo zypper in python-setuptools
+#
+import sys,os,glob,re
 
 from distutils.core import setup
 from setuptools.command.test import test as TestCommand
@@ -23,12 +25,13 @@ class PyTest(TestCommand):
 
 
 setup(name='inkscape-silhouette',
-      version = e.version()
-      description='Inkscape extension for driving a silhouette cameo'
-      author=m.groups()[0]
-      author_email=m.groups()[1]
+      version = e.version(),
+      description='Inkscape extension for driving a silhouette cameo',
+      author=m.groups()[0],
+      author_email=m.groups()[1],
       url='https://github.com/jnweiger/inkscape-silhouette',
-      scripts=['sendto_silhouette.py', 'sendto_silhouette.inx'],
+      scripts=['sendto_silhouette.py', 'sendto_silhouette.inx', 'README.md'], # + glob.glob(os.path.join('silhouette', '*.py')),
+      packages=['silhouette'],
       license='GPL-2.0',
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
