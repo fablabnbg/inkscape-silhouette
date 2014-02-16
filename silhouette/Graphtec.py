@@ -177,15 +177,19 @@ class SilhouetteCameo:
             if dev.detach_kernel_driver(0):
               print >>self.log, "detach_kernel_driver(0) returned nonzero"
         except usb.core.USBError as e:
-          print(e)
+          print >>self.log, "usb.core.USBError:", e
           if e.errno == 13:
-            print("""
+            msg = """
 If you are not running as root, this might be a udev issue.
 Try a file /etc/udev/rules.d/99-graphtec-silhouette.rules
 with the following example syntax:
 SUBSYSTEM=="usb", ATTR{idVendor}=="%04x", ATTR{idProduct}=="%04x", MODE="666"
 
-Then run 'sudo udevadm trigger' to load this file.""" % (self.hardware['vendor_id'], self.hardware['product_id']))
+Then run 'sudo udevadm trigger' to load this file.
+
+Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.hardware['vendor_id'], self.hardware['product_id'])
+            print >>self.log, msg
+	    print >>sys.stderr, msg
           sys.exit(0)
           
         dev.reset();

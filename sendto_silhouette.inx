@@ -31,10 +31,14 @@
     <page name='advanced' _gui-text='Advanced'>
       <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
       <param name="wait_done_help" type="description">Keep dialog open until device becomes idle again.</param>
-      <param name="mat_free" type="boolean" _gui-text="Optimize for cutting without mat">true</param>
+      <param name="mat_free" type="boolean" _gui-text="Optimize for cutting without mat">false</param>
       <param name="mat_free_help" type="description">Subdivide, sort, and choose cut directions, so that most a cutting mat is not needed in most cases.</param>
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>
+    </page>
+    <page name='about' _gui-text='About'>
+      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabfolk.com]</param>
+      <param name="about_version" type="description">Version 1.9a</param>
     </page>
   </param>
 

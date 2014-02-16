@@ -2,6 +2,7 @@
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
+# (C) 2014 juewei@fabfolk.com
 #
 # code snippets visited to learn the extension 'effect' interface:
 # - http://sourceforge.net/projects/inkcut/
@@ -59,6 +60,7 @@
 # 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows. 
 #                        Experimental retry added when write returns 0. 
 #                        issues/2#issuecomment-33526659
+# 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -87,7 +89,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.9'
+__version__ = '1.9a'
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
@@ -254,6 +256,11 @@ class SendtoSilhouette(inkex.Effect):
           type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
     self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
+
+  def version(self):
+    return __version__
+  def author(self):
+    return __author__
 
   def penUp(self):
     # print >>self.tty, "\r penUp", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
@@ -994,12 +1001,13 @@ class SendtoSilhouette(inkex.Effect):
     output = ""
     return output
 
-e = SendtoSilhouette()
+if __name__ == '__main__':
+	e = SendtoSilhouette()
 
-start = time.time()
-e.affect()
-ss = int(time.time()-start+.5)
-mm = int(ss/60)
-ss -= mm*60
-print >>e.tty, " done. %d min %d sec" % (mm,ss)
-sys.exit(0)    # helps to keep the selection
+	start = time.time()
+	e.affect()
+	ss = int(time.time()-start+.5)
+	mm = int(ss/60)
+	ss -= mm*60
+	print >>e.tty, " done. %d min %d sec" % (mm,ss)
+	sys.exit(0)    # helps to keep the selection

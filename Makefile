@@ -11,3 +11,5 @@ clean:
 dist: clean
 	name=$(TARNAME)-$(VERS); echo "$$name"; echo; \
 	tar jcvf $$name.tar.bz2 $(EXCL) --transform="s,^,$$name/," $(ALL)
+	grep about_version ./sendto_silhouette.inx 
+	@echo version should be $(VERS)
