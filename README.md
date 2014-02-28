@@ -21,6 +21,12 @@ Linux:
 * /usr/share/inkscape/extensions/
 * and run '''sudo zypper in python-usb'''
 
+We need python-usb version 1.0, (ubuntu ships version 0.4, that does not work).
+If needed: 
+
+* Download and unpack http://sourceforge.net/projects/pyusb/
+* cd ..\pyusb-1.0.0b1; python.exe setup.py install
+
 
 Windows (untested): 
 * Download and install the free test version of **winzip** from http://www.winzip.com
