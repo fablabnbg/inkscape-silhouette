@@ -2,7 +2,7 @@ inkscape-silhouette
 ===================
 
 An extension to drive a Silhoutte Cameo from within inkscape.
-100% pure python, (except for the libusb backend)
+100% pure python, ontop of the libusb backend.
 
 Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
 
@@ -84,8 +84,8 @@ Features
 --------
 
 * Path sorting for monotonic cut. We limit backwards movement to only a few 
-  millimeters, and make the knive pull only towards sharp edges so that most
-  designs can be done without a cutting mat!
+  millimeters, and make the knive pull only towards sharp corners 
+  so that most designs can be done without a cutting mat!
 * Coordinate system conforms to inkscape SVG.
 * Exact Margins. Can start at (0,0).
 * Pen mode used to avoid the precut movement of the knive.

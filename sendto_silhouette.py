@@ -61,8 +61,15 @@
 #                        Experimental retry added when write returns 0. 
 #                        issues/2#issuecomment-33526659
 # 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
+# 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
 
 import sys, os, shutil, time, logging, tempfile
+
+
+# we sys.path.append() the directory where this 
+# sendto_silhouette.py script lives. Attempt to help with
+# https://github.com/jnweiger/inkscape-silhouette/issues/3
+sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -89,7 +96,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.9a'
+__version__ = '1.9b'
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
