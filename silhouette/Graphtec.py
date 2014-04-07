@@ -159,7 +159,18 @@ class SilhouetteCameo:
         for dev in usb.core.find(find_all=True):
           msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
-      print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev.bus, dev.address)
+
+      try:
+	dev_bus = dev.bus
+      except:
+        dev_bus = -1
+
+      try:
+        dev_addr = dev.address
+      except:
+        dev_addr = -1
+
+      print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr)
 
       if sys_platform.startswith('win'):
         print >>self.log, "device init under windows not implemented. Help adding code!"
