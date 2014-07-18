@@ -63,6 +63,7 @@
 # 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
 # 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
 # 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
+# 2014-07-18 jw, v1.9d -- better diagnostics. hints and (further down) a stack backtrace.
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -97,7 +98,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.9c'
+__version__ = '1.9d'	# Keep in sync with sendto_silhouette.inx ca line 65
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200

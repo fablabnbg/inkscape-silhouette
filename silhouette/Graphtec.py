@@ -14,16 +14,18 @@ elif sys_platform.startswith('darwin'):
 else:   # if sys_platform.startswith('linux'):
   try:
     import usb.core
-  except:
+  except Exception as e:
     try:
       import usb
-    except:
+    except Exception as e2:
       print >>sys.stderr, "The python usb module could not be found. Try"
       print >>sys.stderr, "\t sudo zypper in python-usb \t\t# if you run SUSE"
       print >>sys.stderr, "\t sudo apt-get python-usb   \t\t# if you run Ubuntu"
-      sys.exit(0)
+      print >>sys.stderr, "\n\n\n"
+      raise e2;
     print >>sys.stderr, "Your python usb module appears to be 0.4.x or older -- We need version 1.x"
-    sys.exit(0)
+    print >>sys.stderr, "\n\n\n"
+    raise e;
     # try my own wrapper instead.
     # import UsbCoreMini as usb
     # forget this. old 0.4 PyUSB segfaults easily.
