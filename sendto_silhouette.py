@@ -64,6 +64,7 @@
 # 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
 # 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
 # 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
+# 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -98,7 +99,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.9d'	# Keep in sync with sendto_silhouette.inx ca line 65
+__version__ = '1.10'	# Keep in sync with sendto_silhouette.inx ca line 65
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
@@ -847,7 +848,7 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 self.docHeight = self.getLength( 'height', N_PAGE_HEIGHT )
-                print >>self.tty, "7 self.docWidth=", self.docWidth
+                print >>self.tty, "7 self.docHeight=", self.docHeight
                 self.docWidth = self.getLength( 'width', N_PAGE_WIDTH )
                 print >>self.tty, "8 self.docWidth=", self.docWidth
                 if ( self.docHeight == None ) or ( self.docWidth == None ):
@@ -938,8 +939,12 @@ class SendtoSilhouette(inkex.Effect):
 
     if dev.dev is None:
       o = open(self.dumpname, 'w')
-      print >>self.tty,    "dump written to ",self.dumpname," (",pointcount," points )"
-      print >>sys.stderr, "dump written to ",self.dumpname," (",pointcount," points )"
+      print >>self.tty,   "Dump written to ",self.dumpname," (",pointcount," points )"
+      print >>sys.stderr, "Dump written to ",self.dumpname," (",pointcount," points )"
+      print >>sys.stderr,"device version: '%s'" % dev.get_version()
+      print >>sys.stderr,"driver version: '%s'" % __version__
+      print >>o,"# device version: '%s'" % dev.get_version()
+      print >>o,"# driver version: '%s'" % __version__
       print >>o, cut
 
     if self.options.pressure == 0:     self.options.pressure = None
@@ -953,6 +958,7 @@ class SendtoSilhouette(inkex.Effect):
       bbox = dev.plot(pathlist=cut, 
         mediawidth=px2mm(self.docWidth), 
         mediaheight=px2mm(self.docHeight), 
+	margintop=0, marginleft=0,
         bboxonly=False)         # only return the bbox, do not draw it.
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (

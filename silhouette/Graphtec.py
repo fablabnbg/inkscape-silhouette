@@ -80,7 +80,7 @@ DEVICE = [
  { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',    
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
-   'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':5.0, 'regmark': True },
+   'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20', 
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x111a, 'name': 'Craft Robo CC300-20' },
@@ -116,6 +116,7 @@ class SilhouetteCameo:
     self.log = log
     self.progress_cb = progress_cb
     dev = None
+    self.margins_printed = None
 
     if no_device is True:
       self.hardware = { 'name': 'Crashtest Dummy Device' }
@@ -457,6 +458,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if margintop  is None: margintop = 0
     if marginleft is None: marginleft = 0
 
+    if 'margin_top_mm' in s.hardware:
+      print >>s.log, "hardware margin_top_mm = %s" % (s.hardware['margin_top_mm'])
+    if 'margin_left_mm' in s.hardware:
+      print >>s.log, "hardware margin_left_mm = %s" % (s.hardware['margin_left_mm'])
+
     if s.leftaligned and 'width_mm' in s.hardware:
       # marginleft += s.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth =   s.hardware['width_mm']
@@ -490,7 +496,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
       x_off += int(.5+offset[0]*20.)
       y_off += int(.5+offset[1]*20.)
-    # print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
+    print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?
