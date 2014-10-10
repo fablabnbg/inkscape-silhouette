@@ -65,6 +65,7 @@
 # 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
 # 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
 # 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
+# 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -99,7 +100,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.10'	# Keep in sync with sendto_silhouette.inx ca line 65
+__version__ = '1.11'	# Keep in sync with sendto_silhouette.inx ca line 42
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
@@ -761,10 +762,10 @@ class SendtoSilhouette(inkex.Effect):
                                   print >>self.tty, "Text ignored: '%s'" % (plaintext)
                                   plaintext = "\n".join(texts)+"\n"
 
-                                if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
+                                  if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
                                         inkex.errormsg( plaintext + gettext.gettext( 'Warning: unable to draw text; ' +
                                                 'please convert it to a path first.  Consider using the ' +
-                                                'Hershey Text extension which is located under the '+
+                                                'Hershey Text extension which can be installed in the '+
                                                 '"Render" category of extensions.' ) )
                                         self.warnings['text'] = 1
                                 pass
@@ -789,6 +790,10 @@ class SendtoSilhouette(inkex.Effect):
                                 # of a style attribute to be inherited by child elements
                                 pass
                         elif node.tag == inkex.addNS( 'cursor', 'svg' ) or node.tag == 'cursor':
+                                pass
+                        elif node.tag == inkex.addNS( 'flowRoot', 'svg' ) or node.tag == 'flowRoot':
+				# contains a <flowRegion><rect y="91" x="369" height="383" width="375" ...
+				# see examples/fablab_logo_stencil.svg
                                 pass
                         elif node.tag == inkex.addNS( 'color-profile', 'svg' ) or node.tag == 'color-profile':
                                 # Gamma curves, color temp, etc. are not relevant to single color output
