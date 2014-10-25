@@ -15,18 +15,18 @@ sendto_silhouette.py to your computer:
 openSUSE:
 * An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger/inkscape-silhouette
 
-
-Linux:
 * ~/.config/inkscape/extensions/ or
 * /usr/share/inkscape/extensions/
 * and run '''sudo zypper in python-usb'''
 
-We need python-usb version 1.0, (ubuntu ships version 0.4, that does not work).
-If needed: 
-
-* Download and unpack http://sourceforge.net/projects/pyusb/
-* cd ..\pyusb-1.0.0b1; python.exe setup.py install
-
+Arch Linux:
+* sudo pip2 install pyusb libxml
+* pacman -S inkscape
+* git clone https://github.com/fablabnbg/inkscape-silhouette.git
+* cd inkscape-master
+* sudo python2 setup.py build && sudo python2 setup.py install
+* sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
+* sudo cp -R silhouette /usr/share/inkscape/extensions/
 
 Windows (untested): 
 * Download and install the free test version of **winzip** from http://www.winzip.com
