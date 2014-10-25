@@ -253,10 +253,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # usb.core.USBError: [Errno 110] Operation timed 
         #print >>s.log, "Write Exception: %s, %s errno=%s" % (type(e), e, e.errno)
         import errno
-        if e.errno == errno.ETIMEDOUT:
-          time.sleep(1)
-          msg += 't'
-          continue
+	try:
+          if e.errno == errno.ETIMEDOUT:
+            time.sleep(1)
+            msg += 't'
+            continue
+	except Exception as ee:
+	  msg += "s.dev.write Error: " + ee
       else:
         if len(msg):
           msg = ''

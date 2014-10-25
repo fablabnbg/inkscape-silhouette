@@ -66,6 +66,7 @@
 # 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
 # 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
 # 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
+# 2014-10-25 jw, v1.12 -- better error messages. 
 
 import sys, os, shutil, time, logging, tempfile
 
@@ -100,7 +101,7 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.11'	# Keep in sync with sendto_silhouette.inx ca line 42
+__version__ = '1.12'	# Keep in sync with sendto_silhouette.inx ca line 42
 __author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
