@@ -759,13 +759,14 @@ class SendtoSilhouette(inkex.Effect):
                                     if tnode is not None and tnode.text is not None:
                                       texts.append(tnode.text)
                                 if len(texts):
-                                  plaintext = "', '".join(texts)
+                                  plaintext = "', '".join(texts).encode('latin-1')
+                                  # encode_('latin-1') prevents 'ordinal not in range(128)' errors.
                                   print >>self.tty, "Text ignored: '%s'" % (plaintext)
                                   plaintext = "\n".join(texts)+"\n"
 
                                   if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
                                         inkex.errormsg( plaintext + gettext.gettext( 'Warning: unable to draw text; ' +
-                                                'please convert it to a path first.  Consider using the ' +
+                                                'please convert it to a path first. Or consider using the ' +
                                                 'Hershey Text extension which can be installed in the '+
                                                 '"Render" category of extensions.' ) )
                                         self.warnings['text'] = 1
