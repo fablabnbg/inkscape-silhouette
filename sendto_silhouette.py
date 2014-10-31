@@ -69,6 +69,9 @@
 # 2014-10-25 jw, v1.12 -- better error messages.
 # 2014-10-31 jw, v1.13 -- fixed usb.core.write() without interface parameter. Set Graphtec.py/need_interface if needed.
 
+__version__ = '1.13'	# Keep in sync with sendto_silhouette.inx ca line 42
+__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
+
 import sys, os, shutil, time, logging, tempfile
 
 
@@ -101,9 +104,6 @@ from optparse import SUPPRESS_HELP
 
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
-
-__version__ = '1.12'	# Keep in sync with sendto_silhouette.inx ca line 42
-__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
