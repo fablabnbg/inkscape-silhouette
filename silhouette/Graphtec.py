@@ -215,6 +215,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pass
 
     self.dev = dev
+    self.need_interface = False		# probably never needed, but harmful on some versions of usb.core 
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
     if self.dev is None or 'width_mm' in self.hardware: 
       self.leftaligned = True 
@@ -247,7 +248,17 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           s.log.flush()
       chunk = string[o:o+chunksz]
       try:
-        r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 
+        if s.need_interface:
+          r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 
+	else:
+          r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout) 
+      except TypeError as te:
+        # write() got an unexpected keyword argument 'interface'
+        raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
+      except AttributeError as ae:
+        # write() got an unexpected keyword argument 'interface'
+        raise TypeError("Write Exception: %s, %s dev=%s" % (type(ae), ae, type(s.dev)))
+
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
         # usb.core.USBError: [Errno 110] Operation timed 
@@ -283,7 +294,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """Low level read method"""
     if s.dev is None: return None
     endpoint = 0x82
-    data = s.dev.read(endpoint, size, timeout=timeout, interface=0) 
+    if s.need_interface:
+      data = s.dev.read(endpoint, size, timeout=timeout, interface=0) 
+    else:
+      data = s.dev.read(endpoint, size, timeout=timeout) 
     if data is None:
       raise ValueError('read failed: none')
     return data.tostring()
@@ -499,7 +513,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
       x_off += int(.5+offset[0]*20.)
       y_off += int(.5+offset[1]*20.)
-    print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
+    # print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?

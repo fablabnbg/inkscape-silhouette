@@ -66,7 +66,8 @@
 # 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
 # 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
 # 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
-# 2014-10-25 jw, v1.12 -- better error messages. 
+# 2014-10-25 jw, v1.12 -- better error messages.
+# 2014-10-31 jw, v1.13 -- fixed usb.core.write() without interface parameter. Set Graphtec.py/need_interface if needed.
 
 import sys, os, shutil, time, logging, tempfile
 
