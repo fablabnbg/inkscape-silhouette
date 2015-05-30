@@ -13,7 +13,7 @@ Copy the the folder silhouette and the two files sendto_silhouette.inx and
 sendto_silhouette.py to your computer:
 
 openSUSE:
-* An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger/inkscape-silhouette
+* An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger:fablabnbg/inkscape-silhouette
 
 * ~/.config/inkscape/extensions/ or
 * /usr/share/inkscape/extensions/
