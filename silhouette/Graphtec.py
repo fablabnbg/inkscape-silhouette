@@ -336,7 +336,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     return resp[0:-2]   # chop of 0x03
 
-  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None, return_home=True):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -345,10 +345,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
        trackenhancing: True or False, default False (setting ignored??)
        landscape: True or False, default False
        leftaligned: Loaded media is aligned left(=True) or right(=False), default: device dependant
+       return_home: True, default, go back to start, after plotting. False: set new page origin below plotted graphics.
     """
 
     if leftaligned is not None:
       s.leftaligned = leftaligned
+
+    s.return_home = return_home
 
     if s.dev is None: return None
 
@@ -590,6 +593,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       p += ",D%d,%d" % (int(0.5+width-bbox['urx']), int(0.5+bbox['lly']))
       p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']))
       p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['ury']))
+
+    if not s.return_home:
+      p += ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']))
 
     p += "&1,1,1,TB50,0\x03"   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
     s.write(p)

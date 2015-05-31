@@ -2,10 +2,12 @@
 #
 # simple demo program to drive the silhouette cameo.
 # (C) 2013 jw@suse.de
+# (C) 2015 juewei@fabfolk.com
 #
 # Requires: python-usb  # from Factory
 
-import time
+import time,sys
+sys.path.extend(['..','.'])	# make it callable from top or misc directory.
 from silhouette.Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
@@ -25,6 +27,6 @@ print "status=%s" % (state)
     
 print "device version: '%s'" % dev.get_version()
 
-dev.setup(media=113, pressure=0, trackenhancing=True)
+dev.setup(media=113, pressure=0, trackenhancing=True, return_home=False)
 bbox = dev.plot(pathlist=[arrow1,arrow1], mediaheight=180, offset=(0,0),bboxonly=True)
 print bbox
