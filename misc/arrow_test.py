@@ -6,7 +6,7 @@
 # Requires: python-usb  # from Factory
 
 import time
-from Graphtec import SilhouetteCameo
+from silhouette.Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
 arrow1 = [ (0,5), (21,5), (18,0), (31,10), (18,20), (21,15), (0,15), (3,10), (0,5) ]
@@ -26,5 +26,5 @@ print "status=%s" % (state)
 print "device version: '%s'" % dev.get_version()
 
 dev.setup(media=113, pressure=0, trackenhancing=True)
-bbox = dev.page(cut=[arrow1,arrow1], mediaheight=180, offset=(0,0),bboxonly=True)
+bbox = dev.plot(pathlist=[arrow1,arrow1], mediaheight=180, offset=(0,0),bboxonly=True)
 print bbox
