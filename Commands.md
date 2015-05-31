@@ -17,6 +17,7 @@ Resources
 Typical sequence
 ----------------
 
+<pre>
 "\x1b\x04"  		# initialize plotter
 "\x1b\x05"  		# status request	(works already before initialize)
 	    		# Response "%d\x03" 	0 ready, 1 moving, 2 empty tray
@@ -55,3 +56,4 @@ Typical sequence
 "FO0\x03"		# feed the page out
 "H,"         		# halt?
 
+</pre>
