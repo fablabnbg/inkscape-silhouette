@@ -3,6 +3,12 @@
 # modelled after https://github.com/nosliwneb/robocut.git 
 # https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 #
+# Native resolution of the plotter is 0.05mm -- All movements are integer multiples of this.
+#
+# 2015-06-03, juewei@fabfolk.com using print_function. added wait_for_ready().
+#             plot(bboxonly=None) is now the special case for not doing anything. False is normal plot.
+
+from __future__ import print_function
 import sys, time
 
 sys_platform = sys.platform.lower()
@@ -18,13 +24,13 @@ else:   # if sys_platform.startswith('linux'):
     try:
       import usb
     except Exception as e2:
-      print >>sys.stderr, "The python usb module could not be found. Try"
-      print >>sys.stderr, "\t sudo zypper in python-usb \t\t# if you run SUSE"
-      print >>sys.stderr, "\t sudo apt-get python-usb   \t\t# if you run Ubuntu"
-      print >>sys.stderr, "\n\n\n"
+      print("The python usb module could not be found. Try", file=sys.stderr)
+      print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
+      print("\t sudo apt-get python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
+      print("\n\n\n", file=sys.stderr)
       raise e2;
-    print >>sys.stderr, "Your python usb module appears to be 0.4.x or older -- We need version 1.x"
-    print >>sys.stderr, "\n\n\n"
+    print("Your python usb module appears to be 0.4.x or older -- We need version 1.x", file=sys.stderr)
+    print("\n\n\n", file=sys.stderr)
     raise e;
     # try my own wrapper instead.
     # import UsbCoreMini as usb
@@ -123,7 +129,7 @@ class SilhouetteCameo:
     else:
       for hardware in DEVICE:
         if sys_platform.startswith('win'):
-          print >>self.log, "device lookup under windows not tested. Help adding code!"
+          print("device lookup under windows not tested. Help adding code!", file=self.log)
           dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
 
         elif sys_platform.startswith('darwin'):
@@ -137,7 +143,7 @@ class SilhouetteCameo:
 
       if dev is None:
         if sys_platform.startswith('win'): 
-          print >>self.log, "device fallback under windows not tested. Help adding code!"
+          print("device fallback under windows not tested. Help adding code!", file=self.log)
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device' }
           if dev:
@@ -147,7 +153,7 @@ class SilhouetteCameo:
 
 
         elif sys_platform.startswith('darwin'):
-          print >>self.log, "device fallback under macosx not implemented. Help adding code!"
+          print("device fallback under macosx not implemented. Help adding code!", file=self.log)
 
         else:   # linux
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
@@ -173,25 +179,25 @@ class SilhouetteCameo:
       except:
         dev_addr = -1
 
-      print >>self.log, "%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr)
+      print("%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr), file=self.log)
 
       if sys_platform.startswith('win'):
-        print >>self.log, "device init under windows not implemented. Help adding code!"
+        print("device init under windows not implemented. Help adding code!", file=self.log)
 
       elif sys_platform.startswith('darwin'):
         dev.claimInterface(0)
-        print >>self.log, "device write under macosx not implemented? Check the code!"
+        print("device write under macosx not implemented? Check the code!", file=self.log)
         # usb_enpoint = 1
         # dev.bulkWrite(usb_endpoint, data)
 
       else:     # linux
         try:
           if dev.is_kernel_driver_active(0):
-            print >>self.log, "is_kernel_driver_active(0) returned nonzero"
+            print("is_kernel_driver_active(0) returned nonzero", file=self.log)
             if dev.detach_kernel_driver(0):
-              print >>self.log, "detach_kernel_driver(0) returned nonzero"
+              print("detach_kernel_driver(0) returned nonzero", file=self.log)
         except usb.core.USBError as e:
-          print >>self.log, "usb.core.USBError:", e
+          print("usb.core.USBError:", e, file=self.log)
           if e.errno == 13:
             msg = """
 If you are not running as root, this might be a udev issue.
@@ -202,8 +208,8 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="%04x", ATTR{idProduct}=="%04x", MODE="666"
 Then run 'sudo udevadm trigger' to load this file.
 
 Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.hardware['vendor_id'], self.hardware['product_id'])
-            print >>self.log, msg
-	    print >>sys.stderr, msg
+            print(msg, file=self.log)
+	    print(msg, file=sys.stderr)
           sys.exit(0)
           
         dev.reset();
@@ -230,7 +236,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = s.read(timeout=10) # poll the inbound buffer
       if resp:
-        print >>s.log, "response before write('%s'): '%s'" % (string, resp)
+        print("response before write('%s'): '%s'" % (string, resp), file=s.log)
     except:
       pass
     endpoint = 0x01
@@ -262,7 +268,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
         # usb.core.USBError: [Errno 110] Operation timed 
-        #print >>s.log, "Write Exception: %s, %s errno=%s" % (type(e), e, e.errno)
+        #print("Write Exception: %s, %s errno=%s" % (type(e), e, e.errno), file=s.log)
         import errno
 	try:
           if e.errno == errno.ETIMEDOUT:
@@ -276,7 +282,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           msg = ''
           s.log.write("\n")
 
-      # print >>s.log, "write([%d:%d], len=%d) = %d" % (o,o+chunksz, len(chunk), r)
+      # print("write([%d:%d], len=%d) = %d" % (o,o+chunksz, len(chunk), r), file=s.log)
       if r == 0 and retry < 5:
         time.sleep(1)
         retry += 1
@@ -302,6 +308,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise ValueError('read failed: none')
     return data.tostring()
 
+  def try_read(s, size=64, timeout=1000):
+    ret=None
+    try:
+      ret = s.read(size=size,timeout=timeout)
+      print("try_read got: '%s'" % ret)
+    except:
+      pass
+    return ret
+
   def status(s):
     """Query the device status. This can return one of the three strings
        'ready', 'moving', 'unloaded' or a raw (unknown) byte sequence."""
@@ -316,7 +331,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if resp[:-1] == '1': return "moving"
     if resp[:-1] == '2': return "unloaded"
     return resp[:-1]
-  
+
+  def wait_for_ready(s, timeout=30, verbose=True):
+    if verbose: print("device version: '%s'" % s.get_version(), file=sys.stderr)
+    state = s.status()
+    for i in range(1, int(timeout*.5)):
+      if (state == 'ready'): break
+      if verbose: print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
+      time.sleep(2.0)
+      state = s.status()
+    if verbose: print("",file=sys.stderr)
+    return state
+
   def initialize(s):
     """Send the init command. Called by setup()."""
     # taken from robocut/Plotter.cpp:331 ff
@@ -368,7 +394,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pen = False
       for i in MEDIA:
         if i[0] == media: 
-          print >>s.log, "Media=%d, cap='%s', name='%s'" % (media, i[3], i[4])
+          print("Media=%d, cap='%s', name='%s'" % (media, i[3], i[4]), file=s.log)
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
 
@@ -376,19 +402,19 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if speed < 1: speed = 1
       if speed > 10: speed = 10
       s.write("!%d\x03" % speed);
-      print >>s.log, "speed: %d" % speed
+      print("speed: %d" % speed, file=s.log)
 
     if pressure is not None: 
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
       s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
-      print >>s.log, "pressure: %d" % pressure
+      print("pressure: %d" % pressure, file=s.log)
 
     if s.leftaligned:
-      print >>s.log, "Loaded media is expected left-aligned."
+      print("Loaded media is expected left-aligned.", file=s.log)
     else:
-      print >>s.log, "Loaded media is expected right-aligned."
+      print("Loaded media is expected right-aligned.", file=s.log)
 
     # robocut/Plotter.cpp:393 says:
     # // I think this sets the distance from the position of the plotter
@@ -452,7 +478,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_cut.append(new_path)
     return new_cut
 
-  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=None):
+  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=0, no_trailer=False):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -465,9 +491,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
            desired position.  The top and left media margin is always added to the 
            origin. Default: margin only.
        bboxonly:  True for drawing the bounding instead of the actual cut design; 
-                  False for not moving at all (just return the bounding box). 
-                  Default: None for normal cutting or drawing.
-       Example: The letter Y can be generated with 
+                  None for not moving at all (just return the bounding box). 
+                  Default: False for normal cutting or drawing.
+       end_paper_offset: [mm] adds to the final move, if return_home was False in setup.
+		If the end_paper_offset is negative, the end position is within the drawing 
+                (reverse movmeents are clipped at the home position)
+		It reverse over the last home position.
+       no_trailer: Default false: The plot is properly terminated.
+                If true: The device is left hanging at the last position. You are expected to 
+                extract the trailer from the return value, and send it ising the write() method later.
+       Example: The letter Y (20mm tall, 9mm wide) can be generated with 
                 pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
     bbox = { }
@@ -478,16 +511,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if margintop  is None: margintop = 0
     if marginleft is None: marginleft = 0
 
-    if 'margin_top_mm' in s.hardware:
-      print >>s.log, "hardware margin_top_mm = %s" % (s.hardware['margin_top_mm'])
-    if 'margin_left_mm' in s.hardware:
-      print >>s.log, "hardware margin_left_mm = %s" % (s.hardware['margin_left_mm'])
+    # if 'margin_top_mm' in s.hardware:
+    #   print("hardware margin_top_mm = %s" % (s.hardware['margin_top_mm']), file=s.log)
+    # if 'margin_left_mm' in s.hardware:
+    #   print("hardware margin_left_mm = %s" % (s.hardware['margin_left_mm']), file=s.log)
 
     if s.leftaligned and 'width_mm' in s.hardware:
       # marginleft += s.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth =   s.hardware['width_mm']
 
-    print >>s.log, "mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight)
+    print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=s.log)
 
     # // Begin page definition.
     try:
@@ -498,7 +531,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = s.read(timeout=100)
       if len(resp) > 1:
-        print >>s.log, "FA: '%s'" % (resp[:-1])
+        print("FA: '%s'" % (resp[:-1]), file=s.log)
     except:
       pass
 
@@ -516,7 +549,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
       x_off += int(.5+offset[0]*20.)
       y_off += int(.5+offset[1]*20.)
-    # print >>s.log, "x_off=%d, y_off=%d" % (x_off,y_off)
+    # print("x_off=%d, y_off=%d" % (x_off,y_off), file=s.log)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?
@@ -528,7 +561,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
     s.write("FO%d\x03" % (height-top))
 
-    p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)
+    p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)		# scale
 
     for path in pathlist:
       if len(path) < 2: continue
@@ -554,7 +587,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         last_inside = False
       if not last_inside: clipcount += 1
 
-      if bboxonly is None:
+      if bboxonly is False:
         p += ",M%d,%d" % (int(0.5+width-x), int(0.5+y))
       # for j in reversed(range(0,len(path)-1)):
       for j in range(1,len(path)):
@@ -578,7 +611,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           inside = False
         if not inside: clipcount += 1
 
-        if bboxonly is None:
+        if bboxonly is False:
           if inside and last_inside:
             p += ",D%d,%d" % (int(0.5+width-x), int(0.5+y))
           else:
@@ -594,19 +627,26 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']))
       p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['ury']))
 
-    if not s.return_home:
-      p += ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']))
+    trailer = []
+    trailer.append("&1,1,1,TB50,0\x03")   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
+    trailer.append("FO0\x03")             # // Feed the page out.
+    # trailer.append("H,")                  # // Halt? Not seen in newer dumps.
+    new_home = ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']+end_paper_offset*20.))
 
-    p += "&1,1,1,TB50,0\x03"   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
-    s.write(p)
-    s.write("FO0\x03")          # // Feed the page out.
-    s.write("H,")               # // Halt?
+    if no_trailer:
+      s.write(p)
+      if not s.return_home: trailer.insert(0, new_home)
+    else:
+      if not s.return_home: p += new_home
+      s.write(p)
+      s.write(''.join(trailer))
 
     return { 
         'bbox': bbox, 
         'clipcount': clipcount,
         'total': total,
         'unit' : 1/20.,
-        'mbox': { 'urx':width, 'ury':top, 'llx':left, 'lly':height }
+        'mbox': { 'urx':width, 'ury':top, 'llx':left, 'lly':height },
+	'trailer': trailer
       }
 

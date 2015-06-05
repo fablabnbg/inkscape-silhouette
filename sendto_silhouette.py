@@ -957,7 +957,6 @@ class SendtoSilhouette(inkex.Effect):
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
-    if self.options.bboxonly == False: self.options.bboxonly=None
     dev.setup(media=self.options.media, pen=self.pen, 
       pressure=self.options.pressure, speed=self.options.speed)
 
@@ -967,7 +966,7 @@ class SendtoSilhouette(inkex.Effect):
         mediawidth=px2mm(self.docWidth), 
         mediaheight=px2mm(self.docHeight), 
 	margintop=0, marginleft=0,
-        bboxonly=False)         # only return the bbox, do not draw it.
+        bboxonly=None)         # only return the bbox, do not draw it.
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
           bbox['bbox']['llx']*bbox['unit'],
