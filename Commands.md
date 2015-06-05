@@ -57,3 +57,54 @@ Typical sequence
 "H,"         		# halt?
 
 </pre>
+
+
+New Commands
+------------
+More USB sniffing done. This is the code to draw a triangle with a freshly downloaded Silhouette Studio version 3.3.451 . Note that some of the obscure commands (&x,y,z 'Factor'; H, Halt?) are no longer there. 
+I used the new 'Feed' option, instead of 'Do Return to Origin' which was a hard coded setting in older versions. This produces an additional M (move command), followed by SO0 (Set Origin 0), which redefines the page origin to be below the drawing. Yeah! This feature finally allows me to fill a page with multiple plots or cuts. It is especially useful for my mat-free cutting feature, where rewinding the cut paper was likely to tear the design apart.
+
+<pre>
+0x1B 0x05                                            ..
+- 0x30 0x03
+
+FN0
+TB50,0
+\30,30
+FX1
+!8
+FC18
+FE0,0
+FF0,0,0
+M175.24,577.08
+D157.96,587.14
+D678.70,884.62
+D675.96,284.92
+D157.96,587.14
+D175.32,597.06
+
+0x1B 0x05
+- 0x31 0x03
+...
+0x1B 0x05
+- 0x30 0x03
+
+FX5
+!10
+FC18
+FE0,0
+FF0,0,0
+L0
+\0,0
+M678.70,30
+SO0
+FN0
+TB50,0
+
+0x1B 0x05
+- 0x31 0x03
+...
+0x1B 0x05
+- 0x30 0x03
+
+</pre>
