@@ -8,7 +8,7 @@
 #
 # Modelled after https://github.com/rougier/freetype-py/blob/master/examples/glyph-vector.py
 
-import gtk
+import gtk,time
 from goocanvas import *
 import cairo,random
 import freetype
@@ -21,14 +21,13 @@ fontfile= './RIKY2vamp.ttf'
 #fontfile= './LeckerliOne-Regular.ttf'
 fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'
 
-def show_path(canvas, path = [(0,0),(20,0),(10,20),(0,0)] ):
+def show_path(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
   """ default path is a downward pointing triangle 
       Both, a list of lists, and a list of tuples is accepted.
   """
 
   tuplepath=[]
-  for i in path: tuplepath.append( tuple(i) )
-  print("len tuplepath", len(tuplepath))
+  for i in path: tuplepath.append( tuple([i[0]+xoff, i[1]+yoff]) )
   p = Points(tuplepath)		# cannot handle 2-element lists, need 2-element tuples.
   poly = Polyline(parent=canvas, points=p, line_width=0.5, stroke_color="black")
 
@@ -37,14 +36,22 @@ def show_path(canvas, path = [(0,0),(20,0),(10,20),(0,0)] ):
     text = Text(parent=canvas, text=idx, font="4", fill_color="blue")
     idx += 1
     # text.translate(C.x+random.uniform(-.1,0), C.y+random.uniform(-.1,0))
-    text.translate(C[0]+random.uniform(-.5,0), C[1]+random.uniform(-.5,0))
+    text.translate(C[0]+xoff+random.uniform(-.5,0), C[1]+yoff+random.uniform(-.5,0))
     text.scale(.25,.25)
 
 
-def polygons_from_glyph_outline(o,x=0,y=0,scale=1.0):
+def polygons_from_glyph(glyph,x=0,y=0,scale=1.0):
   """ converts a freetype Face glyph outline to a set of polygons.
       Interpolation of splines is implicitly defined by scale.
+      And also returns the advance metrics. (More reliable than all 
+     the other techniques tested in show_char())
   """
+  fix_adv_scale=scale*0.001		# this is horrible. But works for all fonts.
+  xadv = glyph.linearHoriAdvance*fix_adv_scale
+  yadv = glyph.linearVertAdvance*fix_adv_scale
+
+  o = glyph.outline
+
   affine=MT.Affine2D()
   trans = affine.translate(x,y).scale(sx=scale,sy=-scale)
   start, end = 0, 0
@@ -83,7 +90,7 @@ def polygons_from_glyph_outline(o,x=0,y=0,scale=1.0):
         VERTS.extend(verts)
         CODES.extend(codes)
         start = end+1
-  return MP.Path(VERTS, CODES).to_polygons(transform=trans)
+  return MP.Path(VERTS, CODES).to_polygons(transform=trans),xadv,yadv
 
 
 def show_char(canvas, face, char, x, y, scale, flags=None):
@@ -94,7 +101,7 @@ def show_char(canvas, face, char, x, y, scale, flags=None):
   adv = face.get_advance(idx, flags|freetype.FT_LOAD_NO_SCALE)	# need NO_SCALE,  or its broken.
   
   # bbox = face.glyph.outline.get_bbox()
-  polys = polygons_from_glyph_outline(face.glyph.outline, x=x,y=y,scale=scale)
+  polys,xadv,yadv = polygons_from_glyph(face.glyph, x=x,y=y,scale=scale)
   for poly in polys: show_path(canvas,poly)
 
   if False:
@@ -109,10 +116,9 @@ def show_char(canvas, face, char, x, y, scale, flags=None):
     print("advance "+char+" ",adv*fix_adv_scale)
 
   if True:
-    fix_adv_scale=scale*0.001		# this is horrible. But works for all fonts.
-    print("advance "+char+" ",face.glyph.linearHoriAdvance*fix_adv_scale)
-    x += face.glyph.linearHoriAdvance*fix_adv_scale
-    y += face.glyph.linearVertAdvance*fix_adv_scale
+    print("advance "+char+" ", xadv)
+    x += xadv
+    y += yadv
   return x,y
 
 
@@ -163,8 +169,27 @@ face.set_char_size(12)
 x,y = 0,-100
 scale=1
 
-for char in "0123456789:,mTo":
-  x,_ = show_char(root,face, char, x, y, scale)
+clock_chars = {}
+
+for char in "0123456789:":
+  face.load_char(char)
+  p,xa,ya = polygons_from_glyph(face.glyph, 0, 0, scale)
+  clock_chars[char] = [ p, xa, ya ]
+
+print(clock_chars['1'])
+
+while (y < 100):
+  txt = time.strftime('%H:%M:%S')
+  x = 0
+  for ch in txt:
+    for poly in clock_chars[ch][0]: show_path(root,poly, x,y)
+    x += clock_chars[ch][1]
+  y += clock_chars[txt[0]][2]
+  print(txt)
+  time.sleep(2)
+
+# for char in "0123456789:,m1To":
+#  x,_ = show_char(root,face, char, x, y, scale)
                 
 win.add(canvas)
 win.show_all()

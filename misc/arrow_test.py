@@ -28,5 +28,5 @@ print "status=%s" % (state)
 print "device version: '%s'" % dev.get_version()
 
 dev.setup(media=113, pressure=0, trackenhancing=True, return_home=False)
-bbox = dev.plot(pathlist=[arrow1,arrow1], mediaheight=180, offset=(0,0),bboxonly=True)
+bbox = dev.plot(pathlist=[arrow1,arrow2], mediaheight=180, offset=(0,0),bboxonly=False)
 print bbox
