@@ -212,7 +212,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 	    print(msg, file=sys.stderr)
           sys.exit(0)
           
-        dev.reset();
+        for i in range(5):
+          try:
+            dev.reset();
+            break
+          except usb.core.USBError as e:
+            print("reset failed: ", e, file=self.log)
+            print("retrying reset in 5 sec", file=self.log)
+            time.sleep(5)
 
         dev.set_configuration()
         try:
@@ -650,3 +657,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 	'trailer': trailer
       }
 
+
+  def move_origin(s, feed_mm):
+    new_home = "M%d,%dSO0FN0" % (int(0.5+feed_mm*20.),0)
+    s.wait_for_ready(verbose=False)
+    s.write(new_home)
+    s.wait_for_ready(verbose=False)
