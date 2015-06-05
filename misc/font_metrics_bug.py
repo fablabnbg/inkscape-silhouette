@@ -52,7 +52,7 @@ canvas.set_size_request(1000, 400)
 root = canvas.get_root_item()
 
 Text(parent=root, x=0, y=0,  text="TooT, Hifi VA World", font="6")
-Text(parent=root, x=0, y=8, text="TooT, Hifi VA World", font="sans 9")
+Text(parent=root, x=0, y=8,  text="TooT, Hifi VA World", font="sans 9")
 Text(parent=root, x=0, y=20, text="TooT, Hifi VA World", font="Arial 12")
 Text(parent=root, x=0, y=30, text="TooT, Hifi VA World", font="24")
                 
