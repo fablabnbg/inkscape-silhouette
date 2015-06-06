@@ -377,7 +377,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if s.dev is None: return None
 
     s.write("FG\x03")
-    resp = s.read(timeout=10000) # Large timeout because the plotter moves.
+    try:
+      resp = s.read(timeout=10000) # Large timeout because the plotter moves.
+    except usb.core.USBError as e:
+      print("usb.core.USBError:", e, file=self.log)
+      resp = "None  "
     return resp[0:-2]   # chop of 0x03
 
 
@@ -548,7 +552,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
       
     try:
-      resp = s.read(timeout=100)
+      resp = s.read(timeout=10000)
       if len(resp) > 1:
         print("FA: '%s'" % (resp[:-1]), file=s.log)
     except:

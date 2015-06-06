@@ -21,20 +21,19 @@ from silhouette.Graphtec import SilhouetteCameo
 dev = SilhouetteCameo()
 dev.setup(media=113, pressure=1, trackenhancing=True, return_home=False)	# 113 = Pen
 
-#fontfile= './motorhead.ttf'
-#fontfile= './WC Wunderbach Wimpern.ttf'
-#fontfile= './RIKY2vamp.ttf'
-#fontfile= './LeckerliOne-Regular.ttf'
-#fontfile= './FreeSans.ttf'				# vertical metric is much too high
-fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'	# glyph ZERO is damaged.
+#fontfile= './motorhead.ttf'				# 17sec, 75x30mm, glyph 1 horizontally off.
+#fontfile= './WC Wunderbach Wimpern.ttf'		# 78sec, 82x20mm, fantastic stencil
+fontfile= './RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
+#fontfile= './Channel.ttf'				# 18sec, 80x17mm, very round. stylish.
+#fontfile= './LeckerliOne-Regular.ttf'			# 25sec, 88x39mm, vert stretched upper half, nicely rounded.
+#fontfile= './FreeSans.ttf'				# 19sec, 73x14mm, vertical metric is much too high
+#fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'	# 17sec, 73x14mm, glyph ZERO is damaged.
 
 def translate_poly(poly,xoff,yoff,scale=1):
   tuplepath=[]
   for i in poly: tuplepath.append( tuple([i[0]*scale+xoff, i[1]*scale+yoff]) )
   return tuplepath
   
-def show_char(canvas, face, char, x, y, scale, flags=None):
-  if not flags: flags=freetype.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH|freetype.FT_LOAD_RENDER|freetype.FT_LOAD_FORCE_AUTOHINT
 
 def show_poly(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
   """ default path is a downward pointing triangle.
@@ -107,12 +106,16 @@ def polygons_from_glyph(glyph,x=0,y=0,xscale=1.0,yscale=None):
         start = end+1
   return MP.Path(VERTS, CODES).to_polygons(transform=trans),xadv,yadv
 
+
+def show_char(canvas, face, char, x, y, scale, flags=None):
+  if not flags: flags=freetype.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH|freetype.FT_LOAD_RENDER|freetype.FT_LOAD_FORCE_AUTOHINT
+
   idx = face.get_char_index(char)
   face.load_char(char)		# Do not use load_glyph(), it scales all chars to equal height.
   adv = face.get_advance(idx, flags|freetype.FT_LOAD_NO_SCALE)	# need NO_SCALE,  or its broken.
   
   # bbox = face.glyph.outline.get_bbox()
-  polys,xadv,yadv = polygons_from_glyph(face.glyph, x=x,y=y,scale=scale)
+  polys,xadv,yadv = polygons_from_glyph(face.glyph, x=x,y=y,xscale=scale)
   for poly in polys: show_poly(canvas,poly)
 
   if False:
@@ -185,7 +188,7 @@ clock_chars = {}
 
 for char in "0123456789:":
   face.load_char(char)
-  p,xa,ya = polygons_from_glyph(face.glyph, 0, 0, xscale=scale,yscale=-scale)
+  p,xa,ya = polygons_from_glyph(face.glyph, 0, 0, xscale=-scale,yscale=scale)
   clock_chars[char] = [ p, xa, ya ]
 
 # print(clock_chars['1'])
@@ -196,13 +199,13 @@ tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the de
 
 cscale=0.3	# scale the chars smaller, after interpolating.
 
-while True:
+if True:
   txt = time.strftime('%H:%M:%S')
   print(txt)
   x = 0
   clock_path = []
   for ch in txt:
-    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, x,y, cscale))
+    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, -x,y, cscale))
     x += clock_chars[ch][1]*cscale
   cbox = dev.find_bbox(clock_path)
   ystep = cbox['lly']-cbox['ury']
