@@ -653,7 +653,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     trailer = []
     trailer.append("&1,1,1,TB50,0\x03")   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
     trailer.append("FO0\x03")             # // Feed the page out.
-    # trailer.append("H,")                  # // Halt? Not seen in newer dumps.
+    trailer.append("H,")                  # // Halt? Not seen in newer dumps.
     new_home = ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']+end_paper_offset*20.))
 
     if no_trailer:
