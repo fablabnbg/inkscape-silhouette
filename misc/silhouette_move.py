@@ -10,7 +10,7 @@ import time,sys,string
 sys.path.extend(['..','.'])	# make it callable from top or misc directory.
 from silhouette.Graphtec import SilhouetteCameo
 
-dev = SilhouetteCameo()
+dev = SilhouetteCameo()		# no dev.setup() needed here.
 
 feed_mm = 10
 if len(sys.argv) > 1:

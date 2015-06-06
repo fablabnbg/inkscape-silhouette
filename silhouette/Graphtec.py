@@ -5,8 +5,9 @@
 #
 # Native resolution of the plotter is 0.05mm -- All movements are integer multiples of this.
 #
-# 2015-06-03, juewei@fabfolk.com using print_function. added wait_for_ready().
+# 2015-06-04, juewei@fabfolk.com using print_function. added wait_for_ready().
 #             plot(bboxonly=None) is now the special case for not doing anything. False is normal plot.
+# 2015-06-05  Renamed cut_bbox() to find_bbox(). It does not cut anything.
 
 from __future__ import print_function
 import sys, time
@@ -332,7 +333,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # Status request.
     s.write("\x1b\x05")
-    resp = s.read(timeout=5000)
+    resp = "None\x03"
+    try:
+      resp = s.read(timeout=5000)
+    except usb.core.USBError as e:
+      print("usb.core.USBError:", e, file=self.log)
+      pass
     if resp[-1] != '\x03': raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
     if resp[:-1] == '0': return "ready"
     if resp[:-1] == '1': return "moving"
@@ -345,6 +351,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     for i in range(1, int(timeout*.5)):
       if (state == 'ready'): break
       if verbose: print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
+      if verbose == False:
+        if state == 'unloaded': 
+          print(" %d/%d: please load media ...\r" % (i, int(timeout*.5)), end='', file=sys.stderr)
+        elif i > 5: 
+          print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
       time.sleep(2.0)
       state = s.status()
     if verbose: print("",file=sys.stderr)
@@ -368,6 +379,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.write("FG\x03")
     resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     return resp[0:-2]   # chop of 0x03
+
 
   def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None, return_home=True):
     """media range is [100..300], default 132, "Print Paper Light Weight"
@@ -453,7 +465,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if resp != "    0,    0\x03":
       raise ValueError("setup: Invalid response from plotter.")
 
-  def cut_bbox(s, cut):
+  def find_bbox(s, cut):
     """Find the bouding box of the cut, returns (xmin,ymin,xmax,ymax)"""
     bb = {}
     for path in cut:
@@ -464,7 +476,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def flip_cut(s, cut):
     """this returns a flipped copy of the cut about the x-axis, 
        keeping min and max values as they are."""
-    bb = s.cut_bbox(cut)
+    bb = s.find_bbox(cut)
     new_cut = []
     for path in cut:
       new_path = []
@@ -476,7 +488,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def mirror_cut(s, cut):
     """this returns a mirrored copy of the cut about the x-axis, 
        keeping min and max values as they are."""
-    bb = s.cut_bbox(cut)
+    bb = s.find_bbox(cut)
     new_cut = []
     for path in cut:
       new_path = []

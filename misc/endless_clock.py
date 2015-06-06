@@ -8,26 +8,40 @@
 #
 # Modelled after https://github.com/rougier/freetype-py/blob/master/examples/glyph-vector.py
 
-import gtk,time
+import sys,time,gtk
 from goocanvas import *
 import cairo,random
 import freetype
 import matplotlib.path as MP
 import matplotlib.transforms as MT
 
+sys.path.extend(['..','.'])	# make it callable from top or misc directory.
+from silhouette.Graphtec import SilhouetteCameo
+
+dev = SilhouetteCameo()
+dev.setup(media=113, pressure=1, trackenhancing=True, return_home=False)	# 113 = Pen
+
 #fontfile= './motorhead.ttf'
 #fontfile= './WC Wunderbach Wimpern.ttf'
-fontfile= './RIKY2vamp.ttf'
+#fontfile= './RIKY2vamp.ttf'
 #fontfile= './LeckerliOne-Regular.ttf'
-fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'
+#fontfile= './FreeSans.ttf'				# vertical metric is much too high
+fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'	# glyph ZERO is damaged.
 
-def show_path(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
-  """ default path is a downward pointing triangle 
+def translate_poly(poly,xoff,yoff,scale=1):
+  tuplepath=[]
+  for i in poly: tuplepath.append( tuple([i[0]*scale+xoff, i[1]*scale+yoff]) )
+  return tuplepath
+  
+def show_char(canvas, face, char, x, y, scale, flags=None):
+  if not flags: flags=freetype.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH|freetype.FT_LOAD_RENDER|freetype.FT_LOAD_FORCE_AUTOHINT
+
+def show_poly(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
+  """ default path is a downward pointing triangle.
       Both, a list of lists, and a list of tuples is accepted.
   """
 
-  tuplepath=[]
-  for i in path: tuplepath.append( tuple([i[0]+xoff, i[1]+yoff]) )
+  tuplepath=translate_poly(path, xoff, yoff)
   p = Points(tuplepath)		# cannot handle 2-element lists, need 2-element tuples.
   poly = Polyline(parent=canvas, points=p, line_width=0.5, stroke_color="black")
 
@@ -40,20 +54,21 @@ def show_path(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
     text.scale(.25,.25)
 
 
-def polygons_from_glyph(glyph,x=0,y=0,scale=1.0):
+def polygons_from_glyph(glyph,x=0,y=0,xscale=1.0,yscale=None):
   """ converts a freetype Face glyph outline to a set of polygons.
       Interpolation of splines is implicitly defined by scale.
       And also returns the advance metrics. (More reliable than all 
      the other techniques tested in show_char())
   """
-  fix_adv_scale=scale*0.001		# this is horrible. But works for all fonts.
+  if yscale is None: yscale=xscale
+  fix_adv_scale=yscale*0.001		# this is horrible. But works for all fonts.
   xadv = glyph.linearHoriAdvance*fix_adv_scale
   yadv = glyph.linearVertAdvance*fix_adv_scale
 
   o = glyph.outline
 
   affine=MT.Affine2D()
-  trans = affine.translate(x,y).scale(sx=scale,sy=-scale)
+  trans = affine.translate(x,y).scale(sx=xscale,sy=yscale)
   start, end = 0, 0
   VERTS, CODES = [], []
   for i in range(len(o.contours)):
@@ -92,17 +107,13 @@ def polygons_from_glyph(glyph,x=0,y=0,scale=1.0):
         start = end+1
   return MP.Path(VERTS, CODES).to_polygons(transform=trans),xadv,yadv
 
-
-def show_char(canvas, face, char, x, y, scale, flags=None):
-  if not flags: flags=freetype.FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH|freetype.FT_LOAD_RENDER|freetype.FT_LOAD_FORCE_AUTOHINT
-
   idx = face.get_char_index(char)
   face.load_char(char)		# Do not use load_glyph(), it scales all chars to equal height.
   adv = face.get_advance(idx, flags|freetype.FT_LOAD_NO_SCALE)	# need NO_SCALE,  or its broken.
   
   # bbox = face.glyph.outline.get_bbox()
   polys,xadv,yadv = polygons_from_glyph(face.glyph, x=x,y=y,scale=scale)
-  for poly in polys: show_path(canvas,poly)
+  for poly in polys: show_poly(canvas,poly)
 
   if False:
     fix_adv_scale=scale*1.2		# not really good.
@@ -166,32 +177,55 @@ root = canvas.get_root_item()
 face = freetype.Face(fontfile)
 face.set_char_size(12)
 
-x,y = 0,-100
+x,y = 0,10
 scale=1
+time_window=20
 
 clock_chars = {}
 
 for char in "0123456789:":
   face.load_char(char)
-  p,xa,ya = polygons_from_glyph(face.glyph, 0, 0, scale)
+  p,xa,ya = polygons_from_glyph(face.glyph, 0, 0, xscale=scale,yscale=-scale)
   clock_chars[char] = [ p, xa, ya ]
 
-print(clock_chars['1'])
+# print(clock_chars['1'])
 
-while (y < 100):
+when=time.time()+time_window
+
+tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
+
+cscale=0.3	# scale the chars smaller, after interpolating.
+
+while True:
   txt = time.strftime('%H:%M:%S')
-  x = 0
-  for ch in txt:
-    for poly in clock_chars[ch][0]: show_path(root,poly, x,y)
-    x += clock_chars[ch][1]
-  y += clock_chars[txt[0]][2]
   print(txt)
-  time.sleep(2)
+  x = 0
+  clock_path = []
+  for ch in txt:
+    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, x,y, cscale))
+    x += clock_chars[ch][1]*cscale
+  cbox = dev.find_bbox(clock_path)
+  ystep = cbox['lly']-cbox['ury']
+  y += ystep
 
-# for char in "0123456789:,m1To":
-#  x,_ = show_char(root,face, char, x, y, scale)
-                
-win.add(canvas)
-win.show_all()
+  clock_path_origin = []
+  for poly in clock_path: clock_path_origin.append(translate_poly(poly, -cbox['llx'], -cbox['ury']))
+  clock_path_origin.append([(0,tmp_fwd),(0,tmp_fwd)])
+  bbox = dev.plot(pathlist=clock_path_origin, offset=(0,0), end_paper_offset=-tmp_fwd+ystep, no_trailer=True)
 
-gtk.main()
+  now=time.time()
+  if (now < when):
+    time.sleep(when-now)	# or do something else, interruptable
+    print("sleep(%f)" % (when-now))
+  when=now+time_window
+
+  dev.write(''.join(bbox['trailer']))
+  bbox = dev.plot(pathlist=[ [(0,0),(0,0)] ], offset=(0,0))
+  dev.wait_for_ready()
+
+
+if False:
+  win.add(canvas)
+  win.show_all()
+  gtk.main()
+
