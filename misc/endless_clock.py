@@ -198,6 +198,7 @@ for char in "0123456789:":
 
 when=time.time()+time_window
 
+todo_needs_origin_moved = 0
 tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
 
 cscale=0.3	# scale the chars smaller, after interpolating.
@@ -239,7 +240,7 @@ while True:
 
   while (now < when):
     # something else, interruptable
-    if not 'name' in doing and len(todo):
+    if not 'name' in doing and len(todo)  and todo_needs_origin_moved == 0:
       doing['name'] = todo.pop(0)
       doing['data'] = dev.load_dumpfile(doing['name'])
       doing['cmd_idx'] = -1
