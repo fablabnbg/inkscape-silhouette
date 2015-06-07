@@ -15,7 +15,7 @@
 # 2015-06-06  refactored plot_cmds() from plot().
 
 from __future__ import print_function
-import sys, time
+import sys, time, re
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -721,3 +721,19 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.wait_for_ready(verbose=False)
     s.write(new_home)
     s.wait_for_ready(verbose=False)
+
+  def load_dumpfile(s,file):
+    """ s is unused
+    """
+    data1234=None
+    for line in open(file,'r').readlines():
+      if re.match(r'\s*\[', line):
+        exec('data1234='+line)
+        break 
+      elif re.match(r'\s*<\s*svg', line):
+        print(line)
+        print("Error: xml/svg file. Please load into inkscape. Use extensions -> export -> sendto silhouette, [x] dump to file")
+        return None
+      else:
+        print(line,end='')
+    return data1234

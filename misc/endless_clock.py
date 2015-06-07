@@ -19,15 +19,18 @@ sys.path.extend(['..','.'])	# make it callable from top or misc directory.
 from silhouette.Graphtec import SilhouetteCameo
 
 dev = SilhouetteCameo()
-dev.setup(media=113, pressure=1, trackenhancing=True, return_home=False)	# 113 = Pen
+dev.setup(media=113, pressure=1, trackenhancing=True, return_home=True)	# 113 = Pen
 
-#fontfile= './motorhead.ttf'				# 17sec, 75x30mm, glyph 1 horizontally off.
-#fontfile= './WC Wunderbach Wimpern.ttf'		# 78sec, 82x20mm, fantastic stencil
-fontfile= './RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
-#fontfile= './Channel.ttf'				# 18sec, 80x17mm, very round. stylish.
-#fontfile= './LeckerliOne-Regular.ttf'			# 25sec, 88x39mm, vert stretched upper half, nicely rounded.
-#fontfile= './FreeSans.ttf'				# 19sec, 73x14mm, vertical metric is much too high
+time_window=30		# show the clock every N seconds.
+clock_margin=40		# mm kept clear for clock
+
+fontfile= 'ttf/RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
+#fontfile= 'ttf/Channel.ttf'				# 18sec, 80x17mm, very round. stylish.
+#fontfile= 'ttf/LeckerliOne-Regular.ttf'		# 25sec, 88x39mm, vert stretched upper half, nicely rounded.
+#fontfile= 'ttf/WC Wunderbach Wimpern.ttf'		# 78sec, 82x20mm, fantastic stencil
+#fontfile= 'ttf/FreeSans.ttf'				# 19sec, 73x14mm, vertical metric is much too high
 #fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'	# 17sec, 73x14mm, glyph ZERO is damaged.
+#fontfile= 'ttf/motorhead.ttf'				# 17sec, 75x30mm, glyph 1 horizontally off.
 
 def translate_poly(poly,xoff,yoff,scale=1):
   tuplepath=[]
@@ -182,7 +185,6 @@ face.set_char_size(12)
 
 x,y = 0,10
 scale=1
-time_window=20
 
 clock_chars = {}
 
@@ -198,33 +200,68 @@ when=time.time()+time_window
 tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
 
 cscale=0.3	# scale the chars smaller, after interpolating.
+todo = [
+  'dump/Ghostscript_Tiger.dump',
+  'dump/boxed_triangle.dump',
+  'dump/rounded_star.dump',
+  'dump/star_man.dump'
+]
 
-if True:
+doing = {}
+cy_off = 0
+
+while True:
   txt = time.strftime('%H:%M:%S')
   print(txt)
   x = 0
   clock_path = []
   for ch in txt:
-    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, -x,y, cscale))
+    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, -x,cy_off, cscale))
     x += clock_chars[ch][1]*cscale
   cbox = dev.find_bbox(clock_path)
   ystep = cbox['lly']-cbox['ury']
-  y += ystep
+  cy_off += ystep
 
   clock_path_origin = []
   for poly in clock_path: clock_path_origin.append(translate_poly(poly, -cbox['llx'], -cbox['ury']))
   clock_path_origin.append([(0,tmp_fwd),(0,tmp_fwd)])
-  bbox = dev.plot(pathlist=clock_path_origin, offset=(0,0), end_paper_offset=-tmp_fwd+ystep, no_trailer=True)
+  meta = dev.plot(pathlist=clock_path_origin, offset=(0,0), end_paper_offset=-tmp_fwd+ystep, no_trailer=True)
+  time.sleep(2)	# show the time before doing something else.
 
+  if 'cmd_idx' in doing:
+    ret_cmd = doing['cmds'][doing['cmd_idx']]+','
+    # we want to repeat the last draw command as a move command when returning.
+    if ret_cmd[0] == 'D': ret_cmd = 'M'+ret_cmd[1:]
+    dev.write(ret_cmd)
   now=time.time()
-  if (now < when):
-    time.sleep(when-now)	# or do something else, interruptable
-    print("sleep(%f)" % (when-now))
-  when=now+time_window
 
-  dev.write(''.join(bbox['trailer']))
-  bbox = dev.plot(pathlist=[ [(0,0),(0,0)] ], offset=(0,0))
-  dev.wait_for_ready()
+  while (now < when):
+    print("sleep(%f)" % (when-now))
+    # something else, interruptable
+    if not 'name' in doing and len(todo):
+      doing['name'] = todo.pop(0)
+      doing['data'] = dev.load_dumpfile(doing['name'])
+      doing['cmd_idx'] = -1
+      if doing['data'] is None:
+        del(doing['cmd_idx'])
+        del(doing['name'])
+      else:
+        doing['cmds'] = dev.plot_cmds(doing['data'], meta['bbox'], 0, clock_margin) # keep space for the clock
+
+    if 'cmd_idx' in doing:
+      doing['cmd_idx'] += 1
+      if doing['cmd_idx'] < len(doing['cmds']):
+        dev.write(doing['cmds'][doing['cmd_idx']]+',')
+      else:
+        for key in doing.keys(): del(doing[key])
+        time.sleep(1)
+    else:
+      time.sleep(1)
+      
+    now=time.time()
+  when=time.time()+time_window
+
+  dev.write(''.join(meta['trailer']))
 
 
 if False:

@@ -29,21 +29,10 @@ dev.setup(speed=args.speed, pressure=args.pressure, pen=args.pen, return_home=(n
 
 # print args
 
-dumpdata=None
-for line in open(args.dumpfile,'r').readlines():
-  if re.match(r'\s*\[', line):
-    exec('dumpdata='+line)
-    break 
-  elif re.match(r'\s*<\s*svg', line):
-    print line
-    print("Error: xml/svg file. Please load into inkscape. Use extensions -> export -> sendto silhouette, [x] dump to file")
-    sys.exit(0)
-  else:
-    print line,
-# print dumpdata
+dumpdata=dev.load_dumpfile(args.dumpfile)
 
 dev.wait_for_ready()
-meta = dev.plot(pathlist=dumpdata, bboxonly=args.bbox, no_trailer=True,
+meta = dev.plot(pathlist=[], bboxonly=args.bbox, no_trailer=True,
                 mediawidth=args.width, mediaheight=args.height, offset=(args.xoff,args.yoff))
 print meta
 

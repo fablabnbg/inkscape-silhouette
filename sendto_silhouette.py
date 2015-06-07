@@ -948,6 +948,13 @@ class SendtoSilhouette(inkex.Effect):
         cut.append(mm_path)
 
     if dev.dev is None:
+      docname=None
+      svg = self.document.getroot()
+      # Namespace horrors: Id's expand to full urls, before we can search them.
+      # 'sodipodi:docname' -> '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname'
+      for tag in svg.attrib.keys():
+        if re.search(r'}docname$',tag): docname=svg.get(tag)
+
       o = open(self.dumpname, 'w')
       print >>self.tty,   "Dump written to ",self.dumpname," (",pointcount," points )"
       print >>sys.stderr, "Dump written to ",self.dumpname," (",pointcount," points )"
@@ -955,6 +962,9 @@ class SendtoSilhouette(inkex.Effect):
       print >>sys.stderr,"driver version: '%s'" % __version__
       print >>o,"# device version: '%s'" % dev.get_version()
       print >>o,"# driver version: '%s'" % __version__
+      if docname:
+        print >>o,"# docname: '%s'" % docname
+        print >>sys.stderr, "docname: '%s'" % docname
       print >>o, cut
 
     if self.options.pressure == 0:     self.options.pressure = None
