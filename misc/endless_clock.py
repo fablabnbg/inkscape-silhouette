@@ -33,7 +33,7 @@ def translate_poly(poly,xoff,yoff,scale=1):
   tuplepath=[]
   for i in poly: tuplepath.append( tuple([i[0]*scale+xoff, i[1]*scale+yoff]) )
   return tuplepath
-  
+
 
 def show_poly(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
   """ default path is a downward pointing triangle.
@@ -56,7 +56,7 @@ def show_poly(canvas, path = [(0,0),(20,0),(10,20),(0,0)], xoff=0, yoff=0 ):
 def polygons_from_glyph(glyph,x=0,y=0,xscale=1.0,yscale=None):
   """ converts a freetype Face glyph outline to a set of polygons.
       Interpolation of splines is implicitly defined by scale.
-      And also returns the advance metrics. (More reliable than all 
+      And also returns the advance metrics. (More reliable than all
      the other techniques tested in show_char())
   """
   if yscale is None: yscale=xscale
@@ -113,7 +113,7 @@ def show_char(canvas, face, char, x, y, scale, flags=None):
   idx = face.get_char_index(char)
   face.load_char(char)		# Do not use load_glyph(), it scales all chars to equal height.
   adv = face.get_advance(idx, flags|freetype.FT_LOAD_NO_SCALE)	# need NO_SCALE,  or its broken.
-  
+
   # bbox = face.glyph.outline.get_bbox()
   polys,xadv,yadv = polygons_from_glyph(face.glyph, x=x,y=y,xscale=scale)
   for poly in polys: show_poly(canvas,poly)
@@ -137,7 +137,7 @@ def show_char(canvas, face, char, x, y, scale, flags=None):
 
 
 def scale_up(win, ev):
-  s = canvas.get_scale()  
+  s = canvas.get_scale()
   if   chr(ev.keyval) == '+':  canvas.set_scale(s*1.2)
   elif chr(ev.keyval) == '-':  canvas.set_scale(s*.8)
   else: gtk.main_quit()
@@ -171,7 +171,7 @@ win.connect("key-press-event", scale_up)
 win.connect("motion-notify-event", motion_notify)
 win.connect("button-press-event", button_press)
 win.connect("button-release-event", button_release)
-        
+
 canvas = Canvas(units='mm', scale=1)
 canvas.set_size_request(1000, 400)
 root = canvas.get_root_item()

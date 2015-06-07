@@ -1,6 +1,10 @@
 # (c) 2013,2014 jw@suse.de
-# driver for a Graphtec Silhouette Cameo plotter.
-# modelled after https://github.com/nosliwneb/robocut.git 
+# (c) 2015 juewei@fabfolk.com
+#
+# Distribute under GPLv2 or ask.
+#
+# Driver for a Graphtec Silhouette Cameo plotter.
+# modelled after https://github.com/nosliwneb/robocut.git
 # https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 #
 # Native resolution of the plotter is 0.05mm -- All movements are integer multiples of this.
@@ -8,6 +12,7 @@
 # 2015-06-04, juewei@fabfolk.com using print_function. added wait_for_ready().
 #             plot(bboxonly=None) is now the special case for not doing anything. False is normal plot.
 # 2015-06-05  Renamed cut_bbox() to find_bbox(). It does not cut anything.
+# 2015-06-06  refactored plot_cmds() from plot().
 
 from __future__ import print_function
 import sys, time
@@ -37,7 +42,7 @@ else:   # if sys_platform.startswith('linux'):
     # import UsbCoreMini as usb
     # forget this. old 0.4 PyUSB segfaults easily.
 
-# taken from 
+# taken from
 #  robocut/CutDialog.ui
 #  robocut/CutDialog.cpp
 
@@ -73,7 +78,7 @@ MEDIA = [
 ]
 
 #  robocut/Plotter.h:53 ff
-VENDOR_ID_GRAPHTEC = 0x0b4d 
+VENDOR_ID_GRAPHTEC = 0x0b4d
 PRODUCT_ID_CC200_20 = 0x110a
 PRODUCT_ID_CC300_20 = 0x111a
 PRODUCT_ID_SILHOUETTE_SD_1 = 0x111c
@@ -82,13 +87,13 @@ PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 
 DEVICE = [
- { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait', 
+ { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',    
+ { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20', 
+ { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x111a, 'name': 'Craft Robo CC300-20' },
  { 'vendor_id': 0x0b4d, 'product_id': 0x111c, 'name': 'Silhouette SD 1' },
@@ -107,8 +112,8 @@ def _bbox_extend(bb, x, y):
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
     """ This initializer simply finds the first known device.
-        The default paper alignment is left hand side for devices with known width 
-        (currently Cameo and Portrait). Otherwise it is right hand side. 
+        The default paper alignment is left hand side for devices with known width
+        (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
 
         If no_device is True, the usb device is not actually opened, and all
@@ -143,7 +148,7 @@ class SilhouetteCameo:
           break
 
       if dev is None:
-        if sys_platform.startswith('win'): 
+        if sys_platform.startswith('win'):
           print("device fallback under windows not tested. Help adding code!", file=self.log)
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device' }
@@ -171,7 +176,7 @@ class SilhouetteCameo:
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
       try:
-	dev_bus = dev.bus
+        dev_bus = dev.bus
       except:
         dev_bus = -1
 
@@ -210,9 +215,9 @@ Then run 'sudo udevadm trigger' to load this file.
 
 Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.hardware['vendor_id'], self.hardware['product_id'])
             print(msg, file=self.log)
-	    print(msg, file=sys.stderr)
+            print(msg, file=sys.stderr)
           sys.exit(0)
-          
+
         for i in range(5):
           try:
             dev.reset();
@@ -229,10 +234,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pass
 
     self.dev = dev
-    self.need_interface = False		# probably never needed, but harmful on some versions of usb.core 
+    self.need_interface = False		# probably never needed, but harmful on some versions of usb.core
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
-    if self.dev is None or 'width_mm' in self.hardware: 
-      self.leftaligned = True 
+    if self.dev is None or 'width_mm' in self.hardware:
+      self.leftaligned = True
 
   def write(s, string, timeout=3000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
@@ -263,9 +268,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       chunk = string[o:o+chunksz]
       try:
         if s.need_interface:
-          r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout) 
-	else:
-          r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout) 
+          r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+        else:
+          r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
@@ -275,16 +280,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
-        # usb.core.USBError: [Errno 110] Operation timed 
+        # usb.core.USBError: [Errno 110] Operation timed
         #print("Write Exception: %s, %s errno=%s" % (type(e), e, e.errno), file=s.log)
         import errno
-	try:
+        try:
           if e.errno == errno.ETIMEDOUT:
             time.sleep(1)
             msg += 't'
             continue
-	except Exception as ee:
-	  msg += "s.dev.write Error: " + ee
+        except Exception as ee:
+          msg += "s.dev.write Error: " + ee
       else:
         if len(msg):
           msg = ''
@@ -303,15 +308,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if o != len(string):
       raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
-      
+
   def read(s, size=64, timeout=5000):
     """Low level read method"""
     if s.dev is None: return None
     endpoint = 0x82
     if s.need_interface:
-      data = s.dev.read(endpoint, size, timeout=timeout, interface=0) 
+      data = s.dev.read(endpoint, size, timeout=timeout, interface=0)
     else:
-      data = s.dev.read(endpoint, size, timeout=timeout) 
+      data = s.dev.read(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
     return data.tostring()
@@ -346,15 +351,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[:-1]
 
   def wait_for_ready(s, timeout=30, verbose=True):
-    if verbose: print("device version: '%s'" % s.get_version(), file=sys.stderr)
+    # get_version() is likely to timeout here...
+    # if verbose: print("device version: '%s'" % s.get_version(), file=sys.stderr)
     state = s.status()
     for i in range(1, int(timeout*.5)):
       if (state == 'ready'): break
       if verbose: print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
       if verbose == False:
-        if state == 'unloaded': 
+        if state == 'unloaded':
           print(" %d/%d: please load media ...\r" % (i, int(timeout*.5)), end='', file=sys.stderr)
-        elif i > 5: 
+        elif i > 5:
           print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
       time.sleep(2.0)
       state = s.status()
@@ -380,7 +386,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:
-      print("usb.core.USBError:", e, file=self.log)
+      print("usb.core.USBError:", e, file=s.log)
       resp = "None  "
     return resp[0:-2]   # chop of 0x03
 
@@ -407,27 +413,27 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.initialize()
     s.home()
 
-    if media is not None: 
+    if media is not None:
       if media < 100 or media > 300: media = 300
       s.write("FW%d\x03" % media);
-      if pen is None: 
+      if pen is None:
         if media == 113:
           pen = True
         else:
           pen = False
       for i in MEDIA:
-        if i[0] == media: 
+        if i[0] == media:
           print("Media=%d, cap='%s', name='%s'" % (media, i[3], i[4]), file=s.log)
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
 
-    if speed is not None: 
+    if speed is not None:
       if speed < 1: speed = 1
       if speed > 10: speed = 10
       s.write("!%d\x03" % speed);
       print("speed: %d" % speed, file=s.log)
 
-    if pressure is not None: 
+    if pressure is not None:
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
       s.write("FX%d\x03" % pressure);
@@ -448,14 +454,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if pen: cutter = 0
     s.write("FC%d\x03" % cutter)
 
-    if trackenhancing is not None: 
-      if trackenhancing: 
+    if trackenhancing is not None:
+      if trackenhancing:
         s.write("FY1\x03")
       else:
         s.write("FY0\x03")
 
-    if landscape is not None: 
-      if landscape: 
+    if landscape is not None:
+      if landscape:
         s.write("FN1\x03")
       else:
         s.write("FN0\x03")
@@ -478,7 +484,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return bb
 
   def flip_cut(s, cut):
-    """this returns a flipped copy of the cut about the x-axis, 
+    """this returns a flipped copy of the cut about the x-axis,
        keeping min and max values as they are."""
     bb = s.find_bbox(cut)
     new_cut = []
@@ -490,7 +496,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return new_cut
 
   def mirror_cut(s, cut):
-    """this returns a mirrored copy of the cut about the x-axis, 
+    """this returns a mirrored copy of the cut about the x-axis,
        keeping min and max values as they are."""
     bb = s.find_bbox(cut)
     new_cut = []
@@ -501,34 +507,122 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_cut.append(new_path)
     return new_cut
 
+  def plot_cmds(s, plist, bbox, x_off_mm, y_off_mm):
+    """ s is unused.
+        bbox coordinates are in device units.
+        bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
+        otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
+        x_off_mm, y_off_mm are in mm, relative to the clip urx, ury.
+    """
+    flipwidth = int(12*25.4*20)		# 6096? physical device width of the Silhouette Cameo
+
+    x_off = x_off_mm * 20.
+    y_off = y_off_mm * 20.
+
+    if bbox is None: bbox = {}
+    bbox['count'] = 0
+    if not 'only' in bbox: bbox['only'] = False
+    if 'clip' in bbox and 'urx' in bbox['clip']:
+      flipwidth=bbox['clip']['urx']
+    if 'clip' in bbox and 'llx' in bbox['clip']:
+      x_off += bbox['clip']['llx']
+    if 'clip' in bbox and 'ury' in bbox['clip']:
+      y_off += bbox['clip']['ury']
+
+    last_inside = True
+    plotcmds=[]
+    for path in plist:
+      if len(path) < 2: continue
+      x = path[0][0]*20. + x_off
+      y = path[0][1]*20. + y_off
+      _bbox_extend(bbox, x,y)
+      bbox['count'] += 1
+
+      if 'clip' in bbox:
+        last_inside = True
+        if x < bbox['clip']['llx']:
+          x = bbox['clip']['llx']
+          last_inside = False
+        if x > bbox['clip']['urx']:
+          x = bbox['clip']['urx']
+          last_inside = False
+        if y < bbox['clip']['ury']:
+          y = bbox['clip']['ury']
+          last_inside = False
+        if y > bbox['clip']['lly']:
+          y = bbox['clip']['lly']
+          last_inside = False
+        if not last_inside:
+          if 'count' in bbox['clip']:
+            bbox['clip']['count'] += 1
+          else:
+            bbox['clip']['count'] = 1
+
+      if bbox['only'] is False:
+        plotcmds.append("M%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+
+      for j in range(1,len(path)):
+        x = path[j][0]*20. + x_off
+        y = path[j][1]*20. + y_off
+        _bbox_extend(bbox, x,y)
+        bbox['count'] += 1
+
+        inside = True
+        if 'clip' in bbox:
+          if x < bbox['clip']['llx']:
+            x = bbox['clip']['llx']
+            inside = False
+          if x > bbox['clip']['urx']:
+            x = bbox['clip']['urx']
+            inside = False
+          if y < bbox['clip']['ury']:
+            y = bbox['clip']['ury']
+            inside = False
+          if y > bbox['clip']['lly']:
+            y = bbox['clip']['lly']
+            inside = False
+          if not inside:
+            if 'count' in bbox['clip']:
+              bbox['clip']['count'] += 1
+            else:
+              bbox['clip']['count'] = 1
+
+        if bbox['only'] is False:
+          if inside and last_inside:
+            plotcmds.append("D%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+          else:
+            # // if outside the range just move
+            plotcmds.append("M%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+        last_inside = inside
+    return plotcmds
+
+
   def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=0, no_trailer=False):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
        Each path in pathlist is rendered as a connected stroke (aka "pen_down"
-       mode). Movements between paths are not rendered (aka "pen_up" mode). 
+       mode). Movements between paths are not rendered (aka "pen_up" mode).
 
        A path is a sequence of 2-tupel, all measured in mm.
            The tool is lowered at the beginning and raised at the end of each path.
-       offset = (X_MM, Y_MM) can be specified, to easily move the design to the 
-           desired position.  The top and left media margin is always added to the 
+       offset = (X_MM, Y_MM) can be specified, to easily move the design to the
+           desired position.  The top and left media margin is always added to the
            origin. Default: margin only.
-       bboxonly:  True for drawing the bounding instead of the actual cut design; 
-                  None for not moving at all (just return the bounding box). 
+       bboxonly:  True for drawing the bounding instead of the actual cut design;
+                  None for not moving at all (just return the bounding box).
                   Default: False for normal cutting or drawing.
        end_paper_offset: [mm] adds to the final move, if return_home was False in setup.
-		If the end_paper_offset is negative, the end position is within the drawing 
+                If the end_paper_offset is negative, the end position is within the drawing
                 (reverse movmeents are clipped at the home position)
-		It reverse over the last home position.
+                It reverse over the last home position.
        no_trailer: Default false: The plot is properly terminated.
-                If true: The device is left hanging at the last position. You are expected to 
+                If true: The device is left hanging at the last position. You are expected to
                 extract the trailer from the return value, and send it ising the write() method later.
-       Example: The letter Y (20mm tall, 9mm wide) can be generated with 
+       Example: The letter Y (20mm tall, 9mm wide) can be generated with
                 pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
     bbox = { }
-    clipcount = 0
-    total = 0
     if margintop  is None and 'margin_top_mm'  in s.hardware: margintop  = s.hardware['margin_top_mm']
     if marginleft is None and 'margin_left_mm' in s.hardware: marginleft = s.hardware['margin_left_mm']
     if margintop  is None: margintop = 0
@@ -550,7 +644,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       s.write("FA\x03")   # query someting?
     except Exception as e:
       raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
-      
+
     try:
       resp = s.read(timeout=10000)
       if len(resp) > 1:
@@ -561,18 +655,17 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     width  = int(0.5+20.*mediawidth)
     height = int(0.5+20.*mediaheight)
     top    = int(0.5+20.*margintop)
-    left  = int(0.5+20.*marginleft)
-    if width < left: width=left
-    if height < top:  height=top
+    left   = int(0.5+20.*marginleft)
+    if width < left: width  = left
+    if height < top: height = top
 
     x_off = left
     y_off = top
-    if offset is not None:
+    if offset is None:
+      offset = (0,0)
+    else:
       if type(offset) != type([]) and type(offset) != type(()):
         offset = (offset, 0)
-      x_off += int(.5+offset[0]*20.)
-      y_off += int(.5+offset[1]*20.)
-    # print("x_off=%d, y_off=%d" % (x_off,y_off), file=s.log)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?
@@ -586,61 +679,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)		# scale
 
-    for path in pathlist:
-      if len(path) < 2: continue
-      # x = path[len(path)-1][0]*20. + x_off
-      # y = path[len(path)-1][1]*20. + y_off
-      x = path[0][0]*20. + x_off
-      y = path[0][1]*20. + y_off
-      _bbox_extend(bbox, x,y)
-      total += 1
-    
-      last_inside = True
-      if x < left:  
-        x = left
-        last_inside = False
-      if x > width: 
-        x = width
-        last_inside = False
-      if y < top:    
-        y = top
-        last_inside = False
-      if y > height: 
-        y = height
-        last_inside = False
-      if not last_inside: clipcount += 1
-
-      if bboxonly is False:
-        p += ",M%d,%d" % (int(0.5+width-x), int(0.5+y))
-      # for j in reversed(range(0,len(path)-1)):
-      for j in range(1,len(path)):
-        x = path[j][0]*20. + x_off
-        y = path[j][1]*20. + y_off
-        _bbox_extend(bbox, x,y)
-        total += 1
-
-        inside = True
-        if x < left:
-          x = left
-          inside = False
-        if x > width:
-          x = width
-          inside = False
-        if y < top:
-          y = top
-          inside = False
-        if y > height:
-          y = height
-          inside = False
-        if not inside: clipcount += 1
-
-        if bboxonly is False:
-          if inside and last_inside:
-            p += ",D%d,%d" % (int(0.5+width-x), int(0.5+y))
-          else:
-            # // if outside the range just move
-            p += ",M%d,%d" % (int(0.5+width-x), int(0.5+y))
-        last_inside = inside
+    bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
+    bbox['only'] = bboxonly
+    cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1])
+    p += ',' + ','.join(cmd_list)
 
     if bboxonly == True:
       # move the bouding box
@@ -653,7 +695,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     trailer = []
     trailer.append("&1,1,1,TB50,0\x03")   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
     trailer.append("FO0\x03")             # // Feed the page out.
-    trailer.append("H,")                  # // Halt? Not seen in newer dumps.
+    trailer.append("H,")                  # // Halt? Really move home!
+
+    if not 'llx' in bbox: bbox['llx'] = 0	# survive empty pathlist
+    if not 'lly' in bbox: bbox['lly'] = 0
     new_home = ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']+end_paper_offset*20.))
 
     if no_trailer:
@@ -664,13 +709,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       s.write(p)
       s.write(''.join(trailer))
 
-    return { 
-        'bbox': bbox, 
-        'clipcount': clipcount,
-        'total': total,
+    return {
+        'bbox': bbox,
         'unit' : 1/20.,
-        'mbox': { 'urx':width, 'ury':top, 'llx':left, 'lly':height },
-	'trailer': trailer
+        'trailer': trailer
       }
 
 
