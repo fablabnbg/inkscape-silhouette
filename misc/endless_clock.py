@@ -22,8 +22,8 @@ from silhouette.Graphtec import SilhouetteCameo
 dev = SilhouetteCameo()
 dev.setup(media=113, pressure=1, trackenhancing=True, return_home=True)	# 113 = Pen
 
-time_window=120		# show the clock every N seconds.
-clock_margin=40		# mm kept clear for clock
+time_window=60		# show the clock every N seconds.
+clock_margin=30		# mm kept clear for clock
 
 fontfile= 'ttf/RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
 #fontfile= 'ttf/Channel.ttf'				# 18sec, 80x17mm, very round. stylish.
