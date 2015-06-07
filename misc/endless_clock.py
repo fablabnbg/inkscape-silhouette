@@ -7,6 +7,7 @@
 # Requires: sudo easy_install freetype-py
 #
 # Modelled after https://github.com/rougier/freetype-py/blob/master/examples/glyph-vector.py
+# first working draft, doing 2 things at a time.
 
 import sys,time,gtk
 from goocanvas import *
@@ -21,7 +22,7 @@ from silhouette.Graphtec import SilhouetteCameo
 dev = SilhouetteCameo()
 dev.setup(media=113, pressure=1, trackenhancing=True, return_home=True)	# 113 = Pen
 
-time_window=30		# show the clock every N seconds.
+time_window=120		# show the clock every N seconds.
 clock_margin=40		# mm kept clear for clock
 
 fontfile= 'ttf/RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
@@ -211,22 +212,23 @@ doing = {}
 cy_off = 0
 
 while True:
-  txt = time.strftime('%H:%M:%S')
+  txt = time.strftime('%H:%M')	# '%H:%M:%S'
   print(txt)
   x = 0
   clock_path = []
   for ch in txt:
-    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, -x,cy_off, cscale))
+    for poly in clock_chars[ch][0]: clock_path.append(translate_poly(poly, -x,0, cscale))
     x += clock_chars[ch][1]*cscale
   cbox = dev.find_bbox(clock_path)
   ystep = cbox['lly']-cbox['ury']
-  cy_off += ystep
 
   clock_path_origin = []
-  for poly in clock_path: clock_path_origin.append(translate_poly(poly, -cbox['llx'], -cbox['ury']))
-  clock_path_origin.append([(0,tmp_fwd),(0,tmp_fwd)])
-  meta = dev.plot(pathlist=clock_path_origin, offset=(0,0), end_paper_offset=-tmp_fwd+ystep, no_trailer=True)
+  for poly in clock_path: clock_path_origin.append(translate_poly(poly, -cbox['llx'], -cbox['ury']+cy_off))
+  clock_path_origin.append([(0,tmp_fwd+cy_off),(0,tmp_fwd+cy_off)])
+  meta = dev.plot(pathlist=clock_path_origin, offset=(0,0), no_trailer=True)
+  dev.wait_for_ready()
   time.sleep(2)	# show the time before doing something else.
+  cy_off += int(ystep*1.2)
 
   if 'cmd_idx' in doing:
     ret_cmd = doing['cmds'][doing['cmd_idx']]+','
@@ -236,7 +238,6 @@ while True:
   now=time.time()
 
   while (now < when):
-    print("sleep(%f)" % (when-now))
     # something else, interruptable
     if not 'name' in doing and len(todo):
       doing['name'] = todo.pop(0)
@@ -246,7 +247,7 @@ while True:
         del(doing['cmd_idx'])
         del(doing['name'])
       else:
-        doing['cmds'] = dev.plot_cmds(doing['data'], meta['bbox'], 0, clock_margin) # keep space for the clock
+        doing['cmds'] = dev.plot_cmds(doing['data'], meta['bbox'], clock_margin, 0) # keep space for the clock
 
     if 'cmd_idx' in doing:
       doing['cmd_idx'] += 1
@@ -255,8 +256,10 @@ while True:
       else:
         for key in doing.keys(): del(doing[key])
         time.sleep(1)
+        print("sleep(%f)" % (when-now))
     else:
       time.sleep(1)
+      print("sleep(%f)" % (when-now))
       
     now=time.time()
   when=time.time()+time_window
