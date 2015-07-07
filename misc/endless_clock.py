@@ -202,10 +202,10 @@ tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the de
 
 cscale=0.3	# scale the chars smaller, after interpolating.
 todo = [
-  'dump/Ghostscript_Tiger.dump',
-  'dump/boxed_triangle.dump',
-  'dump/rounded_star.dump',
-  'dump/star_man.dump'
+#  'dump/Ghostscript_Tiger.dump',
+#  'dump/Barock_01.dump',
+#  'dump/rounded_star.dump',
+#  'dump/star_man.dump'
 ]
 
 doing = {}
