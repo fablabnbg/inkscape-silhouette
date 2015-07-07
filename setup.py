@@ -12,7 +12,8 @@ import sendto_silhouette	# for author(), version()
 
 e = sendto_silhouette.SendtoSilhouette()
 m = re.match('(.*)\s+<(.*)>', e.author())
-print ('.',['Makefile'] + glob.glob('silhouette-*')),('misc',glob.glob('misc/*'))
+
+# print ('.',['Makefile'] + glob.glob('silhouette-*')),('misc',glob.glob('misc/*'))
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -33,8 +34,8 @@ setup(name='inkscape-silhouette',
       author=m.groups()[0],
       author_email=m.groups()[1],
       url='https://github.com/jnweiger/inkscape-silhouette',
-      scripts=['sendto_silhouette.py', 'sendto_silhouette.inx', 'README.md'] +
-      		glob.glob('silhouette-*') + glob.glob('misc/*'),
+      scripts=filter(os.path.isfile, ['sendto_silhouette.py', 'sendto_silhouette.inx', 'README.md' ] + glob.glob('silhouette-*') + glob.glob('misc/*') + glob.glob('misc/*/*')),
+
       packages=['silhouette'],
       license='GPL-2.0',
       classifiers=[
