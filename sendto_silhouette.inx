@@ -8,18 +8,43 @@
     <page name='silhouette' _gui-text='Silhouette'>
       <param name="x_off" type="float" min="-999.0" max="999.0" _gui-text="X-Offset [mm]">0.0</param>
       <param name="y_off" type="float" min="-999.0" max="999.0" _gui-text="Y-Offset [mm]">0.0</param>
-
       <param name="tool" type="enum" _gui-text="Tool:">
         <item value="default">Media default</item>
         <item value="pen">Pen</item>
         <item value="cut">Cut</item>
       </param>
       <param name="pen_help" type="description">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</param>
-      <param name="media_id" type="int" min="100" max="300" _gui-text="MediaID">300</param>
-      <param name="media_help" type="description">Media Ids are: 113 = pen, 132 = printer paper, 300 = custom</param>
-
-      <param name="speed" type="int" min="0" max="10" _gui-text="Speed">10</param>
-      <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">10</param>
+      <param name="media" type="enum" _gui-text="Media:">
+        <item value="100">Card without Craft Paper Backing</item>
+        <item value="101">Card with Craft Paper Backing</item>
+        <item value="102">Vinyl Sticker</item>
+        <item value="106">Film Labels</item>
+        <item value="111">Thick Media</item>
+        <item value="112">Thin Media</item>
+        <item value="113">Pen</item>
+        <item value="120">Bond Paper 13-28 lbs (105g)</item>
+        <item value="121">Bristol Paper 57-67 lbs (145g)</item>
+        <item value="122">Cardstock 40-60 lbs (90g)</item>
+        <item value="123">Cover 40-60 lbs (170g)</item>
+        <item value="124">Film, Double Matte Translucent</item>
+        <item value="125">Film, Vinyl With Adhesive Back</item>
+        <item value="126">Film, Window With Kling Adhesive</item>
+        <item value="127">Index 90 lbs (165g)</item>
+        <item value="128">Inkjet Photo Paper 28-44 lbs (70g)</item>
+        <item value="129">Inkjet Photo Paper 45-75 lbs (110g)</item>
+        <item value="130">Magnetic Sheet</item>
+        <item value="131">Offset 24-60 lbs (90g)</item>
+        <item value="132">Print Paper Light Weight</item>
+        <item value="133">Print Paper Medium Weight</item>
+        <item value="134">Sticker Sheet</item>
+        <item value="135">Tag 100 lbs (275g)</item>
+        <item value="136">Text Paper 24-70 lbs (105g)</item>
+        <item value="137">Vellum Bristol 57-67 lbs (145g)</item>
+        <item value="138">Writing Paper 24-70 lbs (105g)</item>
+        <item value="300">Custom</item>
+      </param>
+      <param name="speed" type="int" min="0" max="10" _gui-text="Speed">0</param>
+      <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">0</param>
       <param name="speed_help" type="description">Use speed=0, pressure=0 to take the media defaults.</param>
       <param name="autocrop" type="boolean" _gui-text="Trim margins">false</param> <param name="autocrop_help" type="description">Shift to the top lefthand corner, then do offsets.</param>
       <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
