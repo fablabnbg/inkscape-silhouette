@@ -969,7 +969,7 @@ class SendtoSilhouette(inkex.Effect):
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
-    dev.setup(media=self.options.media, pen=self.pen,
+    dev.setup(media=int(self.options.media,10), pen=self.pen,
       pressure=self.options.pressure, speed=self.options.speed)
 
     if self.options.autocrop:
