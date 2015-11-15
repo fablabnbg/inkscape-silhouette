@@ -1,8 +1,8 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
-# (C) 2014 juewei@fabfolk.com
+# (C) 2014,2015 juewei@fabfolk.com
 #
 # code snippets visited to learn the extension 'effect' interface:
 # - http://sourceforge.net/projects/inkcut/
@@ -18,9 +18,9 @@
 #
 # 2013-05-09 jw, V0.1 -- initial draught
 # 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
-# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
+# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(),
 #                        improved logging, flipped y-axis.
-# 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected. 
+# 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected.
 #                        Explicit multipass option added.
 #                        Emplying recursivelyTraverseSvg() from eggbotcode
 #                        TODO: coordinate system of page is not exact.
@@ -35,12 +35,12 @@
 #                        Added option reversetoggle, to cut the opposite direction.
 # 2013-05-19 jw, v0.8 -- Split GUI into two pages. Added dummy and mat-free checkboxes.
 #                        misc/corner_detect.py done, can now load a dump saved by dummy.
-#                        Udev rules and script added, so that we get a nice notify 
+#                        Udev rules and script added, so that we get a nice notify
 #                        guiding users towards inkscape, when connecting a device.
-# 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy 
+# 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy
 #                        appears useful.
 # 2013-05-26 jw, v1.0 -- Some tuning done. fixed preset scaling, improved path recombination.
-# 2013-05-26 jw, v1.1 -- Strategy.MatFree.path_overshoot() added. With 0.2mm overshoot 
+# 2013-05-26 jw, v1.1 -- Strategy.MatFree.path_overshoot() added. With 0.2mm overshoot
 #                        the paper now comes apart almost by itself. great.
 #                        Buffer percent estimation added. We now have an estimate
 #                        how long the buffered data will need.
@@ -57,18 +57,27 @@
 # 2014-01-23 jw, v1.8 -- improving portability by using os.devnull, os.path.join, tempfile.
 #                        Partial fixes for https://github.com/jnweiger/inkscape-silhouette/issues/2
 #                        Enumerating devices if none are found.
-# 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows. 
-#                        Experimental retry added when write returns 0. 
+# 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows.
+#                        Experimental retry added when write returns 0.
 #                        issues/2#issuecomment-33526659
 # 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
 # 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
 # 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
 # 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
+# 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
+# 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
+# 2014-10-25 jw, v1.12 -- better error messages.
+# 2014-10-31 jw, v1.13 -- fixed usb.core.write() without interface parameter. Set Graphtec.py/need_interface if needed.
+# 2015-06-06 jw, v1.14 -- fixed timout errors, refactored much code.
+#                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
+
+__version__ = '1.14'	# Keep in sync with sendto_silhouette.inx ca line 42
+__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
 
 import sys, os, shutil, time, logging, tempfile
 
 
-# we sys.path.append() the directory where this 
+# we sys.path.append() the directory where this
 # sendto_silhouette.py script lives. Attempt to help with
 # https://github.com/jnweiger/inkscape-silhouette/issues/3
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -98,16 +107,13 @@ from optparse import SUPPRESS_HELP
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 
-__version__ = '1.9d'	# Keep in sync with sendto_silhouette.inx ca line 65
-__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
-
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
 
 
 def px2mm(px):
   '''
-  Convert inkscape pixels to mm. 
+  Convert inkscape pixels to mm.
   The default inkscape unit, called 'px' is 90dpi
   '''
   return px*25.4/90
@@ -218,48 +224,48 @@ class SendtoSilhouette(inkex.Effect):
     except:
       self.tty = open(os.devnull, 'w')  # '/dev/null' for POSIX, 'nul' for Windows.
     # print >>self.tty, "__init__"
-    
-    self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab', 
+
+    self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab',
           help=SUPPRESS_HELP)
     self.OptionParser.add_option('-a', '--autocrop',
-          action = 'store', dest = 'autocrop', type = 'inkbool', default = False, 
+          action = 'store', dest = 'autocrop', type = 'inkbool', default = False,
           help='trim away top and left margin (before adding offsets)')
-    self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only', 
-          action = 'store', dest = 'bboxonly', type = 'inkbool', default = False, 
+    self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only',
+          action = 'store', dest = 'bboxonly', type = 'inkbool', default = False,
           help='draft the objects bounding box instead of the objects')
-    self.OptionParser.add_option('--dummy', 
+    self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
-    self.OptionParser.add_option('--mat-free', '--mat_free', 
+    self.OptionParser.add_option('--mat-free', '--mat_free',
           action = 'store', dest = 'mat_free', type = 'inkbool', default = False,
           help="Optimize movements for cutting without a cutting mat.")
-    self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id', 
-          action = 'store', dest = 'media', default = '132', 
+    self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id',
+          action = 'store', dest = 'media', default = '132',
           choices=('100','101','102','106','111','112','113',
              '120','121','122','123','124','125','126','127','128','129','130',
-             '131','132','133','134','135','136','137','138','300'), 
+             '131','132','133','134','135','136','137','138','300'),
           help="113 = pen, 132 = printer paper, 300 = custom")
-    self.OptionParser.add_option('-M', '--multipass', 
-          action = 'store', dest = 'multipass', type = 'int', default = '1', 
+    self.OptionParser.add_option('-M', '--multipass',
+          action = 'store', dest = 'multipass', type = 'int', default = '1',
           help="[1..8], cut/draw each path object multiple times.")
-    self.OptionParser.add_option('-p', '--pressure', 
-          action = 'store', dest = 'pressure', type = 'int', default = 10, 
+    self.OptionParser.add_option('-p', '--pressure',
+          action = 'store', dest = 'pressure', type = 'int', default = 10,
           help="[1..33], or 0 for media default")
-    self.OptionParser.add_option('-r', '--reversetoggle', 
+    self.OptionParser.add_option('-r', '--reversetoggle',
           action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
           help="Cut each path the other direction. Affects every second pass when multipass.")
-    self.OptionParser.add_option('-s', '--speed', 
-          action = 'store', dest = 'speed', type = 'int', default = 10, 
+    self.OptionParser.add_option('-s', '--speed',
+          action = 'store', dest = 'speed', type = 'int', default = 10,
           help="[1..10], or 0 for media default")
     self.OptionParser.add_option( "-S", "--smoothness", action="store", type="float",
           dest="smoothness", default=.2, help="Smoothness of curves" )
     self.OptionParser.add_option('-t', '--tool', action = 'store',
           choices=('cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
-    self.OptionParser.add_option('-V', '--version', 
-          action = 'store_const', const=True, dest = 'version', default = False, 
+    self.OptionParser.add_option('-V', '--version',
+          action = 'store_const', const=True, dest = 'version', default = False,
           help='Just print version number ("'+__version__+'") and exit.')
-    self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done', 
-          action = 'store', dest = 'wait_done', type = 'inkbool', default = False, 
+    self.OptionParser.add_option('-w', '--wait', '--wait-done', '--wait_done',
+          action = 'store', dest = 'wait_done', type = 'inkbool', default = False,
           help='After sending wait til device reports ready')
     self.OptionParser.add_option('-x', '--x-off', '--x_off', action = 'store',
           type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
@@ -280,7 +286,7 @@ class SendtoSilhouette(inkex.Effect):
     # print >>self.tty, "\r penDown", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
     self.paths.append([(self.fX,self.fY)])
     self.fPrevX = self.fX       # flag that we are down
-    self.fPrevY = self.fY       
+    self.fPrevY = self.fY
 
   def plotLineAndTime( self ):
     '''
@@ -756,14 +762,15 @@ class SendtoSilhouette(inkex.Effect):
                                     if tnode is not None and tnode.text is not None:
                                       texts.append(tnode.text)
                                 if len(texts):
-                                  plaintext = "', '".join(texts)
+                                  plaintext = "', '".join(texts).encode('latin-1')
+                                  # encode_('latin-1') prevents 'ordinal not in range(128)' errors.
                                   print >>self.tty, "Text ignored: '%s'" % (plaintext)
                                   plaintext = "\n".join(texts)+"\n"
 
-                                if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
+                                  if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
                                         inkex.errormsg( plaintext + gettext.gettext( 'Warning: unable to draw text; ' +
-                                                'please convert it to a path first.  Consider using the ' +
-                                                'Hershey Text extension which is located under the '+
+                                                'please convert it to a path first. Or consider using the ' +
+                                                'Hershey Text extension which can be installed in the '+
                                                 '"Render" category of extensions.' ) )
                                         self.warnings['text'] = 1
                                 pass
@@ -788,6 +795,10 @@ class SendtoSilhouette(inkex.Effect):
                                 # of a style attribute to be inherited by child elements
                                 pass
                         elif node.tag == inkex.addNS( 'cursor', 'svg' ) or node.tag == 'cursor':
+                                pass
+                        elif node.tag == inkex.addNS( 'flowRoot', 'svg' ) or node.tag == 'flowRoot':
+                                # contains a <flowRegion><rect y="91" x="369" height="383" width="375" ...
+                                # see examples/fablab_logo_stencil.svg
                                 pass
                         elif node.tag == inkex.addNS( 'color-profile', 'svg' ) or node.tag == 'color-profile':
                                 # Gamma curves, color temp, etc. are not relevant to single color output
@@ -847,7 +858,7 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 self.docHeight = self.getLength( 'height', N_PAGE_HEIGHT )
-                print >>self.tty, "7 self.docWidth=", self.docWidth
+                print >>self.tty, "7 self.docHeight=", self.docHeight
                 self.docWidth = self.getLength( 'width', N_PAGE_WIDTH )
                 print >>self.tty, "8 self.docWidth=", self.docWidth
                 if ( self.docHeight == None ) or ( self.docWidth == None ):
@@ -924,46 +935,60 @@ class SendtoSilhouette(inkex.Effect):
     cut = []
     pointcount = 0
     for px_path in self.paths:
-      mm_path = [] 
+      mm_path = []
       for pt in px_path:
         if self.options.mat_free:
           mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
         else:
           mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
         pointcount += 1
-      for i in range(0,self.options.multipass): 
+      for i in range(0,self.options.multipass):
         if (self.options.reversetoggle):
           mm_path = list(reversed(mm_path))
         cut.append(mm_path)
 
     if dev.dev is None:
+      docname=None
+      svg = self.document.getroot()
+      # Namespace horrors: Id's expand to full urls, before we can search them.
+      # 'sodipodi:docname' -> '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname'
+      for tag in svg.attrib.keys():
+        if re.search(r'}docname$',tag): docname=svg.get(tag)
+
       o = open(self.dumpname, 'w')
-      print >>self.tty,    "dump written to ",self.dumpname," (",pointcount," points )"
-      print >>sys.stderr, "dump written to ",self.dumpname," (",pointcount," points )"
+      print >>self.tty,   "Dump written to ",self.dumpname," (",pointcount," points )"
+      print >>sys.stderr, "Dump written to ",self.dumpname," (",pointcount," points )"
+      print >>sys.stderr,"device version: '%s'" % dev.get_version()
+      print >>sys.stderr,"driver version: '%s'" % __version__
+      print >>o,"# device version: '%s'" % dev.get_version()
+      print >>o,"# driver version: '%s'" % __version__
+      if docname:
+        print >>o,"# docname: '%s'" % docname
+        print >>sys.stderr, "docname: '%s'" % docname
       print >>o, cut
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
-    if self.options.bboxonly == False: self.options.bboxonly=None
-    dev.setup(media=self.options.media, pen=self.pen, 
+    dev.setup(media=int(self.options.media,10), pen=self.pen,
       pressure=self.options.pressure, speed=self.options.speed)
 
     if self.options.autocrop:
       # this takes much longer, if we have a complext drawing
-      bbox = dev.plot(pathlist=cut, 
-        mediawidth=px2mm(self.docWidth), 
-        mediaheight=px2mm(self.docHeight), 
-        bboxonly=False)         # only return the bbox, do not draw it.
+      bbox = dev.plot(pathlist=cut,
+        mediawidth=px2mm(self.docWidth),
+        mediaheight=px2mm(self.docHeight),
+        margintop=0, marginleft=0,
+        bboxonly=None)         # only return the bbox, do not draw it.
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
           bbox['bbox']['llx']*bbox['unit'],
           bbox['bbox']['ury']*bbox['unit'])
         self.options.x_off -= bbox['bbox']['llx']*bbox['unit']
         self.options.y_off -= bbox['bbox']['ury']*bbox['unit']
-      
-    bbox = dev.plot(pathlist=cut, 
-      mediawidth=px2mm(self.docWidth), 
-      mediaheight=px2mm(self.docHeight), 
+
+    bbox = dev.plot(pathlist=cut,
+      mediawidth=px2mm(self.docWidth),
+      mediaheight=px2mm(self.docHeight),
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly)
     if len(bbox['bbox'].keys()) == 0:
@@ -986,7 +1011,7 @@ class SendtoSilhouette(inkex.Effect):
         percent_per_sec = (100.0-self.device_buffer_perc) / write_duration
       else:
         percent_per_sec = 1000.     # unreliable data
-        
+
       wait_sec = 1
       while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
         wait_sec *= 2
@@ -1011,12 +1036,12 @@ class SendtoSilhouette(inkex.Effect):
     return output
 
 if __name__ == '__main__':
-	e = SendtoSilhouette()
+        e = SendtoSilhouette()
 
-	start = time.time()
-	e.affect()
-	ss = int(time.time()-start+.5)
-	mm = int(ss/60)
-	ss -= mm*60
-	print >>e.tty, " done. %d min %d sec" % (mm,ss)
-	sys.exit(0)    # helps to keep the selection
+        start = time.time()
+        e.affect()
+        ss = int(time.time()-start+.5)
+        mm = int(ss/60)
+        ss -= mm*60
+        print >>e.tty, " done. %d min %d sec" % (mm,ss)
+        sys.exit(0)    # helps to keep the selection

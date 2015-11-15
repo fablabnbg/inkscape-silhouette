@@ -18,6 +18,8 @@
 #
 # Examples:
 # http://nullege.com/codes/search/goocanvas.Ellipse
+#
+# Requires: python-goocanvas
 
 import sys
 import gtk
@@ -254,8 +256,8 @@ def main ():
     win.connect("button-release-event", button_release)
 
     #mf = MatFree(preset='nop')
-    mf = MatFree(preset='pyramids')
-    #mf = MatFree(preset='default')
+    #mf = MatFree(preset='pyramids')
+    mf = MatFree(preset='default')
     new_cut = mf.apply(cut)
 
     canvas.points = [ None ]

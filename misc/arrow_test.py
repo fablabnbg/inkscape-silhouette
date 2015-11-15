@@ -2,29 +2,34 @@
 #
 # simple demo program to drive the silhouette cameo.
 # (C) 2013 jw@suse.de
+# (C) 2015 juewei@fabfolk.com
 #
 # Requires: python-usb  # from Factory
 
-import time
-from Graphtec import SilhouetteCameo
+import time,sys
+sys.path.extend(['..','.'])	# make it callable from top or misc directory.
+from silhouette.Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
 arrow1 = [ (0,5), (21,5), (18,0), (31,10), (18,20), (21,15), (0,15), (3,10), (0,5) ]
 arrow2 = map(lambda x: (x[0]+263, x[1]+0), arrow1)
-arrow3 = map(lambda x: (x[0]+2, x[1]+0), arrow1)
+arrow3 = map(lambda x: (x[0]+30, x[1]+0), arrow1)
 
 dev = SilhouetteCameo()
+print "status=%s" % dev.wait_for_ready(20)
 
-state = dev.status()    # hint at loading paper, if not ready.
-for i in range(1,10):
-  if (state == 'ready'): break
-  print "status=%s" % (state)
-  time.sleep(5.0)
-  state = dev.status()
-print "status=%s" % (state)
-    
-print "device version: '%s'" % dev.get_version()
+tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
 
-dev.setup(media=113, pressure=0, trackenhancing=True)
-bbox = dev.page(cut=[arrow1,arrow1], mediaheight=180, offset=(0,0),bboxonly=True)
+dev.setup(media=113, pressure=0, trackenhancing=True, return_home=False)
+
+for i in range(8):
+  bbox = dev.plot(pathlist=[ arrow1,[(0,tmp_fwd),(0,tmp_fwd)] ], mediaheight=180, offset=(60,0), bboxonly=False, end_paper_offset=-tmp_fwd+1, no_trailer=True)
+  dev.wait_for_ready()
+  print(i, "path done.")
+  time.sleep(5)
+  dev.write(''.join(bbox['trailer']))
+  # something is still wrong after we finish a job. The next job does not draw anything.
+  # we can workaround by sending a dummy job.
+  bbox = dev.plot(pathlist=[ [(0,0),(0,0)] ], offset=(0,0))
+  dev.wait_for_ready()
 print bbox
