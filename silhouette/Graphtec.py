@@ -699,6 +699,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if not 'llx' in bbox: bbox['llx'] = 0	# survive empty pathlist
     if not 'lly' in bbox: bbox['lly'] = 0
+    if not 'urx' in bbox: bbox['urx'] = 0
+    if not 'ury' in bbox: bbox['ury'] = 0
     new_home = ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']+end_paper_offset*20.))
 
     if no_trailer:
