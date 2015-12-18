@@ -23,7 +23,7 @@ Arch Linux:
 * sudo pip2 install pyusb libxml
 * pacman -S inkscape
 * git clone https://github.com/fablabnbg/inkscape-silhouette.git
-* cd inkscape-master
+* cd inkscape-silhouette
 * sudo python2 setup.py build && sudo python2 setup.py install
 * sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
 * sudo cp -R silhouette /usr/share/inkscape/extensions/
