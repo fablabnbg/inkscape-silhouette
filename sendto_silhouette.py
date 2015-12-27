@@ -1000,7 +1000,7 @@ class SendtoSilhouette(inkex.Effect):
         bbox['bbox']['ury']*bbox['unit'],
         bbox['bbox']['urx']*bbox['unit'],
         bbox['bbox']['lly']*bbox['unit'],
-        bbox['total']))
+        bbox['bbox']['count']))
       print >>self.tty, ""
       state = dev.status()
       write_duration = time.time() - self.write_start_tstamp
