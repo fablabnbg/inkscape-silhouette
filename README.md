@@ -9,8 +9,16 @@ Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-s
 Installation
 ------------
 
-Copy the the folder silhouette and the two files sendto_silhouette.inx and 
-sendto_silhouette.py to your computer:
+Ubuntu:
+
+* Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
+* Copy the the folder silhouette and the two files sendto_silhouette.inx and 
+sendto_silhouette.py to ~/.config/inkscape/extensions/ or (if you have permissions)  /usr/share/inkscape/extensions/
+
+* sudo apt-get install python-pip
+* sudo pip install libusb1
+* restart inkscape, check the menu entry Extensions -> Export -> Send to Silhouette
+
 
 openSUSE:
 * An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger:fablabnbg/inkscape-silhouette
