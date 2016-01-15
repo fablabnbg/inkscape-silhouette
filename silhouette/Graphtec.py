@@ -32,7 +32,7 @@ else:   # if sys_platform.startswith('linux'):
     except Exception as e2:
       print("The python usb module could not be found. Try", file=sys.stderr)
       print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
-      print("\t sudo apt-get python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
+      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
       print("\n\n\n", file=sys.stderr)
       raise e2;
     print("Your python usb module appears to be 0.4.x or older -- We need version 1.x", file=sys.stderr)
