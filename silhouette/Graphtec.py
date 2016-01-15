@@ -93,6 +93,10 @@ DEVICE = [
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
+ { 'vendor_id': 0x0b4d, 'product_id': 0x112b, 'name': 'Silhouette Cameo2',
+   # margin_top_mm is just for safety when moving backwards with thin media
+   # margin_left_mm is a physical limit, but is relative to width_mm!
+   'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x111a, 'name': 'Craft Robo CC300-20' },
