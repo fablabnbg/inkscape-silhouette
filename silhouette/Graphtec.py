@@ -565,7 +565,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_cut.append(new_path)
     return new_cut
 
-  def plot_cmds(s, plist, bbox, x_off_mm, y_off_mm):
+  def plot_cmds(s, plist, bbox, x_off_mm, y_off_mm, step_per_mm_along_height = 20.0, step_per_mm_along_width = 19.83):
     """ s is unused.
         bbox coordinates are in device units.
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
@@ -592,8 +592,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # As a result we get varying offsets which can be really annoying if doing precision
     # work.
 
-    x_off = x_off_mm * 20.
-    y_off = y_off_mm * 20.
+    x_off = x_off_mm * step_per_mm_along_width
+    y_off = y_off_mm * step_per_mm_along_height
 
     if bbox is None: bbox = {}
     bbox['count'] = 0
@@ -609,8 +609,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     plotcmds=[]
     for path in plist:
       if len(path) < 2: continue
-      x = path[0][0]*20. + x_off
-      y = path[0][1]*20. + y_off
+      x = path[0][0]*step_per_mm_along_width + x_off
+      y = path[0][1]*step_per_mm_along_height + y_off
       _bbox_extend(bbox, x,y)
       bbox['count'] += 1
 
@@ -638,8 +638,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
 
       for j in range(1,len(path)):
-        x = path[j][0]*20. + x_off
-        y = path[j][1]*20. + y_off
+        x = path[j][0]*step_per_mm_along_width + x_off
+        y = path[j][1]*step_per_mm_along_height + y_off
         _bbox_extend(bbox, x,y)
         bbox['count'] += 1
 
@@ -673,7 +673,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return plotcmds
 
 
-  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=10, endposition='below'):
+  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=10, endposition='below',step_per_mm_along_height = 20.0, step_per_mm_along_width = 20.11):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -695,6 +695,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
        endpostiton: Default 'below': The media is moved to a position below the actual cut (so another
                 can be started without additional steps, also good for using the cross-cutter).
                 'start': The media is returned to the positon where the cut started.
+       step_per_mm_along_: count of steps made by cutter per mm
+                (gives resolution, scales cuts on media). along_height
+                designates direction of feeding in cutter (y-axis in
+                inkscape), along_width designates direction of movement of
+                cutting head (inkscape x-axis).
+                Having this setting here allows for easy adaption of new
+                machines. Not (yet) exposed to UI.
        Example: The letter Y (20mm tall, 9mm wide) can be generated with
                 pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
@@ -715,10 +722,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=s.log)
 
-    width  = int(0.5+20.*mediawidth)
-    height = int(0.5+20.*mediaheight)
-    top    = int(0.5+20.*margintop)
-    left   = int(0.5+20.*marginleft)
+    width  = int(0.5+step_per_mm_along_width*mediawidth)
+    height = int(0.5+step_per_mm_along_height*mediaheight)
+    top    = int(0.5+step_per_mm_along_height*margintop)
+    left   = int(0.5+step_per_mm_along_width*marginleft)
     if width < left: width  = left
     if height < top: height = top
 
@@ -744,7 +751,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
-    cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1])
+    cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1],step_per_mm_along_height, step_per_mm_along_width)
     p = '\x03'.join(cmd_list)
 
     if bboxonly == True:
@@ -767,19 +774,19 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if endposition == 'start':
       new_home = "H\x03"
     else: #includes 'below'
-      new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
+      new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*step_per_mm_along_height), 0) #! axis swapped when using Cameo-system
     #new_home += "FN0\x03TB50,0\x03"
     s.write(new_home)
 
     return {
         'bbox': bbox,
-        'unit' : 1/20.,
+        'unit' : 1/step_per_mm_along_width, #FIXME small deviations depending on axis not honoured here
         'trailer': new_home
       }
 
 
   def move_origin(s, feed_mm):
-    new_home = "M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*20.),0)
+    new_home = "M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*step_per_mm_along_height),0)
     s.wait_for_ready(verbose=False)
     s.write(new_home)
     s.wait_for_ready(verbose=False)
