@@ -313,6 +313,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if o != len(string):
       raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
 
+  def safe_write(s, string):
+    """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
+    if s.dev is None: return None
+    # Silhouette Studio uses packet size of maximal 3k, 1k is default
+    safemaxchunksz = 1024
+    so = 0
+    delimiter = "\x03"
+    while so < len(string):
+      safechunksz = min(safemaxchunksz, len(string)-so)
+      candidate = string[so:so+safechunksz]
+      # strip string candidate of unfinished command at its end
+      safechunk = candidate[0:(candidate.rfind(delimiter) + 1)]
+      s.write(string = safechunk)
+      # wait for cutter to finish current chunk, otherwise blocking might occur
+      while not s.status() == "ready":
+        time.sleep(0.05)
+      so += len(safechunk)
+      
   def read(s, size=64, timeout=5000):
     """Low level read method"""
     if s.dev is None: return None
@@ -746,7 +764,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0)
 
     
-    s.write(p)
+    # potentially long command string needs extra care
+    s.safe_write(p)
+
     s.write(new_home)
 
     return {
