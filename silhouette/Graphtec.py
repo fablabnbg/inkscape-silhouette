@@ -601,7 +601,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return plotcmds
 
 
-  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=0, no_trailer=False):
+  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None,
+           marginleft=None, pathlist=None, offset=None, bboxonly=False,
+           end_paper_offset=0, no_trailer=False, regmark=False, regsearch=False,
+           regwidth=180, reglength=230):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -673,10 +676,33 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
     s.write("FM1\x03")          # // ?
-    if s.regmark:
-      raise ValueError("regmark code not impl. see robocut/Plotter.cpp:446")
+    if regmark:
+      s.write("TB50,381\x03") #only with registration (it was TB50,1) ???
+      s.write("TB99\x03")
+      s.write("TB55,1\x03")
+      
+      if regsearch:
+        cmd="123"
+      else
+        cmd="23"
+      ## registration mark test /1-2: 180.0mm / 1-3: 230.0mm (origin 15mmx20mm)
+      s.write("TB%s,%i,%i\x03" % (cmd, regwidth * 20.0, reglength * 20.0)
+      
+      s.write("FQ5\x03") ## only with registration ???
+      resp = s.read(timeout=40000) ## Allow 20s for reply...
+      if resp != "    0,    0\x03":
+        raise ValueError("Couldn't find registration marks.")
+      
+      ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
+      resp = s.read(timeout=40000) ## Allow 20s for reply...
+      if resp != "    0\x03":
+        raise ValueError("Couldn't find registration marks.")
+      
+      resp = s.read(timeout=40000) ## Allow 20s for reply...
+      if resp != "    1\x03":
+        raise ValueError("Couldn't find registration marks.")
     else:
-      s.write("TB50,1\x03")     #; // ???
+      s.write("TB50,1\x03")     # ???
 
     # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
     s.write("FO%d\x03" % (height-top))
