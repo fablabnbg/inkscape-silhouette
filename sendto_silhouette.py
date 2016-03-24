@@ -989,7 +989,7 @@ class SendtoSilhouette(inkex.Effect):
         mediaheight=px2mm(self.docHeight),
         margintop=0, marginleft=0,
         bboxonly=None,         # only return the bbox, do not draw it.
-        regmark=self.options.regmark,regsearch=self.options.regsearch
+        regmark=self.options.regmark,regsearch=self.options.regsearch,
         regwidth=self.options.regwidth,reglength=self.options.reglength)
 
       if len(bbox['bbox'].keys()):
@@ -1004,7 +1004,7 @@ class SendtoSilhouette(inkex.Effect):
       mediaheight=px2mm(self.docHeight),
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly,
-      regmark=self.options.regmark,regsearch=self.options.regsearch
+      regmark=self.options.regmark,regsearch=self.options.regsearch,
       regwidth=self.options.regwidth,reglength=self.options.reglength)
     if len(bbox['bbox'].keys()) == 0:
       print >>self.tty, "empty page?"
