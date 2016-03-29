@@ -59,8 +59,8 @@
       <param name="regmark_help" type="description">???</param>
       <param name="regsearch" type="boolean" _gui-text="Search for the regitration marks">false</param>
       <param name="regsearch_help" type="description">???</param>
-      <param name="regwidth" type="float" min="0.0" _gui-text="X mark distance [mm]">180.0</param>
-      <param name="reglength" type="float" min="0.0" _gui-text="Y mark distance [mm]">230.0</param>
+      <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
+      <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
       <param name="regdistance_help" type="description">Distance of the registration mark edges</param>
     </page>
 

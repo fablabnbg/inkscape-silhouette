@@ -675,10 +675,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
-    s.write("FM1\x03")          # // ?
+    s.write("FN0\x03")          # // ?
     if regmark:
-      s.write("TB50,381\x03") #only with registration (it was TB50,1) ???
+      s.write("TB50,0\x03") #only with registration (it was TB50,1) ???
       s.write("TB99\x03")
+      s.write("TB52,2\x03")
+      s.write("TB51,400\x03")
+      s.write("TB53,10\x03")
       s.write("TB55,1\x03")
       
       if regsearch:
@@ -686,21 +689,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       else:
         cmd="23"
       ## registration mark test /1-2: 180.0mm / 1-3: 230.0mm (origin 15mmx20mm)
-      s.write("TB%s,%i,%i\x03" % (cmd, regwidth * 20.0, reglength * 20.0))
+      s.write("TB%s,%i,%i,118,18\x03" % (cmd, regwidth * 20.0, reglength * 20.0))
       
       s.write("FQ5\x03") ## only with registration ???
       resp = s.read(timeout=40000) ## Allow 20s for reply...
-      if resp != "    0,    0\x03":
-        raise ValueError("Couldn't find registration marks.")
+      if resp != "    0\x03":
+        raise ValueError("Couldn't find registration marks. %s" % str(resp))
       
       ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
       resp = s.read(timeout=40000) ## Allow 20s for reply...
       if resp != "    0\x03":
         raise ValueError("Couldn't find registration marks.")
       
-      resp = s.read(timeout=40000) ## Allow 20s for reply...
-      if resp != "    1\x03":
-        raise ValueError("Couldn't find registration marks.")
+      #resp = s.read(timeout=40000) ## Allow 20s for reply...
+      #if resp != "    1\x03":
+        #raise ValueError("Couldn't find registration marks.")
     else:
       s.write("TB50,1\x03")     # ???
 
