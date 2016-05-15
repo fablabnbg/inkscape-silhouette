@@ -12,11 +12,11 @@ dist:
 
 #install is used by dist.
 install:
+	echo this does not work under fakeroot.
 	mkdir -p $(DEST)
+	cp -a silhouette $(DEST)
 	install -m 755 -t $(DEST) *.py
 	install -m 644 -t $(DEST) *.inx
-	mkdir -p $(DEST)/silhouette
-	cp -a silhouette $(DEST)/silhouette
 
 
 tar_dist_classic: clean
