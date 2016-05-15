@@ -54,6 +54,16 @@
       <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
     </page>
 
+    <page name='reg' _gui-text='Regmarks'>
+      <param name="regmark" type="boolean" _gui-text="The document has registration marks">false</param>
+      <param name="regmark_help" type="description">???</param>
+      <param name="regsearch" type="boolean" _gui-text="Search for the regitration marks">false</param>
+      <param name="regsearch_help" type="description">???</param>
+      <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
+      <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
+      <param name="regdistance_help" type="description">Distance of the registration mark edges</param>
+    </page>
+
     <page name='advanced' _gui-text='Advanced'>
       <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
       <param name="wait_done_help" type="description">Keep dialog open until device becomes idle again.</param>
@@ -62,6 +72,7 @@
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>
     </page>
+    
     <page name='about' _gui-text='About'>
       <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org]</param>
       <!-- Keep in sync with sendto_silhouette.py line 103 __version__ = ... -->
@@ -75,6 +86,7 @@
       <submenu _name="Export"/>
     </effects-menu>
   </effect>
+  
   <script>
       <command reldir="extensions" interpreter="python">sendto_silhouette.py</command>
   </script>

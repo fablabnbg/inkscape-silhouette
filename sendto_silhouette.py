@@ -272,6 +272,16 @@ class SendtoSilhouette(inkex.Effect):
           type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
     self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
+    self.OptionParser.add_option('-R', '--regmark',
+          action = 'store', dest = 'regmark', type = 'inkbool', default = False,
+          help="The document has registration marks.")
+    self.OptionParser.add_option('--regsearch',
+          action = 'store', dest = 'regsearch', type = 'inkbool', default = False,
+          help="Search for the regitration marks.")
+    self.OptionParser.add_option('-X', '--reg-x', '--regwidth', action = 'store',
+          type = 'float', dest = 'regwidth', default = 18.0, help="X mark distance [mm]")
+    self.OptionParser.add_option('-Y', '--reg-y', '--reglength', action = 'store',
+          type = 'float', dest = 'reglength', default = 230.0, help="Y mark distance [mm]")
 
   def version(self):
     return __version__
@@ -979,7 +989,10 @@ class SendtoSilhouette(inkex.Effect):
         mediawidth=px2mm(self.docWidth),
         mediaheight=px2mm(self.docHeight),
         margintop=0, marginleft=0,
-        bboxonly=None)         # only return the bbox, do not draw it.
+        bboxonly=None,         # only return the bbox, do not draw it.
+        regmark=self.options.regmark,regsearch=self.options.regsearch,
+        regwidth=self.options.regwidth,reglength=self.options.reglength)
+
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
           bbox['bbox']['llx']*bbox['unit'],
@@ -991,7 +1004,9 @@ class SendtoSilhouette(inkex.Effect):
       mediawidth=px2mm(self.docWidth),
       mediaheight=px2mm(self.docHeight),
       offset=(self.options.x_off,self.options.y_off),
-      bboxonly=self.options.bboxonly)
+      bboxonly=self.options.bboxonly,
+      regmark=self.options.regmark,regsearch=self.options.regsearch,
+      regwidth=self.options.regwidth,reglength=self.options.reglength)
     if len(bbox['bbox'].keys()) == 0:
       print >>self.tty, "empty page?"
       print >>sys.stderr, "empty page?"
