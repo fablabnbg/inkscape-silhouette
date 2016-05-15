@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # endless-clock.py - plot a the time on a silhouette-cameo, repeating...
-# (c) 2015, juewei@fabfolk.com
+# (c) 2015, juewei@fabmail.org
 #
 # Requires: sudo zypper in python-goocanvas
 # Requires: sudo easy_install freetype-py

@@ -2,7 +2,7 @@
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
-# (C) 2014,2015 juewei@fabfolk.com
+# (C) 2014,2015 juewei@fabmail.org
 #
 # code snippets visited to learn the extension 'effect' interface:
 # - http://sourceforge.net/projects/inkcut/
@@ -72,7 +72,7 @@
 #                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
 
 __version__ = '1.14'	# Keep in sync with sendto_silhouette.inx ca line 42
-__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
+__author__ = 'Juergen Weigert <juewei@fabmail.org>'
 
 import sys, os, shutil, time, logging, tempfile
 

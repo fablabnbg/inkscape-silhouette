@@ -10,7 +10,7 @@ sys.path.append('/home/testy/src/github/inkscape-silhouette')
 from silhouette.Graphtec import SilhouetteCameo
 
 __version__ = '0.1'
-__author__ = 'Juergen Weigert <juewei@fabfolk.com>'
+__author__ = 'Juergen Weigert <juewei@fabmail.org>'
 
 k=0.2   # knive-center offset, (0.1 is not enough)
 

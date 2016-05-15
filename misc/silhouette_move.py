@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #
 # simple demo program to feed paper in the silhouette cameo.
-# (C) 2015 juewei@fabfolk.com
+# (C) 2015 juewei@fabmail.org
 #
 # Requires: python-usb  # from Factory
 

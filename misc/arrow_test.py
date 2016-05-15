@@ -2,7 +2,7 @@
 #
 # simple demo program to drive the silhouette cameo.
 # (C) 2013 jw@suse.de
-# (C) 2015 juewei@fabfolk.com
+# (C) 2015 juewei@fabmail.org
 #
 # Requires: python-usb  # from Factory
 

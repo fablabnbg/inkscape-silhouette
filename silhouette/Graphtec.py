@@ -1,5 +1,5 @@
 # (c) 2013,2014 jw@suse.de
-# (c) 2015 juewei@fabfolk.com
+# (c) 2015 juewei@fabmail.org
 #
 # Distribute under GPLv2 or ask.
 #
