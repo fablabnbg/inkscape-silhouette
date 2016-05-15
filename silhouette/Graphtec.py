@@ -275,9 +275,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       chunk = string[o:o+chunksz]
       try:
         if s.need_interface:
-          r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+          r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
         else:
-          r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout)
+          r = s.dev.write(endpoint, chunk, timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
@@ -316,6 +316,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if o != len(string):
       raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
 
+  def safe_write(s, string):
+    """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
+    if s.dev is None: return None
+    # Silhouette Studio uses packet size of maximal 3k, 1k is default
+    safemaxchunksz = 1024
+    so = 0
+    delimiter = "\x03"
+    while so < len(string):
+      safechunksz = min(safemaxchunksz, len(string)-so)
+      candidate = string[so:so+safechunksz]
+      # strip string candidate of unfinished command at its end
+      safechunk = candidate[0:(candidate.rfind(delimiter) + 1)]
+      s.write(string = safechunk)
+      # wait for cutter to finish current chunk, otherwise blocking might occur
+      while not s.status() == "ready":
+        time.sleep(0.05)
+      so += len(safechunk)
+      
   def read(s, size=64, timeout=5000):
     """Low level read method"""
     if s.dev is None: return None
@@ -379,10 +397,52 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # taken from robocut/Plotter.cpp:331 ff
     # Initialise plotter.
     s.write("\x1b\x04")
+    
+    # Initial palaver
+    try:
+      s.write("FG\x03")   # query device name
+    except Exception as e:
+      raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
 
-  def home(s):
-    """Send the home command. Untested. Called by setup()."""
-    s.write("TT\x03")
+    try:
+      resp = s.read(timeout=1000)
+      if len(resp) > 1:
+        print("FG: '%s'" % (resp[:-1]), file=s.log)
+    except:
+      pass
+    
+    # Additional commands seen in init by Silhouette Studio
+    #s.write("FQ0\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)
+    #except:
+    #  pass
+    
+    #s.write("FQ2\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)
+    #except:
+    #  pass
+    
+    #s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("TB71: '%s'" % (resp[:-1]), file=s.log)
+    #except:
+    #  pass
+    
+    #s.write("FA\x03") # asks for something, not sure, current position?
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("FA: '%s'" % (resp[:-1]), file=s.log)
+    #except:
+    #  pass
 
   def get_version(s):
     """Retrieve the firmware version string from the device."""
@@ -398,7 +458,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None, return_home=True):
+  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -413,12 +473,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if leftaligned is not None:
       s.leftaligned = leftaligned
 
-    s.return_home = return_home
-
     if s.dev is None: return None
 
     s.initialize()
-    s.home()
 
     if media is not None:
       if media < 100 or media > 300: media = 300
@@ -467,20 +524,17 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       else:
         s.write("FY0\x03")
 
+    #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
+    # side of media (boundary check?), but next cut run will stall
+    #TB50,x: x = 1 landscape mode, x = 0 portrait mode
     if landscape is not None:
       if landscape:
-        s.write("FN1\x03")
+        s.write("FN0\x03TB50,1\x03")
       else:
-        s.write("FN0\x03")
-
-    # // No idea what this does.
-    s.write("FE0\x03")
-
-    # // Again, no idea. Maybe something to do with registration marks?
-    s.write("TB71\x03")
-    resp = s.read(timeout=10000)        # // Allow 10s. Seems reasonable.
-    if resp != "    0,    0\x03":
-      raise ValueError("setup: Invalid response from plotter.")
+        s.write("FN0\x03TB50,0\x03")
+    
+    # Don't lift plotter head between paths
+    s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
     """Find the bouding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -514,17 +568,35 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_cut.append(new_path)
     return new_cut
 
-  def plot_cmds(s, plist, bbox, x_off_mm, y_off_mm):
+  def plot_cmds(s, plist, bbox, x_off_mm, y_off_mm, step_per_mm_along_height = 20.0, step_per_mm_along_width = 19.83):
     """ s is unused.
         bbox coordinates are in device units.
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
         otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
         x_off_mm, y_off_mm are in mm, relative to the clip urx, ury.
     """
-    flipwidth = int(12*25.4*20)		# 6096? physical device width of the Silhouette Cameo
 
-    x_off = x_off_mm * 20.
-    y_off = y_off_mm * 20.
+    # Change by Alexander Senger:
+    # Well, there seems to be a clash of different coordinate systems here:
+    # Cameo uses a system with the origin in the top-left corner, x-axis 
+    # running from top to bottom and y-axis from left to right.
+    # Inkscape uses a system where the origin is also in the top-left corner
+    # but x-axis is running from left to right and y-axis from top to 
+    # bottom.
+    # The transform between these two systems used so far was to set Cameo in
+    # landscape-mode ("FN0.TB50,1" in Cameo-speak) and flip the x-coordinates
+    # around the mean x-value (rotate by 90 degrees, mirror and shift x).
+    # My proposed change: just swap x and y in the data (mirror about main diagonal)
+    # This is easier and avoids utilizing landscape-mode.
+    # Why should we bother? Pure technical reason: At the beginning of each cutting run,
+    # Cameo makes a small "tick" in the margin of the media to align the blade.
+    # This gives a small offset which is automatically compensated for in 
+    # portrait mode but not (correctly) in landscape mode.
+    # As a result we get varying offsets which can be really annoying if doing precision
+    # work.
+
+    x_off = x_off_mm * step_per_mm_along_width
+    y_off = y_off_mm * step_per_mm_along_height
 
     if bbox is None: bbox = {}
     bbox['count'] = 0
@@ -540,8 +612,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     plotcmds=[]
     for path in plist:
       if len(path) < 2: continue
-      x = path[0][0]*20. + x_off
-      y = path[0][1]*20. + y_off
+      x = path[0][0]*step_per_mm_along_width + x_off
+      y = path[0][1]*step_per_mm_along_height + y_off
       _bbox_extend(bbox, x,y)
       bbox['count'] += 1
 
@@ -566,11 +638,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             bbox['clip']['count'] = 1
 
       if bbox['only'] is False:
-        plotcmds.append("M%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+        plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
 
       for j in range(1,len(path)):
-        x = path[j][0]*20. + x_off
-        y = path[j][1]*20. + y_off
+        x = path[j][0]*step_per_mm_along_width + x_off
+        y = path[j][1]*step_per_mm_along_height + y_off
         _bbox_extend(bbox, x,y)
         bbox['count'] += 1
 
@@ -596,15 +668,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
         if bbox['only'] is False:
           if inside and last_inside:
-            plotcmds.append("D%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+            plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move
-            plotcmds.append("M%d,%d" % (int(0.5+flipwidth-x), int(0.5+y)))
+            plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
         last_inside = inside
     return plotcmds
 
 
-  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=0, no_trailer=False):
+  def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None, marginleft=None, pathlist=None, offset=None, bboxonly=False, end_paper_offset=10, endposition='below',step_per_mm_along_height = 20.0, step_per_mm_along_width = 20.11):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -619,13 +691,20 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
        bboxonly:  True for drawing the bounding instead of the actual cut design;
                   None for not moving at all (just return the bounding box).
                   Default: False for normal cutting or drawing.
-       end_paper_offset: [mm] adds to the final move, if return_home was False in setup.
+       end_paper_offset: [mm] adds to the final move, if endposition is 'below'.
                 If the end_paper_offset is negative, the end position is within the drawing
                 (reverse movmeents are clipped at the home position)
                 It reverse over the last home position.
-       no_trailer: Default false: The plot is properly terminated.
-                If true: The device is left hanging at the last position. You are expected to
-                extract the trailer from the return value, and send it ising the write() method later.
+       endpostiton: Default 'below': The media is moved to a position below the actual cut (so another
+                can be started without additional steps, also good for using the cross-cutter).
+                'start': The media is returned to the positon where the cut started.
+       step_per_mm_along_: count of steps made by cutter per mm
+                (gives resolution, scales cuts on media). along_height
+                designates direction of feeding in cutter (y-axis in
+                inkscape), along_width designates direction of movement of
+                cutting head (inkscape x-axis).
+                Having this setting here allows for easy adaption of new
+                machines. Not (yet) exposed to UI.
        Example: The letter Y (20mm tall, 9mm wide) can be generated with
                 pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
@@ -646,23 +725,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=s.log)
 
-    # // Begin page definition.
-    try:
-      s.write("FA\x03")   # query someting?
-    except Exception as e:
-      raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
-
-    try:
-      resp = s.read(timeout=10000)
-      if len(resp) > 1:
-        print("FA: '%s'" % (resp[:-1]), file=s.log)
-    except:
-      pass
-
-    width  = int(0.5+20.*mediawidth)
-    height = int(0.5+20.*mediaheight)
-    top    = int(0.5+20.*margintop)
-    left   = int(0.5+20.*marginleft)
+    width  = int(0.5+step_per_mm_along_width*mediawidth)
+    height = int(0.5+step_per_mm_along_height*mediaheight)
+    top    = int(0.5+step_per_mm_along_height*margintop)
+    left   = int(0.5+step_per_mm_along_width*marginleft)
     if width < left: width  = left
     if height < top: height = top
 
@@ -674,59 +740,56 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if type(offset) != type([]) and type(offset) != type(()):
         offset = (offset, 0)
 
-    s.write("FU%d,%d\x03" % (height-top, width-left))
-    s.write("FM1\x03")          # // ?
     if s.regmark:
       raise ValueError("regmark code not impl. see robocut/Plotter.cpp:446")
-    else:
-      s.write("TB50,1\x03")     #; // ???
 
-    # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
-    s.write("FO%d\x03" % (height-top))
-
-    p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)		# scale
+    #FMx, x = 0/1: 1 leads to additional horizontal offset of 5 mm, why? Has other profound
+    # impact (will not cut in certain configuration if x=0). Seems dangerous. Not used
+    # in communtication of Sil Studio with Cameo2.
+    #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
+    #\xmin, ymin Zxmax,ymax, designate cutting area
+    
+    p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width) #FIXME Is coordinate swap necessary here?
+    s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
-    cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1])
-    p += ',' + ','.join(cmd_list)
+    cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1],step_per_mm_along_height, step_per_mm_along_width)
+    p = '\x03'.join(cmd_list)
 
     if bboxonly == True:
       # move the bouding box
-      p += ",M%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['ury']))
-      p += ",D%d,%d" % (int(0.5+width-bbox['urx']), int(0.5+bbox['ury']))
-      p += ",D%d,%d" % (int(0.5+width-bbox['urx']), int(0.5+bbox['lly']))
-      p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']))
-      p += ",D%d,%d" % (int(0.5+width-bbox['llx']), int(0.5+bbox['ury']))
-
-    trailer = []
-    trailer.append("&1,1,1,TB50,0\x03")   #; // TB maybe .. ah I dunno. Need to experiment. No idea what &1,1,1 does either.
-    trailer.append("FO0\x03")             # // Feed the page out.
-    trailer.append("H,")                  # // Halt? Really move home!
-
+      p = "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
+      p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
+      p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
+      p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx']))
+      p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
+    p += "\x03"   # Properly terminate string of plot commands.
+    # potentially long command string needs extra care
+    s.safe_write(p)
+    
+    # Silhouette Cameo2 does not start new job if not properly parked on left side
+    # Attention: This needs the media to not extend beyond the left stop
     if not 'llx' in bbox: bbox['llx'] = 0	# survive empty pathlist
     if not 'lly' in bbox: bbox['lly'] = 0
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
-    new_home = ",M%d,%dSO0FN0" % (int(0.5+width-bbox['llx']), int(0.5+bbox['lly']+end_paper_offset*20.))
-
-    if no_trailer:
-      s.write(p)
-      if not s.return_home: trailer.insert(0, new_home)
-    else:
-      if not s.return_home: p += new_home
-      s.write(p)
-      s.write(''.join(trailer))
+    if endposition == 'start':
+      new_home = "H\x03"
+    else: #includes 'below'
+      new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*step_per_mm_along_height), 0) #! axis swapped when using Cameo-system
+    #new_home += "FN0\x03TB50,0\x03"
+    s.write(new_home)
 
     return {
         'bbox': bbox,
-        'unit' : 1/20.,
-        'trailer': trailer
+        'unit' : 1/step_per_mm_along_width, #FIXME small deviations depending on axis not honoured here
+        'trailer': new_home
       }
 
 
   def move_origin(s, feed_mm):
-    new_home = "M%d,%dSO0FN0" % (int(0.5+feed_mm*20.),0)
+    new_home = "M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*step_per_mm_along_height),0)
     s.wait_for_ready(verbose=False)
     s.write(new_home)
     s.wait_for_ready(verbose=False)

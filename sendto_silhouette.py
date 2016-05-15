@@ -272,6 +272,9 @@ class SendtoSilhouette(inkex.Effect):
           type = 'float', dest = 'x_off', default = 0.0, help="X-Offset [mm]")
     self.OptionParser.add_option('-y', '--y-off', '--y_off', action = 'store',
           type = 'float', dest = 'y_off', default = 0.0, help="Y-Offset [mm]")
+    self.OptionParser.add_option('-e', '--endposition', '--end-postition',
+          '--end_position', action = 'store', choices=('start','below'),
+          dest = 'endposition', default = 'below', help="Position of head after cutting: start or below")
 
   def version(self):
     return __version__
@@ -979,7 +982,7 @@ class SendtoSilhouette(inkex.Effect):
         mediawidth=px2mm(self.docWidth),
         mediaheight=px2mm(self.docHeight),
         margintop=0, marginleft=0,
-        bboxonly=None)         # only return the bbox, do not draw it.
+        bboxonly=None, endposition='start')         # only return the bbox, do not draw it.
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
           bbox['bbox']['llx']*bbox['unit'],
@@ -991,7 +994,7 @@ class SendtoSilhouette(inkex.Effect):
       mediawidth=px2mm(self.docWidth),
       mediaheight=px2mm(self.docHeight),
       offset=(self.options.x_off,self.options.y_off),
-      bboxonly=self.options.bboxonly)
+      bboxonly=self.options.bboxonly, endposition=self.options.endposition)
     if len(bbox['bbox'].keys()) == 0:
       print >>self.tty, "empty page?"
       print >>sys.stderr, "empty page?"
@@ -1014,8 +1017,9 @@ class SendtoSilhouette(inkex.Effect):
         percent_per_sec = 1000.     # unreliable data
 
       wait_sec = 1
-      while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
-        wait_sec *= 2
+      if percent_per_sec > 1: # prevent overflow if device_buffer_perc is almost 100
+        while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
+          wait_sec *= 2
       dots = '.'
       while self.options.wait_done and state == 'moving':
         time.sleep(wait_sec)
