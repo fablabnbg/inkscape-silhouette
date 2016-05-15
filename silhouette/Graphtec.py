@@ -9,7 +9,7 @@
 #
 # Native resolution of the plotter is 0.05mm -- All movements are integer multiples of this.
 #
-# 2015-06-04, juewei@fabfolk.com using print_function. added wait_for_ready().
+# 2015-06-04, juewei@fabmail.org using print_function. added wait_for_ready().
 #             plot(bboxonly=None) is now the special case for not doing anything. False is normal plot.
 # 2015-06-05  Renamed cut_bbox() to find_bbox(). It does not cut anything.
 # 2015-06-06  refactored plot_cmds() from plot().
@@ -25,22 +25,25 @@ elif sys_platform.startswith('darwin'):
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
   try:
-    import usb.core
+    import usb.core		# where???
   except Exception as e:
-    try:
-      import usb
-    except Exception as e2:
-      print("The python usb module could not be found. Try", file=sys.stderr)
-      print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
-      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
-      print("\n\n\n", file=sys.stderr)
-      raise e2;
-    print("Your python usb module appears to be 0.4.x or older -- We need version 1.x", file=sys.stderr)
-    print("\n\n\n", file=sys.stderr)
-    raise e;
-    # try my own wrapper instead.
-    # import UsbCoreMini as usb
-    # forget this. old 0.4 PyUSB segfaults easily.
+      try:
+          import libusb1 as usb
+      except Exception as e1:
+	    try:
+	      import usb
+	    except Exception as e2:
+	      print("The python usb module could not be found. Try", file=sys.stderr)
+	      print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
+	      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
+	      print("\n\n\n", file=sys.stderr)
+	      raise e2;
+	    print("Your python usb module appears to be 0.4.x or older -- We need version 1.x", file=sys.stderr)
+	    print("\n\n\n", file=sys.stderr)
+	    raise e;
+	    # try my own wrapper instead.
+	    # import UsbCoreMini as usb
+	    # forget this. old 0.4 PyUSB segfaults easily.
 
 # taken from
 #  robocut/CutDialog.ui
