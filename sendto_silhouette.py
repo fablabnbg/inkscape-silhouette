@@ -71,9 +71,10 @@
 # 2015-06-06 jw, v1.14 -- fixed timout errors, refactored much code.
 #                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
 # 2016-01-15 jw, v1.15 -- ubuntu loads the wrong usb library.
+# 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
 
-__version__ = '1.15'	# Keep in sync with sendto_silhouette.inx ca line 42
-__author__ = 'Juergen Weigert <juewei@fabmail.org>'
+__version__ = '1.16'	# Keep in sync with sendto_silhouette.inx ca line 42
+__author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile
 

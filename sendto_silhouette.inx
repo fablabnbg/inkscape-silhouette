@@ -74,9 +74,9 @@
     </page>
     
     <page name='about' _gui-text='About'>
-      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org]</param>
+      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org] and contributors</param>
       <!-- Keep in sync with sendto_silhouette.py line 103 __version__ = ... -->
-      <param name="about_version" type="description">Version 1.15</param>
+      <param name="about_version" type="description">Version 1.16</param>
     </page>
   </param>
 
