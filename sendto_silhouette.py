@@ -72,8 +72,10 @@
 #                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
 # 2016-01-15 jw, v1.15 -- ubuntu loads the wrong usb library.
 # 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
+# 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with 
+#                         https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
-__version__ = '1.16'	# Keep in sync with sendto_silhouette.inx ca line 42
+__version__ = '1.17'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile

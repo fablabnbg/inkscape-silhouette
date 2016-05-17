@@ -13,9 +13,12 @@
 #             plot(bboxonly=None) is now the special case for not doing anything. False is normal plot.
 # 2015-06-05  Renamed cut_bbox() to find_bbox(). It does not cut anything.
 # 2015-06-06  refactored plot_cmds() from plot().
+# 2016-05-16  no reset per default, this helps usbip.
 
 from __future__ import print_function
 import sys, time, re
+
+usb_reset_needed = False	# https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -225,14 +228,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             print(msg, file=sys.stderr)
           sys.exit(0)
 
-        for i in range(5):
-          try:
-            dev.reset();
-            break
-          except usb.core.USBError as e:
-            print("reset failed: ", e, file=self.log)
-            print("retrying reset in 5 sec", file=self.log)
-            time.sleep(5)
+	if usb_reset_needed:
+          for i in range(5):
+            try:
+              dev.reset();
+              break
+            except usb.core.USBError as e:
+              print("reset failed: ", e, file=self.log)
+              print("retrying reset in 5 sec", file=self.log)
+              time.sleep(5)
 
         dev.set_configuration()
         try:
