@@ -1,7 +1,8 @@
 #! /bin/sh
-# silhouette-udev.sh -- a helper triggered by silhouette.rules RUN= 
+# silhouette-udev-notify.sh -- a helper triggered by silhouette.rules RUN= 
 #
 # (c) 2013, jw@suse.de - All rights reserved. Distribute under GPL-2.0
+# (c) 2016, juewei@fabmail.org - using Ubuntu paths.
 #
 # Popup a notification and instruct users how to access the device.
 #
@@ -27,9 +28,10 @@ title="Silhouette CAMEO ($ACTION)"
 text="use via inkscape -> Extensions -> Export"
 test "$ACTION" = 'add' || text=
 timeout=10000		# Milliseconds
-icon=printer		
-icon=/usr/lib/udev/silhouette-icon.png
-test -f $icon || icon=printer 	# any other stock values allowed?
+icon=printer
+icon=/lib/udev/silhouette-icon.png	# Ubuntu path
+test -f "$icon" || icon=/usr/$icon	# SUSE path
+test -f "$icon" || icon=printer 	# any other stock values allowed?
 
 ## FIXME: how is this triggered for KDE?
 pids=$(pgrep 'gnome-panel|xfce4-panel')

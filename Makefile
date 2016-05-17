@@ -7,6 +7,7 @@ ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
 VERS=$$(echo '<xml height="0"/>' | python ./sendto_silhouette.py --version /dev/stdin)	
 
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
+UDEV=$(DESTDIR)/lib/udev
 
 dist:
 	cd distribute; sh ./distribute.sh
@@ -18,6 +19,10 @@ install:
 	cp -r silhouette $(DEST)
 	install -m 755 -t $(DEST) *.py
 	install -m 644 -t $(DEST) *.inx
+	mkdir -p $(UDEV)/rules.d
+	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
+	install -m 644 -t $(UDEV) silhouette-icon.png
+	install -m 644 -t $(UDEV) silhouette-udev-notify.sh
 
 
 tar_dist_classic: clean
