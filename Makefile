@@ -6,6 +6,20 @@ EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
 VERS=$$(echo '<xml height="0"/>' | python ./sendto_silhouette.py --version /dev/stdin)	
 
+## echo '<xml height="0"/>' | python ./sendto_silhouette.py /dev/stdin
+# 'module' object has no attribute 'core'
+# 'module' object has no attribute 'core'
+# done. 0 min 0 sec
+#
+# debian 8
+# --------
+# echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main'
+# apt-get update
+# apt-get -t jessie-backports install python-usb
+# vi /etc/group
+# lp:x:debian
+
+
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
 UDEV=$(DESTDIR)/lib/udev
 

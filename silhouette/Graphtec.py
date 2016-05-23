@@ -1,5 +1,5 @@
 # (c) 2013,2014 jw@suse.de
-# (c) 2015 juewei@fabmail.org
+# (c) 2016 juewei@fabmail.org
 #
 # Distribute under GPLv2 or ask.
 #
@@ -14,6 +14,8 @@
 # 2015-06-05  Renamed cut_bbox() to find_bbox(). It does not cut anything.
 # 2015-06-06  refactored plot_cmds() from plot().
 # 2016-05-16  no reset per default, this helps usbip.
+# 2016-05-21  detect python-usb < 1.0 and give instructions.
+#
 
 from __future__ import print_function
 import sys, time, re
@@ -41,18 +43,23 @@ else:   # if sys_platform.startswith('linux'):
 	      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
 	      print("\n\n\n", file=sys.stderr)
 	      raise e2;
-	    print("Your python usb module appears to be 0.4.x or older -- We need version 1.x", file=sys.stderr)
-	    print("\n\n\n", file=sys.stderr)
-	    raise e;
-	    # try my own wrapper instead.
-	    # import UsbCoreMini as usb
-	    # forget this. old 0.4 PyUSB segfaults easily.
+
+if usb.version_info[0] < 1:
+  print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
+  print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
+  print("\n\n\n", file=sys.stderr)
+  sys.exit(1)
+  # try my own wrapper instead.
+  # import UsbCoreMini as usb
+  # forget this. old 0.4 PyUSB segfaults easily.
+
 
 # taken from
 #  robocut/CutDialog.ui
 #  robocut/CutDialog.cpp
 
 MEDIA = [
+# CAUTION: keep in sync with sendto_silhouette.inx
 # media, pressure, speed, cap-color, name
   ( 100,   27,     10,  "yellow", "Card without Craft Paper Backing"),
   ( 101,   27,     10,  "yellow", "Card with Craft Paper Backing"),

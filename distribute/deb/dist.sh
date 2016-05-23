@@ -10,6 +10,7 @@ tmp=../out
 
 [ -d $tmp ] && rm -rf $tmp/*.deb
 mkdir -p $tmp
+cp *-pak files/
 cd files
 fakeroot checkinstall --fstrans --reset-uid --type debian \
   --install=no -y --pkgname $name --pkgversion $vers --arch all \

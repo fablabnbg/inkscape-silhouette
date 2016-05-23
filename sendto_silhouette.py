@@ -74,8 +74,11 @@
 # 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
 # 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with 
 #                         https://github.com/fablabnbg/inkscape-silhouette/issues/10
+# 2016-05-21 jw, v1.18 -- warn about python-usb < 1.0 and give instructions.
+#                         Limit pressure to 18. 19 or 20 make the machine 
+#                         scroll forward backward for several minutes.
 
-__version__ = '1.17'	# Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = '1.18'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile
@@ -107,6 +110,11 @@ import cspsubdiv
 import string   # for string.lstrip
 import gettext
 from optparse import SUPPRESS_HELP
+
+try:
+  inkex.localize()	# 0.91
+except:
+  _ = gettext.gettext	# 0.49
 
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
@@ -254,7 +262,7 @@ class SendtoSilhouette(inkex.Effect):
           help="[1..8], cut/draw each path object multiple times.")
     self.OptionParser.add_option('-p', '--pressure',
           action = 'store', dest = 'pressure', type = 'int', default = 10,
-          help="[1..33], or 0 for media default")
+          help="[1..18], or 0 for media default")
     self.OptionParser.add_option('-r', '--reversetoggle',
           action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
           help="Cut each path the other direction. Affects every second pass when multipass.")
@@ -1056,6 +1064,17 @@ class SendtoSilhouette(inkex.Effect):
 
 if __name__ == '__main__':
         e = SendtoSilhouette()
+
+        if len(sys.argv) < 2:
+	  # write a tempfile that is autoremoved on exit
+	  tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
+	  sys.argv.append(tmpfile.name)
+	  print sys.argv
+	  print >>tmpfile, '<xml height="10"></xml>'
+	  tmpfile.flush()
+          e.affect(sys.argv[1:])
+	  # os.remove(tmpfile.name)
+	  sys.exit(0)
 
         start = time.time()
         e.affect()
