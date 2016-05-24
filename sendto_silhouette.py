@@ -77,6 +77,7 @@
 # 2016-05-21 jw, v1.18 -- warn about python-usb < 1.0 and give instructions.
 #                         Limit pressure to 18. 19 or 20 make the machine 
 #                         scroll forward backward for several minutes.
+#                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
 
 __version__ = '1.18'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
@@ -131,6 +132,7 @@ def px2mm(px):
   return px*25.4/90
 
 # Lifted with impunity from eggbot.py
+# Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
 def parseLengthWithUnits( str ):
 
         '''
@@ -148,12 +150,25 @@ def parseLengthWithUnits( str ):
         elif s[-2:] == 'mm':
                 u = 'mm'
                 s = s[:-2]
+        elif s[-2:] == 'pt':
+                u = 'pt'
+                s = s[:-2]
+        elif s[-2:] == 'pc':
+                u = 'pc'
+                s = s[:-2]
+        elif s[-2:] == 'cm':
+                u = 'cm'
+                s = s[:-2]
+        elif s[-2:] == 'in':
+                u = 'in'
+                s = s[:-2]
         elif s[-1:] == '%':
                 u = '%'
                 s = s[:-1]
         try:
                 v = float( s )
         except:
+                print >>sys.stderr, "parseLengthWithUnits: unknown unit ", s
                 return None, None
 
         return v, u
@@ -861,10 +876,15 @@ class SendtoSilhouette(inkex.Effect):
                                 return v
                         elif u == 'mm':
                                 return v*90./25.4       # inverse of px2mm
+                        elif u == 'in':
+                                return v*90.
+                        elif u == 'cm':
+                                return v*90./2.54       # inverse of 10*px2mm
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
                                 print >>sys.stderr, "unknown unit ", u
+                                print >>self.tty, "unknown unit ", u
                                 return None
                 else:
                         # No width specified; assume the default value
