@@ -4,7 +4,8 @@
 name=$1
 vers=$2
 url=http://github.com/fablabnbg/$name
-requires="bash"
+# versioned dependencies need \ escapes to survive checkinstall mangling.
+requires="python-usb\ \(\>=1.0.0\), bash"
 
 tmp=../out
 
