@@ -75,6 +75,24 @@ Pressure values of 19 or more make the machine misbehave. Beware.
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>
     </page>
+
+    <page name='blade' _gui-text='Blade Setting'>
+      <param name="blade_help" type="description">
+Always use the least amount of blade possible.
+
+1) Take a sheet of the media you are trying to cut and fold it in half.
+
+2) Take the blade out of the machine, set it to 1 and hold it in your hand as you would a pen but held vertically as it would be in the machine.
+
+3) Get your folded media and with your blade held like a pen but kept vertically press firmly down on the media and 'draw' a line.
+
+4) Next have a look at the media; with the correct setting you should have just cut a line through the top layer of the folded card without cutting in to the back layer. If you have not cut through the media, increase the blade by 1 position and repeat from step 3.
+
+5) Keep doing this until you reach the correct setting to cut the top layer without cutting the back.
+
+6) Once this is done the blade can be put back in to the machine.
+      </param>
+    </page>
     
     <page name='about' _gui-text='About'>
       <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org] and contributors</param>
