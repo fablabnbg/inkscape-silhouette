@@ -689,35 +689,40 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
 
     s.write("FU%d,%d\x03" % (height-top, width-left))
-    s.write("FN0\x03")          # // ?
+    s.write("FN0\x03")          # Orientation of coordinate system
     if regmark:
       s.write("TB50,0\x03") #only with registration (it was TB50,1) ???
       s.write("TB99\x03")
-      s.write("TB52,2\x03")
-      s.write("TB51,400\x03")
-      s.write("TB53,10\x03")
+      s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+      s.write("TB51,400\x03")   # length of regmarks
+      s.write("TB53,10\x03")    # width of regmarks
       s.write("TB55,1\x03")
       
       if regsearch:
-        cmd="123"
+        # automatic regmark test, height, width, top, left
+        s.write("TB123,%i,%i,118,18\x03" % (reglength * 20.0, regwidth * 20.0))
       else:
-        cmd="23"
-      ## registration mark test /1-2: 180.0mm / 1-3: 230.0mm (origin 15mmx20mm)
-      s.write("TB%s,%i,%i,118,18\x03" % (cmd, regwidth * 20.0, reglength * 20.0))
+      	# manual regmark, height, width
+        s.write("TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
       
-      s.write("FQ5\x03") ## only with registration ???
+      #while True:
+      #  s.write("\1b\05") #request status
+      #  resp = s.read(timeout=1000)
+      #  if resp != "    1\x03":
+      #  	break;
+        	
       resp = s.read(timeout=40000) ## Allow 20s for reply...
       if resp != "    0\x03":
         raise ValueError("Couldn't find registration marks. %s" % str(resp))
       
       ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
-      resp = s.read(timeout=40000) ## Allow 20s for reply...
-      if resp != "    0\x03":
-        raise ValueError("Couldn't find registration marks.")
+      #resp = s.read(timeout=40000) ## Allow 20s for reply...
+      #if resp != "    0\x03":
+        #raise ValueError("Couldn't find registration marks. (2)(%s)" % str(resp))
       
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    1\x03":
-        #raise ValueError("Couldn't find registration marks.")
+        #raise ValueError("Couldn't find registration marks. (3)")
     else:
       s.write("TB50,1\x03")     # ???
 
@@ -725,6 +730,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.write("FO%d\x03" % (height-top))
 
     p = "&100,100,100,\\0,0,Z%d,%d,L0" % (width,height)		# scale
+    #p = "\\0,0\x03Z%d,%d\x03" % (width,height)		# scale
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
