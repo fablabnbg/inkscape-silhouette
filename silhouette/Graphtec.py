@@ -688,7 +688,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None,
            marginleft=None, pathlist=None, offset=None, bboxonly=False,
            end_paper_offset=0, regmark=False, regsearch=False,
-           regwidth=180, reglength=230):
+           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -743,6 +743,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
 
     if regmark:
+      # after registration logically (0,0) is at regmark position
+      # compensate the offset of the regmark to the svg document origin. 
+      #bb = s.find_bbox(pathlist)
+      #print("bb llx=%g ury=%g" % (bb['llx'], bb['ury']), file=s.log)
+      #regoriginx = bb['llx']
+      #regoriginy = bb['ury']
+      print("bb regoriginx=%g regoriginy=%g" % (regoriginx, regoriginy), file=s.log)
+      offset = (offset[0] - regoriginx, offset[1] - regoriginy)
+      
       s.write("TB50,0\x03") #only with registration (it was TB50,1), landscape mode
       s.write("TB99\x03")
       s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
