@@ -405,11 +405,27 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
     
     # Additional commands seen in init by Silhouette Studio
+    #s.write("[\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("[: '%s'" % (resp[:-1]), file=s.log)	# response '0,0'
+    #except:
+    #  pass
+
+    #s.write("U\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)	# response '20320,4120' max. print range?
+    #except:
+    #  pass
+
     #s.write("FQ0\x03") # asks for something, no idea, just repeating sniffed communication
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)	# response '10'
     #except:
     #  pass
     
@@ -417,7 +433,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)	# response '18'
     #except:
     #  pass
     
@@ -433,7 +449,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FA: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
     #except:
     #  pass
 
@@ -530,7 +546,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
-    """Find the bouding box of the cut, returns (xmin,ymin,xmax,ymax)"""
+    """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
     bb = {}
     for path in cut:
       for pt in path:
@@ -727,7 +743,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
 
     if regmark:
-      s.write("TB50,0\x03") #only with registration (it was TB50,1) ???
+      s.write("TB50,0\x03") #only with registration (it was TB50,1), landscape mode
       s.write("TB99\x03")
       s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
       s.write("TB51,400\x03")   # length of regmarks
@@ -780,7 +796,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     p = '\x03'.join(cmd_list)
 
     if bboxonly == True:
-      # move the bouding box
+      # move the bounding box
       p = "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
       p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
       p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
