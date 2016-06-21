@@ -752,6 +752,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("bb regoriginx=%g regoriginy=%g" % (regoriginx, regoriginy), file=s.log)
       offset = (offset[0] - regoriginx, offset[1] - regoriginy)
       
+      # Limit the cutting area inside cutting marks
+      height = reglength * 20.0
+      width = regwidth * 20.0
+
       s.write("TB50,0\x03") #only with registration (it was TB50,1), landscape mode
       s.write("TB99\x03")
       s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
@@ -761,7 +765,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       
       if regsearch:
         # automatic regmark test, height, width, top, left
-        s.write("TB123,%i,%i,118,18\x03" % (reglength * 20.0, regwidth * 20.0))
+        # add a search range of 10mm
+        s.write("TB123,%i,%i,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
       else:
       	# manual regmark, height, width
         s.write("TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
