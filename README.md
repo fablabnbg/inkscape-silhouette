@@ -89,6 +89,21 @@ Troubleshooting
 
 If this reports no usb.core.Device to you, please help troubleshoot.
 
+Using of registration marks
+---------------------------
+
+To plot with registration marks do the following:
+
+1. Open the document examples/registration-marks.svg
+2. Insert your cutting paths and graphics on the apropriate layers.
+3. Printout the whole document including registration marks. You probably want to hide the cutting layer. 
+4. Select your cutting paths in the document, but exclude regmarks and graphics.
+5. Set or ensure the correct values (regmark position/width/height) on the regmark tab.
+6. Enable 'Document has registration marks' and 'Search for registration marks'
+7. Start cut.
+
+The plotter will search the registration marks at the given positions. If it founds the marks, they will serve as accurate reference and define the origin. Therefore it is necessary to set the correct offset values of the mark. As a result the cut will go precisely along the graphics.
+At my device there seems to be a little offset between the search optics and the cutting knife. For enhanced precision I have to set an offset of 0,1mm for both x and y on the first tab to compensate.
 
 Features
 --------
