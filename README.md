@@ -38,6 +38,13 @@ Arch Linux:
 * sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
 * sudo cp -R silhouette /usr/share/inkscape/extensions/
 
+Mac OS X
+* Install prerequisites:
+  * install homebrew http://brew.sh/
+  * brew install libusb
+* Install the extension:
+  * sudo ./install_osx.py
+
 Windows (untested): 
 * Download and install the free test version of **winzip** from http://www.winzip.com
 * Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
@@ -61,13 +68,6 @@ Windows (untested):
 * Restart inkscape
 * An error message 'ImportError: No module named usb.core' means you are close, but pyusb was not correctly installed. Please check, if there are multiple python installations in your system, e.g. one that came with inkscape.
 
-
-Mac OS X (untested)
-* Install prerequisites:
-** install homebrew http://brew.sh/
-** brew install libusb
-* Install the extension:
-** sudo ./install_osx.py
 
 Troubleshooting
 ---------------
