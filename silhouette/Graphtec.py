@@ -26,7 +26,7 @@ sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
   import usb.core
 elif sys_platform.startswith('darwin'):
-  import usb1
+  import usb1, usb.core
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
   try:
@@ -215,7 +215,6 @@ class SilhouetteCameo:
 
       elif sys_platform.startswith('darwin'):
         dev.claimInterface(0)
-        print("device write under macosx not implemented? Check the code!", file=self.log)
         # usb_enpoint = 1
         # dev.bulkWrite(usb_endpoint, data)
 
@@ -292,9 +291,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       chunk = string[o:o+chunksz]
       try:
         if s.need_interface:
-          r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+            try:
+                r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+            except AttributeError:
+                r = s.dev.bulkWrite(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
         else:
-          r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout)
+            try:
+                r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout)
+            except AttributeError:
+                r = s.dev.bulkWrite(endpoint, string[o:o+chunksz], timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
@@ -313,7 +318,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             msg += 't'
             continue
         except Exception as ee:
-          msg += "s.dev.write Error: " + ee
+          msg += "s.dev.write Error:  {}".format(ee)
       else:
         if len(msg):
           msg = ''
@@ -338,12 +343,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if s.dev is None: return None
     endpoint = 0x82
     if s.need_interface:
-      data = s.dev.read(endpoint, size, timeout=timeout, interface=0)
+        try:
+            data = s.dev.read(endpoint, size, timeout=timeout, interface=0)
+        except AttributeError:
+            data = s.dev.bulkRead(endpoint, size, timeout=timeout, interface=0)
     else:
-      data = s.dev.read(endpoint, size, timeout=timeout)
+        try:
+            data = s.dev.read(endpoint, size, timeout=timeout)
+        except AttributeError:
+            data = s.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    return data.tostring()
+    if isinstance(data, str):
+        return data
+    else:
+        return data.tostring()
 
   def try_read(s, size=64, timeout=1000):
     ret=None
