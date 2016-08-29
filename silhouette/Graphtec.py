@@ -44,14 +44,17 @@ else:   # if sys_platform.startswith('linux'):
 	      print("\n\n\n", file=sys.stderr)
 	      raise e2;
 
-if usb.version_info[0] < 1:
-  print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
-  print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
-  print("\n\n\n", file=sys.stderr)
-  sys.exit(1)
-  # try my own wrapper instead.
-  # import UsbCoreMini as usb
-  # forget this. old 0.4 PyUSB segfaults easily.
+try:
+    if usb.version_info[0] < 1:
+      print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
+      print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
+      print("\n\n\n", file=sys.stderr)
+      sys.exit(1)
+      # try my own wrapper instead.
+      # import UsbCoreMini as usb
+      # forget this. old 0.4 PyUSB segfaults easily.
+except NameError:
+    pass #on OS X usb.version_info[0] will always fail as libusb1 is being used
 
 
 # taken from
@@ -188,8 +191,11 @@ class SilhouetteCameo:
 
       if dev is None:
         msg = ''
-        for dev in usb.core.find(find_all=True):
-          msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+        try:
+            for dev in usb.core.find(find_all=True):
+              msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+        except NameError: 
+            msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
       try:

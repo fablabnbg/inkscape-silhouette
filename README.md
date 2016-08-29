@@ -63,20 +63,11 @@ Windows (untested):
 
 
 Mac OS X (untested)
-*  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
-*  easy_install lxml
-*  easy_install pyusb
-*  Read the eror message 'no backend available'
-*  work some unknown magic, so that devices are found.
-
-* Ideas taken from https://github.com/pmonta/gerber2graphtec
-**  install XCode and macports
-**  port install gerbv
-**  port install pstoedit
-**  port install libusb
-**  Download and install this package: http://pypi.python.org/pypi/libusb1 with the usual "python setup.py install" installation method.
-**  https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
-
+* Install prerequisites:
+** install homebrew http://brew.sh/
+** brew install libusb
+* Install the extension:
+** sudo ./install_osx.py
 
 Troubleshooting
 ---------------
