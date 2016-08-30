@@ -262,7 +262,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
 
-  def write(s, string, timeout=3000):
+  def write(s, string, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
