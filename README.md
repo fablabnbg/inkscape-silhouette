@@ -38,6 +38,13 @@ Arch Linux:
 * sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
 * sudo cp -R silhouette /usr/share/inkscape/extensions/
 
+Mac OS X
+* Install prerequisites:
+  * install homebrew http://brew.sh/
+  * brew install libusb
+* Install the extension:
+  * sudo ./install_osx.py
+
 Windows (untested): 
 * Download and install the free test version of **winzip** from http://www.winzip.com
 * Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
@@ -60,22 +67,6 @@ Windows (untested):
 * cd ..\pyusb-1.0.0b1; python.exe setup.py install
 * Restart inkscape
 * An error message 'ImportError: No module named usb.core' means you are close, but pyusb was not correctly installed. Please check, if there are multiple python installations in your system, e.g. one that came with inkscape.
-
-
-Mac OS X (untested)
-*  /Applications/Inkscape.app/Contents/Resources/extensions/ . 
-*  easy_install lxml
-*  easy_install pyusb
-*  Read the eror message 'no backend available'
-*  work some unknown magic, so that devices are found.
-
-* Ideas taken from https://github.com/pmonta/gerber2graphtec
-**  install XCode and macports
-**  port install gerbv
-**  port install pstoedit
-**  port install libusb
-**  Download and install this package: http://pypi.python.org/pypi/libusb1 with the usual "python setup.py install" installation method.
-**  https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 
 
 Troubleshooting
