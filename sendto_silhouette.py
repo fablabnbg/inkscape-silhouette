@@ -95,7 +95,7 @@ if sys_platform.startswith('win'):
   sys.path.append('C:\Program Files\Inkscape\share\extensions')
 
 elif sys_platform.startswith('darwin'):
-  sys.path.append('/Applications/Inkscape.app/Contents/Resources/extensions')
+  sys.path.append('~/.config/inkscape/extensions')
 
 else:   # linux
   # if sys_platform.startswith('linux'):

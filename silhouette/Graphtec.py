@@ -26,7 +26,7 @@ sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
   import usb.core
 elif sys_platform.startswith('darwin'):
-  import usb1
+  import usb1, usb.core
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
   try:
@@ -44,14 +44,17 @@ else:   # if sys_platform.startswith('linux'):
 	      print("\n\n\n", file=sys.stderr)
 	      raise e2;
 
-if usb.version_info[0] < 1:
-  print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
-  print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
-  print("\n\n\n", file=sys.stderr)
-  sys.exit(1)
-  # try my own wrapper instead.
-  # import UsbCoreMini as usb
-  # forget this. old 0.4 PyUSB segfaults easily.
+try:
+    if usb.version_info[0] < 1:
+      print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
+      print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
+      print("\n\n\n", file=sys.stderr)
+      sys.exit(1)
+      # try my own wrapper instead.
+      # import UsbCoreMini as usb
+      # forget this. old 0.4 PyUSB segfaults easily.
+except NameError:
+    pass #on OS X usb.version_info[0] will always fail as libusb1 is being used
 
 
 # taken from
@@ -188,8 +191,11 @@ class SilhouetteCameo:
 
       if dev is None:
         msg = ''
-        for dev in usb.core.find(find_all=True):
-          msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+        try:
+            for dev in usb.core.find(find_all=True):
+              msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+        except NameError: 
+            msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
       try:
@@ -209,7 +215,6 @@ class SilhouetteCameo:
 
       elif sys_platform.startswith('darwin'):
         dev.claimInterface(0)
-        print("device write under macosx not implemented? Check the code!", file=self.log)
         # usb_enpoint = 1
         # dev.bulkWrite(usb_endpoint, data)
 
@@ -257,7 +262,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
 
-  def write(s, string, timeout=3000):
+  def write(s, string, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
@@ -286,9 +291,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       chunk = string[o:o+chunksz]
       try:
         if s.need_interface:
-          r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
+          try:
+            r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
+          except AttributeError:
+            r = s.dev.bulkWrite(endpoint, chunk, interface=0, timeout=timeout)
         else:
-          r = s.dev.write(endpoint, chunk, timeout=timeout)
+          try:
+            r = s.dev.write(endpoint, chunk, timeout=timeout)
+          except AttributeError:
+            r = s.dev.bulkWrite(endpoint, chunk, timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
@@ -307,7 +318,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             msg += 't'
             continue
         except Exception as ee:
-          msg += "s.dev.write Error: " + ee
+          msg += "s.dev.write Error:  {}".format(ee)
       else:
         if len(msg):
           msg = ''
@@ -332,12 +343,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if s.dev is None: return None
     endpoint = 0x82
     if s.need_interface:
-      data = s.dev.read(endpoint, size, timeout=timeout, interface=0)
+        try:
+            data = s.dev.read(endpoint, size, timeout=timeout, interface=0)
+        except AttributeError:
+            data = s.dev.bulkRead(endpoint, size, timeout=timeout, interface=0)
     else:
-      data = s.dev.read(endpoint, size, timeout=timeout)
+        try:
+            data = s.dev.read(endpoint, size, timeout=timeout)
+        except AttributeError:
+            data = s.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    return data.tostring()
+    if isinstance(data, str):
+        return data
+    else:
+        return data.tostring()
 
   def try_read(s, size=64, timeout=1000):
     ret=None
