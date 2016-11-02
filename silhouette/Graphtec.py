@@ -292,14 +292,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       try:
         if s.need_interface:
             try:
-                r = s.dev.write(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+                r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
             except AttributeError:
-                r = s.dev.bulkWrite(endpoint, string[o:o+chunksz], interface=0, timeout=timeout)
+                r = s.dev.bulkWrite(endpoint, chunk, interface=0, timeout=timeout)
         else:
             try:
-                r = s.dev.write(endpoint, string[o:o+chunksz], timeout=timeout)
+                r = s.dev.write(endpoint, chunk, timeout=timeout)
             except AttributeError:
-                r = s.dev.bulkWrite(endpoint, string[o:o+chunksz], timeout=timeout)
+                r = s.dev.bulkWrite(endpoint, chunk, timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
