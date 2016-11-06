@@ -60,7 +60,7 @@ Pressure values of 19 or more make the machine misbehave. Beware.
     <page name='reg' _gui-text='Regmarks'>
       <param name="regmark" type="boolean" _gui-text="The document has registration marks">false</param>
       <param name="regmark_help" type="description">???</param>
-      <param name="regsearch" type="boolean" _gui-text="Search for the regitration marks">false</param>
+      <param name="regsearch" type="boolean" _gui-text="Search for the registration marks">false</param>
       <param name="regsearch_help" type="description">???</param>
       <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
       <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
