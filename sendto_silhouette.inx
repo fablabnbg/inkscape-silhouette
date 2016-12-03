@@ -64,8 +64,8 @@ Pressure values of 19 or more make the machine misbehave. Beware.
       <param name="regsearch_help" type="description">Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</param>
       <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
       <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
-      <param name="regoriginx" type="float" min="0.0" max="10000" _gui-text="Position of regmark from document left [mm]">15</param>
-      <param name="regoriginy" type="float" min="0.0" max="10000" _gui-text="Position of regmark from document top [mm]">20</param>
+      <param name="regoriginx" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document left [mm]">15</param>
+      <param name="regoriginy" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document top [mm]">20</param>
       <param name="regdistance_help" type="description">Distance of the registration mark edges</param>
     </page>
 
