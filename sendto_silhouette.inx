@@ -50,6 +50,7 @@ Pressure values of 19 or more make the machine misbehave. Beware.
       <param name="speed" type="int" min="0" max="10" _gui-text="Speed">0</param>
       <param name="pressure" type="int" min="0" max="18" _gui-text="Pressure">0</param>
       <param name="speed_help" type="description">Use speed=0, pressure=0 to take the media defaults.</param>
+      <param name="dashes" type="boolean" _gui-text="Convert to dashes">false</param> <param name="dashes_help" type="description">Convert paths with dashed strokes to separate subpaths for perforated cuts.</param>
       <param name="autocrop" type="boolean" _gui-text="Trim margins">false</param> <param name="autocrop_help" type="description">Shift to the top lefthand corner, then do offsets.</param>
       <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
       <param name="bbox_help" type="description">To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</param>

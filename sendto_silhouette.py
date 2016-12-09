@@ -119,6 +119,7 @@ except:
 
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
+from silhouette.convert2dashes import splitPath
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
@@ -254,6 +255,9 @@ class SendtoSilhouette(inkex.Effect):
 
     self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab',
           help=SUPPRESS_HELP)
+    self.OptionParser.add_option('-d', '--dashes',
+          action = 'store', dest = 'dashes', type = 'inkbool', default = False,
+          help='convert paths with dashed strokes to separate subpaths for perforated cuts')
     self.OptionParser.add_option('-a', '--autocrop',
           action = 'store', dest = 'autocrop', type = 'inkbool', default = False,
           help='trim away top and left margin (before adding offsets)')
@@ -507,6 +511,9 @@ class SendtoSilhouette(inkex.Effect):
                                         pass
 
                         elif node.tag == inkex.addNS( 'path', 'svg' ):
+
+                                if self.options.dashes:
+                                        splitPath(inkex, node)
 
                                 self.pathcount += 1
 
