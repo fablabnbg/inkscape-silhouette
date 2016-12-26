@@ -2,6 +2,8 @@
 echo "Determining Version:"
 VERSION=$(echo '<xml height="0"/>' | python ../sendto_silhouette.py --version /dev/stdin)	
 
+test -e /usr/bin/xpath || sudo apt-get install libxml-xpath-perl
+#
 # grep Version ../*.inx
 xpath -q -e '//param[@name="about_version"]/text()' ../sendto_silhouette.inx
 echo "Version should be: \"$VERSION\""

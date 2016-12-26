@@ -45,10 +45,20 @@ else:   # if sys_platform.startswith('linux'):
 	      raise e2;
 
 try:
-    if usb.version_info[0] < 1:
-      print("Your python usb module appears to be "+str(usb.version_info)+" -- We need version 1.x", file=sys.stderr)
+    try:
+      usb_vi = usb.version_info[0]
+      usb_vi_str = str(usb.version_info)
+    except AttributeError:
+      usb_vi = 0
+      usb_vi_str = 'unknown'
+
+    if usb_vi < 1:
+      print("Your python usb module appears to be "+usb_vi_str+" -- We need version 1.x", file=sys.stderr)
       print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
       print("\n\n\n", file=sys.stderr)
+      print("For Ubuntu 14.04try:\n  pip install pyusb --upgrade", file=sys.stderr)
+      print("\n\n\n", file=sys.stderr)
+      sys.exit(1)
       sys.exit(1)
       # try my own wrapper instead.
       # import UsbCoreMini as usb

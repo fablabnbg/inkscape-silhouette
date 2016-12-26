@@ -78,8 +78,10 @@
 #                         Limit pressure to 18. 19 or 20 make the machine 
 #                         scroll forward backward for several minutes.
 #                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
+# 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
+#			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
 
-__version__ = '1.18'	# Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile
