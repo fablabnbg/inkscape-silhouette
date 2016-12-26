@@ -5,7 +5,11 @@ name=$1
 vers=$2
 url=http://github.com/fablabnbg/$name
 # versioned dependencies need \ escapes to survive checkinstall mangling.
-requires="python-usb\ \(\>=1.0.0\), bash"
+# requires="python-usb\ \(\>=1.0.0\), bash"
+
+## not even ubuntu 16.04 has python-usb 1.0,  we requre any python-usb
+## and check at runtime again.
+requires="python-usb, bash"
 
 tmp=../out
 

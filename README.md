@@ -9,7 +9,21 @@ Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-s
 Installation
 ------------
 
-Ubuntu 14.04:
+Ubuntu 16.04
+
+* apt install python-usb
+* https://github.com/fablabnbg/inkscape-silhouette/releases
+  Scroll down to Downloads and click on the *.deb file.
+
+Ubuntu 14.04
+
+* apt install python-pip python-setuptools
+* sudo pip install pyusb
+* https://github.com/fablabnbg/inkscape-silhouette/releases
+  Scroll down to Downloads and click on the *.deb file.
+
+
+Other Debian based Linux
 
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
 * Copy the the folder silhouette and the two files sendto_silhouette.inx and 
