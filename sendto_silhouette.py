@@ -1069,8 +1069,9 @@ class SendtoSilhouette(inkex.Effect):
         percent_per_sec = 1000.     # unreliable data
 
       wait_sec = 1
-      while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
-        wait_sec *= 2
+      if percent_per_sec > 1: # prevent overflow if device_buffer_perc is almost 100
+        while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
+          wait_sec *= 2
       dots = '.'
       while self.options.wait_done and state == 'moving':
         time.sleep(wait_sec)
