@@ -1033,7 +1033,7 @@ class SendtoSilhouette(inkex.Effect):
         mediaheight=px2mm(self.docHeight),
         margintop=0, marginleft=0,
         bboxonly=None,         # only return the bbox, do not draw it.
-        endposition='start',         # only return the bbox, do not draw it.
+        endposition='start',
         regmark=self.options.regmark,regsearch=self.options.regsearch,
         regwidth=self.options.regwidth,reglength=self.options.reglength)
 

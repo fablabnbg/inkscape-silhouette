@@ -303,15 +303,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       chunk = string[o:o+chunksz]
       try:
         if s.need_interface:
-            try:
-                r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
-            except AttributeError:
-                r = s.dev.bulkWrite(endpoint, chunk, interface=0, timeout=timeout)
+          try:
+            r = s.dev.write(endpoint, chunk, interface=0, timeout=timeout)
+          except AttributeError:
+            r = s.dev.bulkWrite(endpoint, chunk, interface=0, timeout=timeout)
         else:
-            try:
-                r = s.dev.write(endpoint, chunk, timeout=timeout)
-            except AttributeError:
-                r = s.dev.bulkWrite(endpoint, chunk, timeout=timeout)
+          try:
+            r = s.dev.write(endpoint, chunk, timeout=timeout)
+          except AttributeError:
+            r = s.dev.bulkWrite(endpoint, chunk, timeout=timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
         raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(s.dev)))
@@ -580,7 +580,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
-    """Find the bouding box of the cut, returns (xmin,ymin,xmax,ymax)"""
+    """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
     bb = {}
     for path in cut:
       for pt in path:
@@ -828,7 +828,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     p = '\x03'.join(cmd_list)
 
     if bboxonly == True:
-      # move the bouding box
+      # move the bounding box
       p = "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
       p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
       p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
