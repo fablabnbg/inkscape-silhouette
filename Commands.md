@@ -13,6 +13,7 @@ Resources
  * https://github.com/vishnubob/silhouette/blob/master/src/gpgl.py
  * https://github.com/jnweiger/robocut/blob/master/Plotter.cpp#L344-L586
  * https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L305-L419
+ * https://github.com/Skrupellos/silhouette/blob/master/decode
 
 Typical sequence
 ----------------

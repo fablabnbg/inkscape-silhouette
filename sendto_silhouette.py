@@ -311,9 +311,13 @@ class SendtoSilhouette(inkex.Effect):
           action = 'store', dest = 'regsearch', type = 'inkbool', default = False,
           help="Search for the registration marks.")
     self.OptionParser.add_option('-X', '--reg-x', '--regwidth', action = 'store',
-          type = 'float', dest = 'regwidth', default = 18.0, help="X mark distance [mm]")
+          type = 'float', dest = 'regwidth', default = 180.0, help="X mark distance [mm]")
     self.OptionParser.add_option('-Y', '--reg-y', '--reglength', action = 'store',
           type = 'float', dest = 'reglength', default = 230.0, help="Y mark distance [mm]")
+    self.OptionParser.add_option('--rego-x',  '--regoriginx',action = 'store',
+          type = 'float', dest = 'regoriginx', default = 15.0, help="X mark origin from left [mm]")
+    self.OptionParser.add_option('--rego-y', '--regoriginy', action = 'store',
+          type = 'float', dest = 'regoriginy', default = 20.0, help="X mark origin from top [mm]")
     self.OptionParser.add_option('-e', '--endposition', '--end-postition',
           '--end_position', action = 'store', choices=('start','below'),
           dest = 'endposition', default = 'below', help="Position of head after cutting: start or below")
@@ -1035,7 +1039,8 @@ class SendtoSilhouette(inkex.Effect):
         bboxonly=None,         # only return the bbox, do not draw it.
         endposition='start',
         regmark=self.options.regmark,regsearch=self.options.regsearch,
-        regwidth=self.options.regwidth,reglength=self.options.reglength)
+        regwidth=self.options.regwidth,reglength=self.options.reglength,
+        regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
 
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
@@ -1051,7 +1056,8 @@ class SendtoSilhouette(inkex.Effect):
       bboxonly=self.options.bboxonly,
       endposition=self.options.endposition,
       regmark=self.options.regmark,regsearch=self.options.regsearch,
-      regwidth=self.options.regwidth,reglength=self.options.reglength)
+      regwidth=self.options.regwidth,reglength=self.options.reglength,
+      regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
     if len(bbox['bbox'].keys()) == 0:
       print >>self.tty, "empty page?"
       print >>sys.stderr, "empty page?"

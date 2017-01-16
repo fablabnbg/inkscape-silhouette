@@ -455,11 +455,27 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
 
     # Additional commands seen in init by Silhouette Studio
+    #s.write("[\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("[: '%s'" % (resp[:-1]), file=s.log)	# response '0,0'
+    #except:
+    #  pass
+
+    #s.write("U\x03") # asks for something, no idea, just repeating sniffed communication
+    #try:
+    #  resp = s.read(timeout=1000)
+    #  if len(resp) > 1:
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)	# response '20320,4120' max. print range?
+    #except:
+    #  pass
+
     #s.write("FQ0\x03") # asks for something, no idea, just repeating sniffed communication
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)	# response '10'
     #except:
     #  pass
 
@@ -467,7 +483,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)	# response '18'
     #except:
     #  pass
 
@@ -483,7 +499,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FA: '%s'" % (resp[:-1]), file=s.log)
+    #  print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
     #except:
     #  pass
 
@@ -722,7 +738,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def plot(s, mediawidth=210.0, mediaheight=297.0, margintop=None,
            marginleft=None, pathlist=None, offset=None, bboxonly=False,
            end_paper_offset=0, endposition='below', regmark=False, regsearch=False,
-           regwidth=180, reglength=230):
+           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -780,38 +796,57 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         offset = (offset, 0)
 
     if regmark:
-      s.write("TB50,0\x03") #only with registration (it was TB50,1) ???
+      # after registration logically (0,0) is at regmark position
+      # compensate the offset of the regmark to the svg document origin.
+      #bb = s.find_bbox(pathlist)
+      #print("bb llx=%g ury=%g" % (bb['llx'], bb['ury']), file=s.log)
+      #regoriginx = bb['llx']
+      #regoriginy = bb['ury']
+      print("bb regoriginx=%g regoriginy=%g" % (regoriginx, regoriginy), file=s.log)
+      offset = (offset[0] - regoriginx, offset[1] - regoriginy)
+
+      # Limit the cutting area inside cutting marks
+      height = reglength * 20.0
+      width = regwidth * 20.0
+
+      s.write("TB50,0\x03") #only with registration (it was TB50,1), landscape mode
       s.write("TB99\x03")
-      s.write("TB52,2\x03")
-      s.write("TB51,400\x03")
-      s.write("TB53,10\x03")
+      s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+      s.write("TB51,400\x03")   # length of regmarks
+      s.write("TB53,10\x03")    # width of regmarks
       s.write("TB55,1\x03")
-      
+
       if regsearch:
-        cmd="123"
+        # automatic regmark test, height, width, top, left
+        # add a search range of 10mm
+        s.write("TB123,%i,%i,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
       else:
-        cmd="23"
-      ## registration mark test /1-2: 180.0mm / 1-3: 230.0mm (origin 15mmx20mm)
-      s.write("TB%s,%i,%i,118,18\x03" % (cmd, regwidth * 20.0, reglength * 20.0))
-      
-      s.write("FQ5\x03") ## only with registration ???
+        # manual regmark, height, width
+        s.write("TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
+
+      #while True:
+      #  s.write("\1b\05") #request status
+      #  resp = s.read(timeout=1000)
+      #  if resp != "    1\x03":
+      #  	break;
+
       resp = s.read(timeout=40000) ## Allow 20s for reply...
       if resp != "    0\x03":
         raise ValueError("Couldn't find registration marks. %s" % str(resp))
-      
+
       ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
-      resp = s.read(timeout=40000) ## Allow 20s for reply...
-      if resp != "    0\x03":
-        raise ValueError("Couldn't find registration marks.")
+      #resp = s.read(timeout=40000) ## Allow 20s for reply...
+      #if resp != "    0\x03":
+        #raise ValueError("Couldn't find registration marks. (2)(%s)" % str(resp))
       
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    1\x03":
-        #raise ValueError("Couldn't find registration marks.")
-    else:
-      s.write("TB50,1\x03")     # ???
+        #raise ValueError("Couldn't find registration marks. (3)")
+
 
     # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
-    s.write("FO%d\x03" % (height-top))
+    #s.write("FO%d\x03" % (height-top))
+
 
     #FMx, x = 0/1: 1 leads to additional horizontal offset of 5 mm, why? Has other profound
     # impact (will not cut in certain configuration if x=0). Seems dangerous. Not used
