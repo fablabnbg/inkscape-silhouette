@@ -1000,10 +1000,22 @@ class SendtoSilhouette(inkex.Effect):
         else:
           mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
         pointcount += 1
-      for i in range(0,self.options.multipass):
+
+      multipath = []
+      multipath.extend(mm_path)
+      for i in range(1,self.options.multipass):
+        # if reverse continue path without lifting, instead turn with rotating knife
         if (self.options.reversetoggle):
           mm_path = list(reversed(mm_path))
-        cut.append(mm_path)
+          multipath.extend(mm_path[1:])
+        # if closed path (end = start) continue path without lifting
+        elif (mm_path[0] == mm_path[-1]):
+          multipath.extend(mm_path[1:])
+        # else start a new path
+        else: 
+          cut.append(mm_path)
+
+      cut.append(multipath)
 
     if dev.dev is None:
       docname=None
