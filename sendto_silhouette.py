@@ -122,6 +122,7 @@ except:
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
+import silhouette.StrategyMinTraveling
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
@@ -988,6 +989,8 @@ class SendtoSilhouette(inkex.Effect):
       mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
+    else:
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
 
     # print >>self.tty, self.paths
     cut = []
