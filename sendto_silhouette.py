@@ -278,6 +278,9 @@ class SendtoSilhouette(inkex.Effect):
              '120','121','122','123','124','125','126','127','128','129','130',
              '131','132','133','134','135','136','137','138','300'),
           help="113 = pen, 132 = printer paper, 300 = custom")
+    self.OptionParser.add_option('-o', '--overcut',
+          action = 'store', dest = 'overcut', type = 'float', default = 0.5,
+          help="overcut on circular paths. [mm]")
     self.OptionParser.add_option('-M', '--multipass',
           action = 'store', dest = 'multipass', type = 'int', default = '1',
           help="[1..8], cut/draw each path object multiple times.")
@@ -1016,7 +1019,7 @@ class SendtoSilhouette(inkex.Effect):
           cut.append(mm_path)
 
       # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
-      overcut = 0.5
+      overcut = self.options.overcut
       if (overcut > 0) and (mm_path[0] == mm_path[-1]):
         pfrom = mm_path[0]
         for pnext in mm_path[1:]:
