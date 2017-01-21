@@ -44,8 +44,7 @@ openSUSE:
 * and run '''sudo zypper in python-usb'''
 
 Arch Linux:
-* sudo pip2 install pyusb libxml
-* pacman -S inkscape
+* sudo pacman -S inkscape python2 python2-lxml python2-pyusb
 * git clone https://github.com/fablabnbg/inkscape-silhouette.git
 * cd inkscape-silhouette
 * sudo python2 setup.py build && sudo python2 setup.py install
