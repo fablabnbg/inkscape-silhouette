@@ -40,11 +40,11 @@ def findnearestpath(paths, pos, entrycircular=False):
     return nearestindex,selected
 
 # Sort paths to achieve minimal traveling times
-def sort(paths):
+def sort(paths, entrycircular=False):
     pos=(0,0)
     sortedpaths=[]
     while (len(paths) > 0):
-        i,path = findnearestpath(paths,pos)
+        i,path = findnearestpath(paths,pos,entrycircular)
         paths.pop(i)             # delete found index
         pos = path[-1]           # endpoint is next start point for search
         sortedpaths.append(path) # append to output list

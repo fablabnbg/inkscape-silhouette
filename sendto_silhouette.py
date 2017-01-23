@@ -270,9 +270,10 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
-    self.OptionParser.add_option('--mat-free', '--mat_free',
-          action = 'store', dest = 'mat_free', type = 'inkbool', default = False,
-          help="Optimize movements for cutting without a cutting mat.")
+    self.OptionParser.add_option('-g', '--strategy',
+          action = 'store', dest = 'strategy', default = 'mintravel',
+          choices=('mintravel','mintravelfull','matfree','zorder' ),
+          help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id',
           action = 'store', dest = 'media', default = '132',
           choices=('100','101','102','106','111','112','113',
@@ -985,12 +986,15 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.tool == 'pen': self.pen=True
     if self.options.tool == 'cut': self.pen=False
 
-    if self.options.mat_free:
+    if self.options.strategy == 'matfree':
       mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
-    else:
+    elif self.options.strategy == 'mintravel':
       self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
+    elif self.options.strategy == 'mintravelfull':
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths, True)
+    # in case of zorder do no reorder
 
     # print >>self.tty, self.paths
     cut = []
@@ -998,7 +1002,7 @@ class SendtoSilhouette(inkex.Effect):
     for px_path in self.paths:
       mm_path = []
       for pt in px_path:
-        if self.options.mat_free:
+        if self.options.strategy == 'matfree':
           mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
         else:
           mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
