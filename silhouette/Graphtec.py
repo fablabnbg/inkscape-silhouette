@@ -17,6 +17,7 @@
 # 2015-06-06  refactored plot_cmds() from plot().
 # 2016-05-16  no reset per default, this helps usbip.
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
+# 2017-04-20  Adding Cameo3 USB IDs
 #
 
 from __future__ import print_function
@@ -122,6 +123,10 @@ DEVICE = [
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x112b, 'name': 'Silhouette Cameo2',
+   # margin_top_mm is just for safety when moving backwards with thin media
+   # margin_left_mm is a physical limit, but is relative to width_mm!
+   'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
+ { 'vendor_id': 0x0b4d, 'product_id': 0x112f, 'name': 'Silhouette Cameo3',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
