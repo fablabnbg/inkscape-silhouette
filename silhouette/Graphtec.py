@@ -410,7 +410,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = s.read(timeout=5000)
     except usb.core.USBError as e:
-      print("usb.core.USBError:", e, file=self.log)
+      print("usb.core.USBError:", e, file=s.log)
       pass
     if resp[-1] != '\x03': raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
     if resp[:-1] == '0': return "ready"
