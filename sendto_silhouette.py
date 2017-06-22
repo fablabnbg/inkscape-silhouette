@@ -126,6 +126,8 @@ from silhouette.convert2dashes import splitPath
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
 
+IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+
 
 def px2mm(px):
   '''
@@ -447,7 +449,6 @@ class SendtoSilhouette(inkex.Effect):
 
 
   def recursivelyTraverseSvg( self, aNodeList,
-                        matCurrent=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
                         parent_visibility='visible' ):
                 """
                 Recursively traverse the svg file to plot out all of the
@@ -470,8 +471,8 @@ class SendtoSilhouette(inkex.Effect):
                         if v == 'hidden' or v == 'collapse':
                                 pass
 
-                        # first apply the current matrix transform to this node's tranform
-                        matNew = composeTransform( matCurrent, parseTransform( node.get( "transform" ) ) )
+                        # calculate this object's transform
+                        transform = composeTransform(self.docTransform, composeParents(node, IDENTITY_TRANSFORM))
 
                         if node.tag == inkex.addNS( 'g', 'svg' ) or node.tag == 'g':
 
@@ -485,7 +486,7 @@ class SendtoSilhouette(inkex.Effect):
                                         if not self.allLayers:
                                                 # inkex.errormsg('Plotting layer named: ' + node.get(inkex.addNS('label', 'inkscape')))
                                                 self.DoWePlotLayer( node.get( inkex.addNS( 'label', 'inkscape' ) ) )
-                                self.recursivelyTraverseSvg( node, matNew, parent_visibility=v )
+                                self.recursivelyTraverseSvg( node, parent_visibility=v )
 
                         elif node.tag == inkex.addNS( 'use', 'svg' ) or node.tag == 'use':
 
@@ -512,11 +513,9 @@ class SendtoSilhouette(inkex.Effect):
                                                 y = float( node.get( 'y', '0' ) )
                                                 # Note: the transform has already been applied
                                                 if ( x != 0 ) or (y != 0 ):
-                                                        matNew2 = composeTransform( matNew, parseTransform( 'translate(%f,%f)' % (x,y) ) )
-                                                else:
-                                                        matNew2 = matNew
+                                                        transform = composeTransform( transform, parseTransform( 'translate(%f,%f)' % (x,y) ) )
                                                 v = node.get( 'visibility', v )
-                                                self.recursivelyTraverseSvg( refnode, matNew2, parent_visibility=v )
+                                                self.recursivelyTraverseSvg( refnode, parent_visibility=v )
                                         else:
                                                 pass
                                 else:
@@ -539,7 +538,7 @@ class SendtoSilhouette(inkex.Effect):
                                 if self.resumeMode and ( self.pathcount < self.svgLastPath ):
                                         pass
                                 else:
-                                        self.plotPath( node, matNew )
+                                        self.plotPath( node, transform )
                                         if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
@@ -587,7 +586,7 @@ class SendtoSilhouette(inkex.Effect):
                                         a.append( [' l ', [-w, 0]] )
                                         a.append( [' Z', []] )
                                         newpath.set( 'd', simplepath.formatPath( a ) )
-                                        self.plotPath( newpath, matNew )
+                                        self.plotPath( newpath, transform )
 
                         elif node.tag == inkex.addNS( 'line', 'svg' ) or node.tag == 'line':
 
@@ -627,7 +626,7 @@ class SendtoSilhouette(inkex.Effect):
                                         a.append( ['M ', [x1, y1]] )
                                         a.append( [' L ', [x2, y2]] )
                                         newpath.set( 'd', simplepath.formatPath( a ) )
-                                        self.plotPath( newpath, matNew )
+                                        self.plotPath( newpath, transform )
                                         if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
@@ -678,7 +677,7 @@ class SendtoSilhouette(inkex.Effect):
                                         t = node.get( 'transform' )
                                         if t:
                                                 newpath.set( 'transform', t )
-                                        self.plotPath( newpath, matNew )
+                                        self.plotPath( newpath, transform )
                                         if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
@@ -730,7 +729,7 @@ class SendtoSilhouette(inkex.Effect):
                                         t = node.get( 'transform' )
                                         if t:
                                                 newpath.set( 'transform', t )
-                                        self.plotPath( newpath, matNew )
+                                        self.plotPath( newpath, transform )
                                         if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
@@ -794,7 +793,7 @@ class SendtoSilhouette(inkex.Effect):
                                                 t = node.get( 'transform' )
                                                 if t:
                                                         newpath.set( 'transform', t )
-                                                self.plotPath( newpath, matNew )
+                                                self.plotPath( newpath, transform )
                                                 if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
                                                         self.svgLastPath += 1
                                                         self.svgLastPathNC = self.nodeCount
@@ -978,10 +977,10 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.ids:
       # Traverse the selected objects
       for id in self.options.ids:
-        self.recursivelyTraverseSvg( [self.selected[id]], self.docTransform )
+        self.recursivelyTraverseSvg( [self.selected[id]] )
     else:
       # Traverse the entire document
-      self.recursivelyTraverseSvg( self.document.getroot(), self.docTransform )
+      self.recursivelyTraverseSvg( self.document.getroot() )
 
     self.pen=None
     if self.options.tool == 'pen': self.pen=True
