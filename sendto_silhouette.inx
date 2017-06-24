@@ -17,8 +17,8 @@
       <param name="pen_help" type="description">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.
 Pressure values of 19 or more make the machine misbehave. Beware.
       </param>
+      <!-- CAUTION: keep media list in sync with silhouette/Graphtec.py -->
       <param name="media" type="enum" _gui-text="Media:">
-        <!-- CAUTION: keep in sync with silhouette/Graphtec.py -->
         <item value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</item>
         <item value="100">[P=27,S=10] SCard without Craft Paper Backing</item>
         <item value="101">[P=27,S=10] Card with Craft Paper Backing</item>
