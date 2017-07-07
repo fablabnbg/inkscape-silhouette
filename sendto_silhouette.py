@@ -449,7 +449,8 @@ class SendtoSilhouette(inkex.Effect):
 
 
   def recursivelyTraverseSvg( self, aNodeList,
-                        parent_visibility='visible' ):
+                        parent_visibility='visible',
+                        extra_transform=IDENTITY_TRANSFORM ):
                 """
                 Recursively traverse the svg file to plot out all of the
                 paths.  The function keeps track of the composite transformation
@@ -472,7 +473,9 @@ class SendtoSilhouette(inkex.Effect):
                                 pass
 
                         # calculate this object's transform
-                        transform = composeTransform(self.docTransform, composeParents(node, IDENTITY_TRANSFORM))
+                        transform = composeParents(node, IDENTITY_TRANSFORM)
+                        transform = composeTransform(self.docTransform, transform)
+                        transform = composeTransform(extra_transform, transform)
 
                         if node.tag == inkex.addNS( 'g', 'svg' ) or node.tag == 'g':
 
@@ -515,7 +518,7 @@ class SendtoSilhouette(inkex.Effect):
                                                 if ( x != 0 ) or (y != 0 ):
                                                         transform = composeTransform( transform, parseTransform( 'translate(%f,%f)' % (x,y) ) )
                                                 v = node.get( 'visibility', v )
-                                                self.recursivelyTraverseSvg( refnode, parent_visibility=v )
+                                                self.recursivelyTraverseSvg( refnode, parent_visibility=v, extra_transform=transform )
                                         else:
                                                 pass
                                 else:
