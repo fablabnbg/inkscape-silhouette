@@ -163,7 +163,12 @@ class SilhouetteMulti(inkex.Effect):
             print >> sys.stderr, "\n".join(commands)
         else:
             for command in commands:
-                os.system(command)
+                status = os.system(command)
+
+                if status != 0:
+                    print >> sys.stderr, "command returned exit status %s: %s" % (status, command)
+                    break
+
                 time.sleep(self.pause)
 
         sys.stdout = old_stdout
