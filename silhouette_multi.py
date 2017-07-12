@@ -364,9 +364,42 @@ class SilhouetteMultiFrame(wx.Frame):
         if self.selected:
             self.actions.Select(self.selected, False)
 
-        self.colors = preset['colors']
-        self.color_enabled = preset['color_enabled']
-        self.color_settings = preset['color_settings']
+        old_colors = self.colors
+        self.colors = []
+        extra_colors = []
+
+        for color in preset['colors']:
+            if color in old_colors:
+                old_colors.remove(color)
+                self.colors.append(color)
+                self.color_enabled[color] = preset['color_enabled'].get(color, True)
+                self.color_settings[color] = preset['color_settings'].get(color, {})
+            else:
+                extra_colors.append(color)
+
+        reassigned = 0
+        # If there are any leftover colors in this SVG that weren't in the
+        # preset, we have to add them back into the list.  Let's try to
+        # use the settings from one of the "unclaimed" colors in the preset.
+
+        for color in old_colors:
+            if extra_colors:
+                reassigned += 1
+                assigned_color = extra_colors.pop(0)
+                self.colors.append(color)
+                self.color_enabled[color] = preset['color_enabled'].get(assigned_color, True)
+                self.color_settings[color] = preset['color_settings'].get(assigned_color, {})
+
+        message = []
+
+        if reassigned:
+            message.append("%d colors were reassigned." % reassigned)
+
+        if extra_colors:
+            message.append("%d colors from the preset were not used." % len(extra_colors))
+
+        if message:
+            info_dialog(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
 
         self.refresh_actions()
 
@@ -514,7 +547,7 @@ class SilhouetteMultiFrame(wx.Frame):
     def __set_properties(self):
         # begin wxGlade: MyFrame.__set_properties
         self.SetTitle("Silhouette Multi-Action")
-        self.notebook.SetMinSize((800, 500))
+        self.notebook.SetMinSize((800, 800))
         # end wxGlade
 
     def __do_layout(self):
