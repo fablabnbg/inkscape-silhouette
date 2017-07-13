@@ -254,6 +254,7 @@ class SilhouetteMultiFrame(wx.Frame):
     def __init__(self, *args, **kwargs):
         # begin wxGlade: MyFrame.__init__
         self.colors = kwargs.pop('colors', [])
+        self.options = kwargs.pop('options')
         self.run_callback = kwargs.pop('run_callback')
         wx.Frame.__init__(self, None, wx.ID_ANY, 
                           "Silhouette Multi-Action"
@@ -287,7 +288,7 @@ class SilhouetteMultiFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.delete_preset, self.delete_preset_button)
         self.Bind(wx.EVT_BUTTON, self.close, self.cancel_button)
 
-        self._load_preset('__LAST__')
+        self._load_preset('__LAST__', silent=True)
 
         self.__set_properties()
         self.__do_layout()
@@ -355,8 +356,10 @@ class SilhouetteMultiFrame(wx.Frame):
         preset_names = [preset for preset in preset_names if not preset.startswith("__")]
         self.preset_chooser.SetItems(preset_names)
 
-    def _load_preset(self, preset_name):
+    def _load_preset(self, preset_name, silent=False):
         preset = load_preset(preset_name)
+
+        #print >> sys.stderr, preset
 
         if not preset:
             return
@@ -383,14 +386,18 @@ class SilhouetteMultiFrame(wx.Frame):
         # use the settings from one of the "unclaimed" colors in the preset.
 
         for color in old_colors:
+            self.colors.append(color)
             if extra_colors:
                 reassigned += 1
                 assigned_color = extra_colors.pop(0)
-                self.colors.append(color)
                 self.color_enabled[color] = preset['color_enabled'].get(assigned_color, True)
                 self.color_settings[color] = preset['color_settings'].get(assigned_color, {})
 
         message = []
+
+        #print >> sys.stderr, reassigned, extra_colors
+        #print >> sys.stderr, self.colors
+        #print >> sys.stderr, self.color_settings
 
         if reassigned:
             message.append("%d colors were reassigned." % reassigned)
@@ -398,7 +405,7 @@ class SilhouetteMultiFrame(wx.Frame):
         if extra_colors:
             message.append("%d colors from the preset were not used." % len(extra_colors))
 
-        if message:
+        if message and not silent:
             info_dialog(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
 
         self.refresh_actions()
@@ -424,10 +431,11 @@ class SilhouetteMultiFrame(wx.Frame):
                 actions.append((color, self.color_settings.get(color) or self.notebook.get_defaults()))
 
         if actions:
-            if not confirm_dialog(self, "About to perform %d actions, continue?" % len(actions)):
-                return
+            if not self.options.dry_run:
+                if not confirm_dialog(self, "About to perform %d actions, continue?" % len(actions)):
+                    return
         else:
-            info_dialog("No colors were enabled, so no actions can be performed.")
+            info_dialog(self, "No colors were enabled, so no actions can be performed.")
             return
 
         self._save_preset('__LAST__')
@@ -589,6 +597,11 @@ class SilhouetteMultiFrame(wx.Frame):
         # end wxGlade
 
 class SilhouetteMulti(inkex.Effect):
+    def __init__(self, *args, **kwargs):
+        inkex.Effect.__init__(self, *args, **kwargs)
+
+        self.OptionParser.add_option("-d", "--dry_run", type='inkbool', default=False)
+
     def get_style(self, element):
         if element.get('style') is not None:
             return simplestyle.parseStyle(element.get('style'))
@@ -624,7 +637,7 @@ class SilhouetteMulti(inkex.Effect):
                 self.selected_objects.add(element)
 
             for child in element:
-                traverse_element(child, visibility)
+                traverse_element(child, selected, visibility)
 
         traverse_element(self.document.getroot())
 
@@ -640,7 +653,7 @@ class SilhouetteMulti(inkex.Effect):
     def effect(self):
         app = wx.App()
         self.split_objects_by_color()
-        self.frame = SilhouetteMultiFrame(colors=self.objects_by_color.keys(), run_callback=self.run)
+        self.frame = SilhouetteMultiFrame(colors=self.objects_by_color.keys(), run_callback=self.run, options=self.options)
         self.frame.Show()
         app.MainLoop()
 
@@ -669,14 +682,14 @@ class SilhouetteMulti(inkex.Effect):
             command += " " + svg_file.name
 
             #print >> sys.stderr, command
+            if self.options.dry_run:
+                print >> sys.stderr, command
+            else:
+                status = os.system(command)
 
-            status = os.system(command)
-
-            if status != 0:
-                print >> sys.stderr, "command returned exit status %s: %s" % (status, command)
-                break
-
-
+                if status != 0:
+                    print >> sys.stderr, "command returned exit status %s: %s" % (status, command)
+                    break
 
         self.frame.Close()
 
