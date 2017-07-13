@@ -3,7 +3,10 @@
 
 import os
 import sys
+import time
 import cPickle
+import subprocess
+from threading import Thread
 from tempfile import NamedTemporaryFile
 from collections import defaultdict, OrderedDict
 import xmltodict
@@ -664,10 +667,9 @@ class SilhouetteMulti(inkex.Effect):
         app.MainLoop()
 
     def save_copy(self):
-        f = NamedTemporaryFile(suffix='.svg', prefix='silhouette-multiple-actions')
-        self.document.write(f)
-        f.flush()
-        return f
+        self.svg_file = NamedTemporaryFile(suffix='.svg', prefix='silhouette-multiple-actions')
+        self.document.write(self.svg_file)
+        self.svg_file.flush()
 
     def format_args(self, args):
         if isinstance(args, dict):
@@ -678,30 +680,74 @@ class SilhouetteMulti(inkex.Effect):
     def id_args(self, nodes):
         return self.format_args(("id", node.get("id")) for node in nodes)
 
-    def run(self, actions):
-        self.frame.Close()
-        restore_stderr()
-
-        svg_file = self.save_copy()
+    def format_commands(self, actions):
+        commands = []
 
         for color, settings in actions:
             command = "python sendto_silhouette.py"
             command += " " + self.format_args(settings)
             command += " " + self.id_args(self.objects_by_color[color])
-            command += " " + svg_file.name
+            command += " " + self.svg_file.name
 
-            #print >> sys.stderr, command
-            if self.options.dry_run:
+            commands.append(command)
+
+        return commands
+
+    def run(self, actions):
+        self.frame.Close()
+        restore_stderr()
+
+        self.save_copy()
+
+        commands = self.format_commands(actions)
+
+        if self.options.dry_run:
+            print >> sys.stderr, "\n\n".join(commands)
+        else:
+            self.run_commands_with_dialog(commands)
+
+    def run_commands_with_dialog(self, commands):
+        for i, command in enumerate(commands):
+            if not self.run_command_with_dialog(command, step=i + 1, total=len(commands)):
+                info_dialog(None, "Action failed.")
+                print >> sys.stderr, "The command that failed:"
                 print >> sys.stderr, command
-            else:
-                status = os.system(command)
 
-                if status != 0:
-                    print >> sys.stderr, "command returned exit status %s: %s" % (status, command)
-                    print >> sys.stderr, os.getcwd()
-                    break
+                sys.exit(1)
 
+    def run_command_with_dialog(self, command, step, total):
+        process = subprocess.Popen(command, shell=True)
 
+        dialog = wx.ProgressDialog(style=wx.PD_APP_MODAL|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME,
+                                   message="Performing action %d of %d..." % (step, total),
+                                   title="Silhouette Multiple Actions")
+
+        last_tick = time.time()
+
+        while process.returncode is None:
+            if time.time() - last_tick > 0.5:
+                dialog.Pulse()
+                last_tick = time.time()
+
+            process.poll()
+            wx.Yield()
+            time.sleep(0.1)
+
+            if dialog.WasCancelled():
+                def cancel():
+                    process.terminate()
+                    process.wait()
+
+                Thread(target=cancel).start()
+
+                dialog.Destroy()
+                wx.Yield()
+                info_dialog(None, "Action aborted.  It may take awhile for the machine to cancel its operation.")
+                sys.exit(1)
+
+        dialog.Destroy()
+        wx.Yield()
+        return process.returncode == 0
 
 def save_stderr():
     # GTK likes to spam stderr, which inkscape will show in a dialog.
