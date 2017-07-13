@@ -390,11 +390,14 @@ class SilhouetteMultiFrame(wx.Frame):
 
         for color in old_colors:
             self.colors.append(color)
+
             if extra_colors:
                 reassigned += 1
                 assigned_color = extra_colors.pop(0)
                 self.color_enabled[color] = preset['color_enabled'].get(assigned_color, True)
                 self.color_settings[color] = preset['color_settings'].get(assigned_color, {})
+            else:
+                self.color_enabled[color] = False
 
         message = []
 
