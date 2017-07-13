@@ -619,7 +619,7 @@ class SilhouetteMulti(inkex.Effect):
             return None
 
     def load_selected_objects(self):
-        self.selected_objects = set()
+        self.selected_objects = []
 
         def traverse_element(element, selected=False, parent_visibility="visible"):
             if self.get_style(element).get('display') == 'none':
@@ -634,12 +634,18 @@ class SilhouetteMulti(inkex.Effect):
                 selected = True
 
             if selected and visibility not in ('hidden', 'collapse'):
-                self.selected_objects.add(element)
+                self.selected_objects.append(element)
 
             for child in element:
                 traverse_element(child, selected, visibility)
 
-        traverse_element(self.document.getroot())
+        # if they haven't selected specific objects, then process all objects
+        if self.selected:
+            select_all = False
+        else:
+            select_all = True
+
+        traverse_element(self.document.getroot(), selected=select_all)
 
     def split_objects_by_color(self):
         self.objects_by_color = defaultdict(list)
@@ -673,12 +679,15 @@ class SilhouetteMulti(inkex.Effect):
         return self.format_args(("id", node.get("id")) for node in nodes)
 
     def run(self, actions):
+        self.frame.Close()
+        restore_stderr()
+
         svg_file = self.save_copy()
 
         for color, settings in actions:
-            command = "python sendto_silhouette.py "
-            command += self.format_args(settings)
-            command += self.id_args(self.objects_by_color[color])
+            command = "python sendto_silhouette.py"
+            command += " " + self.format_args(settings)
+            command += " " + self.id_args(self.objects_by_color[color])
             command += " " + svg_file.name
 
             #print >> sys.stderr, command
@@ -689,9 +698,9 @@ class SilhouetteMulti(inkex.Effect):
 
                 if status != 0:
                     print >> sys.stderr, "command returned exit status %s: %s" % (status, command)
+                    print >> sys.stderr, os.getcwd()
                     break
 
-        self.frame.Close()
 
 
 def save_stderr():
@@ -704,9 +713,12 @@ def save_stderr():
 
 
 def restore_stderr():
-    os.dup2(sys.stderr_dup, 2)
-    sys.stderr_backup.write(sys.stderr.getvalue())
-    sys.sys.stderr = stderr_backup
+    if hasattr(sys, "stderr_backup"):
+        os.dup2(sys.stderr_dup, 2)
+        sys.stderr_backup.write(sys.stderr.getvalue())
+        sys.stderr = sys.stderr_backup
+
+        del sys.stderr_backup
 
 
 # end of class MyFrame
