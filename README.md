@@ -29,15 +29,11 @@ Other Debian based Linux
 * Copy the the folder silhouette and the two files sendto_silhouette.inx and 
 sendto_silhouette.py to ~/.config/inkscape/extensions/ or (if you have permissions)  /usr/share/inkscape/extensions/
 
-* sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/jnweiger:/fablab/xUbuntu_14.04/ /' >> /etc/apt/sources.list.d/python-usb.list"
-* wget http://download.opensuse.org/repositories/home:jnweiger:fablab/xUbuntu_14.10/Release.key -O - | sudo apt-key add -
-* sudo apt-get update
 * sudo apt-get install python-usb
 * restart inkscape, check the menu entry Extensions -> Export -> Send to Silhouette
 
 
 openSUSE:
-* An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger:fablabnbg/inkscape-silhouette
 
 * ~/.config/inkscape/extensions/ or
 * /usr/share/inkscape/extensions/
