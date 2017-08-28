@@ -738,7 +738,7 @@ class SilhouetteMulti(inkex.Effect):
 
             if dialog.WasCancelled():
                 def cancel():
-                    process.terminate()
+                    process.kill()
                     process.wait()
 
                 Thread(target=cancel).start()
