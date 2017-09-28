@@ -719,7 +719,9 @@ class SilhouetteMulti(inkex.Effect):
                 sys.exit(1)
 
     def run_command_with_dialog(self, command, step, total):
-        process = subprocess.Popen(command, shell=True)
+        # exec ensures that the shell gets replaced so that we can terminate the
+        # actual python script if the user cancels
+        process = subprocess.Popen("exec " + command, shell=True)
 
         dialog = wx.ProgressDialog(style=wx.PD_APP_MODAL|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME,
                                    message="Performing action %d of %d..." % (step, total),
@@ -738,7 +740,7 @@ class SilhouetteMulti(inkex.Effect):
 
             if dialog.WasCancelled():
                 def cancel():
-                    process.kill()
+                    process.terminate()
                     process.wait()
 
                 Thread(target=cancel).start()
