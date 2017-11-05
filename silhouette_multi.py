@@ -616,11 +616,14 @@ class SilhouetteMulti(inkex.Effect):
 
         return style
 
-    def get_stroke_color(self, element):
-        stroke = self.get_style(element).get('stroke')
+    def get_color(self, element):
+        color = self.get_style(element).get('stroke', 'none')
 
-        if stroke is not None and stroke != 'none':
-            return simplestyle.parseColor(stroke)
+        if color == 'none':
+            color = self.get_style(element).get('fill', 'none')
+
+        if color != 'none':
+            return simplestyle.parseColor(color)
         else:
             return None
 
@@ -658,7 +661,7 @@ class SilhouetteMulti(inkex.Effect):
         self.load_selected_objects()
 
         for obj in self.selected_objects:
-            color = self.get_stroke_color(obj)
+            color = self.get_color(obj)
             if color:
                 self.objects_by_color[color].append(obj)
 
@@ -774,12 +777,20 @@ def restore_stderr():
 
 # end of class MyFrame
 if __name__ == "__main__":
-    save_stderr()
 
-    try:
-        e = SilhouetteMulti()
-        e.affect()
-    except:
-        traceback.print_exc()
+    pid = os.fork()
+    if pid == 0:
+        # Forking and closing stdout and stderr allows inkscape to continue on
+        # while the silhouette machine is cutting.  This is useful if you're
+        # cutting something really big and want to work on another document.
+        os.close(1)
+        os.close(2)
 
-    restore_stderr()
+        try:
+            e = SilhouetteMulti()
+            e.affect()
+        except:
+            traceback.print_exc()
+
+
+    sys.exit(0)
