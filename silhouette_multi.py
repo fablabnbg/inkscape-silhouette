@@ -617,6 +617,12 @@ class SilhouetteMulti(inkex.Effect):
         return style
 
     def get_color(self, element):
+        if element.tag == inkex.addNS( 'g', 'svg'):
+            # Sometimes Inkscape sets a stroke style on a group, which seems to
+            # have no visual effect.  If we didn't ignore those, we'd cut those
+            # objects twice.
+            return None
+
         color = self.get_style(element).get('stroke', 'none')
 
         if color == 'none':
