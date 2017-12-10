@@ -80,6 +80,7 @@
 #                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
 # 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
+#                         Added new cutting strategy "Minimized Traveling"
 
 __version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
@@ -122,6 +123,7 @@ except:
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
+import silhouette.StrategyMinTraveling
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
@@ -269,15 +271,19 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
-    self.OptionParser.add_option('--mat-free', '--mat_free',
-          action = 'store', dest = 'mat_free', type = 'inkbool', default = False,
-          help="Optimize movements for cutting without a cutting mat.")
+    self.OptionParser.add_option('-g', '--strategy',
+          action = 'store', dest = 'strategy', default = 'mintravel',
+          choices=('mintravel','mintravelfull','matfree','zorder' ),
+          help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id',
           action = 'store', dest = 'media', default = '132',
           choices=('100','101','102','106','111','112','113',
              '120','121','122','123','124','125','126','127','128','129','130',
              '131','132','133','134','135','136','137','138','300'),
           help="113 = pen, 132 = printer paper, 300 = custom")
+    self.OptionParser.add_option('-o', '--overcut',
+          action = 'store', dest = 'overcut', type = 'float', default = 0.5,
+          help="overcut on circular paths. [mm]")
     self.OptionParser.add_option('-M', '--multipass',
           action = 'store', dest = 'multipass', type = 'int', default = '1',
           help="[1..8], cut/draw each path object multiple times.")
@@ -311,9 +317,16 @@ class SendtoSilhouette(inkex.Effect):
           action = 'store', dest = 'regsearch', type = 'inkbool', default = False,
           help="Search for the registration marks.")
     self.OptionParser.add_option('-X', '--reg-x', '--regwidth', action = 'store',
-          type = 'float', dest = 'regwidth', default = 18.0, help="X mark distance [mm]")
+          type = 'float', dest = 'regwidth', default = 180.0, help="X mark distance [mm]")
     self.OptionParser.add_option('-Y', '--reg-y', '--reglength', action = 'store',
           type = 'float', dest = 'reglength', default = 230.0, help="Y mark distance [mm]")
+    self.OptionParser.add_option('--rego-x',  '--regoriginx',action = 'store',
+          type = 'float', dest = 'regoriginx', default = 15.0, help="X mark origin from left [mm]")
+    self.OptionParser.add_option('--rego-y', '--regoriginy', action = 'store',
+          type = 'float', dest = 'regoriginy', default = 20.0, help="X mark origin from top [mm]")
+    self.OptionParser.add_option('-e', '--endposition', '--end-postition',
+          '--end_position', action = 'store', choices=('start','below'),
+          dest = 'endposition', default = 'below', help="Position of head after cutting: start or below")
 
   def version(self):
     return __version__
@@ -977,10 +990,15 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.tool == 'pen': self.pen=True
     if self.options.tool == 'cut': self.pen=False
 
-    if self.options.mat_free:
+    if self.options.strategy == 'matfree':
       mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
+    elif self.options.strategy == 'mintravel':
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
+    elif self.options.strategy == 'mintravelfull':
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths, True)
+    # in case of zorder do no reorder
 
     # print >>self.tty, self.paths
     cut = []
@@ -988,15 +1006,44 @@ class SendtoSilhouette(inkex.Effect):
     for px_path in self.paths:
       mm_path = []
       for pt in px_path:
-        if self.options.mat_free:
+        if self.options.strategy == 'matfree':
           mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
         else:
           mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
         pointcount += 1
-      for i in range(0,self.options.multipass):
+
+      multipath = []
+      multipath.extend(mm_path)
+      for i in range(1,self.options.multipass):
+        # if reverse continue path without lifting, instead turn with rotating knife
         if (self.options.reversetoggle):
           mm_path = list(reversed(mm_path))
-        cut.append(mm_path)
+          multipath.extend(mm_path[1:])
+        # if closed path (end = start) continue path without lifting
+        elif (mm_path[0] == mm_path[-1]):
+          multipath.extend(mm_path[1:])
+        # else start a new path
+        else: 
+          cut.append(mm_path)
+
+      # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
+      overcut = self.options.overcut
+      if (overcut > 0) and (mm_path[0] == mm_path[-1]):
+        pfrom = mm_path[0]
+        for pnext in mm_path[1:]:
+          dx = pnext[0] - pfrom[0]
+          dy = pnext[1] - pfrom[1]
+          dist = math.sqrt(dx*dx + dy*dy)
+          if (overcut > dist): # Full segment needed
+            overcut -= dist
+            multipath.append(pnext)
+            pfrom = pnext
+          else:                # only partial segement needed, create new endpoint
+            pnext = (pfrom[0]+dx*(overcut/dist), pfrom[1]+dy*(overcut/dist))
+            multipath.append(pnext)
+            break
+
+      cut.append(multipath)
 
     if dev.dev is None:
       docname=None
@@ -1030,8 +1077,10 @@ class SendtoSilhouette(inkex.Effect):
         mediaheight=px2mm(self.docHeight),
         margintop=0, marginleft=0,
         bboxonly=None,         # only return the bbox, do not draw it.
+        endposition='start',
         regmark=self.options.regmark,regsearch=self.options.regsearch,
-        regwidth=self.options.regwidth,reglength=self.options.reglength)
+        regwidth=self.options.regwidth,reglength=self.options.reglength,
+        regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
 
       if len(bbox['bbox'].keys()):
         print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
@@ -1045,8 +1094,10 @@ class SendtoSilhouette(inkex.Effect):
       mediaheight=px2mm(self.docHeight),
       offset=(self.options.x_off,self.options.y_off),
       bboxonly=self.options.bboxonly,
+      endposition=self.options.endposition,
       regmark=self.options.regmark,regsearch=self.options.regsearch,
-      regwidth=self.options.regwidth,reglength=self.options.reglength)
+      regwidth=self.options.regwidth,reglength=self.options.reglength,
+      regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
     if len(bbox['bbox'].keys()) == 0:
       print >>self.tty, "empty page?"
       print >>sys.stderr, "empty page?"
@@ -1069,8 +1120,9 @@ class SendtoSilhouette(inkex.Effect):
         percent_per_sec = 1000.     # unreliable data
 
       wait_sec = 1
-      while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
-        wait_sec *= 2
+      if percent_per_sec > 1: # prevent overflow if device_buffer_perc is almost 100
+        while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
+          wait_sec *= 2
       dots = '.'
       while self.options.wait_done and state == 'moving':
         time.sleep(wait_sec)

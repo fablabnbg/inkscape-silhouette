@@ -29,23 +29,18 @@ Other Debian based Linux
 * Copy the the folder silhouette and the two files sendto_silhouette.inx and 
 sendto_silhouette.py to ~/.config/inkscape/extensions/ or (if you have permissions)  /usr/share/inkscape/extensions/
 
-* sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/jnweiger:/fablab/xUbuntu_14.04/ /' >> /etc/apt/sources.list.d/python-usb.list"
-* wget http://download.opensuse.org/repositories/home:jnweiger:fablab/xUbuntu_14.10/Release.key -O - | sudo apt-key add -
-* sudo apt-get update
 * sudo apt-get install python-usb
 * restart inkscape, check the menu entry Extensions -> Export -> Send to Silhouette
 
 
 openSUSE:
-* An automatic build hook updates the rpm package at https://build.opensuse.org/package/show/home:jnweiger:fablabnbg/inkscape-silhouette
 
 * ~/.config/inkscape/extensions/ or
 * /usr/share/inkscape/extensions/
 * and run '''sudo zypper in python-usb'''
 
 Arch Linux:
-* sudo pip2 install pyusb libxml
-* pacman -S inkscape
+* sudo pacman -S inkscape python2 python2-lxml python2-pyusb
 * git clone https://github.com/fablabnbg/inkscape-silhouette.git
 * cd inkscape-silhouette
 * sudo python2 setup.py build && sudo python2 setup.py install
@@ -94,6 +89,21 @@ Troubleshooting
 
 If this reports no usb.core.Device to you, please help troubleshoot.
 
+Using of registration marks
+---------------------------
+
+To plot with registration marks do the following:
+
+1. Open the document examples/registration-marks.svg
+2. Insert your cutting paths and graphics on the apropriate layers.
+3. Printout the whole document including registration marks. You probably want to hide the cutting layer. 
+4. Select your cutting paths in the document, but exclude regmarks and graphics.
+5. Set or ensure the correct values (regmark position/width/height) on the regmark tab.
+6. Enable 'Document has registration marks' and 'Search for registration marks'
+7. Start cut.
+
+The plotter will search the registration marks at the given positions. If it founds the marks, they will serve as accurate reference and define the origin. Therefore it is necessary to set the correct offset values of the mark. As a result the cut will go precisely along the graphics.
+At my device there seems to be a little offset between the search optics and the cutting knife. For enhanced precision I have to set an offset of 0,1mm for both x and y on the first tab to compensate.
 
 Features
 --------

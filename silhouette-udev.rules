@@ -1,7 +1,8 @@
 OPTIONS:="lastrule"
 OPTIONS:="last_rule"
 
-ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1121", MODE="666", ENV{silhouette_cameo}="yes", OPTIONS="last_rule"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="112f", MODE="666", ENV{silhouette_cameo3}="yes", OPTIONS="last_rule"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1121", MODE="666", ENV{silhouette_cameo}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1123", MODE="666", ENV{silhouette_portrait}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111d", MODE="666", ENV{silhouette_sd_2}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111c", MODE="666", ENV{silhouette_sd_1}="yes"
