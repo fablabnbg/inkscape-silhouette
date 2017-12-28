@@ -522,7 +522,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -574,13 +574,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("Loaded media is expected right-aligned.", file=s.log)
 
     # robocut/Plotter.cpp:393 says:
-    # // I think this sets the distance from the position of the plotter
-    # // head to the actual cutting point, maybe in 0.1 mms (todo: Measure blade).
-    # // It is 0 for the pen, 18 for cutting.
-    # // C possible stands for curvature. Not that any of the other letters make sense...
-    cutter = 18
-    if pen: cutter = 0
-    s.write("FC%d\x03" % cutter)
+    # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
+    # C possible stands for curvature. Not that any of the other letters make sense...
+    # C possible stands for circle.
+    # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
+    # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
+    if pen:
+      circle = 0
+    else:
+      circle = bladediameter * 20
+    s.write("FC%d\x03" % circle)
 
     if trackenhancing is not None:
       if trackenhancing:

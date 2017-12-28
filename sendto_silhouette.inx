@@ -94,6 +94,7 @@ Pressure values of 19 or more make the machine misbehave. Beware.
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>
+      <param name="bladediameter" type="float" min="0.0" max="2.3" _gui-text="Diameter of the used blade [mm]">0.9</param>
       <param name="blade_help" type="description">
 Always use the least amount of blade possible.
 

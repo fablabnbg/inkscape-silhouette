@@ -81,6 +81,7 @@
 # 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
 #                         Added new cutting strategy "Minimized Traveling"
+#                         Added parameter for blade diameter
 
 __version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
@@ -268,6 +269,9 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only',
           action = 'store', dest = 'bboxonly', type = 'inkbool', default = False,
           help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('-c', '--bladediameter',
+          action = 'store', dest = 'bladediameter', type = 'float', default = 0.9,
+          help="[0..2.3] diameter of the used blade [mm], default = 0.9")
     self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
@@ -1068,6 +1072,7 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
     dev.setup(media=int(self.options.media,10), pen=self.pen,
+      bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 
     if self.options.autocrop:
