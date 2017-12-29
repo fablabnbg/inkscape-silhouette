@@ -94,7 +94,6 @@ Pressure values of 19 or more make the machine misbehave. Beware.
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>
-      <param name="bladediameter" type="float" min="0.0" max="2.3" _gui-text="Diameter of the used blade [mm]">0.9</param>
       <param name="blade_help" type="description">
 Always use the least amount of blade possible.
 
@@ -110,8 +109,9 @@ Always use the least amount of blade possible.
 
 6) Once this is done the blade can be put back in to the machine.
       </param>
+      <param name="bladediameter" type="float" min="0.0" max="2.3" _gui-text="Diameter of the used blade type[mm]">0.9</param>
+      <param name="bladediameter_help" type="description">Correct value for the silhouette blade is 0.9mm</param>
     </page>
-    
     <page name='about' _gui-text='About'>
       <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org] and contributors</param>
       <!-- Keep in sync with sendto_silhouette.py line 78 __version__ = ... -->
