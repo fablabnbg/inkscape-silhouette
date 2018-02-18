@@ -118,6 +118,8 @@ PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 DEVICE = [
  { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
+ { 'vendor_id': 0x0b4d, 'product_id': 0x1132, 'name': 'Silhouette Portrait2',
+   'width_mm':  203, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
@@ -391,6 +393,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise ValueError('read failed: none')
     if isinstance(data, str):
         return data
+    elif isinstance(data, bytearray):
+        return str(data)
     else:
         return data.tostring()
 
