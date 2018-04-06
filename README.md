@@ -61,7 +61,7 @@ Windows (untested): (TESTING by @sctv)
 * Click open the **inkscape-silhouette-master** folder.
 * Select the following three items (with Ctrl-Click): **silhouette**, **sendto_silhouette.inx**, and **sendto_silhouette.py**
 * Extract to My Computer **C:\Program Files\Inkscape\share\extensions**
-* (Extensions may be here if the obove isn't a path **C:\Program Files (x86)\Inkscape\share\extensions**)
+* (Extensions may be here if the above isn't a path **C:\Program Files (x86)\Inkscape\share\extensions**)
 * untested: if you have a Silhouette Studio CD, install the device driver. Then your Silhouette Cameo may show up as a printer device and the extension could now work. If not, installing pywinusb might help.
 * The following tips are for a Windows-7 64-bit machine:
  * Download and install http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/ 
