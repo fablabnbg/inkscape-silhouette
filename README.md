@@ -73,7 +73,7 @@ Windows (untested): (TESTING by @sctv)
    Installs to Windows\system32\drivers\libusb0.sys
  * When you get a number of options, chose the printer option.
  -----
- Alternative libusb instalation
+ Alternative libusb installation
   use Zadig http://zadig.akeo.ie/
   download http://zadig.akeo.ie/downloads/zadig-2.3.exe
   goto menu options¦List all devices
