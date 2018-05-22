@@ -88,7 +88,7 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 
 #### Silhouette inkscape extension itself
 
-* Download and install the free test version of `winzip` from http://www.winzip.com
+* Download and install `7zip` from https://www.7-zip.org/download.html
 * Download https://github.com/jnweiger/inkscape-silhouette/archive/master.zip
 * Navigate to your `Downloads` folder and double-click on `inkscape-silhouette-master.zip`
 * Click open the `inkscape-silhouette-master` folder.
