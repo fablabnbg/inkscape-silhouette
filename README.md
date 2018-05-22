@@ -117,18 +117,30 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 
 ## Using of registration marks
 
+The plotter will search the registration marks at the given positions.
+If it founds the marks, they will serve as accurate reference and define the origin.
+Therefore it is necessary to set the correct offset values of the mark.
+As a result the cut will go precisely along the graphics.
+
+
 To plot with registration marks do the following:
 
-1. Open the document `examples/registration-marks.svg`
+1. Open the document which fit to your setup, e.g. `examples/registration-marks-cameo-silhouette-a4-maxi.svg` for Silhouette Cameo using A4 paper format.
 2. Insert your cutting paths and graphics on the apropriate layers.
 3. Printout the whole document including registration marks. You probably want to hide the cutting layer.
 4. Select your cutting paths in the document, but exclude regmarks and graphics.
-5. Set or ensure the correct values (regmark position/width/height) on the regmark tab.
-6. Enable 'Document has registration marks' and 'Search for registration marks'
+5. On the **Regmarks** tab:
+  * Check **Document has registration marks**
+  * Check **Search for registration marks**
+6. Set all following parameters according to the registration file used:
+  * **X mark distance** (e.g. *190*)
+  * **Y mark distance** (e.g. *277*)
+  * **Position of regmark from document left** (e.g. *10*)
+  * **Position of regmark from document right** (e.g. *10*)
 7. Start cut.
 
-The plotter will search the registration marks at the given positions. If it founds the marks, they will serve as accurate reference and define the origin. Therefore it is necessary to set the correct offset values of the mark. As a result the cut will go precisely along the graphics.
-At my device there seems to be a little offset between the search optics and the cutting knife. For enhanced precision I have to set an offset of 0,1mm for both x and y on the first tab to compensate.
+On some devices have an offset between the search optics and the cutting knife.
+For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y-Offset** on the **Silhouette** tab to compensate.
 
 ## Features
 
