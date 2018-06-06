@@ -53,7 +53,11 @@ try:
       usb_vi_str = str(usb.version_info)
     except AttributeError:
       usb_vi = 0
+      if sys_platform.startswith('win'):
+        usb_vi = 1
+        pass # windows does not seem to detect the usb.version , gives attribute error. Other tests of pyusb work, pyusb is installed.
       usb_vi_str = 'unknown'
+
 
     if usb_vi < 1:
       print("Your python usb module appears to be "+usb_vi_str+" -- We need version 1.x", file=sys.stderr)
