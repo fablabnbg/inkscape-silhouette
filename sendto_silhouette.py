@@ -125,6 +125,7 @@ from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
 import silhouette.StrategyMinTraveling
+from silhouette.Geometry import dist_sq, XY_a
 
 N_PAGE_WIDTH = 3200
 N_PAGE_HEIGHT = 800
@@ -953,6 +954,9 @@ class SendtoSilhouette(inkex.Effect):
                                         self.docTransform = parseTransform( 'scale(%f,%f)' % (sx, sy) )
 
 
+  def is_closed_path(self, path):
+    return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
+
   def effect(self):
     if self.options.version:
       print __version__
@@ -1020,21 +1024,22 @@ class SendtoSilhouette(inkex.Effect):
 
       multipath = []
       multipath.extend(mm_path)
+
       for i in range(1,self.options.multipass):
         # if reverse continue path without lifting, instead turn with rotating knife
         if (self.options.reversetoggle):
           mm_path = list(reversed(mm_path))
           multipath.extend(mm_path[1:])
         # if closed path (end = start) continue path without lifting
-        elif (mm_path[0] == mm_path[-1]):
+        elif self.is_closed_path(mm_path):
           multipath.extend(mm_path[1:])
         # else start a new path
-        else: 
+        else:
           cut.append(mm_path)
 
       # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
       overcut = self.options.overcut
-      if (overcut > 0) and (mm_path[0] == mm_path[-1]):
+      if (overcut > 0) and self.is_closed_path(mm_path):
         pfrom = mm_path[0]
         for pnext in mm_path[1:]:
           dx = pnext[0] - pfrom[0]
