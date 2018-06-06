@@ -21,7 +21,10 @@
 #
 
 from __future__ import print_function
-import sys, time, re
+
+import re
+import sys
+import time
 
 usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
