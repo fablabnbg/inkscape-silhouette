@@ -23,7 +23,7 @@
 from __future__ import print_function
 import sys, time, re
 
-usb_reset_needed = False	# https://github.com/fablabnbg/inkscape-silhouette/issues/10
+usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -33,19 +33,19 @@ elif sys_platform.startswith('darwin'):
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
   try:
-    import usb.core		# where???
+    import usb.core  # where???
   except Exception as e:
       try:
           import libusb1 as usb
       except Exception as e1:
-	    try:
-	      import usb
-	    except Exception as e2:
-	      print("The python usb module could not be found. Try", file=sys.stderr)
-	      print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
-	      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
-	      print("\n\n\n", file=sys.stderr)
-	      raise e2;
+        try:
+          import usb
+        except Exception as e2:
+          print("The python usb module could not be found. Try", file=sys.stderr)
+          print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
+          print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
+          print("\n\n\n", file=sys.stderr)
+          raise e2;
 
 try:
     try:
@@ -259,7 +259,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             print(msg, file=sys.stderr)
           sys.exit(0)
 
-	if usb_reset_needed:
+        if usb_reset_needed:
           for i in range(5):
             try:
               dev.reset();
@@ -276,7 +276,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pass
 
     self.dev = dev
-    self.need_interface = False		# probably never needed, but harmful on some versions of usb.core
+    self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
@@ -468,7 +468,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("[: '%s'" % (resp[:-1]), file=s.log)	# response '0,0'
+    #  print("[: '%s'" % (resp[:-1]), file=s.log)  # response '0,0'
     #except:
     #  pass
 
@@ -476,7 +476,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("U: '%s'" % (resp[:-1]), file=s.log)	# response '20320,4120' max. print range?
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. print range?
     #except:
     #  pass
 
@@ -484,7 +484,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)	# response '10'
+    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)  # response '10'
     #except:
     #  pass
 
@@ -492,7 +492,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)	# response '18'
+    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)  # response '18'
     #except:
     #  pass
 
@@ -840,7 +840,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #  s.write("\1b\05") #request status
       #  resp = s.read(timeout=1000)
       #  if resp != "    1\x03":
-      #  	break;
+      #    break;
 
       resp = s.read(timeout=40000) ## Allow 20s for reply...
       if resp != "    0\x03":
@@ -887,7 +887,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
-    if not 'llx' in bbox: bbox['llx'] = 0	# survive empty pathlist
+    if not 'llx' in bbox: bbox['llx'] = 0  # survive empty pathlist
     if not 'lly' in bbox: bbox['lly'] = 0
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
