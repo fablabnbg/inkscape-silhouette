@@ -4,7 +4,7 @@ inkscape-silhouette
 An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
 100% pure python, ontop of the libusb backend.
 
-Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
+Here is the wiki with photos and a video: https://github.com/fablabnbg/inkscape-silhouette/wiki
 
 
 Suported Devices
