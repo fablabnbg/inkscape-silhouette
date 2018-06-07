@@ -1,10 +1,27 @@
 inkscape-silhouette
 ===================
 
-An extension to drive a Silhoutte Cameo from within inkscape.
+An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
 100% pure python, ontop of the libusb backend.
 
 Here is the wiki with photos and a video: https://github.com/jnweiger/inkscape-silhouette/wiki
+
+
+Suported Devices
+----------------
+
+This extension should work with the following devices:
+
+* Silhouette Portrait
+* Silhouette Portrait 2
+* Silhouette Cameo
+* Silhouette Cameo 2
+* Silhouette Cameo 3
+* Craft Robo CC200-20
+* Craft Robo CC300-20
+* Silhouette SD 1
+* Silhouette SD 2
+
 
 Installation
 ------------
