@@ -105,7 +105,7 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 >>>
 ```
 
-If this reports no `usb.core.Device` to you, please help troubleshoot.
+If this reports `no usb.core.Device` to you, please help troubleshoot.
 
 ```python
 python
