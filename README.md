@@ -136,7 +136,7 @@ To plot with registration marks do the following:
   * **X mark distance** (e.g. *190*)
   * **Y mark distance** (e.g. *277*)
   * **Position of regmark from document left** (e.g. *10*)
-  * **Position of regmark from document right** (e.g. *10*)
+  * **Position of regmark from document top** (e.g. *10*)
 7. Start cut.
 
 On some devices have an offset between the search optics and the cutting knife.
