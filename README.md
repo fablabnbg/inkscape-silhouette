@@ -10,10 +10,11 @@ Here is the wiki with photos and a video: https://github.com/fablabnbg/inkscape-
 This extension should work with the following devices:
 
 * Silhouette Portrait
-* Silhouette Portrait 2
+* Silhouette Portrait 2 (working confirmed)
 * Silhouette Cameo
 * Silhouette Cameo 2
 * Silhouette Cameo 3
+* Silhouette Curio (partial success confirmed in #36)
 * Craft Robo CC200-20
 * Craft Robo CC300-20
 * Silhouette SD 1
