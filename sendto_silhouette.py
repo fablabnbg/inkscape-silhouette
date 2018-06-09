@@ -136,9 +136,9 @@ IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 def px2mm(px):
   '''
   Convert inkscape pixels to mm.
-  The default inkscape unit, called 'px' is 90dpi
+  The default inkscape unit, called 'px' is 96dpi
   '''
-  return px*25.4/90
+  return px*25.4/96
 
 # Lifted with impunity from eggbot.py
 # Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
@@ -904,11 +904,11 @@ class SendtoSilhouette(inkex.Effect):
                         elif ( u == '' ) or ( u == 'px' ):
                                 return v
                         elif u == 'mm':
-                                return v*90./25.4       # inverse of px2mm
+                                return v*96./25.4       # inverse of px2mm
                         elif u == 'in':
-                                return v*90.
+                                return v*96.
                         elif u == 'cm':
-                                return v*90./2.54       # inverse of 10*px2mm
+                                return v*96./2.54       # inverse of 10*px2mm
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
