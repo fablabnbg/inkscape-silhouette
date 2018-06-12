@@ -596,11 +596,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       circle = bladediameter * 20
     s.write("FC%d\x03" % circle)
 
+    # if enabled, rollers three times forward and back.
+    # needs a pressure of 19 or more, else nothing will happen 
     if trackenhancing is not None:
       if trackenhancing:
-        s.write("FY1\x03")
-      else:
         s.write("FY0\x03")
+      else:
+        s.write("FY1\x03")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
@@ -873,7 +875,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
-    p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width) #FIXME Is coordinate swap necessary here?
+    # needed at least for the trackenhancing feature, defines the usable length,
+    #p = "FU%d\x03" % (height)
+    #p = "FU%d,%d\x03" % (height,width) # optional
+    #s.write(p)
+
+    p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
     s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
