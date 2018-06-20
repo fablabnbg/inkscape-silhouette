@@ -97,6 +97,16 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 * Extract to `My Computer`: `C:\Program Files\Inkscape\share\extensions` or `C:\Program Files (x86)\Inkscape\share\extensions` if first does not exists.
 * Restart inkscape
 
+## Usage
+
+1. Open your document with inkscape.
+2. Ensure the unit of document width and height is mm or inch, but not px. (File - Document settings - Page - Custom - Unit mm) Otherwise you may observe differences in dimensions at inkscape 0.91/0.92, because default dpi has changed from 90 to 96.
+3. Convert all objects and texts to paths (Path - Convert object to path)
+4. Select the parts you want to plot.
+5. Open Extension (Extensions - Export - Send to Silhouette)
+6. Set your desired plot parameters.
+7. Press Apply button to start cut.
+
 ## Troubleshooting
 
 ```python
