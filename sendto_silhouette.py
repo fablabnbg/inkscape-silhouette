@@ -1000,8 +1000,13 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.tool == 'pen': self.pen=True
     if self.options.tool == 'cut': self.pen=False
 
+    # scale all points to unit mm
+    for path in self.paths:
+      for i,pt in enumerate(path):
+        path[i] = (px2mm(pt[0]), px2mm(pt[1]))
+
     if self.options.strategy == 'matfree':
-      mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
+      mf = MatFree('default', scale=1.0, pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
     elif self.options.strategy == 'mintravel':
@@ -1013,14 +1018,8 @@ class SendtoSilhouette(inkex.Effect):
     # print >>self.tty, self.paths
     cut = []
     pointcount = 0
-    for px_path in self.paths:
-      mm_path = []
-      for pt in px_path:
-        if self.options.strategy == 'matfree':
-          mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
-        else:
-          mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
-        pointcount += 1
+    for mm_path in self.paths:
+      pointcount += len(mm_path)
 
       multipath = []
       multipath.extend(mm_path)
