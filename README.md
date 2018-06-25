@@ -104,7 +104,12 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 3. Convert all objects and texts to paths (Path - Convert object to path)
 4. Select the parts you want to plot.
 5. Open Extension (Extensions - Export - Send to Silhouette)
-6. Set your desired plot parameters.
+6. Set your desired plot parameters:
+  * **X-Offset, Y-Offset**  An addtitional offset of your drawing from the top left corner. Default is 0/0
+  * **Tool Cut/Pen**        Cut mode drews small circles for orientation of the blade, Pen mode draws exactly as given.
+  * **Media**               Select a predfined media or set to custom settings.
+  * **Speed**               Custom speed of the movements
+  * **Pressure**            Custom Pressure on the blade. One unit is said to be 7g force.
 7. Press Apply button to start cut.
 
 ## Troubleshooting
