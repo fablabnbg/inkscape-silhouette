@@ -156,7 +156,7 @@ def _bbox_extend(bb, x, y):
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
+  def __init__(self, log=sys.stderr, no_device=False, progress_cb=None, prnfile=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
@@ -176,7 +176,10 @@ class SilhouetteCameo:
     dev = None
     self.margins_printed = None
 
-    if no_device is True:
+    if prnfile is not None:
+        dev = PrnFile(prnfile)
+        self.hardware = { 'name':'PrnFile' }
+    elif no_device is True:
       self.hardware = { 'name': 'Crashtest Dummy Device' }
     else:
       for hardware in DEVICE:
@@ -940,3 +943,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       else:
         print(line,end='')
     return data1234
+
+class PrnFile(file):
+  def __init__(self, prnfile):
+       self.handle = open(prnfile, 'w')
+       self.resp = None
+  def write(self, endpoint, chunk, *args, **kwargs):
+      if chunk == "\x1b\x05":
+          self.resp = "0\x03"
+      elif chunk == "FG\x03":
+          self.resp = "None \x03"
+      else:
+          self.handle.write(chunk)
+      return len(chunk)
+  def read(self, endpoint, size, *args, **kwargs):
+      rtn = self.resp
+      self.resp = None
+      return rtn
+      

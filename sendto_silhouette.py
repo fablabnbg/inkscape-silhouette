@@ -334,6 +334,9 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-e', '--endposition', '--end-postition',
           '--end_position', action = 'store', choices=('start','below'),
           dest = 'endposition', default = 'below', help="Position of head after cutting: start or below")
+    self.OptionParser.add_option('--prnfile',
+          action = 'store', dest = 'prnfile', type = 'string', default = None,
+          help="Output cut data to file for remote cutting.")
 
   def version(self):
     return __version__
@@ -976,7 +979,7 @@ class SendtoSilhouette(inkex.Effect):
       self.tty.flush()
 
     try:
-      dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, no_device=self.options.dummy)
+      dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, no_device=self.options.dummy, prnfile=self.options.prnfile)
     except Exception as e:
       print >>self.tty, e
       print >>sys.stderr, e
