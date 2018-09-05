@@ -92,7 +92,7 @@
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>
-      <param name="blade_help" type="description">
+      <param name="blade_help" type="description" xml:space="preserve">
 Always use the least amount of blade possible.
 
 1) Take a sheet of the media you are trying to cut and fold it in half.
