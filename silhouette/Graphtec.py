@@ -471,7 +471,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
 
     # Additional commands seen in init by Silhouette Studio
-    #s.write("[\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("[\x03") # Get Upper Left Coords: 2 six digit numbers.
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -479,7 +479,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("U\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("U\x03") # Get Lower Right Coordinates: 2 six digit numbers
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -487,7 +487,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("FQ0\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("FQ0\x03") # Unknown: 1 five digit number. Maybe last speed set?
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -495,7 +495,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("FQ2\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("FQ2\x03") # Unknown: 1 five digit number. Maybe last blade offset?
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -503,7 +503,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("TB71\x03") # Unknown: 2 five digit numbers
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -511,7 +511,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("FA\x03") # asks for something, not sure, current position?
+    #s.write("FA\x03") # Unknown: 2 five digit numbers
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -524,7 +524,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.dev is None: return None
 
-    s.write("FG\x03")
+    s.write("FG\x03")   # Get Version: 17 Chars
     try:
       resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:

@@ -1,0 +1,25 @@
+```
+"FW%d\x03" % media            # select media id [100..300]
+"!%d\x03" % speed             # without ',n' in CAMEO 1
+"FX%d\x03" % pressure         # without ',n' in CAMEO 1
+                              # pressure 19 or higher triggers track enhancing in CAMEO 1
+"FY0\x03"                     # ?enable track enhancing in CAMEO 1
+"FY1\x03"                     # ?disable track enhancing in CAMEO 1
+"FN0\x03TB50,1\x03"           # landscape mode in CAMEO 1
+"FN0\x03TB50,0\x03"           # portrait mode in CAMEO 1
+"FE0,0\x03"                   # Don't lift plotter head between paths.
+"D%d,%d" % (y,x)              # draw, move with blade down.
+"TB50,0\x03"                  # Unknown. Seen with registration marks 
+"TB99\x03"                    # Unknown
+"TB52,2\x03"                  # set type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+"TB51,400\x03"                # length of regmarks
+"TB53,10\x03"                 # width of regmarks
+"TB55,1\x03"                  # Unknown
+"TB123,%i,%i,%i,%i\x03" % ... # automatic regmark test, height, width, top, left
+"TB23,%i,%i\x03" %  ...       # manual regmark, height, width
+"FO%d\x03" % (height-top))    # ? a feed command. Sometimes it is 5588
+```
+
+There is some more guesswork in the comments near https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L868
+
+https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L868
