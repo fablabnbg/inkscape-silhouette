@@ -536,7 +536,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -614,6 +614,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         s.write("FY0\x03")
       else:
         s.write("FY1\x03")
+
+    if 'product_id' in s.hardware and s.hardware['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if cuttingmat:
+        s.write("TG1\x03")
+      else:
+        s.write("TG0\x03")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall

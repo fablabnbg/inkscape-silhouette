@@ -275,6 +275,9 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-c', '--bladediameter',
           action = 'store', dest = 'bladediameter', type = 'float', default = 0.9,
           help="[0..2.3] diameter of the used blade [mm], default = 0.9")
+    self.OptionParser.add_option('-C', '--cuttingmat',
+          action = 'store', dest = 'cuttingmat', type = 'inkbool', default = True,
+          help='Use cutting mat')
     self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
@@ -1084,6 +1087,7 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.speed == 0:        self.options.speed = None
     dev.setup(media=int(self.options.media,10), pen=self.pen,
       toolholder=self.options.toolholder,
+      cuttingmat=self.options.cuttingmat,
       bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 
