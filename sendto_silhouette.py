@@ -485,11 +485,18 @@ class SendtoSilhouette(inkex.Effect):
 
                 for node in aNodeList:
                         # Ignore invisible nodes
-                        v = node.get( 'visibility', parent_visibility )
+                        v = None
+                        style = node.get('style')
+                        if style is not None:
+                          kvs = {k.strip():v.strip() for k,v in [x.split(':', 1) for x in style.split(';')]}
+                          if 'display' in kvs and kvs['display'] == 'none':
+                            v = 'hidden'
+                        if v is None:
+                          v = node.get( 'visibility', parent_visibility )
                         if v == 'inherit':
                                 v = parent_visibility
                         if v == 'hidden' or v == 'collapse':
-                                pass
+                                continue
 
                         # calculate this object's transform
                         transform = composeParents(node, IDENTITY_TRANSFORM)
