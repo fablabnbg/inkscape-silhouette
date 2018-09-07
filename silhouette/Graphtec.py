@@ -536,7 +536,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, sharpencorners=False, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -592,6 +592,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("Loaded media is expected left-aligned.", file=s.log)
     else:
       print("Loaded media is expected right-aligned.", file=s.log)
+
+    # Lift plotter head at sharp corners
+    if sharpencorners:
+      s.write("FE1,%d\x03" % toolholder)
+    else:
+      s.write("FE0,%d\x03" % toolholder)
 
     s.write("FF1,0,%d\x03FF1,1,%d\x03" % (toolholder, toolholder))
 

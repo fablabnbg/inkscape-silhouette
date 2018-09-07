@@ -300,6 +300,9 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-p', '--pressure',
           action = 'store', dest = 'pressure', type = 'int', default = 10,
           help="[1..18], or 0 for media default")
+    self.OptionParser.add_option('-P', '--sharpencorners',
+          action = 'store', dest = 'sharpencorners', type = 'inkbool', default = False,
+          help='Lift head at sharp corners')
     self.OptionParser.add_option('-r', '--reversetoggle',
           action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
           help="Cut each path the other direction. Affects every second pass when multipass.")
@@ -1088,6 +1091,7 @@ class SendtoSilhouette(inkex.Effect):
     dev.setup(media=int(self.options.media,10), pen=self.pen,
       toolholder=self.options.toolholder,
       cuttingmat=self.options.cuttingmat,
+      sharpencorners=self.options.sharpencorners,
       bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 

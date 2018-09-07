@@ -57,6 +57,7 @@
       <param name="autocrop" type="boolean" _gui-text="Trim margins">false</param> <param name="autocrop_help" type="description">Shift to the top lefthand corner, then do offsets.</param>
       <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
       <param name="bbox_help" type="description">To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</param>
+      <param name="sharpencorners" type="boolean" _gui-text="Sharpen Corners">false</param> <param name="sharpencorners_help" type="description">Lift head at sharp corners</param>
       <param name="overcut" type="float" min="0.0" max="5.0" _gui-text="Overcut on closed paths [mm]">0.5</param>
       <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
       <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
