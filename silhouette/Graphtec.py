@@ -120,30 +120,33 @@ PRODUCT_ID_CC300_20 = 0x111a
 PRODUCT_ID_SILHOUETTE_SD_1 = 0x111c
 PRODUCT_ID_SILHOUETTE_SD_2 = 0x111d
 PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
+PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
+PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
+PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
 DEVICE = [
- { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x1132, 'name': 'Silhouette Portrait2',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT2, 'name': 'Silhouette Portrait2',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO, 'name': 'Silhouette Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x112b, 'name': 'Silhouette Cameo2',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO2, 'name': 'Silhouette Cameo2',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x112f, 'name': 'Silhouette Cameo3',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO3, 'name': 'Silhouette Cameo3',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':5, 'margin_top_mm':15.5, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111a, 'name': 'Craft Robo CC300-20' },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111c, 'name': 'Silhouette SD 1' },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111d, 'name': 'Silhouette SD 2' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft Robo CC300-20' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_1, 'name': 'Silhouette SD 1' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_2, 'name': 'Silhouette SD 2' },
 ]
 
 def _bbox_extend(bb, x, y):
