@@ -141,7 +141,7 @@ DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO3, 'name': 'Silhouette Cameo3',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
-   'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':5, 'margin_top_mm':15.5, 'regmark': True },
+   'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft Robo CC300-20' },
