@@ -307,6 +307,8 @@ class SendtoSilhouette(inkex.Effect):
           dest="smoothness", default=.2, help="Smoothness of curves" )
     self.OptionParser.add_option('-t', '--tool', action = 'store',
           choices=('cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
+    self.OptionParser.add_option('-T', '--toolholder', action = 'store',
+          choices=('1', '2'), dest = 'toolholder', default = None, help="[1..2]")
     self.OptionParser.add_option('-V', '--version',
           action = 'store_const', const=True, dest = 'version', default = False,
           help='Just print version number ("'+__version__+'") and exit.')
@@ -996,6 +998,8 @@ class SendtoSilhouette(inkex.Effect):
       # Traverse the entire document
       self.recursivelyTraverseSvg( self.document.getroot() )
 
+    if self.options.toolholder is not None:
+      self.options.toolholder = int(self.options.toolholder)
     self.pen=None
     if self.options.tool == 'pen': self.pen=True
     if self.options.tool == 'cut': self.pen=False
@@ -1079,6 +1083,7 @@ class SendtoSilhouette(inkex.Effect):
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
     dev.setup(media=int(self.options.media,10), pen=self.pen,
+      toolholder=self.options.toolholder,
       bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 

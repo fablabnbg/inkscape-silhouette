@@ -536,7 +536,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -557,7 +557,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if media is not None:
       if media < 100 or media > 300: media = 300
-      s.write("FW%d\x03" % media);
+      # Silhouette Studio does not appear to issue this command
+      #s.write("FW%d\x03" % media);
       if pen is None:
         if media == 113:
           pen = True
@@ -569,16 +570,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
 
+    if toolholder is None:
+      toolholder = 1
+    s.write("J%d\x03" % toolholder)
+    print("toolholder: %d" % toolholder, file=s.log)
+
     if speed is not None:
       if speed < 1: speed = 1
       if speed > 10: speed = 10
-      s.write("!%d\x03" % speed);
+      s.write("!%d,%d\x03" % (speed, toolholder));
       print("speed: %d" % speed, file=s.log)
 
     if pressure is not None:
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
-      s.write("FX%d\x03" % pressure);
+      s.write("FX%d,%d\x03" % (pressure, toolholder));
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
       print("pressure: %d" % pressure, file=s.log)
 
@@ -586,6 +592,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("Loaded media is expected left-aligned.", file=s.log)
     else:
       print("Loaded media is expected right-aligned.", file=s.log)
+
+    s.write("FF1,0,%d\x03FF1,1,%d\x03" % (toolholder, toolholder))
 
     # robocut/Plotter.cpp:393 says:
     # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
@@ -596,8 +604,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if pen:
       circle = 0
     else:
-      circle = bladediameter * 20
-    s.write("FC%d\x03" % circle)
+      circle = 0.5 + bladediameter * 20
+    s.write("FC0,1,%d\x03FC%d,1,%d\x03"  % (toolholder, circle, toolholder))
 
     # if enabled, rollers three times forward and back.
     # needs a pressure of 19 or more, else nothing will happen 
@@ -617,7 +625,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         s.write("FN0\x03TB50,0\x03")
 
     # Don't lift plotter head between paths
-    s.write("FE0,0\x03")
+    #s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -883,7 +891,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = "FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
+    p = "\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096)
     s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
@@ -909,7 +917,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      new_home = "H\x03"
+      new_home = "J0\x03H\x03L0\x03FN0\x03TB50,0\x03"
     else: #includes 'below'
       new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
     #new_home += "FN0\x03TB50,0\x03"

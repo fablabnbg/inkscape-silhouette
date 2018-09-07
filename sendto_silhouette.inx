@@ -9,6 +9,10 @@
     <page name='silhouette' _gui-text='Silhouette'>
       <param name="x_off" type="float" min="-999.0" max="999.0" _gui-text="X-Offset [mm]">0.0</param>
       <param name="y_off" type="float" min="-999.0" max="999.0" _gui-text="Y-Offset [mm]">0.0</param>
+      <param name="toolholder" type="enum" _gui-text="Tool Holder:">
+        <item value="1">Red (left tool)</item>
+        <item value="2">Blue (right tool)</item>
+      </param>
       <param name="tool" type="enum" _gui-text="Tool:">
         <item value="default">Media default</item>
         <item value="pen">Pen</item>
