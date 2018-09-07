@@ -83,34 +83,34 @@ except NameError:
 
 MEDIA = [
 # CAUTION: keep in sync with sendto_silhouette.inx
-# media, pressure, speed, cap-color, name
-  ( 100,   27,     10,  "yellow", "Card without Craft Paper Backing"),
-  ( 101,   27,     10,  "yellow", "Card with Craft Paper Backing"),
-  ( 102,   10,     10,  "blue",   "Vinyl Sticker"),
-  ( 106,   14,     10,  "blue",   "Film Labels"),
-  ( 111,   27,     10,  "yellow", "Thick Media"),
-  ( 112,    2,     10,  "blue",   "Thin Media"),
-  ( 113,   10,     10,  "pen",    "Pen"),
-  ( 120,   30,     10,  "blue",   "Bond Paper 13-28 lbs (105g)"),
-  ( 121,   30,     10,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
-  ( 122,   30,     10,  "yellow", "Cardstock 40-60 lbs (90g)"),
-  ( 123,   30,     10,  "yellow", "Cover 40-60 lbs (170g)"),
-  ( 124,    1,     10,  "blue",   "Film, Double Matte Translucent"),
-  ( 125,    1,     10,  "blue",   "Film, Vinyl With Adhesive Back"),
-  ( 126,    1,     10,  "blue",   "Film, Window With Kling Adhesive"),
-  ( 127,   30,     10,  "red",    "Index 90 lbs (165g)"),
-  ( 128,   20,     10,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
-  ( 129,   27,     10,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
-  ( 130,   30,      3,  "red",    "Magnetic Sheet"),
-  ( 131,   30,     10,  "blue",   "Offset 24-60 lbs (90g)"),
-  ( 132,    5,     10,  "blue",   "Print Paper Light Weight"),
-  ( 133,   25,     10,  "yellow", "Print Paper Medium Weight"),
-  ( 134,   20,     10,  "blue",   "Sticker Sheet"),
-  ( 135,   20,     10,  "red",    "Tag 100 lbs (275g)"),
-  ( 136,   30,     10,  "blue",   "Text Paper 24-70 lbs (105g)"),
-  ( 137,   30,     10,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
-  ( 138,   30,     10,  "blue",   "Writing Paper 24-70 lbs (105g)"),
-  ( 300, None,   None,  "custom", "Custom"),
+# media, pressure, speed, depth, cap-color, name
+  ( 100,   27,     10,   1,  "yellow", "Card without Craft Paper Backing"),
+  ( 101,   27,     10,   1,  "yellow", "Card with Craft Paper Backing"),
+  ( 102,   10,     10,   1,  "blue",   "Vinyl Sticker"),
+  ( 106,   14,     10,   1,  "blue",   "Film Labels"),
+  ( 111,   27,     10,   1,  "yellow", "Thick Media"),
+  ( 112,    2,     10,   1,  "blue",   "Thin Media"),
+  ( 113,   10,     10,None,  "pen",    "Pen"),
+  ( 120,   30,     10,   1,  "blue",   "Bond Paper 13-28 lbs (105g)"),
+  ( 121,   30,     10,   1,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
+  ( 122,   30,     10,   1,  "yellow", "Cardstock 40-60 lbs (90g)"),
+  ( 123,   30,     10,   1,  "yellow", "Cover 40-60 lbs (170g)"),
+  ( 124,    1,     10,   1,  "blue",   "Film, Double Matte Translucent"),
+  ( 125,    1,     10,   1,  "blue",   "Film, Vinyl With Adhesive Back"),
+  ( 126,    1,     10,   1,  "blue",   "Film, Window With Kling Adhesive"),
+  ( 127,   30,     10,   1,  "red",    "Index 90 lbs (165g)"),
+  ( 128,   20,     10,   1,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
+  ( 129,   27,     10,   1,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
+  ( 130,   30,      3,   1,  "red",    "Magnetic Sheet"),
+  ( 131,   30,     10,   1,  "blue",   "Offset 24-60 lbs (90g)"),
+  ( 132,    5,     10,   1,  "blue",   "Print Paper Light Weight"),
+  ( 133,   25,     10,   1,  "yellow", "Print Paper Medium Weight"),
+  ( 134,   20,     10,   1,  "blue",   "Sticker Sheet"),
+  ( 135,   20,     10,   1,  "red",    "Tag 100 lbs (275g)"),
+  ( 136,   30,     10,   1,  "blue",   "Text Paper 24-70 lbs (105g)"),
+  ( 137,   30,     10,   1,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
+  ( 138,   30,     10,   1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
+  ( 300, None,   None,None,  "custom", "Custom"),
 ]
 
 #  robocut/Plotter.h:53 ff
@@ -536,7 +536,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, sharpencorners=False, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, sharpencorners=False, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -566,14 +566,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pen = False
       for i in MEDIA:
         if i[0] == media:
-          print("Media=%d, cap='%s', name='%s'" % (media, i[3], i[4]), file=s.log)
+          print("Media=%d, cap='%s', name='%s'" % (media, i[4], i[5]), file=s.log)
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
+          if    depth is None:    depth = i[3]
+          break
 
     if toolholder is None:
       toolholder = 1
     s.write("J%d\x03" % toolholder)
     print("toolholder: %d" % toolholder, file=s.log)
+
+    if autoblade and depth is not None:
+      if 'product_id' in s.hardware and s.hardware['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if toolholder == 1:
+          if depth < 0: depth = 0
+          if depth > 10: depth = 10
+          s.write("TF%d,%d\x03" % (depth, toolholder));
+          print("depth: %d" % depth, file=s.log)
 
     if speed is not None:
       if speed < 1: speed = 1
