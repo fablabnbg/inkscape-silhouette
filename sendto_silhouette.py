@@ -275,8 +275,8 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-c', '--bladediameter',
           action = 'store', dest = 'bladediameter', type = 'float', default = 0.9,
           help="[0..2.3] diameter of the used blade [mm], default = 0.9")
-    self.OptionParser.add_option('-C', '--cuttingmat',
-          action = 'store', dest = 'cuttingmat', type = 'inkbool', default = True,
+    self.OptionParser.add_option('-C', '--cuttingmat', action = 'store',
+          choices=('cameo_12x12', 'cameo_12x24', 'no_mat'), dest = 'cuttingmat', default = 'cameo_12x12',
           help='Use cutting mat')
     self.OptionParser.add_option('-D', '--depth',
           action = 'store', dest = 'depth', type = 'int', default = -1,

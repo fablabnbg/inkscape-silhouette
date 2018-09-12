@@ -546,7 +546,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=True, sharpencorners=False, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -565,8 +565,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     s.initialize()
 
-    if cuttingmat:
+    if cuttingmat == 'cameo_12x12':
       s.write("TG1\x03")
+    elif cuttingmat == 'cameo_12x24':
+      s.write("TG2\x03")
     else:
       s.write("TG0\x03")
 
@@ -575,10 +577,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
     s.write("FN0\x03TB50,0\x03")
 
-    if cuttingmat:
+    if cuttingmat == 'cameo_12x12':
       s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
+    elif cuttingmat == 'cameo_12x24':
+      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
     else:
-      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))  # TODO: Height should come from media height
+      width = s.hardware['width_mm'] if 'width_mm' in s.hardware else mediawidth
+      height = s.hardware['length_mm'] if 'length_mm' in s.hardware else mediaheight
+      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
 
     if media is not None:
       if media < 100 or media > 300: media = 300
