@@ -578,7 +578,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if cuttingmat:
       s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
     else:
-      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 5900))  # TODO: Height should come from media height
+      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))  # TODO: Height should come from media height
 
     if media is not None:
       if media < 100 or media > 300: media = 300
