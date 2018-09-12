@@ -506,21 +506,31 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("TB71: '%s'" % (resp[:-1]), file=s.log)
-    #except:
-    #  pass
+    if 'product_id' in s.hardware and s.hardware['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO3:
 
-    #s.write("FA\x03") # asks for something, not sure, current position?
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
-    #except:
-    #  pass
+      s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("TB71: '%s'" % (resp[:-1]), file=s.log)
+      except:
+        pass
+
+      s.write("FA\x03") # asks for something, not sure, current position?
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
+      except:
+        pass
+
+      s.write("TC\x03")
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("TC: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
+      except:
+        pass
 
   def get_version(s):
     """Retrieve the firmware version string from the device."""
@@ -939,7 +949,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      new_home = "J0\x03H\x03L0\x03FN0\x03TB50,0\x03"
+      new_home = "L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
     else: #includes 'below'
       new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
     #new_home += "FN0\x03TB50,0\x03"
