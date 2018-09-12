@@ -25,11 +25,11 @@
         <item value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</item>
         <item value="100">[P=27,S=10] SCard without Craft Paper Backing</item>
         <item value="101">[P=27,S=10] Card with Craft Paper Backing</item>
-        <item value="102">[P=10,S=10,D=1] Vinyl Sticker</item>
+        <item value="102">[P=10,S= 5,D=1] Vinyl Sticker</item>
         <item value="106">[P=14,S=10] Film Labels</item>
         <item value="111">[P=27,S=10] Thick Media</item>
         <item value="112">[P= 2,S=10] Thin Media</item>
-        <item value="113">[P=10,S=10] Pen</item>
+        <item value="113">[P=18,S=10] Pen</item>
         <item value="120">[P=30,S=10] Bond Paper 13-28 lbs (105g)</item>
         <item value="121">[P=30,S=10] Bristol Paper 57-67 lbs (145g)</item>
         <item value="122">[P=30,S=10] Cardstock 40-60 lbs (90g)</item>

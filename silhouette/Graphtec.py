@@ -86,11 +86,11 @@ MEDIA = [
 # media, pressure, speed, depth, cap-color, name
   ( 100,   27,     10,   1,  "yellow", "Card without Craft Paper Backing"),
   ( 101,   27,     10,   1,  "yellow", "Card with Craft Paper Backing"),
-  ( 102,   10,     10,   1,  "blue",   "Vinyl Sticker"),
+  ( 102,   10,      5,   1,  "blue",   "Vinyl Sticker"),
   ( 106,   14,     10,   1,  "blue",   "Film Labels"),
   ( 111,   27,     10,   1,  "yellow", "Thick Media"),
   ( 112,    2,     10,   1,  "blue",   "Thin Media"),
-  ( 113,   10,     10,None,  "pen",    "Pen"),
+  ( 113,   18,     10,None,  "pen",    "Pen"),
   ( 120,   30,     10,   1,  "blue",   "Bond Paper 13-28 lbs (105g)"),
   ( 121,   30,     10,   1,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
   ( 122,   30,     10,   1,  "yellow", "Cardstock 40-60 lbs (90g)"),
