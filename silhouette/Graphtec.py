@@ -546,7 +546,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -638,7 +638,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if pen:
       s.write("FF0,0,%d\x03" % (toolholder))
     else:
-      s.write("FF1,0,%d\x03FF1,1,%d\x03" % (toolholder, toolholder))
+      sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
+      sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
+      s.write("FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
 
     # robocut/Plotter.cpp:393 says:
     # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm

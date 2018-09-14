@@ -306,6 +306,12 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-P', '--sharpencorners',
           action = 'store', dest = 'sharpencorners', type = 'inkbool', default = False,
           help='Lift head at sharp corners')
+    self.OptionParser.add_option('--sharpencorners_start',
+          action = 'store', dest = 'sharpencorners_start', type = 'float', default = 0.1,
+          help="Sharpen Corners - Start Ext. [mm]")
+    self.OptionParser.add_option('--sharpencorners_end',
+          action = 'store', dest = 'sharpencorners_end', type = 'float', default = 0.1,
+          help="Sharpen Corners - End Ext. [mm]")
     self.OptionParser.add_option('-r', '--reversetoggle',
           action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
           help="Cut each path the other direction. Affects every second pass when multipass.")
@@ -1107,6 +1113,8 @@ class SendtoSilhouette(inkex.Effect):
       toolholder=self.options.toolholder,
       cuttingmat=self.options.cuttingmat,
       sharpencorners=self.options.sharpencorners,
+      sharpencorners_start=self.options.sharpencorners_start,
+      sharpencorners_end=self.options.sharpencorners_end,
       autoblade=self.autoblade,
       depth=self.options.depth,
       bladediameter=self.options.bladediameter,
