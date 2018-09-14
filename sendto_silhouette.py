@@ -1070,6 +1070,20 @@ class SendtoSilhouette(inkex.Effect):
       # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
       overcut = self.options.overcut
       if (overcut > 0) and self.is_closed_path(mm_path):
+        precut = overcut
+        pfrom = mm_path[-1]
+        for pprev in reversed(mm_path[:-1]):
+          dx = pprev[0] - pfrom[0]
+          dy = pprev[1] - pfrom[1]
+          dist = math.sqrt(dx*dx + dy*dy)
+          if (precut > dist): # Full segment needed
+            precut -= dist
+            multipath.insert(0, pprev)
+            pfrom = pprev
+          else:                # only partial segement needed, create new endpoint
+            pprev = (pfrom[0]+dx*(precut/dist), pfrom[1]+dy*(precut/dist))
+            multipath.insert(0, pprev)
+            break
         pfrom = mm_path[0]
         for pnext in mm_path[1:]:
           dx = pnext[0] - pfrom[0]
