@@ -25,9 +25,22 @@ def to_BE(x, y):
 		be2 = "%02X%02X%02X" % (d1 + 0x20, d2 + 0x20, d3 + 0x20)
 		# print("BE2:", be2)
 		return ("BE2", be2)
+	elif abs(x) < 375482 and abs(y) < 375482:
+		index = 750964 * (x + 375482) + (y + 375482)
+		d5 = index // (224 * 224 * 224 * 224)
+		index -= d5 * (224 * 224 * 224 * 224)
+		d4 = index // (224 * 224 * 224)
+		index -= d4 * (224 * 224 * 224)
+		d3 = index // (224 * 224)
+		index -= d3 * (224 * 224)
+		d2 = index // 224
+		index -= d2 * 224
+		d1 = index
+		be3 = "%02X%02X%02X%02X%02X" % (d1 + 0x20, d2 + 0x20, d3 + 0x20, d4 + 0x20, d5 + 0x20)
+		# print("BE3:", be3)
+		return ("BE3", be3)
 	else:
-		# TODO: Implement to_BE3
-		raise RuntimeError("to_BE3 not supported")
+		raise ValueError("Invalid coordinate")
 	# end if
 # end def to_BE
 
@@ -56,9 +69,20 @@ def from_BE(be_stream):
 		y = index % 3352 - 1676
 		# print("BE2: %d,%d" % (x, y))
 		return ("BE2", (x, y))
-	elif len(be_stream) == 8:
-		# TODO: Implement from_BE3
-		raise RuntimeError("from_BE3 not supported")
+	elif len(be_stream) == 10:
+		d1 = int(be_stream[0:2], 16)
+		d2 = int(be_stream[2:4], 16)
+		d3 = int(be_stream[4:6], 16)
+		d4 = int(be_stream[6:8], 16)
+		d5 = int(be_stream[8:10], 16)
+		if d1 < 0x20 or d2 < 0x20 or d3 < 0x20 or d4 < 0x20 or d5 < 0x20:
+			raise ValueError("Invalid BE3 stream digit")
+		# end if
+		index = (d5 - 0x20) * (224 * 224 * 224 * 224) + (d4 - 0x20) * (224 * 224 * 224) + (d3 - 0x20) * (224 * 224) + (d2 - 0x20) * 224 + (d1 - 0x20)
+		x = index // 750964 - 375482
+		y = index % 750964 - 375482
+		# print("BE3: %d,%d" % (x, y))
+		return ("BE3", (x, y))
 	else:
 		raise ValueError("Invalid length hex stream")
 	# end if
