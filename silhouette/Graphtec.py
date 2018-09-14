@@ -290,6 +290,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
+    self.enable_sw_clipping = True
 
   def write(s, string, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
@@ -546,7 +547,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -659,6 +660,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           if depth > 10: depth = 10
           s.write("TF%d,%d\x03" % (depth, toolholder));
           print("depth: %d" % depth, file=s.log)
+
+    s.enable_sw_clipping = sw_clipping
 
     # if enabled, rollers three times forward and back.
     # needs a pressure of 19 or more, else nothing will happen 
@@ -811,7 +814,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               bbox['clip']['count'] = 1
 
         if bbox['only'] is False:
-          if inside and last_inside:
+          if not s.enable_sw_clipping or (inside and last_inside):
             plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move

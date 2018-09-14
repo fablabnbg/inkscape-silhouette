@@ -288,6 +288,9 @@ class SendtoSilhouette(inkex.Effect):
           action = 'store', dest = 'strategy', default = 'mintravel',
           choices=('mintravel','mintravelfull','matfree','zorder' ),
           help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
+    self.OptionParser.add_option('-l', '--sw_clipping',
+          action = 'store', dest = 'sw_clipping', type = 'inkbool', default = True,
+          help='Enable software clipping')
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id',
           action = 'store', dest = 'media', default = '132',
           choices=('100','101','102','106','111','112','113',
@@ -1131,6 +1134,7 @@ class SendtoSilhouette(inkex.Effect):
       sharpencorners_end=self.options.sharpencorners_end,
       autoblade=self.autoblade,
       depth=self.options.depth,
+      sw_clipping=self.options.sw_clipping,
       bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 

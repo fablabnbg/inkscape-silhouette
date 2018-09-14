@@ -101,6 +101,7 @@
       <param name="mat_free_help" type="description">Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.</param>
       <param name="mintravel_help" type="description">Minimal Traveling: Find the nearest startpoint to minimize travel movements</param>
       <param name="mintravelfull_help" type="description">Minimal Traveling (fully optimized): Additionally search startpoints in closed paths</param>
+      <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>
     </page>
