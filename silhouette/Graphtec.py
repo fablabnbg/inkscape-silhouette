@@ -292,6 +292,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.leftaligned = True
     self.enable_sw_clipping = True
 
+  def product_id(s):
+    return s.hardware['product_id'] if 'product_id' in s.hardware else None
+
   def write(s, string, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
@@ -507,7 +510,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    if 'product_id' in s.hardware and s.hardware['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
 
       s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
       try:
@@ -538,7 +541,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.dev is None: return None
 
-    s.write("FG\x03")
+    s.write("FG\x03")   # Get Version: 17 Chars
     try:
       resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:
@@ -566,31 +569,35 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     s.initialize()
 
-    if cuttingmat == 'cameo_12x12':
-      s.write("TG1\x03")
-    elif cuttingmat == 'cameo_12x24':
-      s.write("TG2\x03")
-    else:
-      s.write("TG0\x03")
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if cuttingmat == 'cameo_12x12':
+        s.write("TG1\x03")
+      elif cuttingmat == 'cameo_12x24':
+        s.write("TG2\x03")
+      else:
+        s.write("TG0\x03")
 
-    #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
-    # side of media (boundary check?), but next cut run will stall
-    #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    s.write("FN0\x03TB50,0\x03")
+      #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
+      # side of media (boundary check?), but next cut run will stall
+      #TB50,x: x = 1 landscape mode, x = 0 portrait mode
+      s.write("FN0\x03TB50,0\x03")
 
-    if cuttingmat == 'cameo_12x12':
-      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
-    elif cuttingmat == 'cameo_12x24':
-      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
-    else:
-      width = s.hardware['width_mm'] if 'width_mm' in s.hardware else mediawidth
-      height = s.hardware['length_mm'] if 'length_mm' in s.hardware else mediaheight
-      s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
+      if cuttingmat == 'cameo_12x12':
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
+      elif cuttingmat == 'cameo_12x24':
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
+      else:
+        width = s.hardware['width_mm'] if 'width_mm' in s.hardware else mediawidth
+        height = s.hardware['length_mm'] if 'length_mm' in s.hardware else mediaheight
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
 
     if media is not None:
       if media < 100 or media > 300: media = 300
-      # Silhouette Studio does not appear to issue this command
-      #s.write("FW%d\x03" % media);
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        # Silhouette Studio does not appear to issue this command
+        pass
+      else:
+        s.write("FW%d\x03" % media);
       if pen is None:
         if media == 113:
           pen = True
@@ -606,24 +613,32 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if toolholder is None:
       toolholder = 1
-    s.write("J%d\x03" % toolholder)
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      s.write("J%d\x03" % toolholder)
     print("toolholder: %d" % toolholder, file=s.log)
 
     if speed is not None:
       if speed < 1: speed = 1
       if speed > 10: speed = 10
-      s.write("!%d,%d\x03" % (speed, toolholder));
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        s.write("!%d,%d\x03" % (speed, toolholder));
+      else:
+        s.write("!%d\x03" % speed);
       print("speed: %d" % speed, file=s.log)
 
     if pressure is not None:
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
-      s.write("FX%d,%d\x03" % (pressure, toolholder));
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        s.write("FX%d,%d\x03" % (pressure, toolholder));
+      else:
+        s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
       print("pressure: %d" % pressure, file=s.log)
 
-    if pen:
-      s.write("FC0,1,%d\x03"  % (toolholder))
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if pen:
+        s.write("FC0,1,%d\x03"  % (toolholder))
 
     if s.leftaligned:
       print("Loaded media is expected left-aligned.", file=s.log)
@@ -631,17 +646,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("Loaded media is expected right-aligned.", file=s.log)
 
     # Lift plotter head at sharp corners
-    if sharpencorners:
-      s.write("FE1,%d\x03" % toolholder)
-    else:
-      s.write("FE0,%d\x03" % toolholder)
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if sharpencorners:
+        s.write("FE1,%d\x03" % toolholder)
+      else:
+        s.write("FE0,%d\x03" % toolholder)
 
-    if pen:
-      s.write("FF0,0,%d\x03" % (toolholder))
-    else:
-      sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
-      sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-      s.write("FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+      if pen:
+        s.write("FF0,0,%d\x03" % (toolholder))
+      else:
+        sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
+        sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
+        s.write("FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
 
     # robocut/Plotter.cpp:393 says:
     # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
@@ -649,17 +665,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # C possible stands for circle.
     # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
     # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
-    if not pen:
-      circle = 0.5 + bladediameter * 20
-      s.write("FC0,1,%d\x03FC%d,1,%d\x03"  % (toolholder, circle, toolholder))
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if not pen:
+        circle = 0.5 + bladediameter * 20
+        s.write("FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
 
-    if autoblade and depth is not None:
-      if 'product_id' in s.hardware and s.hardware['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        if toolholder == 1:
-          if depth < 0: depth = 0
-          if depth > 10: depth = 10
-          s.write("TF%d,%d\x03" % (depth, toolholder));
-          print("depth: %d" % depth, file=s.log)
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if autoblade and depth is not None:
+          if toolholder == 1:
+            if depth < 0: depth = 0
+            if depth > 10: depth = 10
+            s.write("TF%d,%d\x03" % (depth, toolholder));
+            print("depth: %d" % depth, file=s.log)
+    else:
+      if pen:
+        circle = 0
+      else:
+        circle = bladediameter * 20
+      s.write("FC%d\x03" % circle)
 
     s.enable_sw_clipping = sw_clipping
 
@@ -668,20 +691,26 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if trackenhancing is not None:
       if trackenhancing:
         s.write("FY0\x03")
-    #  else:
-    #    s.write("FY1\x03")
+      else:
+        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+          pass
+        else:
+          s.write("FY1\x03")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    #if landscape is not None:
-    #  if landscape:
-    #    s.write("FN0\x03TB50,1\x03")
-    #  else:
-    #    s.write("FN0\x03TB50,0\x03")
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      pass
+    else:
+      if landscape is not None:
+       if landscape:
+         s.write("FN0\x03TB50,1\x03")
+       else:
+         s.write("FN0\x03TB50,0\x03")
 
-    # Don't lift plotter head between paths
-    #s.write("FE0,0\x03")
+      # Don't lift plotter head between paths
+      s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -947,8 +976,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = "FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    #p = "\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096)
-    #s.write(p)
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      pass
+    else:
+      p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
+      s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
@@ -973,7 +1005,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      new_home = "L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        new_home = "L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
+      else:
+        new_home = "H\x03"
     else: #includes 'below'
       new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
     #new_home += "FN0\x03TB50,0\x03"
