@@ -479,7 +479,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. print range?
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. usable print range?
     #except:
     #  pass
 
@@ -499,7 +499,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("TB71\x03") # Unknown: 2 five digit numbers
+    #s.write("TB71\x03") # Get machine calibration of regmark sensor (y, x) in  machine units
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -507,7 +507,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    #s.write("FA\x03") # Unknown: 2 five digit numbers
+    #s.write("FA\x03") # Get machine calibration (x, y) (carriage, roller) unit is 0.01% i.e. 0.0001
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
@@ -871,7 +871,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
-    # needed at least for the trackenhancing feature, defines the usable length,
+    # needed only for the trackenhancing feature, defines the usable length, rollers three times forward and back.
+    # needs a pressure of 19 or more, else nothing will happen 
     #p = "FU%d\x03" % (height)
     #p = "FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
