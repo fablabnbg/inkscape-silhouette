@@ -621,7 +621,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return bb
 
   def flip_cut(s, cut):
-    """this returns a flipped copy of the cut about the x-axis,
+    """this returns a flipped copy of the cut about the y-axis,
        keeping min and max values as they are."""
     bb = s.find_bbox(cut)
     new_cut = []
