@@ -124,7 +124,7 @@ PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 
 DEVICE = [
  { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait',
-   'width_mm':  203, 'length_mm': 3000, 'regmark': True },
+   'width_mm':  206, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x1132, 'name': 'Silhouette Portrait2',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',
