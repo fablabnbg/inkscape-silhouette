@@ -909,6 +909,10 @@ class SendtoSilhouette(inkex.Effect):
                                 return v*96.
                         elif u == 'cm':
                                 return v*96./2.54       # inverse of 10*px2mm
+                        elif u == 'pt':
+                                return v*96./72.
+                        elif u == 'pc':
+                                return v*96./16.
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
