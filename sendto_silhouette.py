@@ -82,11 +82,12 @@
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
 #                         Added new cutting strategy "Minimized Traveling"
 #                         Added parameter for blade diameter
+# 2018-06-01, jw, v1.20-- Make it compile again. Hmm.
 
-__version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
-__author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
+__version__ = '1.20'	# Keep in sync with sendto_silhouette.inx ca line 79
+__author__ = 'Juergen Weigert <juergen@fabmail.org> and contributors'
 
-import sys, os, shutil, time, logging, tempfile
+import sys, os, shutil, time, logging, tempfile, math, re
 
 
 # we sys.path.append() the directory where this
