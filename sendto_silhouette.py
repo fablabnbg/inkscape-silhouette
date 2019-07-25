@@ -72,16 +72,19 @@
 #                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
 # 2016-01-15 jw, v1.15 -- ubuntu loads the wrong usb library.
 # 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
-# 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with 
+# 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with
 #                         https://github.com/fablabnbg/inkscape-silhouette/issues/10
 # 2016-05-21 jw, v1.18 -- warn about python-usb < 1.0 and give instructions.
-#                         Limit pressure to 18. 19 or 20 make the machine 
+#                         Limit pressure to 18. 19 or 20 make the machine
 #                         scroll forward backward for several minutes.
 #                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
 # 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
+#                         Added new cutting strategy "Minimized Traveling"
+#                         Added parameter for blade diameter
+# 2019-07-25, jw, v1.20 -- merge from github.com/olegdeezus/inkscape-silhouette
 
-__version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = '1.20'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile
@@ -122,6 +125,7 @@ except:
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
+import silhouette.StrategyMinTraveling
 from silhouette.Geometry import dist_sq, XY_a
 
 N_PAGE_WIDTH = 3200
@@ -269,12 +273,25 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-b', '--bbox', '--bbox-only', '--bbox_only',
           action = 'store', dest = 'bboxonly', type = 'inkbool', default = False,
           help='draft the objects bounding box instead of the objects')
+    self.OptionParser.add_option('-c', '--bladediameter',
+          action = 'store', dest = 'bladediameter', type = 'float', default = 0.9,
+          help="[0..2.3] diameter of the used blade [mm], default = 0.9")
+    self.OptionParser.add_option('-C', '--cuttingmat', action = 'store',
+          choices=('cameo_12x12', 'cameo_12x24', 'no_mat'), dest = 'cuttingmat', default = 'cameo_12x12',
+          help='Use cutting mat')
+    self.OptionParser.add_option('-D', '--depth',
+          action = 'store', dest = 'depth', type = 'int', default = -1,
+          help="[0..10], or -1 for media default")
     self.OptionParser.add_option('--dummy',
           action = 'store', dest = 'dummy', type = 'inkbool', default = False,
           help="Dump raw data to "+self.dumpname+" instead of cutting.")
-    self.OptionParser.add_option('--mat-free', '--mat_free',
-          action = 'store', dest = 'mat_free', type = 'inkbool', default = False,
-          help="Optimize movements for cutting without a cutting mat.")
+    self.OptionParser.add_option('-g', '--strategy',
+          action = 'store', dest = 'strategy', default = 'mintravel',
+          choices=('mintravel','mintravelfull','matfree','zorder' ),
+          help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
+    self.OptionParser.add_option('-l', '--sw_clipping',
+          action = 'store', dest = 'sw_clipping', type = 'inkbool', default = True,
+          help='Enable software clipping')
     self.OptionParser.add_option('-m', '--media', '--media-id', '--media_id',
           action = 'store', dest = 'media', default = '132',
           choices=('100','101','102','106','111','112','113',
@@ -290,6 +307,15 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option('-p', '--pressure',
           action = 'store', dest = 'pressure', type = 'int', default = 10,
           help="[1..18], or 0 for media default")
+    self.OptionParser.add_option('-P', '--sharpencorners',
+          action = 'store', dest = 'sharpencorners', type = 'inkbool', default = False,
+          help='Lift head at sharp corners')
+    self.OptionParser.add_option('--sharpencorners_start',
+          action = 'store', dest = 'sharpencorners_start', type = 'float', default = 0.1,
+          help="Sharpen Corners - Start Ext. [mm]")
+    self.OptionParser.add_option('--sharpencorners_end',
+          action = 'store', dest = 'sharpencorners_end', type = 'float', default = 0.1,
+          help="Sharpen Corners - End Ext. [mm]")
     self.OptionParser.add_option('-r', '--reversetoggle',
           action = 'store', dest = 'reversetoggle', type = 'inkbool', default = False,
           help="Cut each path the other direction. Affects every second pass when multipass.")
@@ -299,7 +325,9 @@ class SendtoSilhouette(inkex.Effect):
     self.OptionParser.add_option( "-S", "--smoothness", action="store", type="float",
           dest="smoothness", default=.2, help="Smoothness of curves" )
     self.OptionParser.add_option('-t', '--tool', action = 'store',
-          choices=('cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
+          choices=('autoblade', 'cut', 'pen','default'), dest = 'tool', default = None, help="Optimize for pen or knive")
+    self.OptionParser.add_option('-T', '--toolholder', action = 'store',
+          choices=('1', '2'), dest = 'toolholder', default = None, help="[1..2]")
     self.OptionParser.add_option('-V', '--version',
           action = 'store_const', const=True, dest = 'version', default = False,
           help='Just print version number ("'+__version__+'") and exit.')
@@ -467,11 +495,18 @@ class SendtoSilhouette(inkex.Effect):
 
                 for node in aNodeList:
                         # Ignore invisible nodes
-                        v = node.get( 'visibility', parent_visibility )
+                        v = None
+                        style = node.get('style')
+                        if style is not None:
+                          kvs = {k.strip():v.strip() for k,v in [x.split(':', 1) for x in style.split(';')]}
+                          if 'display' in kvs and kvs['display'] == 'none':
+                            v = 'hidden'
+                        if v is None:
+                          v = node.get( 'visibility', parent_visibility )
                         if v == 'inherit':
                                 v = parent_visibility
                         if v == 'hidden' or v == 'collapse':
-                                pass
+                                continue
 
                         # calculate this object's transform
                         transform = composeParents(node, IDENTITY_TRANSFORM)
@@ -989,14 +1024,25 @@ class SendtoSilhouette(inkex.Effect):
       # Traverse the entire document
       self.recursivelyTraverseSvg( self.document.getroot() )
 
+    if self.options.toolholder is not None:
+      self.options.toolholder = int(self.options.toolholder)
     self.pen=None
+    self.autoblade=False
     if self.options.tool == 'pen': self.pen=True
     if self.options.tool == 'cut': self.pen=False
+    if self.options.tool == 'autoblade':
+      self.pen=False
+      self.autoblade=True
 
-    if self.options.mat_free:
+    if self.options.strategy == 'matfree':
       mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
+    elif self.options.strategy == 'mintravel':
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
+    elif self.options.strategy == 'mintravelfull':
+      self.paths = silhouette.StrategyMinTraveling.sort(self.paths, True)
+    # in case of zorder do no reorder
 
     # print >>self.tty, self.paths
     cut = []
@@ -1004,7 +1050,7 @@ class SendtoSilhouette(inkex.Effect):
     for px_path in self.paths:
       mm_path = []
       for pt in px_path:
-        if self.options.mat_free:
+        if self.options.strategy == 'matfree':
           mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
         else:
           mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
@@ -1028,6 +1074,20 @@ class SendtoSilhouette(inkex.Effect):
       # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
       overcut = self.options.overcut
       if (overcut > 0) and self.is_closed_path(mm_path):
+        precut = overcut
+        pfrom = mm_path[-1]
+        for pprev in reversed(mm_path[:-1]):
+          dx = pprev[0] - pfrom[0]
+          dy = pprev[1] - pfrom[1]
+          dist = math.sqrt(dx*dx + dy*dy)
+          if (precut > dist): # Full segment needed
+            precut -= dist
+            multipath.insert(0, pprev)
+            pfrom = pprev
+          else:                # only partial segement needed, create new endpoint
+            pprev = (pfrom[0]+dx*(precut/dist), pfrom[1]+dy*(precut/dist))
+            multipath.insert(0, pprev)
+            break
         pfrom = mm_path[0]
         for pnext in mm_path[1:]:
           dx = pnext[0] - pfrom[0]
@@ -1066,7 +1126,17 @@ class SendtoSilhouette(inkex.Effect):
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
+    if self.options.depth == -1:       self.options.depth = None
     dev.setup(media=int(self.options.media,10), pen=self.pen,
+      toolholder=self.options.toolholder,
+      cuttingmat=self.options.cuttingmat,
+      sharpencorners=self.options.sharpencorners,
+      sharpencorners_start=self.options.sharpencorners_start,
+      sharpencorners_end=self.options.sharpencorners_end,
+      autoblade=self.autoblade,
+      depth=self.options.depth,
+      sw_clipping=self.options.sw_clipping,
+      bladediameter=self.options.bladediameter,
       pressure=self.options.pressure, speed=self.options.speed)
 
     if self.options.autocrop:
@@ -1146,15 +1216,15 @@ if __name__ == '__main__':
         e = SendtoSilhouette()
 
         if len(sys.argv) < 2:
-	  # write a tempfile that is autoremoved on exit
-	  tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
-	  sys.argv.append(tmpfile.name)
-	  print sys.argv
-	  print >>tmpfile, '<xml height="10"></xml>'
-	  tmpfile.flush()
+          # write a tempfile that is autoremoved on exit
+          tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
+          sys.argv.append(tmpfile.name)
+          print sys.argv
+          print >>tmpfile, '<xml height="10"></xml>'
+          tmpfile.flush()
           e.affect(sys.argv[1:])
-	  # os.remove(tmpfile.name)
-	  sys.exit(0)
+          # os.remove(tmpfile.name)
+          sys.exit(0)
 
         start = time.time()
         e.affect()

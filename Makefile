@@ -23,6 +23,9 @@ VERS=$$(echo '<xml height="0"/>' | python ./sendto_silhouette.py --version /dev/
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
 UDEV=$(DESTDIR)/lib/udev
 
+# User-specifc inkscape extensions folder for local install
+DESTLOCAL=$(HOME)/.config/inkscape/extensions
+
 dist:
 	cd distribute; sh ./distribute.sh
 
@@ -38,6 +41,12 @@ install:
 	install -m 644 -t $(UDEV) silhouette-icon.png
 	install -m 644 -t $(UDEV) silhouette-udev-notify.sh
 
+install-local:
+	mkdir -p $(DESTLOCAL)
+	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
+	cp -r silhouette $(DESTLOCAL)
+	install -m 755 -t $(DESTLOCAL) *.py
+	install -m 644 -t $(DESTLOCAL) *.inx
 
 tar_dist_classic: clean
 	name=$(DISTNAME)-$(VERS); echo "$$name"; echo; \

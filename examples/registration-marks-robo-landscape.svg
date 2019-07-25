@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="297mm"
+   height="210mm"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="registration-marks-robo-landscape.svg">
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="440.4985"
+     inkscape:cy="341.33132"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer2"
+     showgrid="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1026"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:snap-grids="true"
+     inkscape:snap-page="true"
+     units="mm">
+    <inkscape:grid
+       originy="744.09449"
+       spacingy="1mm"
+       spacingx="1mm"
+       units="mm"
+       snapvisiblegridlinesonly="true"
+       enabled="true"
+       visible="true"
+       empspacing="5"
+       id="grid4328"
+       type="xygrid" />
+  </sodipodi:namedview>
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     style="display:inline"
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Regmarks"
+     transform="translate(0,-308.26772)"
+     sodipodi:insensitive="true">
+    <path
+       inkscape:label="regmark-tr"
+       inkscape:connector-curvature="0"
+       id="regmark-tr"
+       d="m 903.54331,361.41732 70.86612,0 0,70.86615"
+       style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:label="regmark-bl"
+       inkscape:connector-curvature="0"
+       id="regmark-bl"
+       d="m 124.01575,928.34646 -70.866144,0 0,-70.8662"
+       style="fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:label="regmark-tr"
+       inkscape:connector-curvature="0"
+       id="regmark-tl"
+       d="m 124.01575,361.41736 -70.866144,0 0,70.86613"
+       style="display:inline;fill:none;stroke:#000000;stroke-width:1.77165353;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text
+       inkscape:transform-center-y="-18.071825"
+       inkscape:transform-center-x="85.006143"
+       transform="matrix(0,-1,1,0,0,0)"
+       sodipodi:linespacing="125%"
+       id="text4330"
+       y="53.149605"
+       x="-690.04498"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Arial MT';-inkscape-font-specification:'Arial MT';letter-spacing:0px;word-spacing:0px;fill:#808080;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="53.149605"
+         x="-690.04498"
+         id="tspan4332"
+         sodipodi:role="line">170mm</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text4334"
+       y="361.41733"
+       x="460.62991"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Arial MT';-inkscape-font-specification:'Arial MT';letter-spacing:0px;word-spacing:0px;fill:#808080;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="361.41733"
+         x="460.62991"
+         id="tspan4336"
+         sodipodi:role="line">260mm</tspan></text>
+    <path
+       inkscape:connector-curvature="0"
+       id="path2998"
+       d="m 514.47875,360.91225 0,-17.71654 -7.08661,0 14.17323,-10.62992 14.17323,10.62992 -7.08662,0 0,17.71654 z"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3237"
+       d="m -17.716535,308.2677 35.43307,0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path3239"
+       d="M 0,325.98423 0,290.55116"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text4334-5"
+       y="484.99997"
+       x="19.145107"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Arial MT';-inkscape-font-specification:'Arial MT';letter-spacing:0px;word-spacing:0px;display:inline;fill:#808080;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="484.99997"
+         x="19.145107"
+         id="tspan4336-3"
+         sodipodi:role="line">15mm</tspan></text>
+    <text
+       inkscape:transform-center-y="-18.071825"
+       inkscape:transform-center-x="85.006143"
+       transform="matrix(0,-1,1,0,0,0)"
+       sodipodi:linespacing="125%"
+       id="text4330-5"
+       y="191.73228"
+       x="-361.41733"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Arial MT';-inkscape-font-specification:'Arial MT';letter-spacing:0px;word-spacing:0px;display:inline;fill:#808080;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         id="tspan4106"
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="191.73228"
+         x="-361.41733"
+         sodipodi:role="line">15mm</tspan></text>
+  </g>
+  <g
+     style="display:inline"
+     inkscape:label="Print"
+     id="layer2"
+     inkscape:groupmode="layer"
+     transform="translate(0,-308.26772)">
+    <text
+       sodipodi:linespacing="125%"
+       id="text4334-5-6"
+       y="504.98984"
+       x="340.23459"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'Arial MT';-inkscape-font-specification:'Arial MT';letter-spacing:0px;word-spacing:0px;display:inline;fill:#808080;fill-opacity:1;stroke:none"
+       xml:space="preserve"><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="504.98984"
+         x="340.23459"
+         id="tspan4336-3-7"
+         sodipodi:role="line">This registration marks template ist expected to work with:</tspan><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="519.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6821">- graphtec robo (expected)</tspan><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="534.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6823" /><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="549.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6825">X-Width 260mm</tspan><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="564.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6827">Y-Height 170mm</tspan><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="579.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6829">X-Offset 15mm</tspan><tspan
+         style="font-size:12px;fill:#808080;fill-opacity:1"
+         y="594.98987"
+         x="340.23459"
+         sodipodi:role="line"
+         id="tspan6831">Y-Offset 15mm</tspan></text>
+  </g>
+  <g
+     style="display:inline"
+     inkscape:label="Cut"
+     id="layer3"
+     inkscape:groupmode="layer"
+     transform="translate(0,-308.26772)" />
+</svg>

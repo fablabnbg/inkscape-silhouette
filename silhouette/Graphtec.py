@@ -17,12 +17,16 @@
 # 2015-06-06  refactored plot_cmds() from plot().
 # 2016-05-16  no reset per default, this helps usbip.
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
+# 2017-04-20  Adding Cameo3 USB IDs
 #
 
 from __future__ import print_function
-import sys, time, re
 
-usb_reset_needed = False	# https://github.com/fablabnbg/inkscape-silhouette/issues/10
+import re
+import sys
+import time
+
+usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -32,19 +36,19 @@ elif sys_platform.startswith('darwin'):
   usb1ctx = usb1.USBContext()
 else:   # if sys_platform.startswith('linux'):
   try:
-    import usb.core		# where???
+    import usb.core  # where???
   except Exception as e:
       try:
           import libusb1 as usb
       except Exception as e1:
-	    try:
-	      import usb
-	    except Exception as e2:
-	      print("The python usb module could not be found. Try", file=sys.stderr)
-	      print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
-	      print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
-	      print("\n\n\n", file=sys.stderr)
-	      raise e2;
+        try:
+          import usb
+        except Exception as e2:
+          print("The python usb module could not be found. Try", file=sys.stderr)
+          print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
+          print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
+          print("\n\n\n", file=sys.stderr)
+          raise e2;
 
 try:
     try:
@@ -52,7 +56,11 @@ try:
       usb_vi_str = str(usb.version_info)
     except AttributeError:
       usb_vi = 0
+      if sys_platform.startswith('win'):
+        usb_vi = 1
+        pass # windows does not seem to detect the usb.version , gives attribute error. Other tests of pyusb work, pyusb is installed.
       usb_vi_str = 'unknown'
+
 
     if usb_vi < 1:
       print("Your python usb module appears to be "+usb_vi_str+" -- We need version 1.x", file=sys.stderr)
@@ -75,34 +83,34 @@ except NameError:
 
 MEDIA = [
 # CAUTION: keep in sync with sendto_silhouette.inx
-# media, pressure, speed, cap-color, name
-  ( 100,   27,     10,  "yellow", "Card without Craft Paper Backing"),
-  ( 101,   27,     10,  "yellow", "Card with Craft Paper Backing"),
-  ( 102,   10,     10,  "blue",   "Vinyl Sticker"),
-  ( 106,   14,     10,  "blue",   "Film Labels"),
-  ( 111,   27,     10,  "yellow", "Thick Media"),
-  ( 112,    2,     10,  "blue",   "Thin Media"),
-  ( 113,   10,     10,  "pen",    "Pen"),
-  ( 120,   30,     10,  "blue",   "Bond Paper 13-28 lbs (105g)"),
-  ( 121,   30,     10,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
-  ( 122,   30,     10,  "yellow", "Cardstock 40-60 lbs (90g)"),
-  ( 123,   30,     10,  "yellow", "Cover 40-60 lbs (170g)"),
-  ( 124,    1,     10,  "blue",   "Film, Double Matte Translucent"),
-  ( 125,    1,     10,  "blue",   "Film, Vinyl With Adhesive Back"),
-  ( 126,    1,     10,  "blue",   "Film, Window With Kling Adhesive"),
-  ( 127,   30,     10,  "red",    "Index 90 lbs (165g)"),
-  ( 128,   20,     10,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
-  ( 129,   27,     10,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
-  ( 130,   30,      3,  "red",    "Magnetic Sheet"),
-  ( 131,   30,     10,  "blue",   "Offset 24-60 lbs (90g)"),
-  ( 132,    5,     10,  "blue",   "Print Paper Light Weight"),
-  ( 133,   25,     10,  "yellow", "Print Paper Medium Weight"),
-  ( 134,   20,     10,  "blue",   "Sticker Sheet"),
-  ( 135,   20,     10,  "red",    "Tag 100 lbs (275g)"),
-  ( 136,   30,     10,  "blue",   "Text Paper 24-70 lbs (105g)"),
-  ( 137,   30,     10,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
-  ( 138,   30,     10,  "blue",   "Writing Paper 24-70 lbs (105g)"),
-  ( 300, None,   None,  "custom", "Custom"),
+# media, pressure, speed, depth, cap-color, name
+  ( 100,   27,     10,   1,  "yellow", "Card without Craft Paper Backing"),
+  ( 101,   27,     10,   1,  "yellow", "Card with Craft Paper Backing"),
+  ( 102,   10,      5,   1,  "blue",   "Vinyl Sticker"),
+  ( 106,   14,     10,   1,  "blue",   "Film Labels"),
+  ( 111,   27,     10,   1,  "yellow", "Thick Media"),
+  ( 112,    2,     10,   1,  "blue",   "Thin Media"),
+  ( 113,   18,     10,None,  "pen",    "Pen"),
+  ( 120,   30,     10,   1,  "blue",   "Bond Paper 13-28 lbs (105g)"),
+  ( 121,   30,     10,   1,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
+  ( 122,   30,     10,   1,  "yellow", "Cardstock 40-60 lbs (90g)"),
+  ( 123,   30,     10,   1,  "yellow", "Cover 40-60 lbs (170g)"),
+  ( 124,    1,     10,   1,  "blue",   "Film, Double Matte Translucent"),
+  ( 125,    1,     10,   1,  "blue",   "Film, Vinyl With Adhesive Back"),
+  ( 126,    1,     10,   1,  "blue",   "Film, Window With Kling Adhesive"),
+  ( 127,   30,     10,   1,  "red",    "Index 90 lbs (165g)"),
+  ( 128,   20,     10,   1,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
+  ( 129,   27,     10,   1,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
+  ( 130,   30,      3,   1,  "red",    "Magnetic Sheet"),
+  ( 131,   30,     10,   1,  "blue",   "Offset 24-60 lbs (90g)"),
+  ( 132,    5,     10,   1,  "blue",   "Print Paper Light Weight"),
+  ( 133,   25,     10,   1,  "yellow", "Print Paper Medium Weight"),
+  ( 134,   20,     10,   1,  "blue",   "Sticker Sheet"),
+  ( 135,   20,     10,   1,  "red",    "Tag 100 lbs (275g)"),
+  ( 136,   30,     10,   1,  "blue",   "Text Paper 24-70 lbs (105g)"),
+  ( 137,   30,     10,   1,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
+  ( 138,   30,     10,   1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
+  ( 300, None,   None,None,  "custom", "Custom"),
 ]
 
 #  robocut/Plotter.h:53 ff
@@ -112,24 +120,33 @@ PRODUCT_ID_CC300_20 = 0x111a
 PRODUCT_ID_SILHOUETTE_SD_1 = 0x111c
 PRODUCT_ID_SILHOUETTE_SD_2 = 0x111d
 PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
+PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
+PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
+PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
 DEVICE = [
- { 'vendor_id': 0x0b4d, 'product_id': 0x1123, 'name': 'Silhouette Portrait',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x1121, 'name': 'Silhouette Cameo',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT2, 'name': 'Silhouette Portrait2',
+   'width_mm':  203, 'length_mm': 3000, 'regmark': True },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO, 'name': 'Silhouette Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x112b, 'name': 'Silhouette Cameo2',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO2, 'name': 'Silhouette Cameo2',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x110a, 'name': 'Craft Robo CC200-20',
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO3, 'name': 'Silhouette Cameo3',
+   # margin_top_mm is just for safety when moving backwards with thin media
+   # margin_left_mm is a physical limit, but is relative to width_mm!
+   'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111a, 'name': 'Craft Robo CC300-20' },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111c, 'name': 'Silhouette SD 1' },
- { 'vendor_id': 0x0b4d, 'product_id': 0x111d, 'name': 'Silhouette SD 2' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft Robo CC300-20' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_1, 'name': 'Silhouette SD 1' },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_2, 'name': 'Silhouette SD 2' },
 ]
 
 def _bbox_extend(bb, x, y):
@@ -252,7 +269,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             print(msg, file=sys.stderr)
           sys.exit(0)
 
-	if usb_reset_needed:
+        if usb_reset_needed:
           for i in range(5):
             try:
               dev.reset();
@@ -269,10 +286,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pass
 
     self.dev = dev
-    self.need_interface = False		# probably never needed, but harmful on some versions of usb.core
+    self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
     self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
+    self.enable_sw_clipping = True
+
+  def product_id(s):
+    return s.hardware['product_id'] if 'product_id' in s.hardware else None
 
   def write(s, string, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
@@ -386,6 +407,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise ValueError('read failed: none')
     if isinstance(data, str):
         return data
+    elif isinstance(data, bytearray):
+        return str(data)
     else:
         return data.tostring()
 
@@ -455,60 +478,70 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
 
     # Additional commands seen in init by Silhouette Studio
-    #s.write("[\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("[\x03") # Get Upper Left Coords: 2 six digit numbers.
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("[: '%s'" % (resp[:-1]), file=s.log)	# response '0,0'
+    #  print("[: '%s'" % (resp[:-1]), file=s.log)  # response '0,0'
     #except:
     #  pass
 
-    #s.write("U\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("U\x03") # Get Lower Right Coordinates: 2 six digit numbers
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("U: '%s'" % (resp[:-1]), file=s.log)	# response '20320,4120' max. print range?
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. print range?
     #except:
     #  pass
 
-    #s.write("FQ0\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("FQ0\x03") # Unknown: 1 five digit number. Maybe last speed set?
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)	# response '10'
+    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)  # response '10'
     #except:
     #  pass
 
-    #s.write("FQ2\x03") # asks for something, no idea, just repeating sniffed communication
+    #s.write("FQ2\x03") # Unknown: 1 five digit number. Maybe last blade offset?
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)	# response '18'
+    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)  # response '18'
     #except:
     #  pass
 
-    #s.write("TB71\x03") # asks for something, no idea, just repeating sniffed communication
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("TB71: '%s'" % (resp[:-1]), file=s.log)
-    #except:
-    #  pass
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
 
-    #s.write("FA\x03") # asks for something, not sure, current position?
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
-    #except:
-    #  pass
+      s.write("TB71\x03") # Unknown: 2 five digit numbers
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("TB71: '%s'" % (resp[:-1]), file=s.log)
+      except:
+        pass
+
+      s.write("FA\x03") # Unknown: 2 five digit numbers
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
+      except:
+        pass
+
+      s.write("TC\x03")
+      try:
+        resp = s.read(timeout=1000)
+        if len(resp) > 1:
+          print("TC: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
+      except:
+        pass
 
   def get_version(s):
     """Retrieve the firmware version string from the device."""
 
     if s.dev is None: return None
 
-    s.write("FG\x03")
+    s.write("FG\x03")   # Get Version: 17 Chars
     try:
       resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:
@@ -517,7 +550,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return resp[0:-2]   # chop of 0x03
 
 
-  def setup(s, media=132, speed=None, pressure=None, pen=None, trackenhancing=False, landscape=False, leftaligned=None):
+  def setup(s, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
        speed range is [1..10], default None, from paper (132 -> 10)
        pressure range is [1..33], default None, from paper (132 -> 5)
@@ -536,9 +569,35 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     s.initialize()
 
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if cuttingmat == 'cameo_12x12':
+        s.write("TG1\x03")
+      elif cuttingmat == 'cameo_12x24':
+        s.write("TG2\x03")
+      else:
+        s.write("TG0\x03")
+
+      #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
+      # side of media (boundary check?), but next cut run will stall
+      #TB50,x: x = 1 landscape mode, x = 0 portrait mode
+      s.write("FN0\x03TB50,0\x03")
+
+      if cuttingmat == 'cameo_12x12':
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
+      elif cuttingmat == 'cameo_12x24':
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
+      else:
+        width = s.hardware['width_mm'] if 'width_mm' in s.hardware else mediawidth
+        height = s.hardware['length_mm'] if 'length_mm' in s.hardware else mediaheight
+        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
+
     if media is not None:
       if media < 100 or media > 300: media = 300
-      s.write("FW%d\x03" % media);
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        # Silhouette Studio does not appear to issue this command
+        pass
+      else:
+        s.write("FW%d\x03" % media);
       if pen is None:
         if media == 113:
           pen = True
@@ -546,54 +605,112 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pen = False
       for i in MEDIA:
         if i[0] == media:
-          print("Media=%d, cap='%s', name='%s'" % (media, i[3], i[4]), file=s.log)
+          print("Media=%d, cap='%s', name='%s'" % (media, i[4], i[5]), file=s.log)
           if pressure is None: pressure = i[1]
           if    speed is None:    speed = i[2]
+          if    depth is None:    depth = i[3]
+          break
+
+    if toolholder is None:
+      toolholder = 1
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      s.write("J%d\x03" % toolholder)
+    print("toolholder: %d" % toolholder, file=s.log)
 
     if speed is not None:
       if speed < 1: speed = 1
       if speed > 10: speed = 10
-      s.write("!%d\x03" % speed);
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        s.write("!%d,%d\x03" % (speed, toolholder));
+      else:
+        s.write("!%d\x03" % speed);
       print("speed: %d" % speed, file=s.log)
 
     if pressure is not None:
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
-      s.write("FX%d\x03" % pressure);
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        s.write("FX%d,%d\x03" % (pressure, toolholder));
+      else:
+        s.write("FX%d\x03" % pressure);
       # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
       print("pressure: %d" % pressure, file=s.log)
+
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if pen:
+        s.write("FC0,1,%d\x03"  % (toolholder))
 
     if s.leftaligned:
       print("Loaded media is expected left-aligned.", file=s.log)
     else:
       print("Loaded media is expected right-aligned.", file=s.log)
 
-    # robocut/Plotter.cpp:393 says:
-    # // I think this sets the distance from the position of the plotter
-    # // head to the actual cutting point, maybe in 0.1 mms (todo: Measure blade).
-    # // It is 0 for the pen, 18 for cutting.
-    # // C possible stands for curvature. Not that any of the other letters make sense...
-    cutter = 18
-    if pen: cutter = 0
-    s.write("FC%d\x03" % cutter)
+    # Lift plotter head at sharp corners
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if sharpencorners:
+        s.write("FE1,%d\x03" % toolholder)
+      else:
+        s.write("FE0,%d\x03" % toolholder)
 
+      if pen:
+        s.write("FF0,0,%d\x03" % (toolholder))
+      else:
+        sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
+        sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
+        s.write("FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+
+    # robocut/Plotter.cpp:393 says:
+    # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
+    # C possible stands for curvature. Not that any of the other letters make sense...
+    # C possible stands for circle.
+    # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
+    # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if not pen:
+        circle = 0.5 + bladediameter * 20
+        s.write("FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
+
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if autoblade and depth is not None:
+          if toolholder == 1:
+            if depth < 0: depth = 0
+            if depth > 10: depth = 10
+            s.write("TF%d,%d\x03" % (depth, toolholder));
+            print("depth: %d" % depth, file=s.log)
+    else:
+      if pen:
+        circle = 0
+      else:
+        circle = bladediameter * 20
+      s.write("FC%d\x03" % circle)
+
+    s.enable_sw_clipping = sw_clipping
+
+    # if enabled, rollers three times forward and back.
+    # needs a pressure of 19 or more, else nothing will happen 
     if trackenhancing is not None:
       if trackenhancing:
-        s.write("FY1\x03")
-      else:
         s.write("FY0\x03")
+      else:
+        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+          pass
+        else:
+          s.write("FY1\x03")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    if landscape is not None:
-      if landscape:
-        s.write("FN0\x03TB50,1\x03")
-      else:
-        s.write("FN0\x03TB50,0\x03")
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      pass
+    else:
+      if landscape is not None:
+       if landscape:
+         s.write("FN0\x03TB50,1\x03")
+       else:
+         s.write("FN0\x03TB50,0\x03")
 
-    # Don't lift plotter head between paths
-    s.write("FE0,0\x03")
+      # Don't lift plotter head between paths
+      s.write("FE0,0\x03")
 
   def find_bbox(s, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -726,7 +843,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               bbox['clip']['count'] = 1
 
         if bbox['only'] is False:
-          if inside and last_inside:
+          if not s.enable_sw_clipping or (inside and last_inside):
             plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move
@@ -828,7 +945,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #  s.write("\1b\05") #request status
       #  resp = s.read(timeout=1000)
       #  if resp != "    1\x03":
-      #  	break;
+      #    break;
 
       resp = s.read(timeout=40000) ## Allow 20s for reply...
       if resp != "    0\x03":
@@ -854,8 +971,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
-    p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width) #FIXME Is coordinate swap necessary here?
-    s.write(p)
+    # needed at least for the trackenhancing feature, defines the usable length,
+    #p = "FU%d\x03" % (height)
+    #p = "FU%d,%d\x03" % (height,width) # optional
+    #s.write(p)
+
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      pass
+    else:
+      p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
+      s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
@@ -875,12 +1000,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
-    if not 'llx' in bbox: bbox['llx'] = 0	# survive empty pathlist
+    if not 'llx' in bbox: bbox['llx'] = 0  # survive empty pathlist
     if not 'lly' in bbox: bbox['lly'] = 0
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      new_home = "H\x03"
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        new_home = "L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
+      else:
+        new_home = "H\x03"
     else: #includes 'below'
       new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
     #new_home += "FN0\x03TB50,0\x03"
