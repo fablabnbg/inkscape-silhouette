@@ -127,7 +127,7 @@ PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
 DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
-   'width_mm':  203, 'length_mm': 3000, 'regmark': True },
+   'width_mm':  206, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT2, 'name': 'Silhouette Portrait2',
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO, 'name': 'Silhouette Cameo',
@@ -490,7 +490,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
-    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. print range?
+    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. usable print range?
     #except:
     #  pass
 
@@ -721,7 +721,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return bb
 
   def flip_cut(s, cut):
-    """this returns a flipped copy of the cut about the x-axis,
+    """this returns a flipped copy of the cut about the y-axis,
        keeping min and max values as they are."""
     bb = s.find_bbox(cut)
     new_cut = []
@@ -971,7 +971,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
-    # needed at least for the trackenhancing feature, defines the usable length,
+    # needed only for the trackenhancing feature, defines the usable length, rollers three times forward and back.
+    # needs a pressure of 19 or more, else nothing will happen 
     #p = "FU%d\x03" % (height)
     #p = "FU%d,%d\x03" % (height,width) # optional
     #s.write(p)

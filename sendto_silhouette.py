@@ -82,12 +82,14 @@
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
 #                         Added new cutting strategy "Minimized Traveling"
 #                         Added parameter for blade diameter
-# 2019-07-25, jw, v1.20 -- merge from github.com/olegdeezus/inkscape-silhouette
+# 2018-06-01, jw, v1.20 -- Make it compile again. Hmm.
+# 2019-07-25, jw, v1.21 -- merge from github.com/olegdeezus/inkscape-silhouette
+#                          merge from fablabnbg
 
-__version__ = '1.20'	# Keep in sync with sendto_silhouette.inx ca line 79
-__author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
+__version__ = '1.21'	# Keep in sync with sendto_silhouette.inx ca line 79
+__author__ = 'Juergen Weigert <juergen@fabmail.org> and contributors'
 
-import sys, os, shutil, time, logging, tempfile
+import sys, os, shutil, time, logging, tempfile, math, re
 
 
 # we sys.path.append() the directory where this
@@ -137,9 +139,9 @@ IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 def px2mm(px):
   '''
   Convert inkscape pixels to mm.
-  The default inkscape unit, called 'px' is 90dpi
+  The default inkscape unit, called 'px' is 96dpi
   '''
-  return px*25.4/90
+  return px*25.4/96
 
 # Lifted with impunity from eggbot.py
 # Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
@@ -932,11 +934,15 @@ class SendtoSilhouette(inkex.Effect):
                         elif ( u == '' ) or ( u == 'px' ):
                                 return v
                         elif u == 'mm':
-                                return v*90./25.4       # inverse of px2mm
+                                return v*96./25.4       # inverse of px2mm
                         elif u == 'in':
-                                return v*90.
+                                return v*96.
                         elif u == 'cm':
-                                return v*90./2.54       # inverse of 10*px2mm
+                                return v*96./2.54       # inverse of 10*px2mm
+                        elif u == 'pt':
+                                return v*96./72.
+                        elif u == 'pc':
+                                return v*96./16.
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
@@ -1034,8 +1040,13 @@ class SendtoSilhouette(inkex.Effect):
       self.pen=False
       self.autoblade=True
 
+    # scale all points to unit mm
+    for path in self.paths:
+      for i,pt in enumerate(path):
+        path[i] = (px2mm(pt[0]), px2mm(pt[1]))
+
     if self.options.strategy == 'matfree':
-      mf = MatFree('default', scale=px2mm(1.0), pen=self.pen)
+      mf = MatFree('default', scale=1.0, pen=self.pen)
       mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
       self.paths = mf.apply(self.paths)
     elif self.options.strategy == 'mintravel':
@@ -1047,14 +1058,8 @@ class SendtoSilhouette(inkex.Effect):
     # print >>self.tty, self.paths
     cut = []
     pointcount = 0
-    for px_path in self.paths:
-      mm_path = []
-      for pt in px_path:
-        if self.options.strategy == 'matfree':
-          mm_path.append((pt[0], pt[1]))        # MatFree.load() did the scaling already.
-        else:
-          mm_path.append((px2mm(pt[0]), px2mm(pt[1])))
-        pointcount += 1
+    for mm_path in self.paths:
+      pointcount += len(mm_path)
 
       multipath = []
       multipath.extend(mm_path)

@@ -59,6 +59,8 @@
       <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">0</param>
       <param name="depth" type="int" min="-1" max="10" _gui-text="Blade Depth (for AutoBlade)">-1</param>
       <param name="speed_help" type="description">Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</param>
+    </page>
+    <page name='opt' _gui-text='Options'>
       <param name="dashes" type="boolean" _gui-text="Convert to dashes">false</param> <param name="dashes_help" type="description">Convert paths with dashed strokes to separate subpaths for perforated cuts.</param>
       <param name="autocrop" type="boolean" _gui-text="Trim margins">false</param> <param name="autocrop_help" type="description">Shift to the top lefthand corner, then do offsets.</param>
       <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
@@ -126,9 +128,9 @@ Always use the least amount of blade possible.
       <param name="bladediameter_help" type="description">Correct value for the silhouette blade is 0.9mm</param>
     </page>
     <page name='about' _gui-text='About'>
-      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juewei@fabmail.org] and contributors</param>
+      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/jnweiger/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</param>
       <!-- Keep in sync with sendto_silhouette.py line 78 __version__ = ... -->
-      <param name="about_version" type="description">Version 1.20</param>
+      <param name="about_version" type="description">Version 1.21</param>
     </page>
   </param>
 
