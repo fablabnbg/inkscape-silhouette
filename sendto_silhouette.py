@@ -81,8 +81,10 @@
 # 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
 #			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
 #                         Added new cutting strategy "Minimized Traveling"
+# 2019-08-03, jw, v1.22 - merged cameo3 autoblase code, added a copy of pyusb-1.0.2 to be used as a 
+#                         fallback on any platform.
 
-__version__ = '1.19'	# Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = '1.22'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juewei@fabmail.org> and contributors'
 
 import sys, os, shutil, time, logging, tempfile

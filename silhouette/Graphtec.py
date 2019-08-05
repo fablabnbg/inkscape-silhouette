@@ -21,9 +21,10 @@
 #
 
 from __future__ import print_function
-import sys, time, re
+import os, sys, time, re
 
 usb_reset_needed = False	# https://github.com/fablabnbg/inkscape-silhouette/issues/10
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/pyusb-1.0.2')      # advertise a builtin copy of pyusb.
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
@@ -61,11 +62,7 @@ try:
       print("\n\n\n", file=sys.stderr)
       print("For Ubuntu 14.04try:\n  pip install pyusb --upgrade", file=sys.stderr)
       print("\n\n\n", file=sys.stderr)
-      sys.exit(1)
-      sys.exit(1)
-      # try my own wrapper instead.
-      # import UsbCoreMini as usb
-      # forget this. old 0.4 PyUSB segfaults easily.
+      sys.exit(0)
 except NameError:
     pass #on OS X usb.version_info[0] will always fail as libusb1 is being used
 

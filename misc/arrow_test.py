@@ -6,8 +6,8 @@
 #
 # Requires: python-usb  # from Factory
 
-import time,sys
-sys.path.extend(['..','.'])	# make it callable from top or misc directory.
+import time, sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')      # make it callable from anywhere
 from silhouette.Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
