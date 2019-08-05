@@ -6,7 +6,7 @@
 #
 import sys
 sys.path.append('/usr/share/inkscape/extensions')
-sys.path.append('/home/testy/src/github/inkscape-silhouette')
+sys.path.append('/home/jw/src/github/fablabnbg/inkscape-silhouette')
 from silhouette.Graphtec import SilhouetteCameo
 
 __version__ = '0.1'

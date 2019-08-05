@@ -144,12 +144,6 @@ TODO
 
 * Implement the triangle in a square test cut.
 
-* Find out, if inkscape could keep the current selection, after running an
-  extension.  It is not nice, that the selection gets deselected, and I have
-  to close and reopen the extension dialogue to re-activate a selection.
-  Idea: Maybe add an option to auto-remember old selections, if it is still
-  the same document and there is no new selection.
-
 * test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially 
   well suited as a test-case.
 * improve MatFree cutting by finding a better scan sort algorithm.
@@ -160,7 +154,6 @@ TODO
 REFERENCES
 ----------
 
-There is very little documentation about extensions. If so, its often historic.
 * http://wiki.inkscape.org/wiki/index.php/Extensions
 * http://wiki.inkscape.org/wiki/index.php/INX_Parameters
 * http://wiki.inkscape.org/wiki/index.php/ExtensionsSystem
