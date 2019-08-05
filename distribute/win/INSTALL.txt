@@ -1,0 +1,9 @@
+1. Install zadig (https://zadig.akeo.ie/)
+2. Run zadig
+3. Check "Options" > "List all devices"
+4. Select "USB Printing Support" (DE:"USB-Druckerunterstützung") in main window dropdown
+5. In selectbox select "libusb-win32"
+6. Click "replace driver"; After installation close zadig
+# No more needed with 1.22: 7. Enter "pyusb-1.0.2" and copy folder "usb" to C:\Progams\Inkscape\lib\python2.7\site-packages"
+8. Copy all files in "inkscape-silhouette-master" to C:\Programs\Inkscape\share\extensions
+9. Run inkscape; The extension can be found under "Extensions" > "Export" > "Send to Silhouette"
