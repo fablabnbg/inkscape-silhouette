@@ -29,7 +29,7 @@ Typical sequence
 "!%d\x03" % speed	# 1..10
 "FX%d\x03" % press	# 1..33
 "FC%d\x03" % off	# off=18: cutting, off=0: pen. Other values unknown. 	#FC p,q,[n] [t]
-"FY%d\x03" % enh	# enh=1/0: Trackenhancing on/off
+"FY%d\x03" % enh	# enh=0/1: Trackenhancing on/off
 "FN%d\x03" %ori		# ori=1/0: Landscape/Portrait
 "FE0\x03"		# ??
 "TB71\x03"		# ??
@@ -37,7 +37,7 @@ Typical sequence
 "FA\x03"     		# begin page definition
 "FU%d,%d\x03" % (w,h)	# h,w page dimensions without top/left margin. Needed to start left.
 "FM1\x03"		# ??
---------------------------------- if registraion marks
+--------------------------------- if registration marks
 "TB50,381\x03"
 "TB99\x03"
 "TB55,1\x03"
