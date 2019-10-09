@@ -472,7 +472,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = s.read(timeout=1000)
       if len(resp) > 1:
-        print("FG: '%s'" % (resp[:-1]), file=s.log)
+        print("FG: '%s'" % (resp[:-1]), file=s.log) # response 'Portrait V1.10    '
     except:
       pass
 
@@ -490,6 +490,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
     #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. usable print range?
+    #                                              # response ' 20320,   3840' on Portrait
     #except:
     #  pass
 
@@ -498,14 +499,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
     #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)  # response '10'
+    #                                                # response '    5' on portrait
     #except:
     #  pass
 
-    #s.write("FQ2\x03") # Unknown: 1 five digit number. Maybe last blade offset?
+    #s.write("FQ2\x03") # Unknown: 1 five digit number. Maybe last blade offset or last pressure?
     #try:
     #  resp = s.read(timeout=1000)
     #  if len(resp) > 1:
     #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)  # response '18'
+    #                                                # response '   17' on portrait
     #except:
     #  pass
 
@@ -515,7 +518,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
-          print("TB71: '%s'" % (resp[:-1]), file=s.log)
+          print("TB71: '%s'" % (resp[:-1]), file=s.log)  # response '    0,    0' on portrait
       except:
         pass
 
@@ -524,6 +527,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         resp = s.read(timeout=1000)
         if len(resp) > 1:
           print("FA: '%s'" % (resp[:-1]), file=s.log) # response '0,0'
+                                                      # response '    0,    0' on portrait
       except:
         pass
 

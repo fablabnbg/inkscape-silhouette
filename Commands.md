@@ -109,3 +109,129 @@ TB50,0
 - 0x30 0x03
 
 </pre>
+
+
+
+Typical sequence on portrait with silhouette studio 3.3.642ss
+-------------------------------------------------------------
+
+Init
+----
+
+"\x1b\x04"  # initialize plotter
+"\x1b\x05"  # status request	(works already before initialize)
+            # Response "%d\x03" 	0 ready, 1 moving, 2 empty tray
+"FG\x03"    # query version
+            # Response  "Silhouette V1.10    \x03"
+
+"[\x03"    # response '    0,    0'
+"U\x03"    # response' 20320,   3840'	# device limits?
+"FQ0\x03"  # response '    5'
+"FQ2\x03"  # response '   17'
+"TB71\x03" # response '    0,    0'
+
+Additional Commands
+-------------------
+"FB70"	# start calibration
+
+"\x1b\x00\x01"	key press down
+"\x1b\x00\x02"	key press up
+"\x1b\x00\x04"	key press right
+"\x1b\x00\x08"	key press left
+"\x1b\x00\x00"	key set none
+
+Kalibration Cut
+---------------
+
+FB0,0
+FN0
+TB50,0
+\30,0
+Z5910,4070
+
+FX15
+!10
+FC17
+FC18
+FE0,0
+FF0,0,0
+
+M476.66,0
+D576.62,0
+M576.62,4000
+D476.66,4000
+M1202.62,3642.28
+D1202.62,3542.32
+M5202.62,3542.32
+D5202.62,3642.28
+
+FX5
+!10
+FC18
+FE0,0
+FF0,0,0
+L0
+\0,0
+M0,0
+FB0,0
+FN0
+TB50,0
+
+Cut without mat
+---------------
+
+FN0.TB50,0.\30,0.Z5440,4070.
+FX33.!5.FC18.FE0,0.FF0,0,0.FY1.
+M382.10,1256.62.D391.40,568.98.
+FX5.!10.FC18.FE0,0.FF0,0,0.L0.\0,0.M0,0.FN0.TB50,0.
+
+FN0TB50,0\30,0Z5440,4070
+FX33!5FC18FE0,0FF0,0,0FY1
+M382.10,1256.62D391.40,568.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
+
+with mat a4
+-----------
+
+FN0 TB50,0 \30,0 Z5910,4070
+FX33 !5 FC18 FE0,0 FF0,0,0 FY1
+M382.10,1256.62 D391.40,568.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
+
+with mat 8"x12"
+
+FN0TB50,0\30,0Z5910,4120
+FX33!5FC18FE0,0FF0,0,0FY1
+M382.10,1314.62D391.40,626.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
+
+with a4, additional feed 1.0mm
+
+FN0TB50,0\30,0Z5910,4070
+FX33!5FC18FE0,0FF0,0,0FY1
+M382.10,1256.62D391.40,568.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M411.40,0SO0FN0TB50,0
+
+----> SO0 sets new origin
+
+
+with a4, double cut, strength 15
+
+
+FN0TB50,0\30,0Z5910,4070
+FX15!5FC18FE0,0FF0,0,0FY1
+M382.10,1256.62D391.40,568.98M382.10,1256.62D391.40,568.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
+
+
+with a4, trackenhancing, strength 22 (rollers three times back and forth)
+
+
+FN0 TB50,0 FX20 FY0 FU5440 \30,0 Z5910,4070
+FX22!5FC18FE0,0
+FF0,0,0FY0
+M382.10,1256.62D391.40,568.98
+FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
+
+---> FY0 track enhancing
+---> FU5440 usable length (rollers not to end of page)
