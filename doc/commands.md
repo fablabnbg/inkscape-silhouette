@@ -190,7 +190,7 @@ In the mean time, here's what I've come up with so far by sniffing the protocol:
 <td class="org-left">Get Info</td>
 <td class="org-left">'FA' 03</td>
 <td class="org-left">nnnnn ',' mmmmm     03<sup><a id="fnr.5" class="footref" href="#fn.5">5</a></sup></td>
-<td class="org-left">Unknown: 2 five digit numbers.</td>
+<td class="org-left">Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller. (carriage, roller / unit 1/100% i.e. 0.0001)</td>
 </tr>
 
 
@@ -222,7 +222,7 @@ In the mean time, here's what I've come up with so far by sniffing the protocol:
 <td class="org-left">Get Info</td>
 <td class="org-left">'TB71' 03</td>
 <td class="org-left">nnnnn ',' mmmmm     03<sup><a id="fnr.5.100" class="footref" href="#fn.5">5</a></sup></td>
-<td class="org-left">Unknown: 2 five digit numbers.</td>
+<td class="org-left">Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics</td>
 </tr>
 
 
