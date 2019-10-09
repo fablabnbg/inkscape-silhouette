@@ -128,7 +128,8 @@ Init
 "U\x03"    # response' 20320,   3840'	# device limits?
 "FQ0\x03"  # response '    5'
 "FQ2\x03"  # response '   17'
-"TB71\x03" # response '    0,    0'
+"TB71\x03" # response '    0,    4'	# ask for machine stored calibration offset of the regmark sensor optics (y,x / unit 1/20 mm)
+"FA\x03"   # response '    0,    0'	# ask for machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
 
 Additional Commands
 -------------------
@@ -176,6 +177,26 @@ M0,0
 FB0,0
 FN0
 TB50,0
+
+
+Store calibration factors permanently in the machine
+----------------------------------------------------
+
+FB-92.02,0  # scale down carriage movements by 0,9202%
+FB200,134   # scale up carriage movement by 2%, scale up roller movements by 1,34%
+
+
+Cut a calibration test cross
+----------------------------
+
+TB 70
+
+
+Store regmark sensor offset calibration permanently in the machine
+------------------------------------------------------------------
+
+TB72,0,4.01  # move 0.1mm to the right
+
 
 Cut without mat
 ---------------

@@ -514,7 +514,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
 
-      s.write("TB71\x03") # Unknown: 2 five digit numbers
+      s.write("TB71\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
@@ -522,7 +522,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except:
         pass
 
-      s.write("FA\x03") # Unknown: 2 five digit numbers
+      s.write("FA\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
