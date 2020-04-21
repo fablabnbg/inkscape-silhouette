@@ -319,7 +319,7 @@ def interstices( P1, P2, paths, hatches, margin=0 ):
         # Now, entries with even valued indices into sa[] are where we start
         # a hatch line and odd valued indices where we end the hatch line.
         for i in range( 0, len( sa ) - 1, 2 ):
-                if not hatches.has_key( sa[i][1] ):
+                if sa[i][1] not in hatches:
                         hatches[sa[i][1]] = []
                 x1 = P1[0] + sa[i][0] * ( P2[0] - P1[0] )
                 y1 = P1[1] + sa[i][0] * ( P2[1] - P1[1] )
@@ -859,7 +859,7 @@ class Eggbot_Hatch( inkex.Effect ):
 
                                 pass
 
-                        elif not isinstance( node.tag, basestring ):
+                        elif not isinstance( node.tag, str ):
 
                                 pass
 
@@ -1022,7 +1022,7 @@ class Eggbot_Hatch( inkex.Effect ):
                 for key in self.hatches:
                         path = ''
                         direction = True
-                        if self.transforms.has_key( key ):
+                        if key in self.transforms:
                                 transform = inverseTransform( self.transforms[key] )
                                 # Determine the scaled stroke width for a hatch line
                                 # We produce a line segment of unit length, transform

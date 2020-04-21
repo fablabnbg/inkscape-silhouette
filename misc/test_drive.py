@@ -146,7 +146,7 @@ cut = cut_vertical_zigzag + [[(10,0.2),(12,0.3),(11.6,0.8)]]
 if len(sys.argv) > 1:
   str=open(sys.argv[1]).readlines()
   cut=eval("".join(str), {}, {})
-  print "loading from", sys.argv[1]
+  print("loading from", sys.argv[1])
 
 
 def print_pdf(c):
@@ -168,7 +168,7 @@ def print_pdf(c):
   # ctx.fill()
   c.render(ctx)
   ctx.show_page()
-  print "output.pdf written"
+  print("output.pdf written")
 
 def key_press(win, ev, c):
   new_idx = None
@@ -192,7 +192,7 @@ def key_press(win, ev, c):
       a.remove()
     c.arrow = []
   else:
-    print c.get_scale()
+    print(c.get_scale())
 
   if new_idx is not None:
     jumpto = True
@@ -216,7 +216,7 @@ def key_press(win, ev, c):
                 end_arrow=True, arrow_width=3, arrow_tip_length=2, arrow_length=2, 
                 stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
-    print new_idx, c.points[c.cursor_idx][0], c.points[c.cursor_idx][0].att()
+    print(new_idx, c.points[c.cursor_idx][0], c.points[c.cursor_idx][0].att())
   else:
     c.cursor.stop_animation()
 
@@ -288,7 +288,7 @@ def main ():
     if len(canvas.points) <= 1:
       rect = Rect(parent=root, x=1, y=1, width=3,  height=2,
                   fill_color = '#77ff77', stroke_color = 'black', line_width = .01)
-      print "Dummy rectangle drawn. No points in canvas."
+      print("Dummy rectangle drawn. No points in canvas.")
     else:
       cursor_p = Points([(-0.5,0),(0,0.5),(0.5,0),(0,-0.5),(-0.5,0)])
       canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)

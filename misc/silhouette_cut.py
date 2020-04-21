@@ -34,7 +34,7 @@ dumpdata=dev.load_dumpfile(args.dumpfile)
 dev.wait_for_ready()
 meta = dev.plot(pathlist=[], bboxonly=args.bbox, no_trailer=True,
                 mediawidth=args.width, mediaheight=args.height, offset=(args.xoff,args.yoff))
-print meta
+print(meta)
 
 dev.wait_for_ready()
 cmd_list = dev.plot_cmds(dumpdata, meta['bbox'], args.xoff, args.yoff)

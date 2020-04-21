@@ -12,11 +12,11 @@ from silhouette.Graphtec import SilhouetteCameo
 
 # coordinates in mm, origin int top lefthand corner
 arrow1 = [ (0,5), (21,5), (18,0), (31,10), (18,20), (21,15), (0,15), (3,10), (0,5) ]
-arrow2 = map(lambda x: (x[0]+263, x[1]+0), arrow1)
-arrow3 = map(lambda x: (x[0]+30, x[1]+0), arrow1)
+arrow2 = [(x[0]+263, x[1]+0) for x in arrow1]
+arrow3 = [(x[0]+30, x[1]+0) for x in arrow1]
 
 dev = SilhouetteCameo()
-print "status=%s" % dev.wait_for_ready(20)
+print("status=%s" % dev.wait_for_ready(20))
 
 tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
 
@@ -32,4 +32,4 @@ for i in range(8):
   # we can workaround by sending a dummy job.
   bbox = dev.plot(pathlist=[ [(0,0),(0,0)] ], offset=(0,0))
   dev.wait_for_ready()
-print bbox
+print(bbox)
