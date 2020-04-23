@@ -6,6 +6,8 @@
 #
 # Requires: python-usb  # from Factory
 
+from __future__ import print_function
+
 import time, sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')      # make it callable from anywhere
 from silhouette.Graphtec import SilhouetteCameo

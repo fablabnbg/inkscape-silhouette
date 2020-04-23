@@ -4,6 +4,9 @@
 # as our triangle is not a simple triangle, but a more complex
 # Arrow head. The outer square is an ordinary 1cm x 1cm square.
 #
+
+from __future__ import print_function
+
 import sys
 sys.path.append('/usr/share/inkscape/extensions')
 sys.path.append('/home/jw/src/github/fablabnbg/inkscape-silhouette')

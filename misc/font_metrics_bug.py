@@ -7,6 +7,8 @@
 # https://bugzilla.novell.com/show_bug.cgi?id=820593
 # https://bugzilla.gnome.org/show_bug.cgi?id=700664
 
+from __future__ import print_function
+
 import gtk
 from goocanvas import *
 import cairo

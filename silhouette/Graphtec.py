@@ -404,7 +404,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             data = s.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    if isinstance(data, str):
+    if isinstance(data, (str, bytes)):
         return data.decode()
     elif isinstance(data, bytearray):
         return str(data).decode()
@@ -846,7 +846,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               bbox['clip']['count'] = 1
 
         if bbox['only'] is False:
-          if inside and last_inside:
+          if not s.enable_sw_clipping or (inside and last_inside):
             plotcmds.append(b"D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move
