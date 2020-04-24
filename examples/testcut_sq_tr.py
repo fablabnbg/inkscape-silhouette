@@ -4,6 +4,9 @@
 # as our triangle is not a simple triangle, but a more complex
 # Arrow head. The outer square is an ordinary 1cm x 1cm square.
 #
+
+from __future__ import print_function
+
 import sys
 sys.path.append('/usr/share/inkscape/extensions')
 sys.path.append('/home/jw/src/github/fablabnbg/inkscape-silhouette')
@@ -26,8 +29,8 @@ def write_progress(done, total, msg):
 
 dev = SilhouetteCameo(progress_cb=write_progress, no_device=False)
 state = dev.status()    # hint at loading paper, if not ready.
-print "status=%s" % (state)
-print "device version: '%s'" % dev.get_version()
+print("status=%s" % (state))
+print("device version: '%s'" % dev.get_version())
 
 dev.setup(media=132, pen=False, pressure=1, speed=10)
 dev.plot(pathlist=test_sq_tr, offset=(30, 30))

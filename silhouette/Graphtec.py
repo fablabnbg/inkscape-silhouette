@@ -376,7 +376,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
     so = 0
-    delimiter = "\x03"
+    delimiter = b"\x03"
     while so < len(string):
       safechunksz = min(safemaxchunksz, len(string)-so)
       candidate = string[so:so+safechunksz]
@@ -404,12 +404,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             data = s.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    if isinstance(data, str):
-        return data
+    if isinstance(data, (str, bytes)):
+        return data.decode()
     elif isinstance(data, bytearray):
-        return str(data)
+        return str(data).decode()
     else:
-        return data.tostring()
+        return data.tostring().decode()
 
   def try_read(s, size=64, timeout=1000):
     ret=None
@@ -427,8 +427,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if s.dev is None: return 'none'
 
     # Status request.
-    s.write("\x1b\x05")
-    resp = "None\x03"
+    s.write(b"\x1b\x05")
+    resp = b"None\x03"
     try:
       resp = s.read(timeout=5000)
     except usb.core.USBError as e:
@@ -461,11 +461,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """Send the init command. Called by setup()."""
     # taken from robocut/Plotter.cpp:331 ff
     # Initialise plotter.
-    s.write("\x1b\x04")
+    s.write(b"\x1b\x04")
 
     # Initial palaver
     try:
-      s.write("FG\x03")   # query device name
+      s.write(b"FG\x03")   # query device name
     except Exception as e:
       raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
 
@@ -514,7 +514,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
 
-      s.write("TB71\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
+      s.write(b"TB71\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
@@ -522,7 +522,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except:
         pass
 
-      s.write("FA\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
+      s.write(b"FA\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
@@ -531,7 +531,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except:
         pass
 
-      s.write("TC\x03")
+      s.write(b"TC\x03")
       try:
         resp = s.read(timeout=1000)
         if len(resp) > 1:
@@ -544,7 +544,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.dev is None: return None
 
-    s.write("FG\x03")   # Get Version: 17 Chars
+    s.write(b"FG\x03")   # Get Version: 17 Chars
     try:
       resp = s.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:
@@ -574,25 +574,25 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       if cuttingmat == 'cameo_12x12':
-        s.write("TG1\x03")
+        s.write(b"TG1\x03")
       elif cuttingmat == 'cameo_12x24':
-        s.write("TG2\x03")
+        s.write(b"TG2\x03")
       else:
-        s.write("TG0\x03")
+        s.write(b"TG0\x03")
 
       #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
       # side of media (boundary check?), but next cut run will stall
       #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-      s.write("FN0\x03TB50,0\x03")
+      s.write(b"FN0\x03TB50,0\x03")
 
       if cuttingmat == 'cameo_12x12':
-        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
+        s.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
       elif cuttingmat == 'cameo_12x24':
-        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
+        s.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
       else:
         width = s.hardware['width_mm'] if 'width_mm' in s.hardware else mediawidth
         height = s.hardware['length_mm'] if 'length_mm' in s.hardware else mediaheight
-        s.write("\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
+        s.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
 
     if media is not None:
       if media < 100 or media > 300: media = 300
@@ -600,7 +600,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # Silhouette Studio does not appear to issue this command
         pass
       else:
-        s.write("FW%d\x03" % media);
+        s.write(b"FW%d\x03" % media);
       if pen is None:
         if media == 113:
           pen = True
@@ -617,31 +617,31 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if toolholder is None:
       toolholder = 1
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-      s.write("J%d\x03" % toolholder)
+      s.write(b"J%d\x03" % toolholder)
     print("toolholder: %d" % toolholder, file=s.log)
 
     if speed is not None:
       if speed < 1: speed = 1
       if speed > 10: speed = 10
       if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        s.write("!%d,%d\x03" % (speed, toolholder));
+        s.write(b"!%d,%d\x03" % (speed, toolholder));
       else:
-        s.write("!%d\x03" % speed);
+        s.write(b"!%d\x03" % speed);
       print("speed: %d" % speed, file=s.log)
 
     if pressure is not None:
       if pressure <  1: pressure = 1
       if pressure > 33: pressure = 33
       if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        s.write("FX%d,%d\x03" % (pressure, toolholder));
+        s.write(b"FX%d,%d\x03" % (pressure, toolholder));
       else:
-        s.write("FX%d\x03" % pressure);
-      # s.write("FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
+        s.write(b"FX%d\x03" % pressure);
+        # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
       print("pressure: %d" % pressure, file=s.log)
 
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       if pen:
-        s.write("FC0,1,%d\x03"  % (toolholder))
+        s.write(b"FC0,1,%d\x03"  % (toolholder))
 
     if s.leftaligned:
       print("Loaded media is expected left-aligned.", file=s.log)
@@ -651,16 +651,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # Lift plotter head at sharp corners
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       if sharpencorners:
-        s.write("FE1,%d\x03" % toolholder)
+        s.write(b"FE1,%d\x03" % toolholder)
       else:
-        s.write("FE0,%d\x03" % toolholder)
+        s.write(b"FE0,%d\x03" % toolholder)
 
       if pen:
-        s.write("FF0,0,%d\x03" % (toolholder))
+        s.write(b"FF0,0,%d\x03" % (toolholder))
       else:
         sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
         sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-        s.write("FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+        s.write(b"FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
 
     # robocut/Plotter.cpp:393 says:
     # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
@@ -671,21 +671,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       if not pen:
         circle = 0.5 + bladediameter * 20
-        s.write("FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
+        s.write(b"FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
 
       if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if autoblade and depth is not None:
           if toolholder == 1:
             if depth < 0: depth = 0
             if depth > 10: depth = 10
-            s.write("TF%d,%d\x03" % (depth, toolholder));
+            s.write(b"TF%d,%d\x03" % (depth, toolholder));
             print("depth: %d" % depth, file=s.log)
     else:
       if pen:
         circle = 0
       else:
         circle = bladediameter * 20
-      s.write("FC%d\x03" % circle)
+      s.write(b"FC%d\x03" % circle)
 
     s.enable_sw_clipping = sw_clipping
 
@@ -693,12 +693,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # needs a pressure of 19 or more, else nothing will happen 
     if trackenhancing is not None:
       if trackenhancing:
-        s.write("FY0\x03")
+        s.write(b"FY0\x03")
       else:
         if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
           pass
         else:
-          s.write("FY1\x03")
+          s.write(b"FY1\x03")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
@@ -707,13 +707,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
     else:
       if landscape is not None:
-       if landscape:
-         s.write("FN0\x03TB50,1\x03")
-       else:
-         s.write("FN0\x03TB50,0\x03")
+        if landscape:
+          s.write(b"FN0\x03TB50,1\x03")
+        else:
+          s.write(b"FN0\x03TB50,0\x03")
 
       # Don't lift plotter head between paths
-      s.write("FE0,0\x03")
+      s.write(b"FE0,0\x03")
 
   def find_bbox(s, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -817,7 +817,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             bbox['clip']['count'] = 1
 
       if bbox['only'] is False:
-        plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
+        plotcmds.append(b"M%d,%d" % (int(0.5+y), int(0.5+x)))
 
       for j in range(1,len(path)):
         x = path[j][0]*20. + x_off
@@ -847,10 +847,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
         if bbox['only'] is False:
           if not s.enable_sw_clipping or (inside and last_inside):
-            plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append(b"D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move
-            plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append(b"M%d,%d" % (int(0.5+y), int(0.5+x)))
         last_inside = inside
     return plotcmds
 
@@ -929,20 +929,20 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       height = reglength * 20.0
       width = regwidth * 20.0
 
-      s.write("TB50,0\x03") #only with registration (it was TB50,1), landscape mode
-      s.write("TB99\x03")
-      s.write("TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
-      s.write("TB51,400\x03")   # length of regmarks
-      s.write("TB53,10\x03")    # width of regmarks
-      s.write("TB55,1\x03")
+      s.write(b"TB50,0\x03") #only with registration (it was TB50,1), landscape mode
+      s.write(b"TB99\x03")
+      s.write(b"TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+      s.write(b"TB51,400\x03")   # length of regmarks
+      s.write(b"TB53,10\x03")    # width of regmarks
+      s.write(b"TB55,1\x03")
 
       if regsearch:
         # automatic regmark test, height, width, top, left
         # add a search range of 10mm
-        s.write("TB123,%i,%i,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
+        s.write(b"TB123,%i,%i,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
       else:
         # manual regmark, height, width
-        s.write("TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
+        s.write(b"TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
 
       #while True:
       #  s.write("\1b\05") #request status
@@ -965,7 +965,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
 
     # // I think this is the feed command. Sometimes it is 5588 - maybe a maximum?
-    #s.write("FO%d\x03" % (height-top))
+    #s.write(b"FO%d\x03" % (height-top))
 
 
     #FMx, x = 0/1: 1 leads to additional horizontal offset of 5 mm, why? Has other profound
@@ -976,29 +976,29 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # needed only for the trackenhancing feature, defines the usable length, rollers three times forward and back.
     # needs a pressure of 19 or more, else nothing will happen 
-    #p = "FU%d\x03" % (height)
-    #p = "FU%d,%d\x03" % (height,width) # optional
+    #p = b"FU%d\x03" % (height)
+    #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
     if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       pass
     else:
-      p = "\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
+      p = b"\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
       s.write(p)
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
     cmd_list = s.plot_cmds(pathlist,bbox,offset[0],offset[1])
-    p = '\x03'.join(cmd_list)
+    p = b'\x03'.join(cmd_list)
 
     if bboxonly == True:
       # move the bounding box
-      p = "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
-      p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
-      p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
-      p += "\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx']))
-      p += "\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
-    p += "\x03"   # Properly terminate string of plot commands.
+      p = b"M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
+      p += b"\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
+      p += b"\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
+      p += b"\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx']))
+      p += b"\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
+    p += b"\x03"   # Properly terminate string of plot commands.
     # potentially long command string needs extra care
     s.safe_write(p)
 
@@ -1010,12 +1010,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
       if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        new_home = "L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
+        new_home = b"L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
       else:
-        new_home = "H\x03"
+        new_home = b"H\x03"
     else: #includes 'below'
-      new_home = "M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
-    #new_home += "FN0\x03TB50,0\x03"
+      new_home = b"M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
+    #new_home += b"FN0\x03TB50,0\x03"
     s.write(new_home)
 
     return {
@@ -1026,7 +1026,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
 
   def move_origin(s, feed_mm):
-    new_home = "M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*20.),0)
+    new_home = b"M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*20.),0)
     s.wait_for_ready(verbose=False)
     s.write(new_home)
     s.wait_for_ready(verbose=False)

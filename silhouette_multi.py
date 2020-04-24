@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+from __future__ import print_function
+
 import os
 import sys
 import time
-import cPickle
+import pickle
 import subprocess
 from threading import Thread
 from tempfile import NamedTemporaryFile
 from collections import defaultdict, OrderedDict
 import xmltodict
 import traceback
-from cStringIO import StringIO
+from io import StringIO
 import wx
 from wx.lib.scrolledpanel import ScrolledPanel
 from wx.lib.agw import ultimatelistctrl as ulc
@@ -49,15 +51,15 @@ def presets_path():
 def load_presets():
     try:
         with open(presets_path(), 'r') as presets:
-            presets = cPickle.load(presets)
+            presets = pickle.load(presets)
             return presets
     except:
         return {}
 
 def save_presets(presets):
-    #print "saving presets", presets
+    #print("saving presets", presets)
     with open(presets_path(), 'w') as presets_file:
-        cPickle.dump(presets, presets_file)
+        pickle.dump(presets, presets_file)
 
 
 def load_preset(name):
@@ -110,7 +112,7 @@ class ParamsNotebook(wx.Notebook):
         self.notebook = self.inx['inkscape-extension']['param'][0]
 
         if self.notebook['@type'] != 'notebook':
-            print >> sys.stderr, "unexpected INX format"
+            print("unexpected INX format", file=sys.stderr)
             return
 
         self.tabs = []
@@ -171,7 +173,7 @@ class ParamsTab(ScrolledPanel):
     def get_values(self):
         values = {}
 
-        for name, input in self.param_inputs.iteritems():
+        for name, input in self.param_inputs.items():
             if isinstance(input, wx.Choice):
                 choice = input.GetSelection()
 
@@ -187,7 +189,7 @@ class ParamsTab(ScrolledPanel):
         return self.defaults
 
     def set_values(self, values):
-        for name, value in values.iteritems():
+        for name, value in values.items():
             if name not in self.param_inputs:
                 # ignore params not contained in this tab
                 continue
@@ -234,7 +236,7 @@ class ParamsTab(ScrolledPanel):
                 elif param_type == 'enum':
                     choices = OrderedDict((item['#text'], item['@value']) for item in param['item'])
                     self.choices_by_label[param_name] = choices
-                    self.choices_by_value[param_name] = { v: k for k, v in choices.iteritems() }
+                    self.choices_by_value[param_name] = { v: k for k, v in choices.items() }
                     input = wx.Choice(self, wx.ID_ANY, choices=choices.keys(), style=wx.LB_SINGLE)
                     input.SetStringSelection(choices.keys()[0])
                 else:
@@ -362,7 +364,7 @@ class SilhouetteMultiFrame(wx.Frame):
     def _load_preset(self, preset_name, silent=False):
         preset = load_preset(preset_name)
 
-        #print >> sys.stderr, preset
+        #print(preset, file=sys.stderr)
 
         if not preset:
             return
@@ -401,9 +403,9 @@ class SilhouetteMultiFrame(wx.Frame):
 
         message = []
 
-        #print >> sys.stderr, reassigned, extra_colors
-        #print >> sys.stderr, self.colors
-        #print >> sys.stderr, self.color_settings
+        #print(reassigned, extra_colors, file=sys.stderr)
+        #print(self.colors, file=sys.stderr)
+        #print(self.color_settings, file=sys.stderr)
 
         if reassigned:
             message.append("%d colors were reassigned." % reassigned)
@@ -504,7 +506,7 @@ class SilhouetteMultiFrame(wx.Frame):
             self.notebook.set_defaults()
 
     def save_color_settings(self):
-        #print "save:", self.selected
+        #print("save:", self.selected)
 
         if self.selected is None:
             return
@@ -513,7 +515,7 @@ class SilhouetteMultiFrame(wx.Frame):
         settings = self.notebook.get_values()
         self.color_settings[color] = settings
 
-        #print "settings:", settings
+        #print("settings:", settings)
 
     def item_checked(self, event):
         item = event.m_itemIndex
@@ -685,7 +687,7 @@ class SilhouetteMulti(inkex.Effect):
 
     def format_args(self, args):
         if isinstance(args, dict):
-            args = args.iteritems()
+            args = args.items()
 
         return " ".join(("--%s=%s" % (k, v) for k, v in args))
 
@@ -714,7 +716,7 @@ class SilhouetteMulti(inkex.Effect):
         commands = self.format_commands(actions)
 
         if self.options.dry_run:
-            print >> sys.stderr, "\n\n".join(commands)
+            print("\n\n".join(commands), file=sys.stderr)
         else:
             self.run_commands_with_dialog(commands)
 
@@ -722,8 +724,8 @@ class SilhouetteMulti(inkex.Effect):
         for i, command in enumerate(commands):
             if not self.run_command_with_dialog(command, step=i + 1, total=len(commands)):
                 info_dialog(None, "Action failed.")
-                print >> sys.stderr, "The command that failed:"
-                print >> sys.stderr, command
+                print("The command that failed:", file=sys.stderr)
+                print(command, file=sys.stderr)
 
                 sys.exit(1)
 

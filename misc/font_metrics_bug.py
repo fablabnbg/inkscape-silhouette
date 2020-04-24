@@ -7,6 +7,8 @@
 # https://bugzilla.novell.com/show_bug.cgi?id=820593
 # https://bugzilla.gnome.org/show_bug.cgi?id=700664
 
+from __future__ import print_function
+
 import gtk
 from goocanvas import *
 import cairo
@@ -16,12 +18,12 @@ def scale_up(win, ev):
   if   chr(ev.keyval) == '+':  canvas.set_scale(s*1.2)
   elif chr(ev.keyval) == '-':  canvas.set_scale(s*.8)
   else: gtk.main_quit()
-  print canvas.get_scale()
+  print(canvas.get_scale())
 
 def button_press(win, ev):
   win.click_x = ev.x
   win.click_y = ev.y
-  print win.click_x, win.click_y
+  print(win.click_x, win.click_y)
 
 def button_release(win, ev):
   win.click_x = None

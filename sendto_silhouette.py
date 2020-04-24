@@ -87,6 +87,8 @@
 #                          merge from fablabnbg
 # 2019-08-03, jw, v1.22 - added a copy of pyusb-1.0.2 as a fallback on any platform.
 
+from __future__ import print_function
+
 __version__ = '1.22'	# Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = 'Juergen Weigert <juergen@fabmail.org> and contributors'
 
@@ -181,7 +183,7 @@ def parseLengthWithUnits( str ):
         try:
                 v = float( s )
         except:
-                print >>sys.stderr, "parseLengthWithUnits: unknown unit ", s
+                print("parseLengthWithUnits: unknown unit ", s, file=sys.stderr)
                 return None, None
 
         return v, u
@@ -263,7 +265,7 @@ class SendtoSilhouette(inkex.Effect):
       self.tty = open("/dev/tty", 'w')
     except:
       self.tty = open(os.devnull, 'w')  # '/dev/null' for POSIX, 'nul' for Windows.
-    # print >>self.tty, "__init__"
+    # print("__init__", file=self.tty)
 
     self.OptionParser.add_option('--active-tab', action = 'store', dest = 'active_tab',
           help=SUPPRESS_HELP)
@@ -365,12 +367,12 @@ class SendtoSilhouette(inkex.Effect):
     return __author__
 
   def penUp(self):
-    # print >>self.tty, "\r penUp", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
+    # print("\r penUp", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)], file=self.tty)
     self.fPrevX = None              # flag that we are up
     self.fPrevY = None
 
   def penDown(self):
-    # print >>self.tty, "\r penDown", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)]
+    # print("\r penDown", [(self.fPrevX,self.fPrevY), (self.fX, self.fY)], file=self.tty)
     self.paths.append([(self.fX,self.fY)])
     self.fPrevX = self.fX       # flag that we are down
     self.fPrevY = self.fY
@@ -388,7 +390,7 @@ class SendtoSilhouette(inkex.Effect):
     # assuming that penDown() was called before.
     self.paths[-1].append((self.fX,self.fY))
 
-    # print >>self.tty, "\r plotLineAndTime((%g,%g)-(%g,%g)) " % (self.fPrevX,self.fPrevY, self.fX, self.fY);
+    # print("\r plotLineAndTime((%g,%g)-(%g,%g)) " % (self.fPrevX,self.fPrevY, self.fX, self.fY), file=self.tty)
 
 
   ## lifted from eggbot.py, gratefully bowing to the author
@@ -861,10 +863,10 @@ class SendtoSilhouette(inkex.Effect):
                                 if len(texts):
                                   plaintext = "', '".join(texts).encode('latin-1')
                                   # encode_('latin-1') prevents 'ordinal not in range(128)' errors.
-                                  print >>self.tty, "Text ignored: '%s'" % (plaintext)
+                                  print("Text ignored: '%s'" % (plaintext), file=self.tty)
                                   plaintext = "\n".join(texts)+"\n"
 
-                                  if not self.warnings.has_key( 'text' ) and self.plotCurrentLayer:
+                                  if 'text' not in self.warnings and self.plotCurrentLayer:
                                         inkex.errormsg( plaintext + gettext.gettext( 'Warning: unable to draw text; ' +
                                                 'please convert it to a path first. Or consider using the ' +
                                                 'Hershey Text extension which can be installed in the '+
@@ -872,7 +874,7 @@ class SendtoSilhouette(inkex.Effect):
                                         self.warnings['text'] = 1
                                 pass
                         elif node.tag == inkex.addNS( 'image', 'svg' ) or node.tag == 'image':
-                                if not self.warnings.has_key( 'image' ):
+                                if 'image' not in self.warnings:
                                         inkex.errormsg( gettext.gettext( 'Warning: unable to draw bitmap images; ' +
                                                 'please convert them to line art first.  Consider using the "Trace bitmap..." ' +
                                                 'tool of the "Path" menu.  Mac users please note that some X11 settings may ' +
@@ -900,7 +902,7 @@ class SendtoSilhouette(inkex.Effect):
                         elif node.tag == inkex.addNS( 'color-profile', 'svg' ) or node.tag == 'color-profile':
                                 # Gamma curves, color temp, etc. are not relevant to single color output
                                 pass
-                        elif not isinstance( node.tag, basestring ):
+                        elif not isinstance( node.tag, str ):
                                 # This is likely an XML processing instruction such as an XML
                                 # comment.  lxml uses a function reference for such node tags
                                 # and as such the node tag is likely not a printable string.
@@ -908,7 +910,7 @@ class SendtoSilhouette(inkex.Effect):
                                 # be very useful.
                                 pass
                         else:
-                                if not self.warnings.has_key( str( node.tag ) ):
+                                if str( node.tag ) not in self.warnings:
                                         t = str( node.tag ).split( '}' )
                                         inkex.errormsg( gettext.gettext( 'Warning: unable to draw <' + str( t[-1] ) +
                                                 '> object, please convert it to a path first.' ) )
@@ -925,10 +927,10 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 str = self.document.getroot().get( name )
-                # print >>self.tty, "getLength.str", str
+                # print("getLength.str", str, file=self.tty)
                 if str:
                         v, u = parseLengthWithUnits( str )
-                        # print >>self.tty, "parseLengthWithUnits: ", str, u, v
+                        # print("parseLengthWithUnits: ", str, u, v, file=self.tty)
                         if not v:
                                 # Couldn't parse the value
                                 return None
@@ -947,8 +949,8 @@ class SendtoSilhouette(inkex.Effect):
                         elif u == '%':
                                 return float( default ) * v / 100.0
                         else:
-                                print >>sys.stderr, "unknown unit ", u
-                                print >>self.tty, "unknown unit ", u
+                                print("unknown unit ", u, file=sys.stderr)
+                                print("unknown unit ", u, file=self.tty)
                                 return None
                 else:
                         # No width specified; assume the default value
@@ -964,9 +966,9 @@ class SendtoSilhouette(inkex.Effect):
                 '''
 
                 self.docHeight = self.getLength( 'height', N_PAGE_HEIGHT )
-                print >>self.tty, "7 self.docHeight=", self.docHeight
+                print("7 self.docHeight=", self.docHeight, file=self.tty)
                 self.docWidth = self.getLength( 'width', N_PAGE_WIDTH )
-                print >>self.tty, "8 self.docWidth=", self.docWidth
+                print("8 self.docWidth=", self.docWidth, file=self.tty)
                 if ( self.docHeight == None ) or ( self.docWidth == None ):
                         return False
                 else:
@@ -994,7 +996,7 @@ class SendtoSilhouette(inkex.Effect):
 
   def effect(self):
     if self.options.version:
-      print __version__
+      print(__version__)
       sys.exit(0)
 
     def write_progress(done, total, msg):
@@ -1013,12 +1015,12 @@ class SendtoSilhouette(inkex.Effect):
     try:
       dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, no_device=self.options.dummy)
     except Exception as e:
-      print >>self.tty, e
-      print >>sys.stderr, e
+      print(e, file=self.tty)
+      print(e, file=sys.stderr)
       return
     state = dev.status()    # hint at loading paper, if not ready.
-    print >>self.tty, "status=%s" % (state)
-    print >>self.tty, "device version: '%s'" % dev.get_version()
+    print("status=%s" % (state), file=self.tty)
+    print("device version: '%s'" % dev.get_version(), file=self.tty)
 
     # Viewbox handling
     self.handleViewBox()
@@ -1056,7 +1058,7 @@ class SendtoSilhouette(inkex.Effect):
       self.paths = silhouette.StrategyMinTraveling.sort(self.paths, True)
     # in case of zorder do no reorder
 
-    # print >>self.tty, self.paths
+    # print(self.paths, file=self.tty)
     cut = []
     pointcount = 0
     for mm_path in self.paths:
@@ -1119,16 +1121,16 @@ class SendtoSilhouette(inkex.Effect):
         if re.search(r'}docname$',tag): docname=svg.get(tag)
 
       o = open(self.dumpname, 'w')
-      print >>self.tty,   "Dump written to ",self.dumpname," (",pointcount," points )"
-      print >>sys.stderr, "Dump written to ",self.dumpname," (",pointcount," points )"
-      print >>sys.stderr,"device version: '%s'" % dev.get_version()
-      print >>sys.stderr,"driver version: '%s'" % __version__
-      print >>o,"# device version: '%s'" % dev.get_version()
-      print >>o,"# driver version: '%s'" % __version__
+      print("Dump written to ",self.dumpname," (",pointcount," points )", file=self.tty)
+      print("Dump written to ",self.dumpname," (",pointcount," points )", file=sys.stderr)
+      print("device version: '%s'" % dev.get_version(), file=sys.stderr)
+      print("driver version: '%s'" % __version__, file=sys.stderr)
+      print("# device version: '%s'" % dev.get_version(), file=o)
+      print("# driver version: '%s'" % __version__, file=o)
       if docname:
-        print >>o,"# docname: '%s'" % docname
-        print >>sys.stderr, "docname: '%s'" % docname
-      print >>o, cut
+        print("# docname: '%s'" % docname, file=o)
+        print("docname: '%s'" % docname, file=sys.stderr)
+      print(cut, file=o)
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
@@ -1158,9 +1160,9 @@ class SendtoSilhouette(inkex.Effect):
         regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
 
       if len(bbox['bbox'].keys()):
-        print >>self.tty, "autocrop left=%.1fmm top=%.1fmm" % (
+        print("autocrop left=%.1fmm top=%.1fmm" % (
           bbox['bbox']['llx']*bbox['unit'],
-          bbox['bbox']['ury']*bbox['unit'])
+          bbox['bbox']['ury']*bbox['unit']), file=self.tty)
         self.options.x_off -= bbox['bbox']['llx']*bbox['unit']
         self.options.y_off -= bbox['bbox']['ury']*bbox['unit']
 
@@ -1174,8 +1176,8 @@ class SendtoSilhouette(inkex.Effect):
       regwidth=self.options.regwidth,reglength=self.options.reglength,
       regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
     if len(bbox['bbox'].keys()) == 0:
-      print >>self.tty, "empty page?"
-      print >>sys.stderr, "empty page?"
+      print("empty page?", file=self.tty)
+      print("empty page?", file=sys.stderr)
     else:
       write_progress(1,1, "bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
         bbox['bbox']['llx']*bbox['unit'],
@@ -1183,7 +1185,7 @@ class SendtoSilhouette(inkex.Effect):
         bbox['bbox']['urx']*bbox['unit'],
         bbox['bbox']['lly']*bbox['unit'],
         bbox['bbox']['count']))
-      print >>self.tty, ""
+      print("", file=self.tty)
       state = dev.status()
       write_duration = time.time() - self.write_start_tstamp
       # we took write_duration seconds for actualy cutting
@@ -1209,7 +1211,7 @@ class SendtoSilhouette(inkex.Effect):
         state = dev.status()
       self.device_buffer_perc = 0.0
       write_progress(1,1, dots)
-    print >>self.tty, "\nstatus=%s" % (state)
+    print("\nstatus=%s" % (state), file=self.tty)
 
     # pump the output to the device
     success = True
@@ -1225,8 +1227,8 @@ if __name__ == '__main__':
           # write a tempfile that is autoremoved on exit
           tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
           sys.argv.append(tmpfile.name)
-          print sys.argv
-          print >>tmpfile, '<xml height="10"></xml>'
+          print((sys.argv))
+          print('<xml height="10"></xml>', file=tmpfile)
           tmpfile.flush()
           e.affect(sys.argv[1:])
           # os.remove(tmpfile.name)
@@ -1237,5 +1239,5 @@ if __name__ == '__main__':
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
-        print >>e.tty, " done. %d min %d sec" % (mm,ss)
+        print(" done. %d min %d sec" % (mm,ss), file=e.tty)
         sys.exit(0)    # helps to keep the selection

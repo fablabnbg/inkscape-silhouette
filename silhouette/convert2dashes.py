@@ -26,7 +26,9 @@ import bezmisc
 import cubicsuperpath
 import simplestyle
 
-def tpoint((x1,y1), (x2,y2), t = 0.5):
+def tpoint(p1, p2, t = 0.5):
+    (x1,y1) = p1
+    (x2,y2) = p2
     return [x1+t*(x2-x1),y1+t*(y2-y1)]
 def cspbezsplit(sp1, sp2, t = 0.5):
     m1=tpoint(sp1[1],sp1[2],t)
@@ -47,7 +49,7 @@ def cspseglength(sp1,sp2, tolerance = 0.001):
 def splitPath(inkex, node):
     dashes = []
     style = simplestyle.parseStyle(node.get('style'))
-    if style.has_key('stroke-dasharray'):
+    if 'stroke-dasharray' in style:
         if style['stroke-dasharray'].find(',') > 0:
             dashes = [float (dash) for dash in style['stroke-dasharray'].split(',') if dash]
     if dashes:

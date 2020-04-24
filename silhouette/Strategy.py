@@ -31,6 +31,8 @@
 #                          ccw() and sharp_turn*() now global. No class needed.
 #                          Using class Barrier from Geomentry in the main loop of pyramids_barrier()
 
+from __future__ import print_function
+
 import copy     # deepcopy
 import math     # sqrt
 import sys      # maxsize
@@ -140,7 +142,7 @@ class MatFree:
     if k in self.points_dict:
       idx = self.points_dict[k]
       if self.verbose:
-        print >>sys.stderr, "%d found as dup" % idx
+        print("%d found as dup" % idx, file=sys.stderr)
       if 'dup' in self.points[idx].attr:
         self.points[idx].dup += 1
       else:
@@ -213,15 +215,15 @@ class MatFree:
             dx = (s.points[pt].x - s.points[A].x)/float(nsub+1)
             dy = (s.points[pt].y - s.points[A].y)/float(nsub+1)
             if s.verbose > 1:
-              print >>sys.stderr, "pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len)
-              print >>sys.stderr, "dxdy", dx, dy, "to", (s.points[pt].x, s.points[pt].y), "from", (s.points[A].x,s.points[A].y)
+              print("pt%d -- pt%d: need nsub=%d, seg_len=%g" % (A,pt,nsub,seg_len), file=sys.stderr)
+              print("dxdy", dx, dy, "to", (s.points[pt].x, s.points[pt].y), "from", (s.points[A].x,s.points[A].y), file=sys.stderr)
             for subdiv in range(nsub):
               sub_pt =s.pt2idx(s.points[A].x+dx+subdiv*dx, 
                                s.points[A].y+dy+subdiv*dy)
               new_path.append(sub_pt)
               s.points[sub_pt].sub = True
               if s.verbose > 1:
-                print >>sys.stderr, "   sub", (s.points[sub_pt].x, s.points[sub_pt].y)
+                print("   sub", (s.points[sub_pt].x, s.points[sub_pt].y), file=sys.stderr)
         new_path.append(pt)
       s.paths[path_idx] = new_path
 
@@ -263,7 +265,7 @@ class MatFree:
           if 'sharp' in pt.attr:
             break
       else:
-        print >>sys.stderr, "warning: no segments in point %d. Run link_points() before mark_sharp_segs()" % (pt.id)
+        print("warning: no segments in point %d. Run link_points() before mark_sharp_segs()" % (pt.id), file=sys.stderr)
 
 
 
@@ -318,7 +320,7 @@ class MatFree:
     """
     if not 'output' in s.__dict__: s.output = []
     if len(s.output) and s.verbose > 1:
-      print >>sys.stderr, "append_or_extend_hard...", s.output[-1][-1], seg
+      print("append_or_extend_hard...", s.output[-1][-1], seg, file=sys.stderr)
     if (len(s.output) > 0 and len(s.output[-1]) >= 2 and 
          'sharp' not in s.output[-1][0] and
          'sharp' not in s.output[-1][-1]):
@@ -328,29 +330,29 @@ class MatFree:
         # yes, flipping the previous segment, will help below. do it.
         s.output[-1] = list(reversed(s.output[-1]))
         if s.verbose:
-          print >>sys.stderr, "late flip ", len(s.output), len(s.output[-1])
+          print("late flip ", len(s.output), len(s.output[-1]), file=sys.stderr)
       #
     #
 
     if len(s.output) > 0 and s.output[-1][-1].id == seg[0].id:
       s.output[-1].extend(seg[1:])
       if s.verbose > 1:
-        print >>sys.stderr, "... extend"
+        print("... extend", file=sys.stderr)
     elif len(s.output) > 0 and s.output[-1][-1].id == seg[-1].id:
       ## check if we can turn it around
       if 'sharp' not in s.output[-1][-1].attr and 'sharp' not in seg[-1].attr and 'sharp' not in seg[0].attr:
         s.output[-1].extend(list(reversed(seg))[1:])
         if s.verbose > 1:
-          print >>sys.stderr, "... extend reveresed"
+          print("... extend reveresed", file=sys.stderr)
       else:
         s.output.append(seg)
         if s.verbose > 1:
-          print >>sys.stderr, "... append"
+          print("... append", file=sys.stderr)
       #
     else:
       s.output.append(seg)
       if s.verbose > 1:
-        print >>sys.stderr, "... append"
+        print("... append", file=sys.stderr)
     #
 
 
@@ -362,16 +364,16 @@ class MatFree:
     """
     if not 'output' in s.__dict__: s.output = []
     if len(s.output) and s.verbose > 2:
-      print >>sys.stderr, "append_or_extend_simple...", s.output[-1][-1], seg
+      print("append_or_extend_simple...", s.output[-1][-1], seg, file=sys.stderr)
 
     if len(s.output) > 0 and s.output[-1][-1].id == seg[0].id:
       s.output[-1].extend(seg[1:])
       if s.verbose > 1:
-        print >>sys.stderr, "... extend"
+        print("... extend", file=sys.stderr)
     else:
       s.output.append(seg)
       if s.verbose > 1:
-        print >>sys.stderr, "... append"
+        print("... append", file=sys.stderr)
     #
 
 
@@ -444,7 +446,7 @@ class MatFree:
     if len(C.seg) == 2:
       C.attr['obsolete'] = True
       self.points[C.id] = None
-      print >> sys.stderr, "shortcut_segment: point C obsoleted. A,B,C:", A, B, C, C.att()
+      print("shortcut_segment: point C obsoleted. A,B,C:", A, B, C, C.att(), file=sys.stderr)
 
 
   def subdivide_segment(self, A, B, C):
@@ -454,9 +456,9 @@ class MatFree:
         Returns True, if subdivision was done. 
         Returns False, if [AB] was shorter than min_subdivide.
     """
-    print >>sys.stderr, "subdivide_segment A,B,C: ", A,A.att(), B,B.att(), C,C.att()
+    print("subdivide_segment A,B,C: ", A,A.att(), B,B.att(), C,C.att(), file=sys.stderr)
     if dist_sq(A, B) < self.min_subdivide_sq:
-      print >>sys.stderr, " ---- too short, nothing done."
+      print(" ---- too short, nothing done.", file=sys.stderr)
       # should be caught earlier!
       sys.exit(0)
 
@@ -500,11 +502,11 @@ class MatFree:
     if not 'output' in s.__dict__: s.output = []
     if s.verbose >= 1:
       if len(s.output):
-        print >>sys.stderr, "output_add", s.output[-1][-1], A, B
+        print("output_add", s.output[-1][-1], A, B, file=sys.stderr)
       else:
-        print >>sys.stderr, "output_add", None, A, B
+        print("output_add", None, A, B, file=sys.stderr)
     #
-    print >>sys.stderr, "\t...................................."
+    print("\t....................................", file=sys.stderr)
     if len(s.output) > 30:
       sys.exit(2)
 
@@ -522,7 +524,7 @@ class MatFree:
       pt = s.points[iP]
       if pt is None: continue
       a = pt.att() if pt else None
-      print iP, ": ", pt, a
+      print(iP, ": ", pt, a)
 
   def process_pyramids_barrier(s, y_slice, max_y, left2right=True):
     """ finding the next point involves overshadowing other points.
@@ -630,7 +632,7 @@ class MatFree:
         if Ai is None: break
         A = Xf_bar.point()
         continue
-      print >>sys.stderr, "process_pyramids_barrier", left2right, A, A.att()
+      print("process_pyramids_barrier", left2right, A, A.att(), file=sys.stderr)
 
       B = None
       a_todo = 0
@@ -652,32 +654,32 @@ class MatFree:
                 B = pt
 
       if B is None:
-        print "no more forward segments", A, a_todo
+        print("no more forward segments", A, a_todo)
         Xb_bar.find(A, start=0)
         if a_todo == 0:
           s.points[A.id] = None                 # drop A
         while True:
           Ai = Xf_bar.next()
           A = None
-          print >>sys.stderr, "xx next Ai candidate", Ai
+          print("xx next Ai candidate", Ai, file=sys.stderr)
           if Ai is None: break
           A = Xf_bar.point()
-          print >>sys.stderr, "xx next A candidate", A
+          print("xx next A candidate", A, file=sys.stderr)
           if A is None: break
           if not Xb_bar.ahead(A): 
             break
           else:
-            print >>sys.stderr, "process_pyramids_barrier jump: Ignored A, ahead of Xb_bar", A
-        print >>sys.stderr, "process_pyramids_barrier jump to next A", A
+            print("process_pyramids_barrier jump: Ignored A, ahead of Xb_bar", A, file=sys.stderr)
+        print("process_pyramids_barrier jump to next A", A, file=sys.stderr)
         continue                                # just advance Xf_bar: jump
-      print "segment to check a), b)", A, B
+      print("segment to check a), b)", A, B)
 
       if False:                                  # fake to trigger check a)
         b_id = B.id
         B = XY_a((1.3,20-2.1))                  
         B.id = b_id
         B.seg = [1,2,A.id,3,4]
-        print "faked segment to check a), b)", A, B
+        print("faked segment to check a), b)", A, B)
       #
 
       subdividable_ab = bool(dist_sq(A,B) > s.min_subdivide_sq)
@@ -688,12 +690,12 @@ class MatFree:
         C = XY_a((intersect_y(A,B, max_y), max_y))
         ## same, but more expensive:
         # C2 = intersect_lines(A,B,XY_a((0,max_y)),XY_a((.5,max_y)))
-        print "B below barrier, C=", C
+        print("B below barrier, C=", C)
         s.subdivide_segment(A,B,C)
         Xf_bar.insert(C)
         Xb_bar.insert(C)
         B,C = C,B
-        # print A.seg, B.seg, C.seg
+        # print(A.seg, B.seg, C.seg)
       #
 
       # All of the following shortens [AB] sufficiently, so that B does not 
@@ -706,7 +708,7 @@ class MatFree:
           (left2right and B.x-A.x < B.y-A.y) or (not left2right and A.x-B.x < B.y-A.y))):                     
         Xb_a_idx = Xb_bar.find(A, start=0)      # could also use lookup() here. It does not matter.
         Xb_b_idx = Xb_bar.find(B)               # could also use lookup() here. It does not matter.
-        print "check b), moving Xb_bar from A to B", A, B, Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B)
+        print("check b), moving Xb_bar from A to B", A, B, Xb_a_idx, Xb_b_idx, Xb_bar.key(A), Xb_bar.key(B))
         D = None
         for n in range(Xb_a_idx, Xb_b_idx+1):   # sweep from A to B
           pt = Xb_bar.point(n)
@@ -714,7 +716,7 @@ class MatFree:
             D = pt                              # found a D that is clearly left of AB.
             break
           else:
-            print "backsweep ignoring pt", pt, Xb_bar.key(pt)
+            print("backsweep ignoring pt", pt, Xb_bar.key(pt))
         #
         if D is not None:                       # compute intersection of Xb_bar with [AB]
           E = intersect_lines(D,XY_a((D.x+1,D.y+1)),A,B,limit2=True)
@@ -732,9 +734,9 @@ class MatFree:
       Xf_a_idx = Xf_bar.pos()                   # unused, we never move back to A.
       Xf_b_idx = Xf_bar.lookup(lambda b: b.id==B.id if b else False) 
       if Xf_b_idx is None:                      # Should never happen!
-        print "Xf_bar.lookup(B)=None. B=",B     # Okayish fallback, but find() may return
+        print("Xf_bar.lookup(B)=None. B=",B)    # Okayish fallback, but find() may return
         Xf_b_idx = Xf_bar.find(B)               # a different point with the same key().
-      print "line A,B:", A, B, Xf_a_idx, Xf_b_idx, Xf_bar.point(Xf_b_idx)
+      print("line A,B:", A, B, Xf_a_idx, Xf_b_idx, Xf_bar.point(Xf_b_idx))
       F = None
       Xf_f_idx = None
       for n in range(Xf_a_idx, Xf_b_idx+1):     # sweep from A to B (inclusive)
@@ -745,7 +747,7 @@ class MatFree:
           Xf_f_idx = n
           break
         else:
-          print "forward sweep ignoring pt", n, pt, pt.id, Xf_bar.key(pt)
+          print("forward sweep ignoring pt", n, pt, pt.id, Xf_bar.key(pt))
       #
       if F is not None:                       # compute intersection of Xb_bar with [AB]
         _F_back = (F.x-1,F.y+1) if left2right else (F.x+1,F.y+1)
@@ -768,10 +770,10 @@ class MatFree:
         s.unlink_segment(A,B)
         Xf_bar.pos(Xf_b_idx)                  # advance
         A = Xf_bar.point()
-      print >>sys.stderr, "advanced A to",A
+      print("advanced A to", A, file=sys.stderr)
 
     ##  barrier has moved all the way to the other end.
-    print >>sys.stderr, "barrier moved all the way", Xf_bar.points, max_y, A.att() if A else None, A.seg if A else None
+    print("barrier moved all the way", Xf_bar.points, max_y, A.att() if A else None, A.seg if A else None, file=sys.stderr)
 
 
   def process_simple_barrier(s, y_slice, max_y, last_x=0.0):
@@ -788,8 +790,8 @@ class MatFree:
        with its value on the next call.
     """
     if s.verbose:
-      print >>sys.stderr, "process_simple_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x)
-      print >>sys.stderr, "                max_y=%g" % (y_slice[-1].y)
+      print("process_simple_barrier limit=%g, points=%d, %s" % (max_y, len(y_slice), last_x), file=sys.stderr)
+      print("                max_y=%g" % (y_slice[-1].y), file=sys.stderr)
 
     min_x = None
     max_x = None
@@ -806,7 +808,7 @@ class MatFree:
         C = s.points[iC]
         if C is not None and C.y <= max_y:
           if s.verbose > 1:
-            print >>sys.stderr, "   segments.append", C, pt
+            print("   segments.append", C, pt, file=sys.stderr)
           segments.append((C,pt))
           if min_x is None or min_x >  C.x: min_x =  C.x
           if min_x is None or min_x > pt.x: min_x = pt.x
@@ -893,7 +895,7 @@ class MatFree:
         s.output.append([])
         for idx in path:
           s.output[-1].append(s.points[idx])
-          # if idx == 33: print s.points[idx].att()
+          # if idx == 33: print(s.points[idx].att())
         #
       #
       return
@@ -906,19 +908,19 @@ class MatFree:
       ## always recreate the barrier, so that newly added subdivision points are seen.
       Y_bar = Barrier(s.points, key=lambda a: a[1] if a else 0)
       while Y_bar.point() is None:                        # skip forward dropped points
-        # print >>sys.stderr, "Y_bar skipping idx", Y_bar.pos()
+        # print("Y_bar skipping idx", Y_bar.pos(), file=sys.stderr)
         if Y_bar.next() is None:                          # next() returns an idx, except when hitting the end.
           break
       min_y = Y_bar.point().y
       barrier_y = min_y + s.monotone_back_travel
-      print >>sys.stderr, "\t>>>>>>>>>>>>>>> new Y-slice between", min_y, barrier_y
+      print("\t>>>>>>>>>>>>>>> new Y-slice between", min_y, barrier_y, file=sys.stderr)
       y_max_idx = Y_bar.find((0, barrier_y))
       s.process_pyramids_barrier(Y_bar.pslice(), barrier_y, left2right=dir_toggle)
-      # print >>sys.stderr, "process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points)
-      # print >>sys.stderr, "output so far: ", s.output
+      # print("process_pyramids_barrier returns", len(s.output), y_max_idx, len(s.points), file=sys.stderr)
+      # print("output so far: ", s.output, file=sys.stderr)
 
       if old_len_output == len(s.output) and old_min_y == min_y:
-        print >>sys.stderr, "pyramids_barrier aborted: no progress, stuck at min_y=",min_y
+        print("pyramids_barrier aborted: no progress, stuck at min_y=", min_y, file=sys.stderr)
         break;
 
       old_len_output = len(s.output)
