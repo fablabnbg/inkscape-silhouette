@@ -1225,10 +1225,10 @@ if __name__ == '__main__':
 
         if len(sys.argv) < 2:
           # write a tempfile that is autoremoved on exit
-          tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
+          tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette', mode='w+t')
           sys.argv.append(tmpfile.name)
           print((sys.argv))
-          print('<xml height="10"></xml>', file=tmpfile)
+          tmpfile.write('<xml height="10"></xml>')
           tmpfile.flush()
           e.affect(sys.argv[1:])
           # os.remove(tmpfile.name)
