@@ -278,8 +278,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               print("retrying reset in 5 sec", file=self.log)
               time.sleep(5)
 
-        dev.set_configuration()
         try:
+          dev.set_configuration()
           dev.set_interface_altsetting()      # Probably not really necessary.
         except usb.core.USBError:
           pass
