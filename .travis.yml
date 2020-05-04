@@ -1,0 +1,74 @@
+language: python
+
+#dist: focal
+#
+#python:
+#    - 2.7
+#    - 3.7
+#    - 3.8
+
+before_script:
+    - sudo apt-get -y install inkscape
+    - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+script:
+    - PYTHONWARNINGS=default pytest -s -vv test
+
+jobs:
+    include:
+        - dist: xenial
+          python: 2.7
+          # only test python 2.7 on xenial for inkscape < 0.92.5 (https://packages.ubuntu.com/xenial/inkscape)
+
+        - dist: bionic
+          python: 2.7
+          # only test python 2.7 on bionic for inkscape < 0.92.5 (https://packages.ubuntu.com/bionic/inkscape)
+
+        - dist: focal
+          python: 2.7
+
+        - dist: focal
+          python: 3.7
+
+        - dist: focal
+          python: 3.8
+
+        - name: "Python: 2.7"
+          os: osx
+          osx_image: xcode11.3
+          language: shell
+          before_script:
+              - brew install homebrew/cask/inkscape
+              - python --version
+              - pip install -r requirements.txt
+              - pip install libusb1
+              - pip install pytest
+
+        - name: "Python: 2.7"
+          os: windows
+          language: shell
+          env: PATH=/c/Python27:/c/Python27/Scripts:$PATH
+          before_script:
+              - choco install -y inkscape --version 0.92.5
+              - choco install -y python2
+              - echo $PATH
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
+
+        - name: "Python: 3.8"
+          os: windows
+          language: shell
+          env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
+          before_script:
+              - choco install -y inkscape
+              - choco install -y python
+              - echo $PATH
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
+
