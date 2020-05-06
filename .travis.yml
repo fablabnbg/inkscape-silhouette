@@ -72,3 +72,7 @@ jobs:
               - pip install pytest
               - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
 
+
+
+    allow_failures:
+        - os: osx # osx is already on inkscape 1.0
