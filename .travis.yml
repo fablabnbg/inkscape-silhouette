@@ -38,11 +38,32 @@ jobs:
           osx_image: xcode11.3
           language: shell
           before_script:
-              - brew install homebrew/cask/inkscape
+              - brew tap homebrew/cask
+              - brew --prefix
+              - pushd $( brew --prefix )/Homebrew/Library/Taps/homebrew/homebrew-cask
+              - git checkout 87d3d3f Casks/inkscape.rb # inkscape 0.92.2
+              - ls -l Casks/inkscape.rb
+              - cat Casks/inkscape.rb
+              - brew cask install inkscape
+              - popd
               - python --version
               - pip install -r requirements.txt
               - pip install libusb1
               - pip install pytest
+
+        - name: "Python: 3.7 -- Inkscape 1.0"
+          os: osx
+          osx_image: xcode11.3
+          language: shell
+          env: INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
+          before_script:
+              - brew install homebrew/cask/inkscape
+              - python3 --version
+              - pip3 install -r requirements.txt
+              - pip3 install libusb1
+              - pip3 install pytest
+          script:
+              - PYTHONWARNINGS=default python3 -m pytest -s -vv test
 
         - name: "Python: 2.7"
           os: windows
@@ -63,7 +84,7 @@ jobs:
           language: shell
           env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
           before_script:
-              - choco install -y inkscape
+              - choco install -y inkscape --version 0.92.5
               - choco install -y python
               - echo $PATH
               - python --version
@@ -72,7 +93,24 @@ jobs:
               - pip install pytest
               - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
 
-
+### disable until inkscape 1.0 is available in chocolatey # https://chocolatey.org/search?q=inkscape
+#        - name: "Python: 3.8 -- Inkscape 1.0"
+#          os: windows
+#          language: shell
+#          env:
+#              - PATH=/c/Python38:/c/Python38/Scripts:$PATH
+#              - INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
+#          before_script:
+#              - choco install -y inkscape
+#              - choco install -y python
+#              - echo $PATH
+#              - python --version
+#              - python -m pip install --upgrade pip
+#              - pip install -r requirements.txt
+#              - pip install pytest
+#              - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
 
     allow_failures:
-        - os: osx # osx is already on inkscape 1.0
+        - env: INKSCAPE_VERSION=1
+#        - os: osx # osx is already on inkscape 1.0
+

@@ -16,7 +16,7 @@ class TestRun(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output.decode())
-            self.assertEqual(r.returncode, 0)
+            self.assertEqual(e.returncode, 0)
             assert False
 
 
@@ -28,7 +28,7 @@ class TestRun(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output.decode())
-            self.assertEqual(r.returncode, 0)
+            self.assertEqual(e.returncode, 0)
             assert False
 
 
@@ -41,7 +41,7 @@ class TestRun(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output.decode())
-            self.assertEqual(r.returncode, 0)
+            self.assertEqual(e.returncode, 0)
             assert False
 
 
@@ -53,6 +53,6 @@ class TestRun(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             print(e)
             print(e.output.decode())
-            self.assertEqual(r.returncode, 0)
+            self.assertEqual(e.returncode, 0)
             assert False
 
