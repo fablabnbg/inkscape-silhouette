@@ -7,10 +7,10 @@ language: python
 #    - 3.7
 #    - 3.8
 
-before_script:
+install:
     - sudo apt-get -y install inkscape
+before_script:
     - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
-
 script:
     - PYTHONWARNINGS=default pytest -s -vv test
 
@@ -33,19 +33,25 @@ jobs:
         - dist: focal
           python: 3.8
 
+        - dist: focal
+          python: 3.8
+          env: INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
+          before_install:
+              - sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+              - sudo apt-get update
+
         - name: "Python: 2.7"
           os: osx
           osx_image: xcode11.3
           language: shell
-          before_script:
-              - brew tap homebrew/cask
-              - brew --prefix
+          before_install:
               - pushd $( brew --prefix )/Homebrew/Library/Taps/homebrew/homebrew-cask
               - git checkout 87d3d3f Casks/inkscape.rb # inkscape 0.92.2
               - ls -l Casks/inkscape.rb
-              - cat Casks/inkscape.rb
-              - brew cask install inkscape
               - popd
+          install:
+              - brew cask install inkscape
+          before_script:
               - python --version
               - pip install -r requirements.txt
               - pip install libusb1
@@ -56,22 +62,24 @@ jobs:
           osx_image: xcode11.3
           language: shell
           env: INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
+          before_install:
+              - brew unlink python@2 && brew link python
+          install:
+              - brew cask install inkscape
           before_script:
-              - brew install homebrew/cask/inkscape
-              - python3 --version
-              - pip3 install -r requirements.txt
-              - pip3 install libusb1
-              - pip3 install pytest
-          script:
-              - PYTHONWARNINGS=default python3 -m pytest -s -vv test
+              - python --version
+              - pip install -r requirements.txt
+              - pip install libusb1
+              - pip install pytest
 
         - name: "Python: 2.7"
           os: windows
           language: shell
           env: PATH=/c/Python27:/c/Python27/Scripts:$PATH
-          before_script:
+          install:
               - choco install -y inkscape --version 0.92.5
               - choco install -y python2
+          before_script:
               - echo $PATH
               - python --version
               - python -m pip install --upgrade pip
@@ -83,9 +91,10 @@ jobs:
           os: windows
           language: shell
           env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
-          before_script:
+          install:
               - choco install -y inkscape --version 0.92.5
               - choco install -y python
+          before_script:
               - echo $PATH
               - python --version
               - python -m pip install --upgrade pip
@@ -112,5 +121,4 @@ jobs:
 
     allow_failures:
         - env: INKSCAPE_VERSION=1
-#        - os: osx # osx is already on inkscape 1.0
 
