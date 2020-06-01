@@ -138,23 +138,21 @@ jobs:
               - pip install pytest
               - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
 
-### disable until inkscape 1.0 is available in chocolatey # https://chocolatey.org/search?q=inkscape
-#        - name: "Python: 3.8 -- Inkscape 1.0"
-#          os: windows
-#          language: shell
-#          env:
-#              - PATH=/c/Python38:/c/Python38/Scripts:$PATH
-#              - INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
-#          install:
-#              - choco install -y inkscape
-#              - choco install -y python
-#          before_script:
-#              - echo $PATH
-#              - python --version
-#              - python -m pip install --upgrade pip
-#              - pip install -r requirements.txt
-#              - pip install pytest
+        - name: "Python: 3.8 -- Inkscape 1.0"
+          os: windows
+          language: shell
+          env: PATH=/c/Python38:/c/Python38/Scripts:$PATH INKSCAPE_VERSION=1 # port to inkscape 1.0 still pending - allow failure
+          install:
+              - choco install -y inkscape
+              - choco install -y python
+          before_script:
+              - echo $PATH
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install -r requirements.txt
+              - pip install pytest
 
     allow_failures:
         - env: INKSCAPE_VERSION=1
+        - env: PATH=/c/Python38:/c/Python38/Scripts:$PATH INKSCAPE_VERSION=1
 
