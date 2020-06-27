@@ -121,6 +121,7 @@ PRODUCT_ID_SILHOUETTE_SD_2 = 0x111d
 PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
 PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
 PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
+PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
@@ -138,6 +139,10 @@ DEVICE = [
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304, 'length_mm': 3000, 'margin_left_mm':9.0, 'margin_top_mm':1.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO3, 'name': 'Silhouette Cameo3',
+   # margin_top_mm is just for safety when moving backwards with thin media
+   # margin_left_mm is a physical limit, but is relative to width_mm!
+   'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO4, 'name': 'Silhouette Cameo4',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
@@ -222,7 +227,7 @@ class SilhouetteCameo:
         try:
             for dev in usb.core.find(find_all=True):
               msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
-        except NameError: 
+        except NameError:
             msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
@@ -512,7 +517,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
 
       s.write(b"TB71\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       try:
@@ -531,6 +536,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except:
         pass
 
+    # Silhouette Studio does not appear to issue this command when using a cameo 4
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       s.write(b"TC\x03")
       try:
         resp = s.read(timeout=1000)
@@ -572,7 +579,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     s.initialize()
 
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       if cuttingmat == 'cameo_12x12':
         s.write(b"TG1\x03")
       elif cuttingmat == 'cameo_12x24':
@@ -596,7 +603,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if media is not None:
       if media < 100 or media > 300: media = 300
-      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
         # Silhouette Studio does not appear to issue this command
         pass
       else:
@@ -616,86 +623,135 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if toolholder is None:
       toolholder = 1
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       s.write(b"J%d\x03" % toolholder)
     print("toolholder: %d" % toolholder, file=s.log)
 
-    if speed is not None:
-      if speed < 1: speed = 1
-      if speed > 10: speed = 10
-      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        s.write(b"!%d,%d\x03" % (speed, toolholder));
-      else:
-        s.write(b"!%d\x03" % speed);
-      print("speed: %d" % speed, file=s.log)
-
-    if pressure is not None:
-      if pressure <  1: pressure = 1
-      if pressure > 33: pressure = 33
-      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    # cameo 4 sets some parameters two times (force, TJ%d, Cutter offset)
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      if pressure is not None:
+        if pressure <  1: pressure = 1
+        if pressure > 33: pressure = 33
         s.write(b"FX%d,%d\x03" % (pressure, toolholder));
-      else:
-        s.write(b"FX%d\x03" % pressure);
-        # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
-      print("pressure: %d" % pressure, file=s.log)
+        print("pressure: %d" % pressure, file=s.log)
+        # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
+        # hopefully also allowed later on
+        s.write(b"TJ0\x03")
 
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-      if pen:
-        s.write(b"FC0,1,%d\x03"  % (toolholder))
+      if speed is not None:
+        if speed < 1: speed = 1
+        if speed > 10: speed = 10
+        s.write(b"!%d,%d\x03" % (speed, toolholder));
+        print("speed: %d" % speed, file=s.log)
 
-    if s.leftaligned:
-      print("Loaded media is expected left-aligned.", file=s.log)
-    else:
-      print("Loaded media is expected right-aligned.", file=s.log)
+      # set cutter offset a first time (seems to always be 0mm x 0.05mm)
+      s.write(b"FC0,1,%d\x03"  % (toolholder))
 
-    # Lift plotter head at sharp corners
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       if sharpencorners:
         s.write(b"FE1,%d\x03" % toolholder)
       else:
         s.write(b"FE0,%d\x03" % toolholder)
 
       if pen:
-        s.write(b"FF0,0,%d\x03" % (toolholder))
+        s.write(b"FF0,0,%d\x03FF0,0,%d" % (toolholder, toolholder))
       else:
         sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
         sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
         s.write(b"FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
 
-    # robocut/Plotter.cpp:393 says:
-    # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
-    # C possible stands for curvature. Not that any of the other letters make sense...
-    # C possible stands for circle.
-    # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
-    # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-      if not pen:
+      # set pressure a second time (don't know why, just reproducing)
+      if pressure is not None:
+        if pressure <  1: pressure = 1
+        if pressure > 33: pressure = 33
+        s.write(b"FX%d,%d\x03" % (pressure, toolholder));
+        print("pressure: %d" % pressure, file=s.log)
+        # some sort of pressure calibration I presume (always 3 on the second time, as far as I
+        # could see)
+        s.write(b"TJ3\x03")
+
+      # set cutter offset a second time (this time with blade specific parameters)
+      if pen:
+        s.write(b"FC0,1,%d\x03"  % (toolholder))
+      else:
         circle = 0.5 + bladediameter * 20
-        s.write(b"FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
+        s.write(b"FC%d,1,%d\x03" % (circle, toolholder))
+    else:
+      if speed is not None:
+        if speed < 1: speed = 1
+        if speed > 10: speed = 10
+        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+          s.write(b"!%d,%d\x03" % (speed, toolholder));
+        else:
+          s.write(b"!%d\x03" % speed);
+        print("speed: %d" % speed, file=s.log)
+
+      if pressure is not None:
+        if pressure <  1: pressure = 1
+        if pressure > 33: pressure = 33
+        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+          s.write(b"FX%d,%d\x03" % (pressure, toolholder));
+        else:
+          s.write(b"FX%d\x03" % pressure);
+          # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
+        print("pressure: %d" % pressure, file=s.log)
 
       if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        if autoblade and depth is not None:
-          if toolholder == 1:
-            if depth < 0: depth = 0
-            if depth > 10: depth = 10
-            s.write(b"TF%d,%d\x03" % (depth, toolholder));
-            print("depth: %d" % depth, file=s.log)
-    else:
-      if pen:
-        circle = 0
+        if pen:
+          s.write(b"FC0,1,%d\x03"  % (toolholder))
+
+      if s.leftaligned:
+        print("Loaded media is expected left-aligned.", file=s.log)
       else:
-        circle = bladediameter * 20
-      s.write(b"FC%d\x03" % circle)
+        print("Loaded media is expected right-aligned.", file=s.log)
+
+      # Lift plotter head at sharp corners
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if sharpencorners:
+          s.write(b"FE1,%d\x03" % toolholder)
+        else:
+          s.write(b"FE0,%d\x03" % toolholder)
+
+        if pen:
+          s.write(b"FF0,0,%d\x03" % (toolholder))
+        else:
+          sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
+          sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
+          s.write(b"FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+
+      # robocut/Plotter.cpp:393 says:
+      # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
+      # C possible stands for curvature. Not that any of the other letters make sense...
+      # C possible stands for circle.
+      # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
+      # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if not pen:
+          circle = 0.5 + bladediameter * 20
+          s.write(b"FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
+      else:
+        if pen:
+          circle = 0
+        else:
+          circle = bladediameter * 20
+        s.write(b"FC%d\x03" % circle)
+
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      if autoblade and depth is not None:
+        if toolholder == 1:
+          if depth < 0: depth = 0
+          if depth > 10: depth = 10
+          s.write(b"TF%d,%d\x03" % (depth, toolholder));
+          print("depth: %d" % depth, file=s.log)
 
     s.enable_sw_clipping = sw_clipping
 
     # if enabled, rollers three times forward and back.
-    # needs a pressure of 19 or more, else nothing will happen 
+    # needs a pressure of 19 or more, else nothing will happen
     if trackenhancing is not None:
       if trackenhancing:
         s.write(b"FY0\x03")
       else:
-        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+        if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
           pass
         else:
           s.write(b"FY1\x03")
@@ -703,7 +759,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       pass
     else:
       if landscape is not None:
@@ -958,7 +1014,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    0\x03":
         #raise ValueError("Couldn't find registration marks. (2)(%s)" % str(resp))
-      
+
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    1\x03":
         #raise ValueError("Couldn't find registration marks. (3)")
@@ -975,12 +1031,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
     # needed only for the trackenhancing feature, defines the usable length, rollers three times forward and back.
-    # needs a pressure of 19 or more, else nothing will happen 
+    # needs a pressure of 19 or more, else nothing will happen
     #p = b"FU%d\x03" % (height)
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+    if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       pass
     else:
       p = b"\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
@@ -1002,6 +1058,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # potentially long command string needs extra care
     s.safe_write(p)
 
+    s.wait_for_ready()
+
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
     if not 'llx' in bbox: bbox['llx'] = 0  # survive empty pathlist
@@ -1009,7 +1067,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
+      if s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or s.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
         new_home = b"L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
       else:
         new_home = b"H\x03"
@@ -1038,7 +1096,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     for line in open(file,'r').readlines():
       if re.match(r'\s*\[', line):
         exec('data1234='+line)
-        break 
+        break
       elif re.match(r'\s*<\s*svg', line):
         print(line)
         print("Error: xml/svg file. Please load into inkscape. Use extensions -> export -> sendto silhouette, [x] dump to file")
