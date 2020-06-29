@@ -51,7 +51,7 @@ else:   # if sys_platform.startswith('linux'):
           print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
           print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
           print("\n\n\n", file=sys.stderr)
-          raise e2;
+          raise e2
 
 try:
     try:
@@ -276,7 +276,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if usb_reset_needed:
           for i in range(5):
             try:
-              dev.reset();
+              dev.reset()
               break
             except usb.core.USBError as e:
               print("reset failed: ", e, file=self.log)
@@ -607,7 +607,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # Silhouette Studio does not appear to issue this command
         pass
       else:
-        self.write(b"FW%d\x03" % media);
+        self.write(b"FW%d\x03" % media)
       if pen is None:
         if media == 113:
           pen = True
@@ -632,7 +632,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.write(b"FX%d,%d\x03" % (pressure, toolholder));
+        self.write(b"FX%d,%d\x03" % (pressure, toolholder))
         print("pressure: %d" % pressure, file=self.log)
         # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
         # hopefully also allowed later on
@@ -641,7 +641,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if speed is not None:
         if speed < 1: speed = 1
         if speed > 10: speed = 10
-        self.write(b"!%d,%d\x03" % (speed, toolholder));
+        self.write(b"!%d,%d\x03" % (speed, toolholder))
         print("speed: %d" % speed, file=self.log)
 
       # set cutter offset a first time (seems to always be 0mm x 0.05mm)
@@ -663,7 +663,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.write(b"FX%d,%d\x03" % (pressure, toolholder));
+        self.write(b"FX%d,%d\x03" % (pressure, toolholder))
         print("pressure: %d" % pressure, file=self.log)
         # some sort of pressure calibration I presume (always 3 on the second time, as far as I
         # could see)
@@ -680,18 +680,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if speed < 1: speed = 1
         if speed > 10: speed = 10
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.write(b"!%d,%d\x03" % (speed, toolholder));
+          self.write(b"!%d,%d\x03" % (speed, toolholder))
         else:
-          self.write(b"!%d\x03" % speed);
+          self.write(b"!%d\x03" % speed)
         print("speed: %d" % speed, file=self.log)
 
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.write(b"FX%d,%d\x03" % (pressure, toolholder));
+          self.write(b"FX%d,%d\x03" % (pressure, toolholder))
         else:
-          self.write(b"FX%d\x03" % pressure);
+          self.write(b"FX%d\x03" % pressure)
           # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
         print("pressure: %d" % pressure, file=self.log)
 
@@ -740,7 +740,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if toolholder == 1:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
-          self.write(b"TF%d,%d\x03" % (depth, toolholder));
+          self.write(b"TF%d,%d\x03" % (depth, toolholder))
           print("depth: %d" % depth, file=self.log)
 
     self.enable_sw_clipping = sw_clipping
