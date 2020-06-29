@@ -384,16 +384,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if o != len(data):
       raise ValueError('write all %d bytes failed: o=%d' % (len(data), o))
 
-  def safe_write(self, string):
+  def safe_write(self, data):
     """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
     if self.dev is None: return None
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
     so = 0
     delimiter = b"\x03"
-    while so < len(string):
-      safechunksz = min(safemaxchunksz, len(string)-so)
-      candidate = string[so:so+safechunksz]
+    while so < len(data):
+      safechunksz = min(safemaxchunksz, len(data)-so)
+      candidate = data[so:so+safechunksz]
       # strip string candidate of unfinished command at its end
       safechunk = candidate[0:(candidate.rfind(delimiter) + 1)]
       self.write(string = safechunk)
