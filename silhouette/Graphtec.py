@@ -387,7 +387,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def safe_write(self, data):
     """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
     if self.dev is None: return None
-    
+
     # convert string to bytes if required
     if isinstance(data, str):
       data = data.encode()
@@ -395,7 +395,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
     so = 0
-    delimiter = b"\x03"
+    delimiter = CMD_EOT.encode()
     while so < len(data):
       safechunksz = min(safemaxchunksz, len(data)-so)
       candidate = data[so:so+safechunksz]
