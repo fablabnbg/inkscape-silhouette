@@ -423,6 +423,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise TypeError("Send Command Exception: %s " % type(cmd))
     self.write(data + CMD_EOT, timeout)
 
+  def safe_send_command(self, cmd):
+    """ Sends a command or a list of commands of type string """
+    if isinstance(cmd, str):
+      data = cmd
+    elif isinstance(cmd, list) and isinstance(cmd[0], str):
+      data = CMD_EOT.join(cmd)
+    else:
+      raise TypeError("Send Command Exception: %s " % type(cmd))
+    self.safe_write(data + CMD_EOT)
+
   def send_escape(self, esc):
     """ Sends a Escape Command """
     if isinstance(esc, str):
@@ -503,11 +513,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """Send the init command. Called by setup()."""
     # taken from robocut/Plotter.cpp:331 ff
     # Initialise plotter.
-    self.write(b"\x1b\x04")
+    self.send_escape(CMD_EOT)
 
     # Initial palaver
     try:
-      self.write(b"FG\x03")   # query device name
+      self.send_command("FG") # query device name
     except Exception as e:
       raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
 
@@ -556,7 +566,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
 
-      self.write(b"TB71\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
+      self.send_command("TB71") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       try:
         resp = self.read(timeout=1000)
         if len(resp) > 1:
@@ -564,7 +574,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       except:
         pass
 
-      self.write(b"FA\x03") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
+      self.send_command("FA") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
       try:
         resp = self.read(timeout=1000)
         if len(resp) > 1:
@@ -575,7 +585,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # Silhouette Studio does not appear to issue this command when using a cameo 4
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-      self.write(b"TC\x03")
+      self.send_command("TC")
       try:
         resp = self.read(timeout=1000)
         if len(resp) > 1:
@@ -588,7 +598,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.dev is None: return None
 
-    self.write(b"FG\x03")   # Get Version: 17 Chars
+    self.send_command("FG")   # Get Version: 17 Chars
     try:
       resp = self.read(timeout=10000) # Large timeout because the plotter moves.
     except usb.core.USBError as e:
@@ -618,25 +628,33 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       if cuttingmat == 'cameo_12x12':
-        self.write(b"TG1\x03")
+        self.send_command("TG1")
       elif cuttingmat == 'cameo_12x24':
-        self.write(b"TG2\x03")
+        self.send_command("TG2")
       else:
-        self.write(b"TG0\x03")
+        self.send_command("TG0")
 
       #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
       # side of media (boundary check?), but next cut run will stall
       #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-      self.write(b"FN0\x03TB50,0\x03")
+      self.send_command(["FN0", "TB50,0"])
 
+      top = 0
+      left = 0
+      bottom = 0
+      right = 0
       if cuttingmat == 'cameo_12x12':
-        self.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, 6096, 6096))
+        bottom = 6096
+        right = 6096
       elif cuttingmat == 'cameo_12x24':
-        self.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, 12192, 6096))
+        bottom = 12192
+        right = 6096
       else:
         width = self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth
         height = self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight
-        self.write(b"\\%d,%d\x03Z%d,%d\x03" % (0, 0, height * 20.0, width * 20.0))
+        bottom = height * 20.0
+        right = width * 20.0
+      self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
 
     if media is not None:
       if media < 100 or media > 300: media = 300
@@ -644,7 +662,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # Silhouette Studio does not appear to issue this command
         pass
       else:
-        self.write(b"FW%d\x03" % media)
+        self.send_command("FW%d" % media)
       if pen is None:
         if media == 113:
           pen = True
@@ -661,7 +679,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if toolholder is None:
       toolholder = 1
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
-      self.write(b"J%d\x03" % toolholder)
+      self.send_command("J%d" % toolholder)
     print("toolholder: %d" % toolholder, file=self.log)
 
     # cameo 4 sets some parameters two times (force, TJ%d, Cutter offset)
@@ -669,72 +687,74 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.write(b"FX%d,%d\x03" % (pressure, toolholder))
+        self.send_command("FX%d,%d" % (pressure, toolholder))
         print("pressure: %d" % pressure, file=self.log)
         # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
         # hopefully also allowed later on
-        self.write(b"TJ0\x03")
+        self.send_command("TJ0")
 
       if speed is not None:
         if speed < 1: speed = 1
         if speed > 10: speed = 10
-        self.write(b"!%d,%d\x03" % (speed, toolholder))
+        self.send_command("!%d,%d" % (speed, toolholder))
         print("speed: %d" % speed, file=self.log)
 
       # set cutter offset a first time (seems to always be 0mm x 0.05mm)
-      self.write(b"FC0,1,%d\x03"  % (toolholder))
+      self.send_command("FC0,1,%d"  % (toolholder))
 
       if sharpencorners:
-        self.write(b"FE1,%d\x03" % toolholder)
+        self.send_command("FE1,%d" % toolholder)
       else:
-        self.write(b"FE0,%d\x03" % toolholder)
+        self.send_command("FE0,%d" % toolholder)
 
       if pen:
-        self.write(b"FF0,0,%d\x03FF0,0,%d" % (toolholder, toolholder))
+        self.send_command(["FF0,0,%d" % toolholder,"FF0,0,%d" % toolholder])
       else:
         sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
         sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-        self.write(b"FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+        self.send_command([
+          "FF%d,0,%d" % (sharpencorners_start, toolholder),
+          "FF%d,%d,%d" % (sharpencorners_start, sharpencorners_end, toolholder)])
 
       # set pressure a second time (don't know why, just reproducing)
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.write(b"FX%d,%d\x03" % (pressure, toolholder))
+        self.send_command("FX%d,%d" % (pressure, toolholder))
         print("pressure: %d" % pressure, file=self.log)
         # some sort of pressure calibration I presume (always 3 on the second time, as far as I
         # could see)
-        self.write(b"TJ3\x03")
+        self.send_command("TJ3")
 
       # set cutter offset a second time (this time with blade specific parameters)
       if pen:
-        self.write(b"FC0,1,%d\x03"  % (toolholder))
+        self.send_command("FC0,1,%d"  % (toolholder))
       else:
         circle = 0.5 + bladediameter * 20
-        self.write(b"FC%d,1,%d\x03" % (circle, toolholder))
+        self.send_command("FC%d,1,%d" % (circle, toolholder))
     else:
       if speed is not None:
         if speed < 1: speed = 1
         if speed > 10: speed = 10
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.write(b"!%d,%d\x03" % (speed, toolholder))
+          self.send_command("!%d,%d" % (speed, toolholder))
         else:
-          self.write(b"!%d\x03" % speed)
+          self.send_command("!%d" % speed)
         print("speed: %d" % speed, file=self.log)
 
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.write(b"FX%d,%d\x03" % (pressure, toolholder))
+          self.send_command("FX%d,%d" % (pressure, toolholder))
         else:
-          self.write(b"FX%d\x03" % pressure)
+          self.send_command("FX%d" % pressure)
           # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
         print("pressure: %d" % pressure, file=self.log)
 
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if pen:
-          self.write(b"FC0,1,%d\x03"  % (toolholder))
+          self.send_command("FC0,1,%d"  % (toolholder))
 
       if self.leftaligned:
         print("Loaded media is expected left-aligned.", file=self.log)
@@ -744,16 +764,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # Lift plotter head at sharp corners
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if sharpencorners:
-          self.write(b"FE1,%d\x03" % toolholder)
+          self.send_command("FE1,%d" % toolholder)
         else:
-          self.write(b"FE0,%d\x03" % toolholder)
+          self.send_command("FE0,%d" % toolholder)
 
         if pen:
-          self.write(b"FF0,0,%d\x03" % (toolholder))
+          self.send_command("FF0,0,%d" % (toolholder))
         else:
           sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
           sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-          self.write(b"FF%d,0,%d\x03FF%d,%d,%d\x03" % (sharpencorners_start, toolholder, sharpencorners_start, sharpencorners_end, toolholder))
+          self.send_command([
+            "FF%d,0,%d" % (sharpencorners_start, toolholder),
+            "FF%d,%d,%d" % (sharpencorners_start, sharpencorners_end, toolholder)])
 
       # robocut/Plotter.cpp:393 says:
       # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
@@ -764,20 +786,22 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if not pen:
           circle = 0.5 + bladediameter * 20
-          self.write(b"FC0,1,%d\x03FC%d,1,%d\x03" % (toolholder, circle, toolholder))
+          self.send_command([
+            "FC0,1,%d" % toolholder,
+            "FC%d,1,%d" % (circle, toolholder)])
       else:
         if pen:
           circle = 0
         else:
           circle = bladediameter * 20
-        self.write(b"FC%d\x03" % circle)
+        self.send_command("FC%d" % circle)
 
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       if autoblade and depth is not None:
         if toolholder == 1:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
-          self.write(b"TF%d,%d\x03" % (depth, toolholder))
+          self.send_command("TF%d,%d" % (depth, toolholder))
           print("depth: %d" % depth, file=self.log)
 
     self.enable_sw_clipping = sw_clipping
@@ -786,12 +810,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # needs a pressure of 19 or more, else nothing will happen
     if trackenhancing is not None:
       if trackenhancing:
-        self.write(b"FY0\x03")
+        self.send_command("FY0")
       else:
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
           pass
         else:
-          self.write(b"FY1\x03")
+          self.send_command("FY1")
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
@@ -801,12 +825,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     else:
       if landscape is not None:
         if landscape:
-          self.write(b"FN0\x03TB50,1\x03")
+          self.send_command(["FN0", "TB50,1"])
         else:
-          self.write(b"FN0\x03TB50,0\x03")
+          self.send_command(["FN0", "TB50,0"])
 
       # Don't lift plotter head between paths
-      self.write(b"FE0,0\x03")
+      self.send_command("FE0,0")
 
   def find_bbox(self, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -910,7 +934,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             bbox['clip']['count'] = 1
 
       if bbox['only'] is False:
-        plotcmds.append(b"M%d,%d" % (int(0.5+y), int(0.5+x)))
+        plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
 
       for j in range(1,len(path)):
         x = path[j][0]*20. + x_off
@@ -940,10 +964,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
         if bbox['only'] is False:
           if not self.enable_sw_clipping or (inside and last_inside):
-            plotcmds.append(b"D%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
           else:
             # // if outside the range just move
-            plotcmds.append(b"M%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
         last_inside = inside
     return plotcmds
 
@@ -1022,20 +1046,20 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       height = reglength * 20.0
       width = regwidth * 20.0
 
-      self.write(b"TB50,0\x03") #only with registration (it was TB50,1), landscape mode
-      self.write(b"TB99\x03")
-      self.write(b"TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
-      self.write(b"TB51,400\x03")   # length of regmarks
-      self.write(b"TB53,10\x03")    # width of regmarks
-      self.write(b"TB55,1\x03")
+      self.send_command("TB50,0") #only with registration (it was TB50,1), landscape mode
+      self.send_command("TB99")
+      self.send_command("TB52,2")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+      self.send_command("TB51,400")   # length of regmarks
+      self.send_command("TB53,10")    # width of regmarks
+      self.send_command("TB55,1")
 
       if regsearch:
         # automatic regmark test, height, width, top, left
         # add a search range of 10mm
-        self.write(b"TB123,%i,%i,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
+        self.send_command("TB123,%i,%i,%i,%i" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
       else:
         # manual regmark, height, width
-        self.write(b"TB23,%i,%i\x03" % (reglength * 20.0, regwidth * 20.0))
+        self.send_command("TB23,%i,%i" % (reglength * 20.0, regwidth * 20.0))
 
       #while True:
       #  s.write("\1b\05") #request status
@@ -1076,24 +1100,27 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       pass
     else:
-      p = b"\\0,0\x03Z%d,%d\x03L0\x03FE0,0\x03FF0,0,0\x03" % (height, width)
-      self.write(p)
+      self.send_command([
+        "\\0,0",
+        "Z%d,%d" % (height, width),
+        "L0",
+        "FE0,0",
+        "FF0,0,0"])
 
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
     cmd_list = self.plot_cmds(pathlist,bbox,offset[0],offset[1])
-    p = b'\x03'.join(cmd_list)
 
     if bboxonly == True:
       # move the bounding box
-      p = b"M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
-      p += b"\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx']))
-      p += b"\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx']))
-      p += b"\x03D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx']))
-      p += b"\x03D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))
-    p += b"\x03"   # Properly terminate string of plot commands.
+      cmd_list.append("M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])))
+      cmd_list.append("D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx'])))
+      cmd_list.append("D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx'])))
+      cmd_list.append("D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx'])))
+      cmd_list.append("D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])))
+
     # potentially long command string needs extra care
-    self.safe_write(p)
+    self.safe_send_command(cmd_list)
 
     self.wait_for_ready()
 
@@ -1105,13 +1132,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
-        new_home = b"L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
+        new_home = [
+          "L0",
+          "\\0,0",
+          "M0,0",
+          "J0",
+          "FN0",
+          "TB50,0"]
       else:
-        new_home = b"H\x03"
+        new_home = "H"
     else: #includes 'below'
-      new_home = b"M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
+      new_home = [
+        "M%d,%d" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0), 
+        "SO0"]
     #new_home += b"FN0\x03TB50,0\x03"
-    self.write(new_home)
+    self.send_command(new_home)
 
     return {
         'bbox': bbox,
@@ -1121,9 +1156,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
 
   def move_origin(self, feed_mm):
-    new_home = b"M%d,%d\x03SO0\x03FN0" % (int(0.5+feed_mm*20.),0)
     self.wait_for_ready(verbose=False)
-    self.write(new_home)
+    self.send_command([
+      "M%d,%d" % (int(0.5+feed_mm*20.),0),
+      "SO0",
+      "FN0"])
     self.wait_for_ready(verbose=False)
 
   def load_dumpfile(self,file):
