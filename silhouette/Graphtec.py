@@ -407,7 +407,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       candidate = data[so:so+safechunksz]
       # strip string candidate of unfinished command at its end
       safechunk = candidate[0:(candidate.rfind(delimiter) + 1)]
-      self.write(string = safechunk)
+      self.write(data = safechunk)
       # wait for cutter to finish current chunk, otherwise blocking might occur
       while not self.status() == "ready":
         time.sleep(0.05)
@@ -486,7 +486,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     except usb.core.USBError as e:
       print("usb.core.USBError:", e, file=self.log)
       pass
-    if resp[-1] != '\x03': raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
+    if resp[-1] != CMD_ETX: raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
     if resp[:-1] == '0': return "ready"
     if resp[:-1] == '1': return "moving"
     if resp[:-1] == '2': return "unloaded"
