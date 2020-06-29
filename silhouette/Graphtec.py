@@ -299,17 +299,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def product_id(self):
     return self.hardware['product_id'] if 'product_id' in self.hardware else None
 
-  def write(self, string, timeout=10000):
+  def write(self, data, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
     if self.dev is None: return None
 
+    # convert string to bytes if required
+    if isinstance(data, str):
+      data = data.encode()
+
     # robocut/Plotter.cpp:73 says: Send in 4096 byte chunks. Not sure where I got this from, I'm not sure it is actually necessary.
     try:
       resp = self.read(timeout=10) # poll the inbound buffer
       if resp:
-        print("response before write('%s'): '%s'" % (string, resp), file=self.log)
+        print("response before write('%s'): '%s'" % (data, resp), file=self.log)
     except:
       pass
     endpoint = 0x01
@@ -318,14 +322,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     o = 0
     msg=''
     retry = 0
-    while o < len(string):
+    while o < len(data):
       if o:
         if self.progress_cb:
-          self.progress_cb(o,len(string),msg)
+          self.progress_cb(o,len(data),msg)
         elif self.log:
-          self.log.write(" %d%% %s\r" % (100.*o/len(string),msg))
+          self.log.write(" %d%% %s\r" % (100.*o/len(data),msg))
           self.log.flush()
-      chunk = string[o:o+chunksz]
+      chunk = data[o:o+chunksz]
       try:
         if self.need_interface:
           try:
@@ -372,8 +376,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         retry = 0
       o += r
 
-    if o != len(string):
-      raise ValueError('write all %d bytes failed: o=%d' % (len(string), o))
+    if o != len(data):
+      raise ValueError('write all %d bytes failed: o=%d' % (len(data), o))
 
   def safe_write(self, string):
     """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
