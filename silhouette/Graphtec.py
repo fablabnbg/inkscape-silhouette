@@ -18,7 +18,7 @@
 # 2016-05-16  no reset per default, this helps usbip.
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
 # 2017-04-20  Adding Cameo3 USB IDs
-#
+# 2020-06-    Adding Cameo4 and refactore code
 
 from __future__ import print_function
 
@@ -172,6 +172,18 @@ def _bbox_extend(bb, x, y):
     if not 'urx' in bb or x > bb['urx']: bb['urx'] = x
     if not 'lly' in bb or y > bb['lly']: bb['lly'] = y
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
+
+
+#   1   mm =   20 SU
+#   1   in =  508 SU    
+#   8.5 in = 4318 SU
+#  11   in = 5588 SU
+
+def _mm_2_SU(mm):
+  return int(mm * 20.0)
+
+def _inch_2_SU(inch):
+  return int(inch * 508.0)
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
@@ -644,16 +656,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       bottom = 0
       right = 0
       if cuttingmat == 'cameo_12x12':
-        bottom = 6096
-        right = 6096
+        bottom = _inch_2_SU(12)
+        right = _inch_2_SU(12)
       elif cuttingmat == 'cameo_12x24':
-        bottom = 12192
-        right = 6096
+        bottom = _inch_2_SU(24)
+        right = _inch_2_SU(12)
       else:
-        width = self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth
-        height = self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight
-        bottom = height * 20.0
-        right = width * 20.0
+        bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
+        right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
       self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
 
     if media is not None:
