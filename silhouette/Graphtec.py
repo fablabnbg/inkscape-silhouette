@@ -125,10 +125,16 @@ PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
+# End Of Text - marks the end of a command
 CMD_ETX = '\x03'
-CMD_EOT = '\x04'
-CMD_ENQ = '\x05'
+# Escape - send escape command
 CMD_ESC = '\x1b'
+
+### Escape Commands
+# End Of Transmission - will initialize the device, 
+CMD_EOT = '\x04'
+# Enquiry - Returns device status
+CMD_ENQ = '\x05'
 
 DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
@@ -463,7 +469,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.dev is None: return 'none'
 
     # Status request.
-    self.write(b"\x1b\x05")
+    self.send_escape(CMD_ENQ)
     resp = b"None\x03"
     try:
       resp = self.read(timeout=5000)
