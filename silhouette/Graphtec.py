@@ -407,6 +407,23 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         time.sleep(0.05)
       so += len(safechunk)
 
+  def send_command(self, cmd, timeout=10000):
+    """ Sends a command or a list of commands of type string """
+    if isinstance(cmd, str):
+      data = cmd
+    elif isinstance(cmd, list) and isinstance(cmd[0], str):
+      data = CMD_EOT.join(cmd)
+    else:
+      raise TypeError("Send Command Exception: %s " % type(cmd))
+    self.write(data + CMD_EOT, timeout)
+
+  def send_escape(self, esc):
+    """ Sends a Escape Command """
+    if isinstance(esc, str):
+      self.write(CMD_ESC + esc)
+    else:
+      raise TypeError("Send Escape Exception: %s " % type(esc))
+    
   def read(self, size=64, timeout=5000):
     """Low level read method"""
     if self.dev is None: return None
