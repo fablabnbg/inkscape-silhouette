@@ -125,6 +125,11 @@ PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 
+CMD_ETX = '\x03'
+CMD_EOT = '\x04'
+CMD_ENQ = '\x05'
+CMD_ESC = '\x1b'
+
 DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
    'width_mm':  206, 'length_mm': 3000, 'regmark': True },
