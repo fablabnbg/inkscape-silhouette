@@ -782,7 +782,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pen:
         self.send_command(tool.cutter_offset(0, 0.05))
       else:
-        self.send_command(tool.cutter_offset(bladediameter + 0.05, 0.05))
+        self.send_command(tool.cutter_offset(bladediameter + 0.0025, 0.05))
     else:
       if speed is not None:
         if speed < 1: speed = 1
@@ -833,13 +833,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if not pen:
           self.send_command([
             tool.cutter_offset(0, 0.05),
-            tool.cutter_offset(bladediameter + 0.05, 0.05)])
+            tool.cutter_offset(bladediameter + 0.0025, 0.05)])
       else:
         if pen:
-          circle = 0
+          self.send_command("FC0")
         else:
-          circle = bladediameter * 20
-        self.send_command("FC%d" % circle)
+          self.send_command("FC%d" % _mm_2_SU(bladediameter))
 
     if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       if autoblade and depth is not None:
