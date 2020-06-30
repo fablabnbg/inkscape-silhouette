@@ -1157,11 +1157,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if bboxonly == True:
       # move the bounding box
-      cmd_list.append("M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])))
-      cmd_list.append("D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx'])))
-      cmd_list.append("D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx'])))
-      cmd_list.append("D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx'])))
-      cmd_list.append("D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])))
+      cmd_list = [
+        "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])),
+        "D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx'])),
+        "D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx'])),
+        "D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx'])),
+        "D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))]
 
     # potentially long command string needs extra care
     self.safe_send_command(cmd_list)
