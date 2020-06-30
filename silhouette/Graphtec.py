@@ -618,7 +618,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       resp = "None  "
     return resp[0:-2]   # chop of 0x03
 
-  def set_cutting_mat(self, cuttingmat=None):
+  def set_boundary(self, top, left, bottom, right):
+    """ Sets boundary box """
+    self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
+
+  def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """ Sets cutting mat only for cameo 3 / 4 """
     if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       return
@@ -633,6 +637,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
     self.send_command(["FN0", "TB50,0"])
+
+    if cuttingmat == 'cameo_12x12':
+      self.set_boundary(0, 0, _inch_2_SU(12), _inch_2_SU(12))
+    elif cuttingmat == 'cameo_12x24':
+      self.set_boundary(0, 0, _inch_2_SU(24), _inch_2_SU(12))
+    else:
+      bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
+      right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
+      self.set_boundary(0, 0, bottom, right)
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
@@ -653,25 +666,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     self.initialize()
 
-    self.set_cutting_mat(cuttingmat)
-
-
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
-
-      top = 0
-      left = 0
-      bottom = 0
-      right = 0
-      if cuttingmat == 'cameo_12x12':
-        bottom = _inch_2_SU(12)
-        right = _inch_2_SU(12)
-      elif cuttingmat == 'cameo_12x24':
-        bottom = _inch_2_SU(24)
-        right = _inch_2_SU(12)
-      else:
-        bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
-        right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
-      self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
+    self.set_cutting_mat(cuttingmat, mediawidth, mediaheight)
 
     if media is not None:
       if media < 100 or media > 300: media = 300
