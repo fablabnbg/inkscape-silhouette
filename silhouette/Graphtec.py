@@ -193,14 +193,36 @@ class SilhouetteCameoTool:
     self.toolholder = toolholder
 
   def select(self):
+    """ select tool command """
     return "J%d" % self.toolholder
 
   def pressure(self, pressure):
+    """ set pressure command """
     return "FX%d,%d" % (pressure, self.toolholder)
 
   def speed(self, speed):
+    """ set speed command """
     return "!%d,%d" % (speed, self.toolholder)
 
+  def depth(self, depth):
+    """ set depth command """
+    return "TF%d,%d" % (depth, self.toolholder)
+
+  def cutter_offset(self, xmm, ymm):
+    """ set cutter offset command using mm """
+    return "FC%d,%d,%d" % (_mm_2_SU(xmm), _mm_2_SU(ymm), self.toolholder)
+
+  def lift(self, lift):
+    """ set lift command """
+    if lift:
+      return "FE1,%d" % self.toolholder
+    else:
+      return "FE0,%d" % self.toolholder
+
+  def sharpen_corners(self, start, end):
+    return [
+      "FF%d,0,%d" % (start, self.toolholder),
+      "FF%d,%d,%d" % (start, end, self.toolholder)]
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
@@ -593,7 +615,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #except:
     #  pass
 
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
 
       self.send_command("TB71") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       try:
@@ -687,7 +709,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if media is not None:
       if media < 100 or media > 300: media = 300
-      if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
         # Silhouette Studio does not appear to issue this command
         pass
       else:
@@ -724,7 +746,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         print("pressure: %d" % pressure, file=self.log)
 
         # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
-        # hopefully also allowed later on
+        # hopefully also allowed later on, maybe accelleration
         self.send_command("TJ0")
 
       if speed is not None:
@@ -734,27 +756,23 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         print("speed: %d" % speed, file=self.log)
 
       # set cutter offset a first time (seems to always be 0mm x 0.05mm)
-      self.send_command("FC0,1,%d"  % (toolholder))
+      self.send_command(tool.cutter_offset(0, 0.05))
 
-      if sharpencorners:
-        self.send_command("FE1,%d" % toolholder)
-      else:
-        self.send_command("FE0,%d" % toolholder)
+      # lift tool between paths
+      self.send_command(tool.lift(sharpencorners))
 
       if pen:
-        self.send_command(["FF0,0,%d" % toolholder,"FF0,0,%d" % toolholder])
+        self.send_command(tool.sharpen_corners(0, 0))
       else:
         sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
         sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-        self.send_command([
-          "FF%d,0,%d" % (sharpencorners_start, toolholder),
-          "FF%d,%d,%d" % (sharpencorners_start, sharpencorners_end, toolholder)])
+        self.send_command(tool.sharpen_corners(sharpencorners_start, sharpencorners_end))
 
       # set pressure a second time (don't know why, just reproducing)
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.send_command("FX%d,%d" % (pressure, toolholder))
+        self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
         # some sort of pressure calibration I presume (always 3 on the second time, as far as I
         # could see)
@@ -762,16 +780,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       # set cutter offset a second time (this time with blade specific parameters)
       if pen:
-        self.send_command("FC0,1,%d"  % (toolholder))
+        self.send_command(tool.cutter_offset(0, 0.05))
       else:
-        circle = 0.5 + bladediameter * 20
-        self.send_command("FC%d,1,%d" % (circle, toolholder))
+        self.send_command(tool.cutter_offset(bladediameter + 0.05, 0.05))
     else:
       if speed is not None:
         if speed < 1: speed = 1
         if speed > 10: speed = 10
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.send_command("!%d,%d" % (speed, toolholder))
+          self.send_command(tool.speed(speed))
         else:
           self.send_command("!%d" % speed)
         print("speed: %d" % speed, file=self.log)
@@ -780,7 +797,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-          self.send_command("FX%d,%d" % (pressure, toolholder))
+          self.send_command(tool.pressure(pressure))
         else:
           self.send_command("FX%d" % pressure)
           # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
@@ -788,7 +805,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if pen:
-          self.send_command("FC0,1,%d"  % (toolholder))
+          self.send_command(tool.cutter_offset(0, 0.05))
 
       if self.leftaligned:
         print("Loaded media is expected left-aligned.", file=self.log)
@@ -797,19 +814,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       # Lift plotter head at sharp corners
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-        if sharpencorners:
-          self.send_command("FE1,%d" % toolholder)
-        else:
-          self.send_command("FE0,%d" % toolholder)
+        self.send_command(tool.lift(sharpencorners))
 
         if pen:
-          self.send_command("FF0,0,%d" % (toolholder))
+          self.send_command(tool.sharpen_corners(0, 0))
         else:
           sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
           sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
-          self.send_command([
-            "FF%d,0,%d" % (sharpencorners_start, toolholder),
-            "FF%d,%d,%d" % (sharpencorners_start, sharpencorners_end, toolholder)])
+          self.send_command(tool.sharpen_corners(sharpencorners_start, sharpencorners_end))
 
       # robocut/Plotter.cpp:393 says:
       # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
@@ -819,10 +831,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if not pen:
-          circle = 0.5 + bladediameter * 20
           self.send_command([
-            "FC0,1,%d" % toolholder,
-            "FC%d,1,%d" % (circle, toolholder)])
+            tool.cutter_offset(0, 0.05),
+            tool.cutter_offset(bladediameter + 0.05, 0.05)])
       else:
         if pen:
           circle = 0
@@ -830,12 +841,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           circle = bladediameter * 20
         self.send_command("FC%d" % circle)
 
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       if autoblade and depth is not None:
         if toolholder == 1:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
-          self.send_command("TF%d,%d" % (depth, toolholder))
+          self.send_command(tool.depth(depth))
           print("depth: %d" % depth, file=self.log)
 
     self.enable_sw_clipping = sw_clipping
@@ -846,7 +857,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if trackenhancing:
         self.send_command("FY0")
       else:
-        if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+        if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
           pass
         else:
           self.send_command("FY1")
@@ -854,7 +865,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       pass
     else:
       if landscape is not None:
@@ -1131,7 +1142,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       pass
     else:
       self.send_command([
@@ -1165,7 +1176,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
         new_home = [
           "L0",
           "\\0,0",
