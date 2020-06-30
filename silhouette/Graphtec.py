@@ -618,6 +618,21 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       resp = "None  "
     return resp[0:-2]   # chop of 0x03
 
+  def set_cutting_mat(self, cuttingmat=None):
+    """ Sets cutting mat only for cameo 3 / 4 """
+    if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+      return
+    if cuttingmat == 'cameo_12x12':
+      self.send_command("TG1")
+    elif cuttingmat == 'cameo_12x24':
+      self.send_command("TG2")
+    else:
+      self.send_command("TG0")
+
+    #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
+    # side of media (boundary check?), but next cut run will stall
+    #TB50,x: x = 1 landscape mode, x = 0 portrait mode
+    self.send_command(["FN0", "TB50,0"])
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """media range is [100..300], default 132, "Print Paper Light Weight"
@@ -638,18 +653,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     self.initialize()
 
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
-      if cuttingmat == 'cameo_12x12':
-        self.send_command("TG1")
-      elif cuttingmat == 'cameo_12x24':
-        self.send_command("TG2")
-      else:
-        self.send_command("TG0")
+    self.set_cutting_mat(cuttingmat)
 
-      #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
-      # side of media (boundary check?), but next cut run will stall
-      #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-      self.send_command(["FN0", "TB50,0"])
+
+    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
 
       top = 0
       left = 0
