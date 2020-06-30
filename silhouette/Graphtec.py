@@ -185,6 +185,23 @@ def _mm_2_SU(mm):
 def _inch_2_SU(inch):
   return int(inch * 508.0)
 
+  
+class SilhouetteCameoTool:
+  def __init__(self, toolholder=1):
+    if toolholder is None:
+      toolholder = 1
+    self.toolholder = toolholder
+
+  def select(self):
+    return "J%d" % self.toolholder
+
+  def pressure(self, pressure):
+    return "FX%d,%d" % (pressure, self.toolholder)
+
+  def speed(self, speed):
+    return "!%d,%d" % (speed, self.toolholder)
+
+
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
     """ This initializer simply finds the first known device.
@@ -688,10 +705,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           if    depth is None:    depth = i[3]
           break
 
+    tool = SilhouetteCameoTool(toolholder)
+
     if toolholder is None:
       toolholder = 1
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3 or self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
-      self.send_command("J%d" % toolholder)
+
+    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+      self.send_command(tool.select())
+
     print("toolholder: %d" % toolholder, file=self.log)
 
     # cameo 4 sets some parameters two times (force, TJ%d, Cutter offset)
@@ -699,8 +720,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
-        self.send_command("FX%d,%d" % (pressure, toolholder))
+        self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
+
         # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
         # hopefully also allowed later on
         self.send_command("TJ0")
@@ -708,7 +730,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if speed is not None:
         if speed < 1: speed = 1
         if speed > 10: speed = 10
-        self.send_command("!%d,%d" % (speed, toolholder))
+        self.send_command(tool.speed(speed))
         print("speed: %d" % speed, file=self.log)
 
       # set cutter offset a first time (seems to always be 0mm x 0.05mm)
