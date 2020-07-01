@@ -222,7 +222,7 @@ class SilhouetteCameo:
         try:
             for dev in usb.core.find(find_all=True):
               msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
-        except NameError: 
+        except NameError:
             msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
@@ -409,7 +409,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     elif isinstance(data, bytearray):
         return str(data).decode()
     else:
-        return data.tostring().decode()
+        return data.tobytes().decode()  # return data.tostring().decode()
 
   def try_read(s, size=64, timeout=1000):
     ret=None
@@ -690,7 +690,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.enable_sw_clipping = sw_clipping
 
     # if enabled, rollers three times forward and back.
-    # needs a pressure of 19 or more, else nothing will happen 
+    # needs a pressure of 19 or more, else nothing will happen
     if trackenhancing is not None:
       if trackenhancing:
         s.write(b"FY0\x03")
@@ -958,7 +958,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    0\x03":
         #raise ValueError("Couldn't find registration marks. (2)(%s)" % str(resp))
-      
+
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
       #if resp != "    1\x03":
         #raise ValueError("Couldn't find registration marks. (3)")
@@ -975,7 +975,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
     # needed only for the trackenhancing feature, defines the usable length, rollers three times forward and back.
-    # needs a pressure of 19 or more, else nothing will happen 
+    # needs a pressure of 19 or more, else nothing will happen
     #p = b"FU%d\x03" % (height)
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
@@ -1038,7 +1038,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     for line in open(file,'r').readlines():
       if re.match(r'\s*\[', line):
         exec('data1234='+line)
-        break 
+        break
       elif re.match(r'\s*<\s*svg', line):
         print(line)
         print("Error: xml/svg file. Please load into inkscape. Use extensions -> export -> sendto silhouette, [x] dump to file")
