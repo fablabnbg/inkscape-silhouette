@@ -609,40 +609,34 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     print("Device Version: '%s'" % self.get_version(), file=self.log)
 
     # Additional commands seen in init by Silhouette Studio
-    #s.write("[\x03") # Get Upper Left Coords: 2 six digit numbers.
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("[: '%s'" % (resp[:-1]), file=s.log)  # response '0,0'
-    #except:
-    #  pass
+    """
+    # Get Upper Left Coords: 2 six digit numbers.
+    resp = self.send_receive_command("[")
+    if resp:
+      # response '0,0'
+      print("[: '%s'" % resp, file=self.log)
 
-    #s.write("U\x03") # Get Lower Right Coordinates: 2 six digit numbers
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("U: '%s'" % (resp[:-1]), file=s.log)  # response '20320,4120' max. usable print range?
-    #                                              # response ' 20320,   3840' on Portrait
-    #except:
-    #  pass
-
-    #s.write("FQ0\x03") # Unknown: 1 five digit number. Maybe last speed set?
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("FQ0: '%s'" % (resp[:-1]), file=s.log)  # response '10'
-    #                                                # response '    5' on portrait
-    #except:
-    #  pass
-
-    #s.write("FQ2\x03") # Unknown: 1 five digit number. Maybe last blade offset or last pressure?
-    #try:
-    #  resp = s.read(timeout=1000)
-    #  if len(resp) > 1:
-    #  print("FQ2: '%s'" % (resp[:-1]), file=s.log)  # response '18'
-    #                                                # response '   17' on portrait
-    #except:
-    #  pass
+    # Get Lower Right Coordinates: 2 six digit numbers  
+    resp = self.send_receive_command("U")
+    if resp:
+      # response '20320,4120' max. usable print range?
+      # response ' 20320,   3840' on Portrait
+      print("U: '%s'" % resp, file=self.log)
+      
+    # Unknown: 1 five digit number. Maybe last speed set?
+    resp = self.send_receive_command("FQ0")
+    if resp:
+      # response '10'
+      # response '    5' on portrait
+      print("FQ0: '%s'" % resp, file=self.log)
+      
+    # Unknown: 1 five digit number. Maybe last blade offset or last pressure?
+    resp = self.send_receive_command("FQ2")
+    if resp:
+      # response '18'
+      # response '   17' on portrait
+      print("FQ2: '%s'" % resp, file=self.log)
+    """
 
     if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
 
@@ -724,11 +718,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if media is not None:
       if media < 100 or media > 300: media = 300
-      if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
-        # Silhouette Studio does not appear to issue this command
-        pass
-      else:
+
+      # Silhouette Studio does not appear to issue this command
+      if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
         self.send_command("FW%d" % media)
+
       if pen is None:
         if media == 113:
           pen = True
