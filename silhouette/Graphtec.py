@@ -782,7 +782,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pen:
         self.send_command(tool.cutter_offset(0, 0.05))
       else:
-        self.send_command(tool.cutter_offset(bladediameter + 0.0025, 0.05))
+        self.send_command(tool.cutter_offset(bladediameter + 0.025, 0.05))
     else:
       if speed is not None:
         if speed < 1: speed = 1
@@ -833,7 +833,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if not pen:
           self.send_command([
             tool.cutter_offset(0, 0.05),
-            tool.cutter_offset(bladediameter + 0.0025, 0.05)])
+            tool.cutter_offset(bladediameter + 0.025, 0.05)])
       else:
         if pen:
           self.send_command("FC0")
