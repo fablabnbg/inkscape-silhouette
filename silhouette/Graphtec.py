@@ -671,7 +671,17 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
 
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
-    """ Sets cutting mat only for cameo 3 / 4 """
+    """Setting Cutting mat only for Cameo 3 and 4
+
+    Parameters
+    ----------
+        cuttingmat : {'cameo_12x12', 'cameo_12x24'. None}
+            type of the cutting mat
+        mediawidth : float
+            width of the media
+        mediaheight : float
+            height of the media
+    """
     if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       return
     if cuttingmat == 'cameo_12x12':
@@ -696,16 +706,48 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.set_boundary(0, 0, bottom, right)
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
-    """media range is [100..300], default 132, "Print Paper Light Weight"
-       speed range is [1..10], default None, from paper (132 -> 10)
-       pressure range is [1..33], default None, from paper (132 -> 5)
-          Notice: Cameo runs trackenhancing if you select a pressure of 19 or more.
-       pen: True or False, default None (media dependant)
-       trackenhancing: True or False, default False (setting ignored??)
-       landscape: True or False, default False
-       leftaligned: Loaded media is aligned left(=True) or right(=False), default: device dependant
-       return_home: True, default, go back to start, after plotting. False: set new page origin below plotted graphics.
+    """Setup the Silhuette Device
+
+    Parameters
+    ----------
+        media : int, optional 
+            range is [100..300], "Print Paper Light Weight". Defaults to 132.
+        speed : int, optional
+            range is [1..10]. Defaults to None, from paper (132 -> 10).
+        pressure : int, optional
+            range is [1..33], Notice: Cameo runs trackenhancing if you select a pressure of 19 or more. Defaults to None, from paper (132 -> 5).
+        toolholder : int, optional
+            range is [1..2]. Defaults to 1.
+        pen : bool, optional
+            media dependant. Defaults to None.
+        cuttingmat : {'cameo_12x12', 'cameo_12x24'}, optional
+            setting the cutting mat. Defaults to None.
+        sharpencorners : bool, optional
+            Defaults to False.
+        sharpencorners_start : float, optional
+            Defaults to 0.1.
+        sharpencorners_end : float, optional
+            Defaults to 0.1.
+        autoblade : bool, optional
+            Defaults to False.
+        depth : int, optional
+            range is [0..10] Defaults to None.
+        sw_clipping : bool, optional
+            Defaults to True.
+        trackenhancing : bool, optional
+            Defaults to False.
+        bladediameter : float, optional
+            Defaults to 0.9.
+        landscape : bool, optional
+            Defaults to False.
+        leftaligned : bool, optional
+            Loaded media is aligned left(=True) or right(=False). Defaults to device dependant.
+        mediawidth : float, optional
+            Defaults to 210.0.
+        mediaheight : float, optional
+            Defaults to 297.0.
     """
+
 
     if leftaligned is not None:
       self.leftaligned = leftaligned
