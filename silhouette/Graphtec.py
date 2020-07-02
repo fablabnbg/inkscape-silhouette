@@ -572,7 +572,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.product_id() != PRODUCT_ID_SILHOUETTE_CAMEO4:
       return 'none'
 
-    # Status request.
+    # tool setup request.
     self.send_escape(CMD_NAK)
     try:
       resp = self.read(timeout=1000)
