@@ -135,6 +135,14 @@ CMD_ESC = '\x1b'
 CMD_EOT = '\x04'
 # Enquiry - Returns device status
 CMD_ENQ = '\x05'
+# Negative Acnoledge - Returns device tool setup
+CMD_NAK = '\x15'
+
+SILHOUETTE_CAMEO4_TOOL_BLADE = 1
+SILHOUETTE_CAMEO4_TOOL_AUTOBLADE = 2
+SILHOUETTE_CAMEO4_TOOL_DEEPCUT = 3
+SILHOUETTE_CAMEO4_TOOL_2MM_CRAFTBLADE = 4
+SILHOUETTE_CAMEO4_TOOL_PEN = 7
 
 DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
@@ -552,6 +560,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if resp[:-1] == '1': return "moving"
     if resp[:-1] == '2': return "unloaded"
     return resp[:-1]
+
+  def get_tool_setup(self):
+    """ gets the type of the tools installed in Cameo 4 """
+    if self.dev is None:
+      return 'none'
+
+    if self.product_id() != PRODUCT_ID_SILHOUETTE_CAMEO4:
+      return 'none'
+
+    # Status request.
+    self.send_escape(CMD_NAK)
+    try:
+      resp = self.read(timeout=1000)
+      if len(resp) > 1:
+        return resp[:-1]
+    except:
+      pass
+    return 'none'
 
   def wait_for_ready(self, timeout=30, verbose=True):
     # get_version() is likely to timeout here...
