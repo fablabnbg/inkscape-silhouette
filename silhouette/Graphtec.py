@@ -523,6 +523,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
     return ret
 
+  def send_receive_command(self, cmd, tx_timeout=10000, rx_timeout=1000):
+      self.send_command(cmd, tx_timeout)
+      try:
+        resp = self.read(timeout=rx_timeout)
+        if len(resp) > 1:
+          return resp[:-1]
+      except:
+        pass
+      return None
+
   def status(self):
     """Query the device status. This can return one of the three strings
        'ready', 'moving', 'unloaded' or a raw (unknown) byte sequence."""
