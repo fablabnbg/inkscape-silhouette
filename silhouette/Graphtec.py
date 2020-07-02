@@ -574,20 +574,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """Send the init command. Called by setup()."""
     # taken from robocut/Plotter.cpp:331 ff
     # Initialise plotter.
-    self.send_escape(CMD_EOT)
-
-    # Initial palaver
     try:
-      self.send_command("FG") # query device name
+      self.send_escape(CMD_EOT)
     except Exception as e:
       raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
 
-    try:
-      resp = self.read(timeout=1000)
-      if len(resp) > 1:
-        print("FG: '%s'" % (resp[:-1]), file=self.log) # response 'Portrait V1.10    '
-    except:
-      pass
+    # Initial palaver
+    print("Device Version: '%s'" % self.get_version(), file=self.log)
 
     # Additional commands seen in init by Silhouette Studio
     #s.write("[\x03") # Get Upper Left Coords: 2 six digit numbers.
@@ -627,45 +620,31 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
 
-      self.send_command("TB71") # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
-      try:
-        resp = self.read(timeout=1000)
-        if len(resp) > 1:
-          print("TB71: '%s'" % (resp[:-1]), file=self.log)  # response '    0,    0' on portrait
-      except:
-        pass
+      # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
+      resp = self.send_receive_command("TB71")
+      if resp:
+        # response '    0,    0' on portrait
+        print("TB71: '%s'" % resp, file=self.log)
 
-      self.send_command("FA") # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
-      try:
-        resp = self.read(timeout=1000)
-        if len(resp) > 1:
-          print("FA: '%s'" % (resp[:-1]), file=self.log) # response '0,0'
-                                                      # response '    0,    0' on portrait
-      except:
-        pass
+      # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
+      resp = self.send_receive_command("FA")
+      if resp:
+        # response '    0,    0' on portrait
+        print("FA: '%s'" % resp, file=self.log)
 
     # Silhouette Studio does not appear to issue this command when using a cameo 4
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
-      self.send_command("TC")
-      try:
-        resp = self.read(timeout=1000)
-        if len(resp) > 1:
-          print("TC: '%s'" % (resp[:-1]), file=self.log) # response '0,0'
-      except:
-        pass
+      resp = self.send_receive_command("TC")
+      if resp:
+        # response '0,0'
+        print("TC: '%s'" % resp, file=self.log)
 
   def get_version(self):
     """Retrieve the firmware version string from the device."""
 
     if self.dev is None: return None
 
-    self.send_command("FG")   # Get Version: 17 Chars
-    try:
-      resp = self.read(timeout=10000) # Large timeout because the plotter moves.
-    except usb.core.USBError as e:
-      print("usb.core.USBError:", e, file=self.log)
-      resp = "None  "
-    return resp[0:-2]   # chop of 0x03
+    return self.send_receive_command("FG", rx_timeout = 10000)
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
