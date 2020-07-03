@@ -988,6 +988,31 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_cut.append(new_path)
     return new_cut
 
+  def move_mm_cmd(self, mmy, mmx):
+    """ My,x """
+    return "M%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+
+  def draw_mm_cmd(self, mmy, mmx):
+    """ Dy,x """
+    return "D%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+
+  def upper_left_mm_cmd(self, mmy, mmx):
+    """ \y,x """
+    return "\\%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+
+  def lower_right_mm_cmd(self, mmy, mmx):
+    """ Zy,x """
+    return "Z%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+
+  def automatic_regmark_test_mm_cmd(self, height, width, top, left):
+    """ TB123,h,w,t,l """
+    return "TB123,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
+
+  def manual_regmark_mm_cmd(self, height, width):
+    """ TB23,h,w """
+    return "TB23,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width))
+
+    
   def plot_cmds(self, plist, bbox, x_off_mm, y_off_mm):
     """ s is unused.
         bbox coordinates are in device units.
@@ -1137,7 +1162,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.leftaligned and 'width_mm' in self.hardware:
       # marginleft += s.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
-      mediawidth =   self.hardware['width_mm']
+      mediawidth = self.hardware['width_mm']
 
     print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=self.log)
 
@@ -1178,12 +1203,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.send_command("TB55,1")
 
       if regsearch:
-        # automatic regmark test, height, width, top, left
+        # automatic regmark test
         # add a search range of 10mm
-        self.send_command("TB123,%i,%i,%i,%i" % (reglength * 20.0, regwidth * 20.0, (regoriginy - 10)  * 20.0, (regoriginx - 10) * 20.0))
+        self.send_command(self.automatic_regmark_test_mm_cmd(reglength, regwidth, regoriginy - 10, regoriginx - 10))
       else:
-        # manual regmark, height, width
-        self.send_command("TB23,%i,%i" % (reglength * 20.0, regwidth * 20.0))
+        # manual regmark
+        self.send_command(self.manual_regmark_mm_cmd(reglength, regwidth))
 
       #while True:
       #  s.write("\1b\05") #request status
@@ -1221,11 +1246,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
-      pass
-    else:
+    if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       self.send_command([
-        "\\0,0",
+        self.upper_left_mm_cmd(0, 0),
         "Z%d,%d" % (height, width),
         "L0",
         "FE0,0",
@@ -1259,8 +1282,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
         new_home = [
           "L0",
-          "\\0,0",
-          "M0,0",
+          self.upper_left_mm_cmd(0, 0),
+          self.move_mm_cmd(0, 0),
           "J0",
           "FN0",
           "TB50,0"]
@@ -1283,7 +1306,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def move_origin(self, feed_mm):
     self.wait_for_ready(verbose=False)
     self.send_command([
-      "M%d,%d" % (int(0.5+feed_mm*20.),0),
+      self.move_mm_cmd(feed_mm, 0),
       "SO0",
       "FN0"])
     self.wait_for_ready(verbose=False)
