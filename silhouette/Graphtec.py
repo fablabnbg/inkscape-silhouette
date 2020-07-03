@@ -196,7 +196,7 @@ def _mm_2_SU(mm):
   Parameters
   ----------
       mm : int, float
-          input millimeter
+          input millimetre
 
   Returns
   -------
@@ -1014,8 +1014,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     
   def plot_cmds(self, plist, bbox, x_off_mm, y_off_mm):
-    """ s is unused.
-        bbox coordinates are in device units.
+    """ 
+        bbox coordinates are in mm
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
         otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
         x_off_mm, y_off_mm are in mm, relative to the clip urx, ury.
@@ -1039,6 +1039,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # portrait mode but not (correctly) in landscape mode.
     # As a result we get varying offsets which can be really annoying if doing precision
     # work.
+
+    # Change by Sven Fabricius:
+    # Update the code to use millimetres in all places to prevent mixing with device units.
+    # The conversation to SU (SilhuetteUnits) will be done in command create function.
+    # Removing all kinds of multiplying, dividing and rouning.
 
     x_off = x_off_mm * 20.
     y_off = y_off_mm * 20.
