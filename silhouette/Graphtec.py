@@ -1043,7 +1043,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # Change by Sven Fabricius:
     # Update the code to use millimetres in all places to prevent mixing with device units.
     # The conversation to SU (SilhuetteUnits) will be done in command create function.
-    # Removing all kinds of multiplying, dividing and rouning.
+    # Removing all kinds of multiplying, dividing and rounding.
 
     if bbox is None: bbox = {}
     bbox['count'] = 0
