@@ -191,10 +191,34 @@ def _bbox_extend(bb, x, y):
 #  11   in = 5588 SU
 
 def _mm_2_SU(mm):
-  return int(mm * 20.0)
+  """Convert mm to SU (SilhuetteUnit) using round
+
+  Parameters
+  ----------
+      mm : int, float
+          input millimeter
+
+  Returns
+  -------
+      int
+          output SU
+  """
+  return int(round(mm * 20.0))
 
 def _inch_2_SU(inch):
-  return int(inch * 508.0)
+  """Convert inch to SU (SilhuetteUnit) using round
+
+  Parameters
+  ----------
+      inch : int, float
+          input inch
+
+  Returns
+  -------
+      int
+          output SU
+  """
+  return int(round(inch * 508.0))
 
   
 class SilhouetteCameoTool:
@@ -836,7 +860,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pen:
         self.send_command(tool.cutter_offset(0, 0.05))
       else:
-        self.send_command(tool.cutter_offset(bladediameter + 0.025, 0.05))
+        self.send_command(tool.cutter_offset(bladediameter, 0.05))
     else:
       if speed is not None:
         if speed < 1: speed = 1
@@ -887,7 +911,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if not pen:
           self.send_command([
             tool.cutter_offset(0, 0.05),
-            tool.cutter_offset(bladediameter + 0.025, 0.05)])
+            tool.cutter_offset(bladediameter, 0.05)])
       else:
         if pen:
           self.send_command("FC0")
