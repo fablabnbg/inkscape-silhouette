@@ -1013,12 +1013,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return "TB23,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width))
 
     
-  def plot_cmds(self, plist, bbox, x_off_mm, y_off_mm):
+  def plot_cmds(self, plist, bbox, x_off, y_off):
     """ 
         bbox coordinates are in mm
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
         otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
-        x_off_mm, y_off_mm are in mm, relative to the clip urx, ury.
+        x_off, y_off are in mm, relative to the clip urx, ury.
     """
 
     # Change by Alexander Senger:
@@ -1045,9 +1045,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # The conversation to SU (SilhuetteUnits) will be done in command create function.
     # Removing all kinds of multiplying, dividing and rouning.
 
-    x_off = x_off_mm * 20.
-    y_off = y_off_mm * 20.
-
     if bbox is None: bbox = {}
     bbox['count'] = 0
     if not 'only' in bbox: bbox['only'] = False
@@ -1062,9 +1059,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     plotcmds=[]
     for path in plist:
       if len(path) < 2: continue
-      x = path[0][0]*20. + x_off
-      y = path[0][1]*20. + y_off
-      _bbox_extend(bbox, x,y)
+      x = path[0][0] + x_off
+      y = path[0][1] + y_off
+      _bbox_extend(bbox, x, y)
       bbox['count'] += 1
 
       if 'clip' in bbox:
@@ -1088,12 +1085,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             bbox['clip']['count'] = 1
 
       if bbox['only'] is False:
-        plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
+        plotcmds.append(self.move_mm_cmd(y, x))
 
       for j in range(1,len(path)):
-        x = path[j][0]*20. + x_off
-        y = path[j][1]*20. + y_off
-        _bbox_extend(bbox, x,y)
+        x = path[j][0] + x_off
+        y = path[j][1] + y_off
+        _bbox_extend(bbox, x, y)
         bbox['count'] += 1
 
         inside = True
@@ -1118,10 +1115,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
         if bbox['only'] is False:
           if not self.enable_sw_clipping or (inside and last_inside):
-            plotcmds.append("D%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append(self.draw_mm_cmd(y, x))
           else:
             # // if outside the range just move
-            plotcmds.append("M%d,%d" % (int(0.5+y), int(0.5+x)))
+            plotcmds.append(self.move_mm_cmd(y, x))
         last_inside = inside
     return plotcmds
 
@@ -1171,10 +1168,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=self.log)
 
-    width  = int(0.5+20.*mediawidth)
-    height = int(0.5+20.*mediaheight)
-    top    = int(0.5+20.*margintop)
-    left   = int(0.5+20.*marginleft)
+    width  = mediawidth
+    height = mediaheight
+    top    = margintop
+    left   = marginleft
     if width < left: width  = left
     if height < top: height = top
 
@@ -1197,8 +1194,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       offset = (offset[0] - regoriginx, offset[1] - regoriginy)
 
       # Limit the cutting area inside cutting marks
-      height = reglength * 20.0
-      width = regwidth * 20.0
+      height = reglength
+      width = regwidth
 
       self.send_command("TB50,0") #only with registration (it was TB50,1), landscape mode
       self.send_command("TB99")
@@ -1254,7 +1251,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
       self.send_command([
         self.upper_left_mm_cmd(0, 0),
-        "Z%d,%d" % (height, width),
+        self.lower_right_mm_cmd(height, width),
         "L0",
         "FE0,0",
         "FF0,0,0"])
@@ -1266,11 +1263,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if bboxonly == True:
       # move the bounding box
       cmd_list = [
-        "M%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx'])),
-        "D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['urx'])),
-        "D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['urx'])),
-        "D%d,%d" % (int(0.5+bbox['lly']), int(0.5+bbox['llx'])),
-        "D%d,%d" % (int(0.5+bbox['ury']), int(0.5+bbox['llx']))]
+        self.move_mm_cmd(bbox['ury'], bbox['llx']),
+        self.draw_mm_cmd(bbox['ury'], bbox['urx']),
+        self.draw_mm_cmd(bbox['lly'], bbox['urx']),
+        self.draw_mm_cmd(bbox['lly'], bbox['llx']),
+        self.draw_mm_cmd(bbox['ury'], bbox['llx'])]
 
     # potentially long command string needs extra care
     self.safe_send_command(cmd_list)
@@ -1296,14 +1293,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         new_home = "H"
     else: #includes 'below'
       new_home = [
-        "M%d,%d" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0), 
+        self.move_mm_cmd(bbox['lly'] + end_paper_offset, 0), 
         "SO0"]
     #new_home += b"FN0\x03TB50,0\x03"
     self.send_command(new_home)
 
     return {
         'bbox': bbox,
-        'unit' : 1/20.,
+        'unit' : 1,
         'trailer': new_home
       }
 
