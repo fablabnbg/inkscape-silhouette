@@ -131,7 +131,7 @@ CMD_ETX = '\x03'
 CMD_ESC = '\x1b'
 
 ### Escape Commands
-# End Of Transmission - will initialize the device, 
+# End Of Transmission - will initialize the device,
 CMD_EOT = '\x04'
 # Enquiry - Returns device status
 CMD_ENQ = '\x05'
@@ -186,7 +186,7 @@ def _bbox_extend(bb, x, y):
 
 
 #   1   mm =   20 SU
-#   1   in =  508 SU    
+#   1   in =  508 SU
 #   8.5 in = 4318 SU
 #  11   in = 5588 SU
 
@@ -220,7 +220,7 @@ def _inch_2_SU(inch):
   """
   return int(round(inch * 508.0))
 
-  
+
 class SilhouetteCameoTool:
   def __init__(self, toolholder=1):
     if toolholder is None:
@@ -525,7 +525,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.write(CMD_ESC + esc)
     else:
       raise TypeError("Send Escape Exception: %s " % type(esc))
-    
+
   def read(self, size=64, timeout=5000):
     """Low level read method"""
     if self.dev is None: return None
@@ -643,20 +643,20 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # response '0,0'
       print("[: '%s'" % resp, file=self.log)
 
-    # Get Lower Right Coordinates: 2 six digit numbers  
+    # Get Lower Right Coordinates: 2 six digit numbers
     resp = self.send_receive_command("U")
     if resp:
       # response '20320,4120' max. usable print range?
       # response ' 20320,   3840' on Portrait
       print("U: '%s'" % resp, file=self.log)
-      
+
     # Unknown: 1 five digit number. Maybe last speed set?
     resp = self.send_receive_command("FQ0")
     if resp:
       # response '10'
       # response '    5' on portrait
       print("FQ0: '%s'" % resp, file=self.log)
-      
+
     # Unknown: 1 five digit number. Maybe last blade offset or last pressure?
     resp = self.send_receive_command("FQ2")
     if resp:
@@ -737,7 +737,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     Parameters
     ----------
-        media : int, optional 
+        media : int, optional
             range is [100..300], "Print Paper Light Weight". Defaults to 132.
         speed : int, optional
             range is [1..10]. Defaults to None, from paper (132 -> 10).
@@ -1013,9 +1013,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """ TB23,h,w """
     return "TB23,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width))
 
-    
+
   def plot_cmds(self, plist, bbox, x_off, y_off):
-    """ 
+    """
         bbox coordinates are in mm
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
         otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
@@ -1294,7 +1294,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         new_home = "H"
     else: #includes 'below'
       new_home = [
-        self.move_mm_cmd(bbox['lly'] + end_paper_offset, 0), 
+        self.move_mm_cmd(bbox['lly'] + end_paper_offset, 0),
         "SO0"]
     #new_home += b"FN0\x03TB50,0\x03"
     self.send_command(new_home)
