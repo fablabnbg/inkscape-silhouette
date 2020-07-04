@@ -487,7 +487,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
     so = 0
-    delimiter = CMD_EOT.encode()
+    delimiter = CMD_ETX.encode()
     while so < len(data):
       safechunksz = min(safemaxchunksz, len(data)-so)
       candidate = data[so:so+safechunksz]
@@ -504,20 +504,20 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if isinstance(cmd, str):
       data = cmd
     elif isinstance(cmd, list) and isinstance(cmd[0], str):
-      data = CMD_EOT.join(cmd)
+      data = CMD_ETX.join(cmd)
     else:
       raise TypeError("Send Command Exception: %s " % type(cmd))
-    self.write(data + CMD_EOT, timeout)
+    self.write(data + CMD_ETX, timeout)
 
   def safe_send_command(self, cmd):
     """ Sends a command or a list of commands of type string """
     if isinstance(cmd, str):
       data = cmd
     elif isinstance(cmd, list) and isinstance(cmd[0], str):
-      data = CMD_EOT.join(cmd)
+      data = CMD_ETX.join(cmd)
     else:
       raise TypeError("Send Command Exception: %s " % type(cmd))
-    self.safe_write(data + CMD_EOT)
+    self.safe_write(data + CMD_ETX)
 
   def send_escape(self, esc):
     """ Sends a Escape Command """
