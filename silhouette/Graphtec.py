@@ -815,7 +815,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     print("toolholder: %d" % toolholder, file=self.log)
 
-    # cameo 4 sets some parameters two times (force, TJ%d, Cutter offset)
+    # cameo 4 sets some parameters two times (force, acceleration, Cutter offset)
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
       if pressure is not None:
         if pressure <  1: pressure = 1
@@ -823,9 +823,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
 
-        # some sort of pressure calibration I presume (only 0 on first connection to cameo else 3)
-        # hopefully also allowed later on, maybe accelleration
-        self.send_command("TJ0")
+        # on first connection acceleration is allways set to 0
+        self.send_command(self.acceleration_cmd(0))
 
       if speed is not None:
         if speed < 1: speed = 1
@@ -853,9 +852,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if pressure > 33: pressure = 33
         self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
-        # some sort of pressure calibration I presume (always 3 on the second time, as far as I
-        # could see)
-        self.send_command("TJ3")
+        self.send_command(self.acceleration_cmd(3))
 
       # set cutter offset a second time (this time with blade specific parameters)
       if pen:
@@ -987,6 +984,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         new_path.append((bb['llx']+bb['urx']-pt[0], pt[1]))
       new_cut.append(new_path)
     return new_cut
+
+  def acceleration_cmd(self, acceleration):
+    """ TJa """
+    return "TJ%d" % acceleration
 
   def move_mm_cmd(self, mmy, mmx):
     """ My,x """
