@@ -40,6 +40,6 @@ print(meta)
 
 dev.wait_for_ready()
 cmd_list = dev.plot_cmds(dumpdata, meta['bbox'], args.xoff, args.yoff)
-dev.write(','.join(cmd_list))
-dev.write(''.join(meta['trailer']))
+dev.send_command(cmd_list)
+dev.send_command(meta['trailer'])
 dev.wait_for_ready()

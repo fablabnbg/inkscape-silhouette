@@ -29,7 +29,7 @@ for i in range(8):
   dev.wait_for_ready()
   print(i, "path done.")
   time.sleep(5)
-  dev.write(''.join(bbox['trailer']))
+  dev.send_command(bbox['trailer'])
   # something is still wrong after we finish a job. The next job does not draw anything.
   # we can workaround by sending a dummy job.
   bbox = dev.plot(pathlist=[ [(0,0),(0,0)] ], offset=(0,0))
