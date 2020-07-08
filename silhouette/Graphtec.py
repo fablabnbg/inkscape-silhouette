@@ -841,7 +841,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if pen:
         self.send_command(tool.sharpen_corners(0, 0))
       else:
-        # TODO: shouldn't be this also SU? why * 10 ?
+        # start and end for sharpen corners is transmitted in tenth of a millimeter NOT in SUs
         sharpencorners_start = int((sharpencorners_start + 0.05) * 10.0)
         sharpencorners_end = int((sharpencorners_end + 0.05) * 10.0)
         self.send_command(tool.sharpen_corners(sharpencorners_start, sharpencorners_end))
