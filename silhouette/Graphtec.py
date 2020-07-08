@@ -6,7 +6,7 @@
 # Distribute under GPLv2 or ask.
 #
 # Driver for a Graphtec Silhouette Cameo plotter.
-# modelled after https://github.com/nosliwneb/robocut.git
+# modeled after https://github.com/nosliwneb/robocut.git
 # https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
 #
 # Native resolution of the plotter is 0.05mm -- All movements are integer multiples of this.
@@ -18,7 +18,7 @@
 # 2016-05-16  no reset per default, this helps usbip.
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
 # 2017-04-20  Adding Cameo3 USB IDs
-# 2020-06-    Adding Cameo4 and refactore code
+# 2020-06-    Adding Cameo4 and refactor code
 
 from __future__ import print_function
 
@@ -626,7 +626,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def initialize(self):
     """Send the init command. Called by setup()."""
     # taken from robocut/Plotter.cpp:331 ff
-    # Initialise plotter.
+    # Initialize plotter.
     try:
       self.send_escape(CMD_EOT)
     except Exception as e:
@@ -733,7 +733,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.set_boundary(0, 0, bottom, right)
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
-    """Setup the Silhuette Device
+    """Setup the Silhouette Device
 
     Parameters
     ----------
@@ -746,7 +746,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         toolholder : int, optional
             range is [1..2]. Defaults to 1.
         pen : bool, optional
-            media dependant. Defaults to None.
+            media dependent. Defaults to None.
         cuttingmat : {'cameo_12x12', 'cameo_12x24'}, optional
             setting the cutting mat. Defaults to None.
         sharpencorners : bool, optional
@@ -823,7 +823,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
 
-        # on first connection acceleration is allways set to 0
+        # on first connection acceleration is always set to 0
         self.send_command(self.acceleration_cmd(0))
 
       if speed is not None:
@@ -904,7 +904,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # It is 0 for the pen, 18 for cutting. Default diameter of a blade is 0.9mm
       # C possible stands for curvature. Not that any of the other letters make sense...
       # C possible stands for circle.
-      # This value is the circle diameter which is exectuted on direction changes on corners to adjust the blade.
+      # This value is the circle diameter which is executed on direction changes on corners to adjust the blade.
       # Seems to be limited to 46 or 47. Values above does keep the last setting on the device.
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if not pen:
@@ -1018,7 +1018,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """
         bbox coordinates are in mm
         bbox *should* contain a proper { 'clip': {'llx': , 'lly': , 'urx': , 'ury': } }
-        otherwise a hardcoded flipwidth is used to make the coordinate system left aligned.
+        otherwise a hardcoded flip width is used to make the coordinate system left aligned.
         x_off, y_off are in mm, relative to the clip urx, ury.
     """
 
@@ -1042,8 +1042,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # work.
 
     # Change by Sven Fabricius:
-    # Update the code to use millimetres in all places to prevent mixing with device units.
-    # The conversation to SU (SilhuetteUnits) will be done in command create function.
+    # Update the code to use millimeters in all places to prevent mixing with device units.
+    # The conversion to SU (SilhouetteUnits) will be done in command create function.
     # Removing all kinds of multiplying, dividing and rounding.
 
     if bbox is None: bbox = {}
@@ -1144,11 +1144,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
                   Default: False for normal cutting or drawing.
        end_paper_offset: [mm] adds to the final move, if endposition is 'below'.
                 If the end_paper_offset is negative, the end position is within the drawing
-                (reverse movmeents are clipped at the home position)
+                (reverse movements are clipped at the home position)
                 It reverse over the last home position.
-       endpostiton: Default 'below': The media is moved to a position below the actual cut (so another
+       endposition: Default 'below': The media is moved to a position below the actual cut (so another
                 can be started without additional steps, also good for using the cross-cutter).
-                'start': The media is returned to the positon where the cut started.
+                'start': The media is returned to the position where the cut started.
        Example: The letter Y (20mm tall, 9mm wide) can be generated with
                 pathlist=[[(0,0),(4.5,10),(4.5,20)],[(9,0),(4.5,10)]]
     """
@@ -1239,7 +1239,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     #FMx, x = 0/1: 1 leads to additional horizontal offset of 5 mm, why? Has other profound
     # impact (will not cut in certain configuration if x=0). Seems dangerous. Not used
-    # in communtication of Sil Studio with Cameo2.
+    # in communication of Sil Studio with Cameo2.
     #FEx,0 , x = 0 cutting of distinct paths in one go, x = 1 head is lifted at sharp angles
     #\xmin, ymin Zxmax,ymax, designate cutting area
 
