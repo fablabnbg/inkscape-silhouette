@@ -38,7 +38,7 @@ This extension should work with the following devices:
 ### Other Debian based Linux
 
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Copy the the folder silhouette and the two files `sendto_silhouette.inx` and
+* Copy the the folder `silhouette` and the two files `sendto_silhouette.inx` and
 `sendto_silhouette.py` to `~/.config/inkscape/extensions/` or (if you have permissions) `/usr/share/inkscape/extensions/`
 
 * `sudo apt-get install python-usb`
