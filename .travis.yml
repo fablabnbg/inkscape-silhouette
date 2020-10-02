@@ -105,6 +105,7 @@ jobs:
           before_script:
               - python3 --version                 # python symlink still point to python2
               - pip3 install -r requirements.txt  # pip ... 
+              - pip3 install numpy
               - pip3 install libusb1
               - pip3 install pytest
 
