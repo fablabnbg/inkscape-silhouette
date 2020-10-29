@@ -143,14 +143,12 @@ N_PAGE_HEIGHT = 800
 
 IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 
-
 def px2mm(px):
   '''
   Convert inkscape pixels to mm.
   The default inkscape unit, called 'px' is 96dpi
-  Inkscape version 1.00 seems to default to mm so no conversion is needed
   '''
-  return px
+  return px*25.4/96
 
 # Lifted with impunity from eggbot.py
 # Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
@@ -408,13 +406,16 @@ class SendtoSilhouette(inkex.Effect):
                 by the matrix [matTransform].
                 '''
                 # turn this path into a cubicsuperpath (list of beziers)...
-
                 d = path.get( 'd' )
 
                 if len( Path(d).to_arrays() ) == 0:
                         return
 
                 p = CubicSuperPath( d )
+                for comp in p:
+                  for ctl in comp:
+                      for pt in ctl:
+                          pt[0], pt[1] = Transform(matTransform).apply_to_point(pt)
 
                 # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
                 # where the start-point is the last point in the previous segment.
@@ -519,7 +520,7 @@ class SendtoSilhouette(inkex.Effect):
                                 continue
 
                         # calculate this object's transform
-                        transform = node.transform * Transform(IDENTITY_TRANSFORM).matrix
+                        transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
                         transform = Transform(self.docTransform) * Transform(transform)
                         transform = Transform(extra_transform) * Transform(transform)
 
@@ -535,6 +536,7 @@ class SendtoSilhouette(inkex.Effect):
                                         if not self.allLayers:
                                                 # inkex.errormsg('Plotting layer named: ' + node.get(inkex.addNS('label', 'inkscape')))
                                                 self.DoWePlotLayer( node.get( inkex.addNS( 'label', 'inkscape' ) ) )
+
                                 self.recursivelyTraverseSvg( node, parent_visibility=v )
 
                         elif node.tag == inkex.addNS( 'use', 'svg' ) or node.tag == 'use':
@@ -998,6 +1000,20 @@ class SendtoSilhouette(inkex.Effect):
   def is_closed_path(self, path):
     return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
 
+  def compose_parent_transforms(self, node, mat):
+    # This is adapted from Inkscape's simpletransform.py's composeParents()
+    # function.  That one can't handle nodes that are detached from a DOM.
+
+    trans = node.get('transform')
+    if trans:
+        mat = Transform(parseTransform(trans)) * Transform(mat)
+
+    if node.getparent() is not None:
+        if node.getparent().tag == inkex.addNS('g', 'svg'):
+            mat = self.compose_parent_transforms(node.getparent(), mat)
+
+    return mat
+
   def effect(self):
     if self.options.version:
       print(__version__)
@@ -1134,7 +1150,9 @@ class SendtoSilhouette(inkex.Effect):
       if docname:
         print("# docname: '%s'" % docname, file=o)
         print("docname: '%s'" % docname, file=sys.stderr)
+
       print(cut, file=o)
+      o.close()
 
     if self.options.pressure == 0:     self.options.pressure = None
     if self.options.speed == 0:        self.options.speed = None
@@ -1179,6 +1197,7 @@ class SendtoSilhouette(inkex.Effect):
       regmark=self.options.regmark,regsearch=self.options.regsearch,
       regwidth=self.options.regwidth,reglength=self.options.reglength,
       regoriginx=self.options.regoriginx,regoriginy=self.options.regoriginy)
+
     if len(bbox['bbox'].keys()) == 0:
       print("empty page?", file=self.tty)
       print("empty page?", file=sys.stderr)
@@ -1224,6 +1243,7 @@ class SendtoSilhouette(inkex.Effect):
     output = ""
     return output
 
+
 if __name__ == '__main__':
         e = SendtoSilhouette()
 
@@ -1240,6 +1260,7 @@ if __name__ == '__main__':
 
         start = time.time()
         e.run()
+
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
