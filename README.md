@@ -1,5 +1,7 @@
 # inkscape-silhouette
 
+[![Build Status](https://travis-ci.com/fablabnbg/inkscape-silhouette.svg?branch=master)](https://travis-ci.com/fablabnbg/inkscape-silhouette)
+
 An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
 100% pure python, ontop of the libusb backend.
 
