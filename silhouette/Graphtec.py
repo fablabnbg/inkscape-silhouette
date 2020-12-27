@@ -404,10 +404,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             data = s.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    if isinstance(data, (str, bytes)):
+    if isinstance(data, (str, bytes, bytearray)):
         return data.decode()
-    elif isinstance(data, bytearray):
-        return str(data).decode()
     else:
         return data.tostring().decode()
 
