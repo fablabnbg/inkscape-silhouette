@@ -278,8 +278,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               print("retrying reset in 5 sec", file=self.log)
               time.sleep(5)
 
-        dev.set_configuration()
         try:
+          dev.set_configuration()
           dev.set_interface_altsetting()      # Probably not really necessary.
         except usb.core.USBError:
           pass
@@ -407,7 +407,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if isinstance(data, (str, bytes, bytearray)):
         return data.decode()
     else:
-        return data.tostring().decode()
+        try:
+            return data.tobytes().decode() # with py3
+        except:
+            return data.tostring().decode() # with py2/3 - dropped in py39
 
   def try_read(s, size=64, timeout=1000):
     ret=None

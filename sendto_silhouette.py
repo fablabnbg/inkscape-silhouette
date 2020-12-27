@@ -102,10 +102,12 @@ sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith('win'):
-  sys.path.append('C:\Program Files\Inkscape\share\extensions')
+  sys.path.append('C:\\Program Files\\Inkscape\\share\\inkscape\\extensions') # 1.0
+  sys.path.append('C:\\Program Files\\Inkscape\\share\\extensions') # 0.92
 
 elif sys_platform.startswith('darwin'):
   sys.path.append('~/.config/inkscape/extensions')
+  sys.path.append('/Applications/Inkscape.app/Contents/Resources/share/inkscape/extensions')
 
 else:   # linux
   # if sys_platform.startswith('linux'):
@@ -1227,8 +1229,8 @@ if __name__ == '__main__':
           # write a tempfile that is autoremoved on exit
           tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
           sys.argv.append(tmpfile.name)
-          print((sys.argv))
-          print('<xml height="10"></xml>', file=tmpfile)
+          print(sys.argv)
+          tmpfile.write(b'<xml height="10"></xml>')
           tmpfile.flush()
           e.affect(sys.argv[1:])
           # os.remove(tmpfile.name)
