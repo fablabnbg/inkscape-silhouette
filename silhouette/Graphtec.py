@@ -409,7 +409,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     elif isinstance(data, bytearray):
         return str(data).decode()
     else:
-        return data.tostring().decode()
+        try:
+            return data.tobytes().decode() # with py3
+        except:
+            return data.tostring().decode() # with py2/3 - dropped in py39
 
   def try_read(s, size=64, timeout=1000):
     ret=None
