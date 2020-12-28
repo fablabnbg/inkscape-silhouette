@@ -115,20 +115,23 @@ else:   # linux
 
 # We will use the inkex module with the predefined Effect base class.
 import inkex
+
 try:     # inkscape 1.0 doesn't provide inkex.etree
     from lxml import etree
 except:  # inkscape 0.9x
     from inkex import etree
-from bezmisc import *
-from simpletransform import *  # Note: still needed for parseTransform(), composeTransform(), applyTransformToPath() ...
-import cubicsuperpath
+
 try:     # inkscape 1.0
-    from inkex.paths import Path
+    from inkex.paths import Path, CubicSuperPath
     from inkex.transforms import Transform
     from inkex.bezier import beziersplitatt, maxdist
 except:  # inkscape 0.9x
-    from cspsubdiv import maxdist
     import simplepath
+    import cubicsuperpath
+    from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents
+    from bezmisc import beziersplitatt
+    from cspsubdiv import maxdist
+
 import string   # for string.lstrip
 import gettext
 from optparse import SUPPRESS_HELP
@@ -526,10 +529,19 @@ class SendtoSilhouette(inkex.Effect):
                     if len( simplepath.parsePath( d ) ) == 0:
                         return
 
-                p = cubicsuperpath.parsePath( d )
+                try:  # Inkscape 1.0
+                    p = CubicSuperPath( d )
+                except:  # Inkscape 0.9x
+                    p = cubicsuperpath.parsePath( d )
 
                 # ...and apply the transformation to each point
-                applyTransformToPath( matTransform, p )
+                try:  # Inkscape 1.0
+                    for comp in p:
+                        for ctl in comp:
+                            for pt in ctl:
+                                pt[0], pt[1] = Transform(matTransform).apply_to_point(pt)
+                except:  # Inkscape 0.9x
+                    applyTransformToPath( matTransform, p )
 
                 # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
                 # where the start-point is the last point in the previous segment.
@@ -682,6 +694,9 @@ class SendtoSilhouette(inkex.Effect):
                                                 y = float( node.get( 'y', '0' ) )
                                                 # Note: the transform has already been applied
                                                 if ( x != 0 ) or (y != 0 ):
+                                                    try:  # Inkscape 1.0
+                                                        transform = transform * Transform( 'translate(%f,%f)' % (x,y) )
+                                                    except:  # Inkscape 0.9x
                                                         transform = composeTransform( transform, parseTransform( 'translate(%f,%f)' % (x,y) ) )
                                                 v = node.get( 'visibility', v )
                                                 self.recursivelyTraverseSvg( refnode, parent_visibility=v, extra_transform=transform )
@@ -1128,13 +1143,13 @@ class SendtoSilhouette(inkex.Effect):
   def is_closed_path(self, path):
     return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
 
-  def compose_parent_transforms(self, node, mat):  # Inkscape 1.0
+  def compose_parent_transforms(self, node, mat):  # Inkscape 1.0+ only
     # This is adapted from Inkscape's simpletransform.py's composeParents()
     # function.  That one can't handle nodes that are detached from a DOM.
 
     trans = node.get('transform')
     if trans:
-        mat = Transform(parseTransform(trans)) * Transform(mat)
+        mat = Transform(trans) * Transform(mat)
 
     if node.getparent() is not None:
         if node.getparent().tag == inkex.addNS('g', 'svg'):
