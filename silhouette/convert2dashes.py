@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 # Extracted from inkscape extension; original comments below:
 '''
@@ -26,10 +26,13 @@ import bezmisc
 import cubicsuperpath
 import simplestyle
 
+
 def tpoint(p1, p2, t = 0.5):
     (x1,y1) = p1
     (x2,y2) = p2
     return [x1+t*(x2-x1),y1+t*(y2-y1)]
+
+
 def cspbezsplit(sp1, sp2, t = 0.5):
     m1=tpoint(sp1[1],sp1[2],t)
     m2=tpoint(sp1[2],sp2[0],t)
@@ -38,13 +41,18 @@ def cspbezsplit(sp1, sp2, t = 0.5):
     m5=tpoint(m2,m3,t)
     m=tpoint(m4,m5,t)
     return [[sp1[0][:],sp1[1][:],m1], [m4,m,m5], [m3,sp2[1][:],sp2[2][:]]]
+
+
 def cspbezsplitatlength(sp1, sp2, l = 0.5, tolerance = 0.001):
     bez = (sp1[1][:],sp1[2][:],sp2[0][:],sp2[1][:])
     t = bezmisc.beziertatlength(bez, l, tolerance)
     return cspbezsplit(sp1, sp2, t)
+
+
 def cspseglength(sp1,sp2, tolerance = 0.001):
     bez = (sp1[1][:],sp1[2][:],sp2[0][:],sp2[1][:])
-    return bezmisc.bezierlength(bez, tolerance)    
+    return bezmisc.bezierlength(bez, tolerance)
+
 
 def splitPath(inkex, node):
     dashes = []

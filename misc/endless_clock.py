@@ -35,6 +35,7 @@ fontfile= 'ttf/RIKY2vamp.ttf'				# 15sec, 55x11mm, nice script.
 #fontfile= '/usr/share/fonts/truetype/FreeSans.ttf'	# 17sec, 73x14mm, glyph ZERO is damaged.
 #fontfile= 'ttf/motorhead.ttf'				# 17sec, 75x30mm, glyph 1 horizontally off.
 
+
 def translate_poly(poly,xoff,yoff,scale=1):
   tuplepath=[]
   for i in poly: tuplepath.append( tuple([i[0]*scale+xoff, i[1]*scale+yoff]) )
@@ -144,19 +145,22 @@ def show_char(canvas, face, char, x, y, scale, flags=None):
 
 def scale_up(win, ev):
   s = canvas.get_scale()
-  if   chr(ev.keyval) == '+':  canvas.set_scale(s*1.2)
+  if chr(ev.keyval) == '+':  canvas.set_scale(s*1.2)
   elif chr(ev.keyval) == '-':  canvas.set_scale(s*.8)
   else: gtk.main_quit()
   print(canvas.get_scale())
+
 
 def button_press(win, ev):
   win.click_x = ev.x
   win.click_y = ev.y
   print(win.click_x, win.click_y)
 
+
 def button_release(win, ev):
   win.click_x = None
   win.click_y = None
+
 
 def motion_notify(win, ev):
   try:
@@ -263,7 +267,7 @@ while True:
     else:
       time.sleep(1)
       print("sleep(%f)" % (when-now))
-      
+
     now=time.time()
   when=time.time()+time_window
 
@@ -274,4 +278,3 @@ if False:
   win.add(canvas)
   win.show_all()
   gtk.main()
-

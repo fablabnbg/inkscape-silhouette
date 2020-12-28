@@ -148,6 +148,7 @@ def px2mm(px):
   '''
   return px*25.4/96
 
+
 # Lifted with impunity from eggbot.py
 # Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
 def parseLengthWithUnits( str ):
@@ -365,6 +366,7 @@ class SendtoSilhouette(inkex.Effect):
 
   def version(self):
     return __version__
+
   def author(self):
     return __author__
 
@@ -395,8 +397,8 @@ class SendtoSilhouette(inkex.Effect):
     # print("\r plotLineAndTime((%g,%g)-(%g,%g)) " % (self.fPrevX,self.fPrevY, self.fX, self.fY), file=self.tty)
 
 
-  ## lifted from eggbot.py, gratefully bowing to the author
   def plotPath( self, path, matTransform ):
+  ## lifted from eggbot.py, gratefully bowing to the author
                 '''
                 Plot the path while applying the transformation defined
                 by the matrix [matTransform].
@@ -461,7 +463,7 @@ class SendtoSilhouette(inkex.Effect):
 
                 TempNumString = 'x'
                 stringPos = 1
-                CurrentLayerName = string.lstrip( strLayerName ) #remove leading whitespace
+                CurrentLayerName = string.lstrip( strLayerName ) # remove leading whitespace
 
                 # Look at layer name.  Sample first character, then first two, and
                 # so on, until the string ends or the string no longer consists of
@@ -476,12 +478,12 @@ class SendtoSilhouette(inkex.Effect):
                                 else:
                                         break
 
-                self.plotCurrentLayer = False    #Temporarily assume that we aren't plotting the layer
+                self.plotCurrentLayer = False    # Temporarily assume that we aren't plotting the layer
                 if ( str.isdigit( TempNumString ) ):
                         if ( self.svgLayer == int( float( TempNumString ) ) ):
-                                self.plotCurrentLayer = True    #We get to plot the layer!
+                                self.plotCurrentLayer = True    # We get to plot the layer!
                                 self.LayersPlotted += 1
-                #Note: this function is only called if we are NOT plotting all layers.
+                # Note: this function is only called if we are NOT plotting all layers.
 
 
   def recursivelyTraverseSvg( self, aNodeList,
@@ -585,7 +587,7 @@ class SendtoSilhouette(inkex.Effect):
                                         pass
                                 else:
                                         self.plotPath( node, transform )
-                                        if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
+                                        if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
 
@@ -673,7 +675,7 @@ class SendtoSilhouette(inkex.Effect):
                                         a.append( [' L ', [x2, y2]] )
                                         newpath.set( 'd', simplepath.formatPath( a ) )
                                         self.plotPath( newpath, transform )
-                                        if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
+                                        if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
 
@@ -724,7 +726,7 @@ class SendtoSilhouette(inkex.Effect):
                                         if t:
                                                 newpath.set( 'transform', t )
                                         self.plotPath( newpath, transform )
-                                        if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
+                                        if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
 
@@ -745,8 +747,8 @@ class SendtoSilhouette(inkex.Effect):
                                         pass
 
                                 self.pathcount += 1
-                                #if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                                #if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
+                                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
+                                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
                                 # self.nodeCount equal to self.svgLastPathNC
 
                                 if self.resumeMode and ( self.pathcount == self.svgLastPath ):
@@ -776,7 +778,7 @@ class SendtoSilhouette(inkex.Effect):
                                         if t:
                                                 newpath.set( 'transform', t )
                                         self.plotPath( newpath, transform )
-                                        if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
+                                        if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
                                                 self.svgLastPath += 1
                                                 self.svgLastPathNC = self.nodeCount
 
@@ -840,7 +842,7 @@ class SendtoSilhouette(inkex.Effect):
                                                 if t:
                                                         newpath.set( 'transform', t )
                                                 self.plotPath( newpath, transform )
-                                                if ( not self.bStopped ):       #an "index" for resuming plots quickly-- record last complete path
+                                                if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
                                                         self.svgLastPath += 1
                                                         self.svgLastPathNC = self.nodeCount
                         elif node.tag == inkex.addNS( 'metadata', 'svg' ) or node.tag == 'metadata':

@@ -48,6 +48,7 @@ def presets_path():
         os.makedirs(config_path)
     return os.path.join(config_path, 'presets.cPickle')
 
+
 def load_presets():
     try:
         with open(presets_path(), 'r') as presets:
@@ -55,6 +56,7 @@ def load_presets():
             return presets
     except:
         return {}
+
 
 def save_presets(presets):
     #print("saving presets", presets)
@@ -148,6 +150,7 @@ class ParamsNotebook(wx.Notebook):
     def set_defaults(self):
         for tab in self.tabs:
             tab.set_defaults()
+
 
 class ParamsTab(ScrolledPanel):
     def __init__(self, *args, **kwargs):
@@ -261,7 +264,7 @@ class SilhouetteMultiFrame(wx.Frame):
         self.colors = kwargs.pop('colors', [])
         self.options = kwargs.pop('options')
         self.run_callback = kwargs.pop('run_callback')
-        wx.Frame.__init__(self, None, wx.ID_ANY, 
+        wx.Frame.__init__(self, None, wx.ID_ANY,
                           "Silhouette Multi-Action"
                           )
 
@@ -594,7 +597,7 @@ class SilhouetteMultiFrame(wx.Frame):
         sizer_6 = wx.BoxSizer(wx.VERTICAL)
         sizer_6.Add(self.run_button, 0, flag=wx.ALIGN_RIGHT|wx.BOTTOM, border=10)
         sizer_6.Add(self.cancel_button, 0, flag=wx.ALIGN_RIGHT|wx.EXPAND)
-        sizer_2.Add(sizer_6, 0, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=30) 
+        sizer_2.Add(sizer_6, 0, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=30)
 
         sizer_1.Add(sizer_2, 0, flag=wx.EXPAND|wx.ALL, border=10)
 
@@ -603,6 +606,7 @@ class SilhouetteMultiFrame(wx.Frame):
         sizer_1.Fit(self)
         self.Layout()
         # end wxGlade
+
 
 class SilhouetteMulti(inkex.Effect):
     def __init__(self, *args, **kwargs):
@@ -764,6 +768,7 @@ class SilhouetteMulti(inkex.Effect):
         dialog.Destroy()
         wx.Yield()
         return process.returncode == 0
+
 
 def save_stderr():
     # GTK likes to spam stderr, which inkscape will show in a dialog.

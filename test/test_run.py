@@ -89,4 +89,3 @@ class TestRun(unittest.TestCase):
             print(e)
             self.assertEqual(e.returncode, 0)
             assert False
-
