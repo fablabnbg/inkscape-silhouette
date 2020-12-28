@@ -1379,16 +1379,17 @@ if __name__ == '__main__':
 
     if len(sys.argv) < 2:
         # write a tempfile that is autoremoved on exit
-        tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette')
+        tmpfile=tempfile.NamedTemporaryFile(suffix='.svg', prefix='inkscape-silhouette', delete=False)
         sys.argv.append(tmpfile.name)
         print(sys.argv)
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M 0,0" /></svg>')
         tmpfile.flush()
+        tmpfile.close()
         if hasattr(e, 'run'):   # inkscape 1.0
             e.run(sys.argv[1:])
         else:                   # inkscape 0.9x
             e.affect(sys.argv[1:])
-        # os.remove(tmpfile.name)
+        os.remove(tmpfile.name)
         sys.exit(0)
 
     start = time.time()
