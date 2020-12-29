@@ -183,7 +183,6 @@ jobs:
               - pip install -r requirements.txt
               - pip install pytest
 
-    allow_failures:
-        - env: INKSCAPE_VERSION=1
-        - env: PATH=/c/Python39:/c/Python39/Scripts:$PATH INKSCAPE_VERSION=1
-
+#    allow_failures:
+#        - env: INKSCAPE_VERSION=1
+#        - env: PATH=/c/Python39:/c/Python39/Scripts:$PATH INKSCAPE_VERSION=1
