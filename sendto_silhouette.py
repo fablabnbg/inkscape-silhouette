@@ -2,7 +2,7 @@
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
-# (C) 2014,2015 juewei@fabmail.org
+# (C) 2014, 2015 juewei@fabmail.org
 #
 # code snippets visited to learn the extension 'effect' interface:
 # - http://sourceforge.net/projects/inkcut/
@@ -18,7 +18,7 @@
 #
 # 2013-05-09 jw, V0.1 -- initial draught
 # 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
-# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(),
+# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
 #                        improved logging, flipped y-axis.
 # 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected.
 #                        Explicit multipass option added.
@@ -46,7 +46,7 @@
 #                        how long the buffered data will need.
 # 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
 # 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
-#                        test_drive.py now draws arrows. All [0],[1] converted to new .x,.y syntax.
+#                        test_drive.py now draws arrows. All [0], [1] converted to new .x, .y syntax.
 #                        Split Geometry.py from Strategy.py; class Barrier implemented.
 # 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
 # 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
@@ -78,20 +78,20 @@
 #                         Limit pressure to 18. 19 or 20 make the machine
 #                         scroll forward backward for several minutes.
 #                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
-# 2016-12-18, jw, v1.19 -- support for dashed lines added. Thanks to mehtank
-#			  https://github.com/fablabnbg/inkscape-silhouette/pull/33
+# 2016-12-18 jw, v1.19 -- support for dashed lines added. Thanks to mehtank
+#                         https://github.com/fablabnbg/inkscape-silhouette/pull/33
 #                         Added new cutting strategy "Minimized Traveling"
 #                         Added parameter for blade diameter
-# 2018-06-01, jw, v1.20 -- Make it compile again. Hmm.
-# 2019-07-25, jw, v1.21 -- merge from github.com/olegdeezus/inkscape-silhouette
-#                          merge from fablabnbg
-# 2019-08-03, jw, v1.22 - added a copy of pyusb-1.0.2 as a fallback on any platform.
-# 2020-07-01, uw, v1.23 - port to inkscape version 1.00
-# 2020-12-29, tb, v1.24 - restore compatiblity with any inkscape version, add automated tests for win,osx,linux, lots of bugfixes
+# 2018-06-01 jw, v1.20 -- Make it compile again. Hmm.
+# 2019-07-25 jw, v1.21 -- merge from github.com/olegdeezus/inkscape-silhouette
+#                         merge from fablabnbg
+# 2019-08-03 jw, v1.22 -- added a copy of pyusb-1.0.2 as a fallback on any platform.
+# 2020-07-01 uw, v1.23 -- port to inkscape version 1.00
+# 2020-12-29 tb, v1.24 -- restore compatiblity with any inkscape version, add automated tests for win, osx, linux, lots of bugfixes
 
 from __future__ import print_function
 
-__version__ = "1.24"	# Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = "1.24"     # Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
 import sys, os, time, tempfile, math, re
@@ -104,8 +104,8 @@ sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith("win"):
-    sys.path.append("C:\\Program Files\\Inkscape\\share\\inkscape\\extensions") # 1.0
-    sys.path.append("C:\\Program Files\\Inkscape\\share\\extensions") # 0.92
+    sys.path.append("C:\\Program Files\\Inkscape\\share\\inkscape\\extensions")  # 1.0
+    sys.path.append("C:\\Program Files\\Inkscape\\share\\extensions")  # 0.92
 
 elif sys_platform.startswith("darwin"):
     sys.path.append("~/.config/inkscape/extensions")
@@ -118,30 +118,27 @@ else:   # linux
 # We will use the inkex module with the predefined Effect base class.
 import inkex
 
-try:     # inkscape 1.0 doesn't provide inkex.etree
-    from lxml import etree
-except:  # inkscape 0.9x
-    from inkex import etree
-
 try:     # inkscape 1.0
     from inkex.paths import Path, CubicSuperPath
     from inkex.transforms import Transform
     from inkex.bezier import beziersplitatt, maxdist
+    from lxml import etree
 except:  # inkscape 0.9x
     import simplepath
     import cubicsuperpath
     from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents
     from bezmisc import beziersplitatt
     from cspsubdiv import maxdist
+    from inkex import etree
 
 import string   # for string.lstrip
 import gettext
 from optparse import SUPPRESS_HELP
 
 try:
-    inkex.localization.localize()  # inkscape 1.0
+    inkex.localization.localize()   # inkscape 1.0
 except:
-    inkex.localize()	# inkscape 0.9x
+    inkex.localize()    # inkscape 0.9x
 
 from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
@@ -165,10 +162,10 @@ def px2mm(px):
 
 # Lifted with impunity from eggbot.py
 # Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
-def parseLengthWithUnits( str ):
+def parseLengthWithUnits(str):
     """
     Parse an SVG value which may or may not have units attached
-    This version is greatly simplified in that it only allows: no units,
+    This version is greatly simplified in that it only allows: no units, 
     units of px, mm, and %.  Everything else, it returns None for.
     There is a more general routine to consider in scour.py if more
     generality is ever needed.
@@ -283,106 +280,108 @@ class SendtoSilhouette(inkex.Effect):
 
         if not hasattr(self, "arg_parser"):  # inkscape 0.9x wrapper function
             inkex.Boolean = "inkbool"
+
             def add_option_wrapper(*arg, **args):
                 args["action"] = "store"
                 if hasattr(args, "type"):
                     args["type"] = re.split("'", str(args["type"]))[1]
                 self.OptionParser.add_option(*arg, **args)
+
             self.arg_parser = lambda: None
             self.arg_parser.add_argument = add_option_wrapper
 
-        self.arg_parser.add_argument("--active-tab", dest = "active_tab",
+        self.arg_parser.add_argument("--active-tab", dest = "active_tab", 
                 help=SUPPRESS_HELP)
-        self.arg_parser.add_argument("-d", "--dashes",
-                dest = "dashes", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-d", "--dashes", 
+                dest = "dashes", type = inkex.Boolean, default = False, 
                 help="convert paths with dashed strokes to separate subpaths for perforated cuts")
-        self.arg_parser.add_argument("-a", "--autocrop",
-                dest = "autocrop", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-a", "--autocrop", 
+                dest = "autocrop", type = inkex.Boolean, default = False, 
                 help="trim away top and left margin (before adding offsets)")
-        self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
-                dest = "bboxonly", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only", 
+                dest = "bboxonly", type = inkex.Boolean, default = False, 
                 help="draft the objects bounding box instead of the objects")
-        self.arg_parser.add_argument("-c", "--bladediameter",
-                dest = "bladediameter", type = float, default = 0.9,
+        self.arg_parser.add_argument("-c", "--bladediameter", 
+                dest = "bladediameter", type = float, default = 0.9, 
                 help="[0..2.3] diameter of the used blade [mm], default = 0.9")
-        self.arg_parser.add_argument("-C", "--cuttingmat",
-                choices=("cameo_12x12", "cameo_12x24", "no_mat"), dest = "cuttingmat", default = "cameo_12x12",
+        self.arg_parser.add_argument("-C", "--cuttingmat", 
+                choices=("cameo_12x12", "cameo_12x24", "no_mat"), dest = "cuttingmat", default = "cameo_12x12", 
                 help="Use cutting mat")
-        self.arg_parser.add_argument("-D", "--depth",
-                dest = "depth", type = int, default = -1,
+        self.arg_parser.add_argument("-D", "--depth", 
+                dest = "depth", type = int, default = -1, 
                 help="[0..10], or -1 for media default")
-        self.arg_parser.add_argument("--dummy",
-                dest = "dummy", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("--dummy", 
+                dest = "dummy", type = inkex.Boolean, default = False, 
                 help="Dump raw data to "+self.dumpname+" instead of cutting.")
-        self.arg_parser.add_argument("-g", "--strategy",
-                dest = "strategy", default = "mintravel",
-                choices=("mintravel","mintravelfull","matfree","zorder" ),
+        self.arg_parser.add_argument("-g", "--strategy", 
+                dest = "strategy", default = "mintravel", 
+                choices=("mintravel", "mintravelfull", "matfree", "zorder"), 
                 help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
-        self.arg_parser.add_argument("-l", "--sw_clipping",
-                dest = "sw_clipping", type = inkex.Boolean, default = True,
+        self.arg_parser.add_argument("-l", "--sw_clipping", 
+                dest = "sw_clipping", type = inkex.Boolean, default = True, 
                 help="Enable software clipping")
-        self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id",
-                dest = "media", default = "132",
-                choices=("100","101","102","106","111","112","113",
-                "120","121","122","123","124","125","126","127","128","129","130",
-                "131","132","133","134","135","136","137","138","300"),
+        self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id", 
+                dest = "media", default = "132", 
+                choices=("100", "101", "102", "106", "111", "112", "113", 
+                "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", 
+                "131", "132", "133", "134", "135", "136", "137", "138", "300"), 
                 help="113 = pen, 132 = printer paper, 300 = custom")
-        self.arg_parser.add_argument("-o", "--overcut",
-                dest = "overcut", type = float, default = 0.5,
+        self.arg_parser.add_argument("-o", "--overcut", 
+                dest = "overcut", type = float, default = 0.5, 
                 help="overcut on circular paths. [mm]")
-        self.arg_parser.add_argument("-M", "--multipass",
-                dest = "multipass", type = int, default = "1",
+        self.arg_parser.add_argument("-M", "--multipass", 
+                dest = "multipass", type = int, default = "1", 
                 help="[1..8], cut/draw each path object multiple times.")
-        self.arg_parser.add_argument("-p", "--pressure",
-                dest = "pressure", type = int, default = 10,
+        self.arg_parser.add_argument("-p", "--pressure", 
+                dest = "pressure", type = int, default = 10, 
                 help="[1..18], or 0 for media default")
-        self.arg_parser.add_argument("-P", "--sharpencorners",
-                dest = "sharpencorners", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-P", "--sharpencorners", 
+                dest = "sharpencorners", type = inkex.Boolean, default = False, 
                 help="Lift head at sharp corners")
-        self.arg_parser.add_argument("--sharpencorners_start",
-                dest = "sharpencorners_start", type = float, default = 0.1,
+        self.arg_parser.add_argument("--sharpencorners_start", 
+                dest = "sharpencorners_start", type = float, default = 0.1, 
                 help="Sharpen Corners - Start Ext. [mm]")
-        self.arg_parser.add_argument("--sharpencorners_end",
-                dest = "sharpencorners_end", type = float, default = 0.1,
+        self.arg_parser.add_argument("--sharpencorners_end", 
+                dest = "sharpencorners_end", type = float, default = 0.1, 
                 help="Sharpen Corners - End Ext. [mm]")
-        self.arg_parser.add_argument("-r", "--reversetoggle",
-                dest = "reversetoggle", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-r", "--reversetoggle", 
+                dest = "reversetoggle", type = inkex.Boolean, default = False, 
                 help="Cut each path the other direction. Affects every second pass when multipass.")
-        self.arg_parser.add_argument("-s", "--speed",
-                dest = "speed", type = int, default = 10,
+        self.arg_parser.add_argument("-s", "--speed", 
+                dest = "speed", type = int, default = 10, 
                 help="[1..10], or 0 for media default")
-        self.arg_parser.add_argument( "-S", "--smoothness", type = float,
-                dest="smoothness", default=.2, help="Smoothness of curves" )
-        self.arg_parser.add_argument("-t", "--tool",
-                choices=("autoblade", "cut", "pen","default"), dest = "tool", default = None, help="Optimize for pen or knive")
-        self.arg_parser.add_argument("-T", "--toolholder",
+        self.arg_parser.add_argument("-S", "--smoothness", type = float, 
+                dest="smoothness", default=.2, help="Smoothness of curves")
+        self.arg_parser.add_argument("-t", "--tool", 
+                choices=("autoblade", "cut", "pen", "default"), dest = "tool", default = None, help="Optimize for pen or knive")
+        self.arg_parser.add_argument("-T", "--toolholder", 
                 choices=("1", "2"), dest = "toolholder", default = None, help="[1..2]")
-        self.arg_parser.add_argument("-V", "--version",
-                dest = "version", action = "store_true",
+        self.arg_parser.add_argument("-V", "--version", 
+                dest = "version", action = "store_true", 
                 help="Just print version number ('"+self.version()+"') and exit.")
-        self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
-                dest = "wait_done", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done", 
+                dest = "wait_done", type = inkex.Boolean, default = False, 
                 help="After sending wait til device reports ready")
-        self.arg_parser.add_argument("-x", "--x-off", "--x_off",
+        self.arg_parser.add_argument("-x", "--x-off", "--x_off", 
                 type = float, dest = "x_off", default = 0.0, help="X-Offset [mm]")
-        self.arg_parser.add_argument("-y", "--y-off", "--y_off",
+        self.arg_parser.add_argument("-y", "--y-off", "--y_off", 
                 type = float, dest = "y_off", default = 0.0, help="Y-Offset [mm]")
-        self.arg_parser.add_argument("-R", "--regmark",
-                dest = "regmark", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("-R", "--regmark", 
+                dest = "regmark", type = inkex.Boolean, default = False, 
                 help="The document has registration marks.")
-        self.arg_parser.add_argument("--regsearch",
-                dest = "regsearch", type = inkex.Boolean, default = False,
+        self.arg_parser.add_argument("--regsearch", 
+                dest = "regsearch", type = inkex.Boolean, default = False, 
                 help="Search for the registration marks.")
-        self.arg_parser.add_argument("-X", "--reg-x", "--regwidth",
+        self.arg_parser.add_argument("-X", "--reg-x", "--regwidth", 
                 type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
-        self.arg_parser.add_argument("-Y", "--reg-y", "--reglength",
+        self.arg_parser.add_argument("-Y", "--reg-y", "--reglength", 
                 type = float, dest = "reglength", default = 230.0, help="Y mark distance [mm]")
-        self.arg_parser.add_argument("--rego-x",  "--regoriginx",
+        self.arg_parser.add_argument("--rego-x",  "--regoriginx", 
                 type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
-        self.arg_parser.add_argument("--rego-y", "--regoriginy",
+        self.arg_parser.add_argument("--rego-y", "--regoriginy", 
                 type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
-        self.arg_parser.add_argument("-e", "--endposition", "--end-postition",
-                "--end_position", choices=("start","below"),
+        self.arg_parser.add_argument("-e", "--endposition", "--end-postition", 
+                "--end_position", choices=("start", "below"), 
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
 
 
@@ -406,7 +405,7 @@ class SendtoSilhouette(inkex.Effect):
 
     def penDown(self):
         # print("\r penDown", [(self.fPrevX, self.fPrevY), (self.fX, self.fY)], file=self.tty)
-        self.paths.append([(self.fX,self.fY)])
+        self.paths.append([(self.fX, self.fY)])
         self.fPrevX = self.fX       # flag that we are down
         self.fPrevY = self.fY
 
@@ -422,28 +421,28 @@ class SendtoSilhouette(inkex.Effect):
         if (self.fPrevX is None):
             return
         # assuming that penDown() was called before.
-        self.paths[-1].append((self.fX,self.fY))
+        self.paths[-1].append((self.fX, self.fY))
 
-        # print("\r plotLineAndTime((%g,%g)-(%g,%g)) " % (self.fPrevX,self.fPrevY, self.fX, self.fY), file=self.tty)
+        # print("\r plotLineAndTime((%g, %g)-(%g, %g)) " % (self.fPrevX, self.fPrevY, self.fX, self.fY), file=self.tty)
 
 
     def plotPath(self, path, matTransform):
-        ## lifted from eggbot.py, gratefully bowing to the author
+        # lifted from eggbot.py, gratefully bowing to the author
         """
         Plot the path while applying the transformation defined
         by the matrix [matTransform].
         """
         # turn this path into a cubicsuperpath (list of beziers)...
 
-        d = path.get( "d" )
+        d = path.get("d")
 
         try:  # inkscape 1.0
-            p = CubicSuperPath( d ).transform(Transform(matTransform))
+            p = CubicSuperPath(d).transform(Transform(matTransform))
         except:  # inkscape 0.9x
-            if len( simplepath.parsePath( d ) ) == 0:
+            if len(simplepath.parsePath(d)) == 0:
                 return
-            p = cubicsuperpath.parsePath( d )
-            applyTransformToPath( matTransform, p )
+            p = cubicsuperpath.parsePath(d)
+            applyTransformToPath(matTransform, p)
         # ...and apply the transformation to each point
 
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
@@ -473,7 +472,7 @@ class SendtoSilhouette(inkex.Effect):
 
                 # store home
                 if self.ptFirst is None:
-                    self.ptFirst = ( self.fX, self.fY )
+                    self.ptFirst = (self.fX, self.fY)
 
                 if self.plotCurrentLayer:
                     self.plotLineAndTime()
@@ -486,7 +485,7 @@ class SendtoSilhouette(inkex.Effect):
         We are only plotting *some* layers. Check to see
         whether or not we're going to plot this one.
 
-        First: scan first 4 chars of node id for first non-numeric character,
+        First: scan first 4 chars of node id for first non-numeric character, 
         and scan the part before that (if any) into a number
 
         Then, see if the number matches the layer.
@@ -494,7 +493,7 @@ class SendtoSilhouette(inkex.Effect):
 
         TempNumString = "x"
         stringPos = 1
-        CurrentLayerName = string.lstrip( strLayerName ) # remove leading whitespace
+        CurrentLayerName = string.lstrip(strLayerName)  # remove leading whitespace
 
         # Look at layer name.  Sample first character, then first two, and
         # so on, until the string ends or the string no longer consists of
@@ -503,8 +502,8 @@ class SendtoSilhouette(inkex.Effect):
         MaxLength = len(CurrentLayerName)
         if MaxLength > 0:
             while stringPos <= MaxLength:
-                if str.isdigit( CurrentLayerName[:stringPos] ):
-                    TempNumString = CurrentLayerName[:stringPos] # Store longest numeric string so far
+                if str.isdigit(CurrentLayerName[:stringPos]):
+                    TempNumString = CurrentLayerName[:stringPos]  # Store longest numeric string so far
                     stringPos = stringPos + 1
                 else:
                     break
@@ -517,15 +516,15 @@ class SendtoSilhouette(inkex.Effect):
         # Note: this function is only called if we are NOT plotting all layers.
 
 
-    def recursivelyTraverseSvg(self, aNodeList,
-                parent_visibility="visible",
+    def recursivelyTraverseSvg(self, aNodeList, 
+                parent_visibility="visible", 
                 extra_transform=IDENTITY_TRANSFORM):
         """
         Recursively traverse the svg file to plot out all of the
         paths.  The function keeps track of the composite transformation
         that should be applied to each path.
 
-        This function handles path, group, line, rect, polyline, polygon,
+        This function handles path, group, line, rect, polyline, polygon, 
         circle, ellipse and use (clone) elements.  Notable elements not
         handled include text.  Unhandled elements should be converted to
         paths in Inkscape.
@@ -538,7 +537,7 @@ class SendtoSilhouette(inkex.Effect):
             v = None
             style = node.get("style")
             if style is not None:
-                kvs = {k.strip():v.strip() for k,v in [x.split(":", 1) for x in style.split(";")]}
+                kvs = {k.strip(): v.strip() for k, v in [x.split(":", 1) for x in style.split(";")]}
                 if "display" in kvs and kvs["display"] == "none":
                     v = "hidden"
             if v is None:
@@ -558,27 +557,27 @@ class SendtoSilhouette(inkex.Effect):
                 transform = composeTransform(self.docTransform, transform)
                 transform = composeTransform(extra_transform, transform)
 
-            if node.tag == inkex.addNS( "g", "svg" ) or node.tag == "g":
+            if node.tag == inkex.addNS("g", "svg") or node.tag == "g":
 
                 self.penUp()
-                if ( node.get( inkex.addNS( "groupmode", "inkscape" ) ) == "layer" ):
-                    if (node.get("style","") == "display:none"):
+                if (node.get(inkex.addNS("groupmode", "inkscape")) == "layer"):
+                    if (node.get("style", "") == "display:none"):
                         self.plotCurrentLayer = False
                     else:
                         self.plotCurrentLayer = True
 
                     if not self.allLayers:
                         # inkex.errormsg("Plotting layer named: " + node.get(inkex.addNS("label", "inkscape")))
-                        self.DoWePlotLayer( node.get( inkex.addNS( "label", "inkscape" ) ) )
-                self.recursivelyTraverseSvg( node, parent_visibility=v )
+                        self.DoWePlotLayer(node.get(inkex.addNS("label", "inkscape")))
+                self.recursivelyTraverseSvg(node, parent_visibility=v)
 
-            elif node.tag == inkex.addNS( "use", "svg" ) or node.tag == "use":
+            elif node.tag == inkex.addNS("use", "svg") or node.tag == "use":
 
                 # A <use> element refers to another SVG element via an xlink:href="#blah"
                 # attribute.  We will handle the element by doing an XPath search through
                 # the document, looking for the element with the matching id="blah"
                 # attribute.  We then recursively process that element after applying
-                # any necessary (x,y) translation.
+                # any necessary (x, y) translation.
                 #
                 # Notes:
                 #  1. We ignore the height and width attributes as they do not apply to
@@ -587,202 +586,152 @@ class SendtoSilhouette(inkex.Effect):
                 #     for processing the referenced element.  The referenced element is
                 #     hidden only if its visibility is "inherit" or "hidden".
 
-                refid = node.get( inkex.addNS( "href", "xlink" ) )
+                refid = node.get(inkex.addNS("href", "xlink"))
                 if refid:
                     # [1:] to ignore leading "#" in reference
                     path = "//*[@id='%s']" % refid[1:]
-                    refnode = node.xpath( path )
+                    refnode = node.xpath(path)
                     if refnode:
-                        x = float( node.get( "x", "0" ) )
-                        y = float( node.get( "y", "0" ) )
+                        x = float(node.get("x", "0"))
+                        y = float(node.get("y", "0"))
                         # Note: the transform has already been applied
-                        if ( x != 0 ) or (y != 0 ):
+                        if (x != 0) or (y != 0):
                             try:  # inkscape 1.0
-                                transform = transform * Transform( "translate(%f,%f)" % (x,y) )
+                                transform = transform * Transform("translate(%f, %f)" % (x, y))
                             except:  # inkscape 0.9x
-                                transform = composeTransform( transform, parseTransform( "translate(%f,%f)" % (x,y) ) )
-                        v = node.get( "visibility", v )
-                        self.recursivelyTraverseSvg( refnode, parent_visibility=v, extra_transform=transform )
+                                transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
+                        v = node.get("visibility", v)
+                        self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=transform)
                     else:
                         pass
                 else:
                     pass
 
-            elif node.tag == inkex.addNS( "path", "svg" ):
+            elif node.tag == inkex.addNS("path", "svg"):
                 if self.options.dashes:
                     splitPath(inkex, node)
 
                 self.pathcount += 1
 
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
+                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
+                # if we're in resume mode and self.pathcount = self.svgLastPath, 
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
                     self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
                     pass
                 else:
-                    self.plotPath( node, transform )
-                    if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
+                    self.plotPath(node, transform)
+                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS( "rect", "svg" ) or node.tag == "rect":
+            elif node.tag == inkex.addNS("rect", "svg") or node.tag == "rect":
                 # Manually transform
                 #
                 #    <rect x="X" y="Y" width="W" height="H"/>
                 #
                 # into
                 #
-                #    <path d="MX,Y lW,0 l0,H l-W,0 z"/>
+                #    <path d="MX, Y lW, 0 l0, H l-W, 0 z"/>
                 #
                 # I.e., explicitly draw three sides of the rectangle and the
                 # fourth side implicitly
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
+                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
+                # if we're in resume mode and self.pathcount = self.svgLastPath, 
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
                     self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
                     pass
                 else:
                     # Create a path with the outline of the rectangle
-                    newpath = etree.Element( inkex.addNS( "path", "svg" ) )
-                    x = float( node.get( "x" ) )
-                    y = float( node.get( "y" ) )
-                    w = float( node.get( "width" ) )
-                    h = float( node.get( "height" ) )
-                    s = node.get( "style" )
+                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    x = float(node.get("x"))
+                    y = float(node.get("y"))
+                    w = float(node.get("width"))
+                    h = float(node.get("height"))
+                    s = node.get("style")
                     if s:
-                        newpath.set( "style", s )
-                    t = node.get( "transform" )
+                        newpath.set("style", s)
+                    t = node.get("transform")
                     if t:
-                        newpath.set( "transform", t )
+                        newpath.set("transform", t)
                     a = []
-                    a.append( ["M", [x, y]] )
-                    a.append( ["l", [w, 0]] )
-                    a.append( ["l", [0, h]] )
-                    a.append( ["l", [-w, 0]] )
-                    a.append( ["Z", []] )
+                    a.append(["M", [x, y]])
+                    a.append(["l", [w, 0]])
+                    a.append(["l", [0, h]])
+                    a.append(["l", [-w, 0]])
+                    a.append(["Z", []])
                     try:  # inkscape 1.0
-                        newpath.set( "d", str(Path(a)) )
+                        newpath.set("d", str(Path(a)))
                     except:  # inkscape 0.9x
-                        newpath.set( "d", simplepath.formatPath( a ) )
-                    self.plotPath( newpath, transform )
+                        newpath.set("d", simplepath.formatPath(a))
+                    self.plotPath(newpath, transform)
 
-            elif node.tag == inkex.addNS( "line", "svg" ) or node.tag == "line":
+            elif node.tag == inkex.addNS("line", "svg") or node.tag == "line":
                 # Convert
                 #
                 #   <line x1="X1" y1="Y1" x2="X2" y2="Y2/>
                 #
                 # to
                 #
-                #   <path d="MX1,Y1 LX2,Y2"/>
+                #   <path d="MX1, Y1 LX2, Y2"/>
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
+                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
+                # if we're in resume mode and self.pathcount = self.svgLastPath, 
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
 
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
                     self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
                     pass
                 else:
                     # Create a path to contain the line
-                    newpath = etree.Element( inkex.addNS( "path", "svg" ) )
-                    x1 = float( node.get( "x1" ) )
-                    y1 = float( node.get( "y1" ) )
-                    x2 = float( node.get( "x2" ) )
-                    y2 = float( node.get( "y2" ) )
-                    s = node.get( "style" )
+                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    x1 = float(node.get("x1"))
+                    y1 = float(node.get("y1"))
+                    x2 = float(node.get("x2"))
+                    y2 = float(node.get("y2"))
+                    s = node.get("style")
                     if s:
-                        newpath.set( "style", s )
-                    t = node.get( "transform" )
+                        newpath.set("style", s)
+                    t = node.get("transform")
                     if t:
-                        newpath.set( "transform", t )
+                        newpath.set("transform", t)
                     a = []
-                    a.append( ["M", [x1, y1]] )
-                    a.append( ["L", [x2, y2]] )
+                    a.append(["M", [x1, y1]])
+                    a.append(["L", [x2, y2]])
                     try:  # Inkscape 1.0
-                        newpath.set( "d", str(Path(a)) )
+                        newpath.set("d", str(Path(a)))
                     except:  # Inkscape 0.9x
-                        newpath.set( "d", simplepath.formatPath( a ) )
-                    self.plotPath( newpath, transform )
-                    if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
+                        newpath.set("d", simplepath.formatPath(a))
+                    self.plotPath(newpath, transform)
+                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS( "polyline", "svg" ) or node.tag == "polyline":
+            elif node.tag == inkex.addNS("polyline", "svg") or node.tag == "polyline":
                 # Convert
                 #
-                #  <polyline points="x1,y1 x2,y2 x3,y3 [...]"/>
+                #  <polyline points="x1, y1 x2, y2 x3, y3 [...]"/>
                 #
                 # to
                 #
-                #   <path d="Mx1,y1 Lx2,y2 Lx3,y3 [...]"/>
+                #   <path d="Mx1, y1 Lx2, y2 Lx3, y3 [...]"/>
                 #
                 # Note: we ignore polylines with no points
 
-                pl = node.get( "points", "" ).strip()
-                if pl == "":
-                    pass
-
-                self.pathcount += 1
-                #if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                #if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
-
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
-                    self.nodeCount = self.svgLastPathNC
-
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
-                    pass
-
-                else:
-                    pa = pl.split()
-                    if not len( pa ):
-                        pass
-                    # Issue 29: pre 2.5.? versions of Python do not have
-                    #    "statement-1 if expression-1 else statement-2"
-                    # which came out of PEP 308, Conditional Expressions
-                    #d = "".join( ["M " + pa[i] if i == 0 else " L " + pa[i] for i in range( 0, len( pa ) )] )
-                    d = "M " + pa[0]
-                    for i in range( 1, len( pa ) ):
-                        d += " L " + pa[i]
-                    newpath = etree.Element( inkex.addNS( "path", "svg" ) )
-                    newpath.set( "d", d );
-                    s = node.get( "style" )
-                    if s:
-                        newpath.set( "style", s )
-                    t = node.get( "transform" )
-                    if t:
-                        newpath.set( "transform", t )
-                    self.plotPath( newpath, transform )
-                    if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-
-            elif node.tag == inkex.addNS( "polygon", "svg" ) or node.tag == "polygon":
-                # Convert
-                #
-                #  <polygon points="x1,y1 x2,y2 x3,y3 [...]"/>
-                #
-                # to
-                #
-                #   <path d="Mx1,y1 Lx2,y2 Lx3,y3 [...] Z"/>
-                #
-                # Note: we ignore polygons with no points
-
-                pl = node.get( "points", "" ).strip()
+                pl = node.get("points", "").strip()
                 if pl == "":
                     pass
 
@@ -791,39 +740,89 @@ class SendtoSilhouette(inkex.Effect):
                 # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
 
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
                     self.nodeCount = self.svgLastPathNC
 
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
                     pass
 
                 else:
                     pa = pl.split()
-                    if not len( pa ):
+                    if not len(pa):
                         pass
                     # Issue 29: pre 2.5.? versions of Python do not have
                     #    "statement-1 if expression-1 else statement-2"
                     # which came out of PEP 308, Conditional Expressions
-                    #d = "".join( ["M " + pa[i] if i == 0 else " L " + pa[i] for i in range( 0, len( pa ) )] )
+                    # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
                     d = "M " + pa[0]
-                    for i in range( 1, len( pa ) ):
+                    for i in range(1, len(pa)):
                         d += " L " + pa[i]
-                    d += " Z"
-                    newpath = etree.Element( inkex.addNS( "path", "svg" ) )
-                    newpath.set( "d", d );
-                    s = node.get( "style" )
+                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath.set("d", d)
+                    s = node.get("style")
                     if s:
-                        newpath.set( "style", s )
-                    t = node.get( "transform" )
+                        newpath.set("style", s)
+                    t = node.get("transform")
                     if t:
-                        newpath.set( "transform", t )
-                    self.plotPath( newpath, transform )
-                    if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
+                        newpath.set("transform", t)
+                    self.plotPath(newpath, transform)
+                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS( "ellipse", "svg" ) or node.tag == "ellipse" or \
-                node.tag == inkex.addNS( "circle", "svg" ) or node.tag == "circle":
+            elif node.tag == inkex.addNS("polygon", "svg") or node.tag == "polygon":
+                # Convert
+                #
+                #  <polygon points="x1, y1 x2, y2 x3, y3 [...]"/>
+                #
+                # to
+                #
+                #   <path d="Mx1, y1 Lx2, y2 Lx3, y3 [...] Z"/>
+                #
+                # Note: we ignore polygons with no points
+
+                pl = node.get("points", "").strip()
+                if pl == "":
+                    pass
+
+                self.pathcount += 1
+                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
+                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
+                # self.nodeCount equal to self.svgLastPathNC
+
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
+                    self.nodeCount = self.svgLastPathNC
+
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
+                    pass
+
+                else:
+                    pa = pl.split()
+                    if not len(pa):
+                        pass
+                    # Issue 29: pre 2.5.? versions of Python do not have
+                    #    "statement-1 if expression-1 else statement-2"
+                    # which came out of PEP 308, Conditional Expressions
+                    # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
+                    d = "M " + pa[0]
+                    for i in range(1, len(pa)):
+                        d += " L " + pa[i]
+                    d += " Z"
+                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath.set("d", d)
+                    s = node.get("style")
+                    if s:
+                        newpath.set("style", s)
+                    t = node.get("transform")
+                    if t:
+                        newpath.set("transform", t)
+                    self.plotPath(newpath, transform)
+                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
+                        self.svgLastPath += 1
+                        self.svgLastPathNC = self.nodeCount
+
+            elif node.tag == inkex.addNS("ellipse", "svg") or node.tag == "ellipse" or \
+                    node.tag == inkex.addNS("circle", "svg") or node.tag == "circle":
                 # Convert circles and ellipses to a path with two 180 degree arcs.
                 # In general (an ellipse), we convert
                 #
@@ -831,7 +830,7 @@ class SendtoSilhouette(inkex.Effect):
                 #
                 # to
                 #
-                #   <path d="MX1,CY A RX,RY 0 1 0 X2,CY A RX,RY 0 1 0 X1,CY"/>
+                #   <path d="MX1, CY A RX, RY 0 1 0 X2, CY A RX, RY 0 1 0 X1, CY"/>
                 #
                 # where
                 #
@@ -840,65 +839,65 @@ class SendtoSilhouette(inkex.Effect):
                 #
                 # Note: ellipses or circles with a radius attribute of value 0 are ignored
 
-                if node.tag == inkex.addNS( "ellipse", "svg" ) or node.tag == "ellipse":
-                    rx = float( node.get( "rx", "0" ) )
-                    ry = float( node.get( "ry", "0" ) )
+                if node.tag == inkex.addNS("ellipse", "svg") or node.tag == "ellipse":
+                    rx = float(node.get("rx", "0"))
+                    ry = float(node.get("ry", "0"))
                 else:
-                    rx = float( node.get( "r", "0" ) )
+                    rx = float(node.get("r", "0"))
                     ry = rx
                 if rx == 0 or ry == 0:
                     pass
 
                 self.pathcount += 1
-                #if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                #if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
+                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
+                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
 
-                if self.resumeMode and ( self.pathcount == self.svgLastPath ):
+                if self.resumeMode and (self.pathcount == self.svgLastPath):
                     self.nodeCount = self.svgLastPathNC
 
-                if self.resumeMode and ( self.pathcount < self.svgLastPath ):
+                if self.resumeMode and (self.pathcount < self.svgLastPath):
                     pass
 
                 else:
-                    cx = float( node.get( "cx", "0" ) )
-                    cy = float( node.get( "cy", "0" ) )
+                    cx = float(node.get("cx", "0"))
+                    cy = float(node.get("cy", "0"))
                     x1 = cx - rx
                     x2 = cx + rx
-                    d = "M %f,%f " % ( x1, cy ) + \
-                        "A %f,%f " % ( rx, ry ) + \
-                        "0 1 0 %f,%f " % ( x2, cy ) + \
-                        "A %f,%f " % ( rx, ry ) + \
-                        "0 1 0 %f,%f" % ( x1, cy )
-                    newpath = etree.Element( inkex.addNS( "path", "svg" ) )
-                    newpath.set( "d", d );
-                    s = node.get( "style" )
+                    d = "M %f, %f " % (x1, cy) + \
+                        "A %f, %f " % (rx, ry) + \
+                        "0 1 0 %f, %f " % (x2, cy) + \
+                        "A %f, %f " % (rx, ry) + \
+                        "0 1 0 %f, %f" % (x1, cy)
+                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath.set("d", d)
+                    s = node.get("style")
                     if s:
-                        newpath.set( "style", s )
-                    t = node.get( "transform" )
+                        newpath.set("style", s)
+                    t = node.get("transform")
                     if t:
-                        newpath.set( "transform", t )
-                    self.plotPath( newpath, transform )
-                    if ( not self.bStopped ):       # an "index" for resuming plots quickly-- record last complete path
+                        newpath.set("transform", t)
+                    self.plotPath(newpath, transform)
+                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
-            elif node.tag == inkex.addNS( "metadata", "svg" ) or node.tag == "metadata":
+            elif node.tag == inkex.addNS("metadata", "svg") or node.tag == "metadata":
                 pass
-            elif node.tag == inkex.addNS( "defs", "svg" ) or node.tag == "defs":
+            elif node.tag == inkex.addNS("defs", "svg") or node.tag == "defs":
                 pass
-            elif node.tag == inkex.addNS( "namedview", "sodipodi" ) or node.tag == "namedview":
+            elif node.tag == inkex.addNS("namedview", "sodipodi") or node.tag == "namedview":
                 pass
-            elif node.tag == inkex.addNS( "eggbot", "svg" ) or node.tag == "eggbot":
+            elif node.tag == inkex.addNS("eggbot", "svg") or node.tag == "eggbot":
                 pass
-            elif node.tag == inkex.addNS( "title", "svg" ) or node.tag == "title":
+            elif node.tag == inkex.addNS("title", "svg") or node.tag == "title":
                 pass
-            elif node.tag == inkex.addNS( "desc", "svg" ) or node.tag == "desc":
+            elif node.tag == inkex.addNS("desc", "svg") or node.tag == "desc":
                 pass
-            elif node.tag == inkex.addNS( "text", "svg" ) or node.tag == "text":
+            elif node.tag == inkex.addNS("text", "svg") or node.tag == "text":
                 texts = []
                 plaintext = ""
                 if self.plotCurrentLayer:
-                    for tnode in node.iterfind(".//"): # all subtree
+                    for tnode in node.iterfind(".//"):   # all subtree
                         if tnode is not None and tnode.text is not None:
                             texts.append(tnode.text)
                 if len(texts):
@@ -908,42 +907,42 @@ class SendtoSilhouette(inkex.Effect):
                     plaintext = "\n".join(texts)+"\n"
 
                     if "text" not in self.warnings and self.plotCurrentLayer:
-                        inkex.errormsg( plaintext + gettext.gettext( "Warning: unable to draw text; " +
+                        inkex.errormsg(plaintext + gettext.gettext("Warning: unable to draw text; " +
                                 "please convert it to a path first. Or consider using the " +
                                 "Hershey Text extension which can be installed in the "+
-                                "'Render' category of extensions." ) )
+                                "'Render' category of extensions."))
                         self.warnings["text"] = 1
                 pass
-            elif node.tag == inkex.addNS( "image", "svg" ) or node.tag == "image":
+            elif node.tag == inkex.addNS("image", "svg") or node.tag == "image":
                 if "image" not in self.warnings:
-                    inkex.errormsg( gettext.gettext( "Warning: unable to draw bitmap images; " +
+                    inkex.errormsg(gettext.gettext("Warning: unable to draw bitmap images; " +
                             "please convert them to line art first.  Consider using the 'Trace bitmap...' " +
                             "tool of the 'Path' menu.  Mac users please note that some X11 settings may " +
-                            "cause cut-and-paste operations to paste in bitmap copies." ) )
+                            "cause cut-and-paste operations to paste in bitmap copies."))
                     self.warnings["image"] = 1
                 pass
-            elif node.tag == inkex.addNS( "pattern", "svg" ) or node.tag == "pattern":
+            elif node.tag == inkex.addNS("pattern", "svg") or node.tag == "pattern":
                 pass
-            elif node.tag == inkex.addNS( "radialGradient", "svg" ) or node.tag == "radialGradient":
+            elif node.tag == inkex.addNS("radialGradient", "svg") or node.tag == "radialGradient":
                 # Similar to pattern
                 pass
-            elif node.tag == inkex.addNS( "linearGradient", "svg" ) or node.tag == "linearGradient":
+            elif node.tag == inkex.addNS("linearGradient", "svg") or node.tag == "linearGradient":
                 # Similar in pattern
                 pass
-            elif node.tag == inkex.addNS( "style", "svg" ) or node.tag == "style":
+            elif node.tag == inkex.addNS("style", "svg") or node.tag == "style":
                 # This is a reference to an external style sheet and not the value
                 # of a style attribute to be inherited by child elements
                 pass
-            elif node.tag == inkex.addNS( "cursor", "svg" ) or node.tag == "cursor":
+            elif node.tag == inkex.addNS("cursor", "svg") or node.tag == "cursor":
                 pass
-            elif node.tag == inkex.addNS( "flowRoot", "svg" ) or node.tag == "flowRoot":
+            elif node.tag == inkex.addNS("flowRoot", "svg") or node.tag == "flowRoot":
                 # contains a <flowRegion><rect y="91" x="369" height="383" width="375" ...
                 # see examples/fablab_logo_stencil.svg
                 pass
-            elif node.tag == inkex.addNS( "color-profile", "svg" ) or node.tag == "color-profile":
+            elif node.tag == inkex.addNS("color-profile", "svg") or node.tag == "color-profile":
                 # Gamma curves, color temp, etc. are not relevant to single color output
                 pass
-            elif not isinstance( node.tag, str ):
+            elif not isinstance(node.tag, str):
                 # This is likely an XML processing instruction such as an XML
                 # comment.  lxml uses a function reference for such node tags
                 # and as such the node tag is likely not a printable string.
@@ -951,29 +950,29 @@ class SendtoSilhouette(inkex.Effect):
                 # be very useful.
                 pass
             else:
-                if str( node.tag ) not in self.warnings:
-                    t = str( node.tag ).split( "}" )
-                    inkex.errormsg( gettext.gettext( "Warning: unable to draw <" + str( t[-1] ) +
-                            "> object, please convert it to a path first." ) )
-                    self.warnings[str( node.tag )] = 1
+                if str(node.tag) not in self.warnings:
+                    t = str(node.tag).split("}")
+                    inkex.errormsg(gettext.gettext("Warning: unable to draw <" + str(t[-1]) +
+                            "> object, please convert it to a path first."))
+                    self.warnings[str(node.tag)] = 1
                 pass
 
 
-    def getLength( self, name, default ):
+    def getLength(self, name, default):
         """
         Get the <svg> attribute with name "name" and default value "default"
         Parse the attribute into a value and associated units.  Then, accept
         no units (""), units of pixels ("px"), and units of percentage ("%").
         """
-        str = self.document.getroot().get( name )
+        str = self.document.getroot().get(name)
         # print("getLength.str", str, file=self.tty)
         if str:
-            v, u = parseLengthWithUnits( str )
+            v, u = parseLengthWithUnits(str)
             # print("parseLengthWithUnits: ", str, u, v, file=self.tty)
             if not v:
                 # Couldn't parse the value
                 return None
-            elif ( u == "" ) or ( u == "px" ):
+            elif (u == "") or (u == "px"):
                 return v
             elif u == "mm":
                 return v*96./25.4       # inverse of px2mm
@@ -986,49 +985,49 @@ class SendtoSilhouette(inkex.Effect):
             elif u == "pc":
                 return v*96./16.
             elif u == "%":
-                return float( default ) * v / 100.0
+                return float(default) * v / 100.0
             else:
                 print("unknown unit ", u, file=sys.stderr)
                 print("unknown unit ", u, file=self.tty)
                 return None
         else:
             # No width specified; assume the default value
-            return float( default )
+            return float(default)
 
 
-    def getDocProps( self ):
+    def getDocProps(self):
         """
         Get the document's height and width attributes from the <svg> tag.
         Use a default value in case the property is not present or is
         expressed in units of percentages.
         """
 
-        self.docHeight = self.getLength( "height", N_PAGE_HEIGHT )
+        self.docHeight = self.getLength("height", N_PAGE_HEIGHT)
         print("7 self.docHeight=", self.docHeight, file=self.tty)
-        self.docWidth = self.getLength( "width", N_PAGE_WIDTH )
+        self.docWidth = self.getLength("width", N_PAGE_WIDTH)
         print("8 self.docWidth=", self.docWidth, file=self.tty)
-        if ( self.docHeight == None ) or ( self.docWidth == None ):
+        if (self.docHeight is None) or (self.docWidth is None):
             return False
         else:
             return True
 
 
-    def handleViewBox( self ):
+    def handleViewBox(self):
         """
         Set up the document-wide transform in the event that the document has an SVG viewbox
         """
 
         if self.getDocProps():
-            viewbox = self.document.getroot().get( "viewBox" )
+            viewbox = self.document.getroot().get("viewBox")
             if viewbox:
-                vinfo = viewbox.strip().replace( ",", " " ).split( " " )
-                if ( vinfo[2] != 0 ) and ( vinfo[3] != 0 ):
-                    sx = self.docWidth / float( vinfo[2] )
-                    sy = self.docHeight / float( vinfo[3] )
+                vinfo = viewbox.strip().replace(", ", " ").split(" ")
+                if (vinfo[2] != 0) and (vinfo[3] != 0):
+                    sx = self.docWidth / float(vinfo[2])
+                    sy = self.docHeight / float(vinfo[3])
                     try:  # Inkscape 1.0
-                        self.docTransform = Transform( "scale(%f,%f)" % (sx, sy) )
+                        self.docTransform = Transform("scale(%f, %f)" % (sx, sy))
                     except:  # Inkscape 0.9x
-                        self.docTransform = parseTransform( "scale(%f,%f)" % (sx, sy) )
+                        self.docTransform = parseTransform("scale(%f, %f)" % (sx, sy))
 
 
     def is_closed_path(self, path):
@@ -1056,7 +1055,7 @@ class SendtoSilhouette(inkex.Effect):
             sys.exit(0)
 
         def write_progress(done, total, msg):
-            if not "write_start_tstamp" in self.__dict__:
+            if "write_start_tstamp" not in self.__dict__:
                 self.write_start_tstamp = time.time()
                 self.device_buffer_perc = 0.0
             perc = 100.*done/total
@@ -1085,27 +1084,29 @@ class SendtoSilhouette(inkex.Effect):
             # Traverse the selected objects
             if hasattr(self, "svg"):  # inkscape 1.0
                 for id in self.options.ids:
-                    self.recursivelyTraverseSvg( [self.svg.selected[id]] )
+                    self.recursivelyTraverseSvg([self.svg.selected[id]])
             else:                     # inkscape 0.9x
                 for id in self.options.ids:
-                    self.recursivelyTraverseSvg( [self.selected[id]] )
+                    self.recursivelyTraverseSvg([self.selected[id]])
         else:
             # Traverse the entire document
-            self.recursivelyTraverseSvg( self.document.getroot() )
+            self.recursivelyTraverseSvg(self.document.getroot())
 
         if self.options.toolholder is not None:
             self.options.toolholder = int(self.options.toolholder)
         self.pen=None
         self.autoblade=False
-        if self.options.tool == "pen": self.pen=True
-        if self.options.tool == "cut": self.pen=False
+        if self.options.tool == "pen":
+            self.pen=True
+        if self.options.tool == "cut":
+            self.pen=False
         if self.options.tool == "autoblade":
             self.pen=False
             self.autoblade=True
 
         # scale all points to unit mm
         for path in self.paths:
-            for i,pt in enumerate(path):
+            for i, pt in enumerate(path):
                 path[i] = (px2mm(pt[0]), px2mm(pt[1]))
 
         if self.options.strategy == "matfree":
@@ -1127,7 +1128,7 @@ class SendtoSilhouette(inkex.Effect):
             multipath = []
             multipath.extend(mm_path)
 
-            for i in range(1,self.options.multipass):
+            for i in range(1, self.options.multipass):
                 # if reverse continue path without lifting, instead turn with rotating knife
                 if (self.options.reversetoggle):
                     mm_path = list(reversed(mm_path))
@@ -1148,7 +1149,7 @@ class SendtoSilhouette(inkex.Effect):
                     dx = pprev[0] - pfrom[0]
                     dy = pprev[1] - pfrom[1]
                     dist = math.sqrt(dx*dx + dy*dy)
-                    if (precut > dist): # Full segment needed
+                    if (precut > dist):  # Full segment needed
                         precut -= dist
                         multipath.insert(0, pprev)
                         pfrom = pprev
@@ -1161,11 +1162,11 @@ class SendtoSilhouette(inkex.Effect):
                     dx = pnext[0] - pfrom[0]
                     dy = pnext[1] - pfrom[1]
                     dist = math.sqrt(dx*dx + dy*dy)
-                    if (overcut > dist): # Full segment needed
+                    if (overcut > dist):  # Full segment needed
                             overcut -= dist
                             multipath.append(pnext)
                             pfrom = pnext
-                    else:                # only partial segement needed, create new endpoint
+                    else:                 # only partial segement needed, create new endpoint
                             pnext = (pfrom[0]+dx*(overcut/dist), pfrom[1]+dy*(overcut/dist))
                             multipath.append(pnext)
                             break
@@ -1178,11 +1179,12 @@ class SendtoSilhouette(inkex.Effect):
             # Namespace horrors: Id's expand to full urls, before we can search them.
             # 'sodipodi:docname' -> '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname'
             for tag in svg.attrib.keys():
-                    if re.search(r"}docname$",tag): docname=svg.get(tag)
+                if re.search(r"}docname$", tag):
+                    docname=svg.get(tag)
 
             o = open(self.dumpname, "w")
-            print("Dump written to ",self.dumpname," (",pointcount," points )", file=self.tty)
-            print("Dump written to ",self.dumpname," (",pointcount," points )", file=sys.stderr)
+            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=self.tty)
+            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=sys.stderr)
             print("device version: '%s'" % dev.get_version(), file=sys.stderr)
             print("driver version: '%s'" % __version__, file=sys.stderr)
             print("# device version: '%s'" % dev.get_version(), file=o)
@@ -1193,70 +1195,70 @@ class SendtoSilhouette(inkex.Effect):
             print(cut, file=o)
             o.close()
 
-        if self.options.pressure == 0:     
+        if self.options.pressure == 0:
             self.options.pressure = None
-        if self.options.speed == 0:        
+        if self.options.speed == 0:
             self.options.speed = None
-        if self.options.depth == -1:       
+        if self.options.depth == -1:
             self.options.depth = None
-        dev.setup(media=int(self.options.media,10), 
-                pen=self.pen,
-                toolholder=self.options.toolholder,
-                cuttingmat=self.options.cuttingmat,
-                sharpencorners=self.options.sharpencorners,
-                sharpencorners_start=self.options.sharpencorners_start,
-                sharpencorners_end=self.options.sharpencorners_end,
-                autoblade=self.autoblade,
-                depth=self.options.depth,
-                sw_clipping=self.options.sw_clipping,
-                bladediameter=self.options.bladediameter,
+        dev.setup(media=int(self.options.media, 10), 
+                pen=self.pen, 
+                toolholder=self.options.toolholder, 
+                cuttingmat=self.options.cuttingmat, 
+                sharpencorners=self.options.sharpencorners, 
+                sharpencorners_start=self.options.sharpencorners_start, 
+                sharpencorners_end=self.options.sharpencorners_end, 
+                autoblade=self.autoblade, 
+                depth=self.options.depth, 
+                sw_clipping=self.options.sw_clipping, 
+                bladediameter=self.options.bladediameter, 
                 pressure=self.options.pressure, 
                 speed=self.options.speed)
 
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
-            bbox = dev.plot(pathlist=cut,
-                    mediawidth=px2mm(self.docWidth),
-                    mediaheight=px2mm(self.docHeight),
+            bbox = dev.plot(pathlist=cut, 
+                    mediawidth=px2mm(self.docWidth), 
+                    mediaheight=px2mm(self.docHeight), 
                     margintop=0, 
-                    marginleft=0,
+                    marginleft=0, 
                     bboxonly=None,         # only return the bbox, do not draw it.
-                    endposition="start",
-                    regmark=self.options.regmark,
-                    regsearch=self.options.regsearch,
-                    regwidth=self.options.regwidth,
-                    reglength=self.options.reglength,
-                    regoriginx=self.options.regoriginx,
+                    endposition="start", 
+                    regmark=self.options.regmark, 
+                    regsearch=self.options.regsearch, 
+                    regwidth=self.options.regwidth, 
+                    reglength=self.options.reglength, 
+                    regoriginx=self.options.regoriginx, 
                     regoriginy=self.options.regoriginy)
 
             if len(bbox["bbox"].keys()):
                     print("autocrop left=%.1fmm top=%.1fmm" % (
-                        bbox["bbox"]["llx"]*bbox["unit"],
+                        bbox["bbox"]["llx"]*bbox["unit"], 
                         bbox["bbox"]["ury"]*bbox["unit"]), file=self.tty)
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
-        bbox = dev.plot(pathlist=cut,
-            mediawidth=px2mm(self.docWidth),
-            mediaheight=px2mm(self.docHeight),
-            offset=(self.options.x_off, self.options.y_off),
-            bboxonly=self.options.bboxonly,
-            endposition=self.options.endposition,
-            regmark=self.options.regmark,
-            regsearch=self.options.regsearch,
-            regwidth=self.options.regwidth,
-            reglength=self.options.reglength,
-            regoriginx=self.options.regoriginx,
+        bbox = dev.plot(pathlist=cut, 
+            mediawidth=px2mm(self.docWidth), 
+            mediaheight=px2mm(self.docHeight), 
+            offset=(self.options.x_off, self.options.y_off), 
+            bboxonly=self.options.bboxonly, 
+            endposition=self.options.endposition, 
+            regmark=self.options.regmark, 
+            regsearch=self.options.regsearch, 
+            regwidth=self.options.regwidth, 
+            reglength=self.options.reglength, 
+            regoriginx=self.options.regoriginx, 
             regoriginy=self.options.regoriginy)
         if len(bbox["bbox"].keys()) == 0:
             print("empty page?", file=self.tty)
             print("empty page?", file=sys.stderr)
         else:
-            write_progress(1,1, "bbox: (%.1f,%.1f)-(%.1f,%.1f)mm, %d points" % (
-                        bbox["bbox"]["llx"]*bbox["unit"],
-                        bbox["bbox"]["ury"]*bbox["unit"],
-                        bbox["bbox"]["urx"]*bbox["unit"],
-                        bbox["bbox"]["lly"]*bbox["unit"],
+            write_progress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
+                        bbox["bbox"]["llx"]*bbox["unit"], 
+                        bbox["bbox"]["ury"]*bbox["unit"], 
+                        bbox["bbox"]["urx"]*bbox["unit"], 
+                        bbox["bbox"]["lly"]*bbox["unit"], 
                         bbox["bbox"]["count"]))
             print("", file=self.tty)
             state = dev.status()
@@ -1270,7 +1272,7 @@ class SendtoSilhouette(inkex.Effect):
                 percent_per_sec = 1000.     # unreliable data
 
             wait_sec = 1
-            if percent_per_sec > 1: # prevent overflow if device_buffer_perc is almost 100
+            if percent_per_sec > 1:   # prevent overflow if device_buffer_perc is almost 100
                 while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
                     wait_sec *= 2
             dots = "."
@@ -1279,11 +1281,11 @@ class SendtoSilhouette(inkex.Effect):
                 self.device_buffer_perc -= wait_sec * percent_per_sec
                 if self.device_buffer_perc < 0.0:
                     self.device_buffer_perc = 0.0
-                write_progress(1,1, dots)
+                write_progress(1, 1, dots)
                 dots += "."
                 state = dev.status()
             self.device_buffer_perc = 0.0
-            write_progress(1,1, dots)
+            write_progress(1, 1, dots)
         print("\nstatus=%s" % (state), file=self.tty)
 
 
@@ -1293,23 +1295,23 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         # write a tempfile that is autoremoved on exit
         tmpfile=tempfile.NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
-        tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0,0" /></svg>')
+        tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
         sys.argv.append(tmpfile.name)
-        try:    # inkscape 1.0
+        try:     # inkscape 1.0
             e.run(sys.argv[1:])
-        except: # inkscape 0.9x
+        except:  # inkscape 0.9x
             e.affect(sys.argv[1:])
         os.remove(tmpfile.name)
     else:
         start = time.time()
-        try:    # inkscape 1.0
+        try:     # inkscape 1.0
             e.run()
-        except: # inkscape 0.9x
+        except:  # inkscape 0.9x
             e.affect()
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
-        print(" done. %d min %d sec" % (mm,ss), file=e.tty)
+        print(" done. %d min %d sec" % (mm, ss), file=e.tty)
 
     sys.exit(0)
