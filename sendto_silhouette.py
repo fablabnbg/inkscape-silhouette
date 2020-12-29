@@ -435,26 +435,14 @@ class SendtoSilhouette(inkex.Effect):
 
         d = path.get( "d" )
 
-        try:  # Inkscape 1.0
-            if len( Path(d).to_arrays() ) == 0:
-                return
-        except:  # Inkscape 0.9x
+        try:  # inkscape 1.0
+            p = CubicSuperPath( d ).transform(Transform(matTransform))
+        except:  # inkscape 0.9x
             if len( simplepath.parsePath( d ) ) == 0:
                 return
-
-        try:  # Inkscape 1.0
-            p = CubicSuperPath( d )
-        except:  # Inkscape 0.9x
             p = cubicsuperpath.parsePath( d )
-
-        # ...and apply the transformation to each point
-        try:  # Inkscape 1.0
-            for comp in p:
-                for ctl in comp:
-                    for pt in ctl:
-                        pt[0], pt[1] = Transform(matTransform).apply_to_point(pt)
-        except:  # Inkscape 0.9x
             applyTransformToPath( matTransform, p )
+        # ...and apply the transformation to each point
 
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
         # where the start-point is the last point in the previous segment.
@@ -559,11 +547,11 @@ class SendtoSilhouette(inkex.Effect):
                 continue
 
             # calculate this object's transform
-            try:  # Inkscape 1.0
+            try:  # inkscape 1.0
                 transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
-                transform = Transform(self.docTransform) * Transform(transform)
-                transform = Transform(extra_transform) * Transform(transform)
-            except:  # Inkscape 0.9x
+                transform = Transform(self.docTransform) * transform
+                transform = Transform(extra_transform) * transform
+            except:  # inkscape 0.9x
                 transform = composeParents(node, IDENTITY_TRANSFORM)
                 transform = composeTransform(self.docTransform, transform)
                 transform = composeTransform(extra_transform, transform)
@@ -607,9 +595,9 @@ class SendtoSilhouette(inkex.Effect):
                         y = float( node.get( "y", "0" ) )
                         # Note: the transform has already been applied
                         if ( x != 0 ) or (y != 0 ):
-                            try:  # Inkscape 1.0
+                            try:  # inkscape 1.0
                                 transform = transform * Transform( "translate(%f,%f)" % (x,y) )
-                            except:  # Inkscape 0.9x
+                            except:  # inkscape 0.9x
                                 transform = composeTransform( transform, parseTransform( "translate(%f,%f)" % (x,y) ) )
                         v = node.get( "visibility", v )
                         self.recursivelyTraverseSvg( refnode, parent_visibility=v, extra_transform=transform )
@@ -680,9 +668,9 @@ class SendtoSilhouette(inkex.Effect):
                     a.append( ["l", [0, h]] )
                     a.append( ["l", [-w, 0]] )
                     a.append( ["Z", []] )
-                    try:  # Inkscape 1.0
+                    try:  # inkscape 1.0
                         newpath.set( "d", str(Path(a)) )
-                    except:  # Inkscape 0.9x
+                    except:  # inkscape 0.9x
                         newpath.set( "d", simplepath.formatPath( a ) )
                     self.plotPath( newpath, transform )
 
@@ -1051,7 +1039,7 @@ class SendtoSilhouette(inkex.Effect):
 
         trans = node.get("transform")
         if trans:
-            mat = Transform(trans) * Transform(mat)
+            mat = Transform(trans) * mat
 
         if node.getparent() is not None:
             if node.getparent().tag == inkex.addNS("g", "svg"):
