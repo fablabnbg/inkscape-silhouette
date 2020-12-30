@@ -4,7 +4,7 @@ PREFIX?=/usr
 DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
-VERS=$$(echo '<xml height="0"/>' | python ./sendto_silhouette.py --version /dev/stdin)	
+VERS=$$(echo '<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>' | python ./sendto_silhouette.py --version)
 
 ## echo '<xml height="0"/>' | python ./sendto_silhouette.py /dev/stdin
 # 'module' object has no attribute 'core'
@@ -34,7 +34,7 @@ install:
 	mkdir -p $(DEST)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DEST)
-	install -m 755 -t $(DEST) *.py
+	install -m 755 -t $(DEST) eggbot*.py *silhouette*.py
 	install -m 644 -t $(DEST) *.inx
 	mkdir -p $(UDEV)/rules.d
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
@@ -45,7 +45,7 @@ install-local:
 	mkdir -p $(DESTLOCAL)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DESTLOCAL)
-	install -m 755 -t $(DESTLOCAL) *.py
+	install -m 755 -t $(DESTLOCAL) eggbot*.py *silhouette*.py
 	install -m 644 -t $(DESTLOCAL) *.inx
 
 tar_dist_classic: clean

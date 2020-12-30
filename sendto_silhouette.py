@@ -1298,16 +1298,16 @@ if __name__ == "__main__":
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
         sys.argv.append(tmpfile.name)
-        try:     # inkscape 1.0
+        if hasattr(e, "run"):     # inkscape 1.0
             e.run(sys.argv[1:])
-        except:  # inkscape 0.9x
+        else:                     # inkscape 0.9x
             e.affect(sys.argv[1:])
         os.remove(tmpfile.name)
     else:
         start = time.time()
-        try:     # inkscape 1.0
+        if hasattr(e, "run"):     # inkscape 1.0
             e.run()
-        except:  # inkscape 0.9x
+        else:                     # inkscape 0.9x
             e.affect()
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
