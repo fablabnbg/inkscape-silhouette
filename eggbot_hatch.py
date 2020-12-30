@@ -155,6 +155,7 @@ Note that
    that range indicates that the line segments do not intersect.
 '''
 
+
 def intersect( P1, P2, P3, P4 ):
 
         '''
@@ -212,18 +213,19 @@ def intersect( P1, P2, P3, P4 ):
 
         return sa
 
+
 def trimmedLine(line, margin):
         '''
         Takes a line of the form [[x1, y1], [x2, y2]] and returns a line segment of the same form.
         the returned segment is within the original line, so that the following distance equations
         are true:
-        |[xs1,ys1] - [x1,y1]| == |margin| 
+        |[xs1,ys1] - [x1,y1]| == |margin|
         |[xs2,ys2] - [x2,y2]| == |margin|
         |[x1, y1] - [x2, y2]| - 2* margin == |[xs1,ys1] - [xs2,ys2]|
         If the line length is less than 2*margin, None is returned.
         If the margin is not positive, the original line segment is returned.
         '''
-        if margin <= 0.0: 
+        if margin <= 0.0:
                 return line
         x1 = line[0][0]
         y1 = line[0][1]
@@ -238,6 +240,7 @@ def trimmedLine(line, margin):
         ys1 = y1 + ratio * (y2-y1)
         ys2 = y2 - ratio * (y2-y1)
         return [[xs1,ys1], [xs2,ys2]]
+
 
 def interstices( P1, P2, paths, hatches, margin=0 ):
 
@@ -326,8 +329,9 @@ def interstices( P1, P2, paths, hatches, margin=0 ):
                 x2 = P1[0] + sa[i+1][0] * ( P2[0] - P1[0] )
                 y2 = P1[1] + sa[i+1][0] * ( P2[1] - P1[1] )
                 hatch = trimmedLine([[x1, y1], [x2, y2]], margin)
-                if hatch is not None: 
+                if hatch is not None:
                         hatches[sa[i][1]].append( hatch )
+
 
 def inverseTransform ( tran ):
         '''
@@ -371,6 +375,7 @@ def inverseTransform ( tran ):
                         [-tran[1][0]/D, tran[0][0]/D,
                         (tran[1][0]*tran[0][2] - tran[0][0]*tran[1][2])/D]]
 
+
 def parseLengthWithUnits( str ):
 
         '''
@@ -397,6 +402,7 @@ def parseLengthWithUnits( str ):
         return v, u
 
 # Lifted with impunity from eggbot.py
+
 
 def subdivideCubicPath( sp, flat, i=1 ):
 
@@ -446,6 +452,7 @@ def distanceSquared( P1, P2 ):
         dy = P2[1] - P1[1]
 
         return ( dx * dx + dy * dy )
+
 
 class Eggbot_Hatch( inkex.Effect ):
 
@@ -511,6 +518,7 @@ class Eggbot_Hatch( inkex.Effect ):
                         # No width specified; assume the default value
                         return float( default )
 
+
         def getDocProps( self ):
 
                 '''
@@ -526,6 +534,7 @@ class Eggbot_Hatch( inkex.Effect ):
                 else:
                         return True
 
+
         def handleViewBox( self ):
 
                 '''
@@ -540,6 +549,7 @@ class Eggbot_Hatch( inkex.Effect ):
                                         sx = self.docWidth / float( vinfo[2] )
                                         sy = self.docHeight / float( vinfo[3] )
                                         self.docTransform = simpletransform.parseTransform( 'scale(%f,%f)' % (sx, sy) )
+
 
         def addPathVertices( self, path, node=None, transform=None ):
 
@@ -605,6 +615,7 @@ class Eggbot_Hatch( inkex.Effect ):
                 # by the element's lxml node pointer
                 self.transforms[node] = transform
 
+
         def getBoundingBox( self ):
 
                 '''
@@ -625,6 +636,7 @@ class Eggbot_Hatch( inkex.Effect ):
                                                 self.ymin = vertex[1]
                                         elif vertex[1] > self.ymax:
                                                 self.ymax = vertex[1]
+
 
         def recursivelyTraverseSvg( self, aNodeList,
                         matCurrent=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -868,6 +880,7 @@ class Eggbot_Hatch( inkex.Effect ):
                                 inkex.errormsg( 'Warning: unable to draw object <%s>, please convert it to a path first.' % node.tag )
                                 pass
 
+
         def joinFillsWithNode ( self, node, stroke_width, path ):
 
                 '''
@@ -898,6 +911,7 @@ class Eggbot_Hatch( inkex.Effect ):
                 if ( tran != None ) and ( tran != '' ):
                         line_attribs['transform'] = tran
                 inkex.etree.SubElement( g, inkex.addNS( 'path', 'svg' ), line_attribs )
+
 
         def makeHatchGrid( self, angle, spacing, init=True ):
 
@@ -970,6 +984,7 @@ class Eggbot_Hatch( inkex.Effect ):
                                 (( y1 > self.ymax ) and ( y2 > self.ymax )):
                                 continue
                         self.grid.append( ( x1, y1, x2, y2 ) )
+
 
         def effect( self ):
 
@@ -1071,6 +1086,7 @@ class Eggbot_Hatch( inkex.Effect ):
                         self.joinFillsWithNode( key, stroke_width, path[:-1] )
 
                 #inkex.errormsg("Elapsed CPU time was %f" % (time.clock()-self.t0))
+
 
 if __name__ == '__main__':
 

@@ -73,7 +73,7 @@ try:
       print("\n\n\n", file=sys.stderr)
       sys.exit(0)
 except NameError:
-    pass #on OS X usb.version_info[0] will always fail as libusb1 is being used
+    pass # on OS X usb.version_info[0] will always fail as libusb1 is being used
 
 
 # taken from
@@ -148,6 +148,7 @@ DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_2, 'name': 'Silhouette SD 2' },
 ]
 
+
 def _bbox_extend(bb, x, y):
     # The coordinate system origin is in the top lefthand corner.
     # Downwards and rightwards we count positive. Just like SVG or HPGL.
@@ -156,6 +157,7 @@ def _bbox_extend(bb, x, y):
     if not 'urx' in bb or x > bb['urx']: bb['urx'] = x
     if not 'lly' in bb or y > bb['lly']: bb['lly'] = y
     if not 'ury' in bb or y < bb['ury']: bb['ury'] = y
+
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
@@ -222,7 +224,7 @@ class SilhouetteCameo:
         try:
             for dev in usb.core.find(find_all=True):
               msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
-        except NameError: 
+        except NameError:
             msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
@@ -611,8 +613,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if i[0] == media:
           print("Media=%d, cap='%s', name='%s'" % (media, i[4], i[5]), file=s.log)
           if pressure is None: pressure = i[1]
-          if    speed is None:    speed = i[2]
-          if    depth is None:    depth = i[3]
+          if speed is None:    speed = i[2]
+          if depth is None:    depth = i[3]
           break
 
     if toolholder is None:
@@ -691,7 +693,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     s.enable_sw_clipping = sw_clipping
 
     # if enabled, rollers three times forward and back.
-    # needs a pressure of 19 or more, else nothing will happen 
+    # needs a pressure of 19 or more, else nothing will happen
     if trackenhancing is not None:
       if trackenhancing:
         s.write(b"FY0\x03")
@@ -930,9 +932,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       height = reglength * 20.0
       width = regwidth * 20.0
 
-      s.write(b"TB50,0\x03") #only with registration (it was TB50,1), landscape mode
+      s.write(b"TB50,0\x03") # only with registration (it was TB50,1), landscape mode
       s.write(b"TB99\x03")
-      s.write(b"TB52,2\x03")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
+      s.write(b"TB52,2\x03")     # type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
       s.write(b"TB51,400\x03")   # length of regmarks
       s.write(b"TB53,10\x03")    # width of regmarks
       s.write(b"TB55,1\x03")
@@ -951,7 +953,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #  if resp != "    1\x03":
       #    break;
 
-      resp = s.read(timeout=40000) ## Allow 20s for reply...
+      resp = s.read(timeout=40000) # Allow 20s for reply...
       if resp != "    0\x03":
         raise ValueError("Couldn't find registration marks. %s" % str(resp))
 
@@ -1014,8 +1016,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         new_home = b"L0\x03\\0,0\x03M0,0\x03J0\x03FN0\x03TB50,0\x03"
       else:
         new_home = b"H\x03"
-    else: #includes 'below'
-      new_home = b"M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) #! axis swapped when using Cameo-system
+    else: # includes 'below'
+      new_home = b"M%d,%d\x03SO0\x03" % (int(0.5+bbox['lly']+end_paper_offset*20.), 0) # ! axis swapped when using Cameo-system
     #new_home += b"FN0\x03TB50,0\x03"
     s.write(new_home)
 
@@ -1039,7 +1041,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     for line in open(file,'r').readlines():
       if re.match(r'\s*\[', line):
         exec('data1234='+line)
-        break 
+        break
       elif re.match(r'\s*<\s*svg', line):
         print(line)
         print("Error: xml/svg file. Please load into inkscape. Use extensions -> export -> sendto silhouette, [x] dump to file")

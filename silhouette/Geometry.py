@@ -2,10 +2,11 @@
 #
 # Geometry.py -- collection of geometric functions.
 # Split from silhouette/Strategy.py
-# 
+#
 
 # minimum difference for geometric values to be considered equal.
 _eps = 1e-10
+
 
 def dist_sq(A,B):
   """
@@ -20,15 +21,16 @@ def dist_sq(A,B):
 
 
 def ccw(A,B,C):
-  """True, if three points are listed in counter-clockwise order in a right handed coordinate 
-     system. 
+  """True, if three points are listed in counter-clockwise order in a right handed coordinate
+     system.
      Note that Silhouette Cameo uses a left handed coordinate systems, where the clock
      rotates in the bavarian direction.
   """
   ## From http://www.bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-  ## FIXME: should integrate colinear() into ccw() returning 
+  ## FIXME: should integrate colinear() into ccw() returning
   ##        None when colinear, True when ccw, False when cw.
   return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
+
 
 def colinear(A,B,C):
   """True, if three points are on the same line.
@@ -36,12 +38,13 @@ def colinear(A,B,C):
   ## FIXME: test this thoroughly and integrate into ccw()
   return abs((C.y-A.y)*(B.x-A.x) - (B.y-A.y)*(C.x-A.x)) < _eps
 
+
 def sharp_turn_90(A,B,C):
   """Given the path from A to B to C as two line segments.
      Return true, if the corner at B is more than +/- 90 degree.
 
      Algorithm:
-     For the segment A-B, we construct the normal B-D. 
+     For the segment A-B, we construct the normal B-D.
      The we test, if points A and C lie on the same side of the line(!) B-D.
      If so, it is a sharp turn.
 
@@ -88,15 +91,15 @@ def sharp_turn(A,B,C,fwd_ratio):
                fwd_ratio=-.5: 116.565 deg.
 
      Algorithm:
-     First we test if C is on the left or right of A-B. 
+     First we test if C is on the left or right of A-B.
      We will place D on the same side and remember the side for later.
-     For the segment A-B, we construct the normal B-D. 
+     For the segment A-B, we construct the normal B-D.
      Then we extend A-B to E so that distance |B-E| == |B-D|.
-     Now we use the weighted vector sum [BE]*fwd_ratio + [BD]*1 == [BF] to create 
+     Now we use the weighted vector sum [BE]*fwd_ratio + [BD]*1 == [BF] to create
      the desired angle A-B-F
 
      If C is left of AB and C is left of BF, then it is a sharp turn; or
-     If C is right of AB and C is right of BF, then it is a sharp turn; 
+     If C is right of AB and C is right of BF, then it is a sharp turn;
      else not.
 
   """
@@ -126,13 +129,13 @@ def intersect_lines(A,B,C,D, limit1=False, limit2=False):
   """compute the intersection point of line AB with line CD.
      If limit1 is True, only the segment [AB] is considered.
      If limit2 is True, only the segment [CD] is considered.
-     None is returned, if the lines do not intersect or -- 
-     with applying limits -- the intersection point is outside 
+     None is returned, if the lines do not intersect or --
+     with applying limits -- the intersection point is outside
      a segment.
   """
 
   def _in_segment(A,B,x,y):
-    """ simplified segment test, 
+    """ simplified segment test,
         knowing that point (x,y) is colinar to AB.
 
         We apply tolerance _eps, so that points that are "exactly" on the endpoint
@@ -163,7 +166,7 @@ def intersect_lines(A,B,C,D, limit1=False, limit2=False):
     if colinear(A,B,C) and colinear(A,B,D):
       if _in_segment(A,B,C.x,C.y): return C     # A--C--B--D or A--C--D--B
       if _in_segment(A,B,D.x,D.y): return D     # A--D--B--C
-      if _in_segment(C,D,A.x,A.y): return A     # C--A--B--D 
+      if _in_segment(C,D,A.x,A.y): return A     # C--A--B--D
       #  _in_segment(C,D,B.x,B.y): return B     # see above: A--C--B--D
     return None                                 # A--B--C--D
   x = (_b2*_c1 - _b1*_c2) / float(det)
@@ -215,13 +218,14 @@ def intersect_y(A,B,y_boundary, limit=False):
   """
   return _intersect_y5(A.x, A.y, B.x, B.y, y_boundary, limit)
 
+
 class XY_Grid_Factory:
   def __init__(self, spacing=0.5):
     self.serial = 0
     # seperatly aplied to x and y
     self.min_dist = spacing if spacing > _eps else _eps
     self.near = {}
-  
+
   def XY_a(self, t):
     x0 = int(float(t[0])/self.min_dist)
     y0 = int(float(t[1])/self.min_dist)
@@ -238,16 +242,18 @@ class XY_Grid_Factory:
     xy.serial = self.serial
     self.serial += 1
     return xy
-    
+
 
 class XY_a(tuple):
   def __init__(self,t):
     # super(XY_a, self).__init__(tuple(t))
     tuple.__init__(t)
     self.attr = self.__dict__
+
   @property
   def x(self):
     return self[0]
+
   @property
   def y(self):
     return self[1]
@@ -265,9 +271,9 @@ class XY_a(tuple):
 class Barrier:
   def __init__(self, points, key):
     """Initialize a barrier by sorting the points according to the given
-       sort key. The barrier is placed on the first point, and can be 
-       moved by next(n=1) prev(n=1), first(), last(), pos(idx), or 
-       find(point). All these method return an index into the sorted list 
+       sort key. The barrier is placed on the first point, and can be
+       moved by next(n=1) prev(n=1), first(), last(), pos(idx), or
+       find(point). All these method return an index into the sorted list
        that can be used in pos(idx) or pslice(idx1, idx2).
        Additional points can be added to an existing barrier with insert(point).
     """
@@ -308,7 +314,7 @@ class Barrier:
       self.idx = 0
       return None
     return self.idx
-  
+
 
   def pos(self, new_idx=None):
     """Returns the current barrier index; optionally setting a new index.
@@ -317,7 +323,7 @@ class Barrier:
     """
     if new_idx is None:
       return self.idx
-   
+
     self.idx = new_idx
     if self.idx < 0:    # inlined self.prev(0)
       self.idx = 0
@@ -328,7 +334,7 @@ class Barrier:
   def pslice(self, first=0, last=None):
     """Returns a list of points that are beween the given indices. Ends inclusive.
        Last defaults to the current barrier position.
-       First defaults to 0, thus pslpice() without parameters returns the slice that 
+       First defaults to 0, thus pslpice() without parameters returns the slice that
        the barrier has passed.
     """
     if last is None: last = self.idx
@@ -343,15 +349,15 @@ class Barrier:
 
   def lookup(self, match):
     """Locate a point A where match(A) returns True.
-       The index of the first point that matches is returned. 
+       The index of the first point that matches is returned.
        If there were no matches, None is returned.
 
-       This is different than find(), as it does not alter self.idx, always searches the full 
+       This is different than find(), as it does not alter self.idx, always searches the full
        range, and uses a user provided predicate match instead of self.key() with a point.
-       Use lookup() when one particular point is sought, and find() 
+       Use lookup() when one particular point is sought, and find()
        could return another point that happens to share the same key() value.
     """
-    ## SPEEDUP:  provide the lambda function to __init__ and build a hash 
+    ## SPEEDUP:  provide the lambda function to __init__ and build a hash
     ## that we can lookup by value here. (Would need a rebuild after insert(), but hey).
     for i in range(0, len(self.points)):
       if match(self.points[i]): return i
@@ -396,14 +402,14 @@ class Barrier:
   def ahead(self, point):
     """Return True if the given point is ahead of the current barrier position.
        Returns False if the point is exactly at the barrier or behind.
-       The point need not belong to self.points . Calling ahead() is faster than 
+       The point need not belong to self.points . Calling ahead() is faster than
        find() when the exact index position for the point is not needed.
     """
     return self.key(point) > self.key(self.points[self.idx])
-  
+
   def insert(self, point):
     """Insert a new point into the given barrier, while keeping the sort order.
-       Returns False if it is inserted in a position ahead of the 
+       Returns False if it is inserted in a position ahead of the
        current barrier position (to be reached with next() ).
        Otherwise the current barrier position is incremented to refer to the same
        element and True is returned.
@@ -411,9 +417,9 @@ class Barrier:
     ## SPEEDUP: A sequential scan is used.
     ##  * Should use bisect and __cmp__, __lt__, __eq__.
     ##  * Should call find() for doing all the bisecting.
-    ## http://bugs.python.org/issue4356 asks for adding a key= parameter to bisect, 
-    ## one of the reasons says: 
-    ##   The lack of key may as well encourage you to continue using linear searches, 
+    ## http://bugs.python.org/issue4356 asks for adding a key= parameter to bisect,
+    ## one of the reasons says:
+    ##   The lack of key may as well encourage you to continue using linear searches,
     ##   or other sub-optimal solutions.
     ## I chose the linear search for simplicity, as I fear hidden complexity while
     ## tweaking compare functions.
@@ -431,11 +437,9 @@ class Barrier:
       return False      # ahead
     self.idx += 1
     return True         # behind.
-  
+
 
   def __iter__(self):
     """ An iterator for advancing next(). Quite useless?
     """
     pass
-
-

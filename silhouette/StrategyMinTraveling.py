@@ -15,6 +15,7 @@ def dist_sq(a,b):
   dy = a[1]-b[1]
   return dx*dx+dy*dy
 
+
 # Finds the nearest path in a list from a given position
 def findnearestpath(paths, pos, entrycircular=False):
     nearestindex=0
@@ -38,6 +39,7 @@ def findnearestpath(paths, pos, entrycircular=False):
                      nearestindex = index
                      selected = path[i:] + path[1:i+1]
     return nearestindex,selected
+
 
 # Sort paths to achieve minimal traveling times
 def sort(paths, entrycircular=False):
