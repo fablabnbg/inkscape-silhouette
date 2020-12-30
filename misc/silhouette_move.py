@@ -18,7 +18,7 @@ feed_mm = 10
 if len(sys.argv) > 1:
   feed_mm = string.atof(sys.argv[1])
 
-if not feed_mm: 
+if not feed_mm:
   print("Usage: %s [PAPER_FORWARD_MM]" % sys.argv[0])
 
 dev.move_origin(feed_mm)

@@ -2,8 +2,8 @@
 #
 # detect sharp corners in a path.
 # (c) 2013 jnweiger@gmail.com, distribute under GPL-2.0
-# 
-# Usage: 
+#
+# Usage:
 #  '-'           zoom out
 #  '+'           zoom in
 #  'f' ('F')     cursor forward (20 points)
@@ -172,11 +172,12 @@ def print_pdf(c):
   ctx.show_page()
   print("output.pdf written")
 
+
 def key_press(win, ev, c):
   new_idx = None
-  s = c.get_scale()  
+  s = c.get_scale()
   key = chr(ev.keyval & 0xff)
-  if   key == '+':  c.set_scale(s*1.2)
+  if key == '+':  c.set_scale(s*1.2)
   elif key == '-':  c.set_scale(s*.8)
   elif key == 'p':  print_pdf(c)
   elif key == 'f':  new_idx = c.cursor_idx + 1
@@ -188,7 +189,7 @@ def key_press(win, ev, c):
   elif key == '0':  new_idx = 0
   elif ev.keyval <= 255: gtk.main_quit()
 
-  if new_idx is not None and (new_idx < 1 or  new_idx >= len(c.points)):
+  if new_idx is not None and (new_idx < 1 or new_idx >= len(c.points)):
     new_idx = 1
     for a in c.arrows:
       a.remove()
@@ -207,28 +208,31 @@ def key_press(win, ev, c):
     c.cursor_idx = new_idx
     cx = c.points[c.cursor_idx][0].x
     cy = c.points[c.cursor_idx][0].y
-    # GooCanvas.CanvasAnimateType.FREEZE = 0 
+    # GooCanvas.CanvasAnimateType.FREEZE = 0
     if jumpto:
       c.cursor.set_simple_transform(cx,cy, 1, 0.)
     else:
       if key == 'f':
         ## place forward pointing arrows
         p = Points([(ox,oy),(cx,cy)])
-        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.25, 
-                end_arrow=True, arrow_width=3, arrow_tip_length=2, arrow_length=2, 
+        c.arrows.append(Polyline(parent=c.get_root_item(), points=p, line_width=0.25,
+                end_arrow=True, arrow_width=3, arrow_tip_length=2, arrow_length=2,
                 stroke_color_rgba=0x00000033))
       c.cursor.animate(cx,cy, 1, -360., absolute=True, duration=150, step_time=30, type=0)
     print(new_idx, c.points[c.cursor_idx][0], c.points[c.cursor_idx][0].att())
   else:
     c.cursor.stop_animation()
 
+
 def button_press(win, ev):
   win.click_x = ev.x
   win.click_y = ev.y
 
+
 def button_release(win, ev):
   win.click_x = None
   win.click_y = None
+
 
 def motion_notify(win, ev, c):
   try:
@@ -270,7 +274,7 @@ def main ():
       for C in path:
         if 'attr' in C.__dict__ and 'sharp' in C.attr:
           Ellipse(parent=root, center_x=C.x, center_y=C.y, radius_x=.25, radius_y=.25, fill_color_rgba = 0xFF666644, line_width = 0.01)
-          
+
 
         Ellipse(parent=root, center_x=C.x, center_y=C.y, radius_x=.2, radius_y=.2, line_width = 0.01)
 
@@ -285,8 +289,8 @@ def main ():
         jumpto = False
         text.translate(C.x+random.uniform(-.1,0), C.y+random.uniform(-.1,0))
         text.scale(.05,.05)
-      
-    
+
+
     if len(canvas.points) <= 1:
       rect = Rect(parent=root, x=1, y=1, width=3,  height=2,
                   fill_color = '#77ff77', stroke_color = 'black', line_width = .01)
@@ -296,14 +300,14 @@ def main ():
       canvas.cursor = Polyline(parent=root, points=cursor_p, line_width=0.05, stroke_color="green", fill_color_rgba=0x77ff7777)
       canvas.cursor.translate(canvas.points[1][0].x,canvas.points[1][0].y)
       canvas.cursor_idx = 1
-    
+
     # text = Text(parent=root, text="Hello World", font="12")
     # text.rotate(30,0,10)
     # text.scale(.05,.05)
-                    
+
     win.add(canvas)
     win.show_all()
-                                
+
     gtk.main()
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ try:
       print("\n\n\n", file=sys.stderr)
       sys.exit(0)
 except NameError:
-    pass #on OS X usb.version_info[0] will always fail as libusb1 is being used
+    pass # on OS X usb.version_info[0] will always fail as libusb1 is being used
 
 
 # taken from
@@ -174,6 +174,7 @@ DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_1, 'name': 'Silhouette SD 1' },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_SD_2, 'name': 'Silhouette SD 2' },
 ]
+
 
 def _bbox_extend(bb, x, y):
     # The coordinate system origin is in the top lefthand corner.
@@ -380,8 +381,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
               print("retrying reset in 5 sec", file=self.log)
               time.sleep(5)
 
-        dev.set_configuration()
         try:
+          dev.set_configuration()
           dev.set_interface_altsetting()      # Probably not really necessary.
         except usb.core.USBError:
           pass
@@ -542,12 +543,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             data = self.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    if isinstance(data, (str, bytes)):
+    if isinstance(data, (str, bytes, bytearray)):
         return data.decode()
-    elif isinstance(data, bytearray):
-        return str(data).decode()
     else:
-        return data.tostring().decode()
+        try:
+            return data.tobytes().decode() # with py3
+        except:
+            return data.tostring().decode() # with py2/3 - dropped in py39
 
   def try_read(self, size=64, timeout=1000):
     ret=None
@@ -801,8 +803,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if i[0] == media:
           print("Media=%d, cap='%s', name='%s'" % (media, i[4], i[5]), file=self.log)
           if pressure is None: pressure = i[1]
-          if    speed is None:    speed = i[2]
-          if    depth is None:    depth = i[3]
+          if speed is None:    speed = i[2]
+          if depth is None:    depth = i[3]
           break
 
     tool = SilhouetteCameoTool(toolholder)

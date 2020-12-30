@@ -1,0 +1,18 @@
+Silhouette Cameo3 found on usb bus=3 addr=17
+status=ready
+device version: 'CAMEO 3 V1.60   '
+7 self.docHeight= 10.0
+8 self.docWidth= 3200.0
+FG: 'CAMEO 3 V1.60    '
+TB71: '    0,    0'
+FA: '    0,    0'
+TC: '    0,    0'
+Media=132, cap='blue', name='Print Paper Light Weight'
+toolholder: 1
+speed: 10
+pressure: 10
+Loaded media is expected left-aligned.
+mediabox: (0,0)-(304.8,2.64583)
+0% (+100%) bbox: (0.0,0.0)-(0.0,0.0)mm, 0 points
+0% (+100%) .
+status=ready

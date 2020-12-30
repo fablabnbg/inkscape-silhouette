@@ -1,0 +1,203 @@
+language: python
+
+#dist: focal
+#
+#python:
+#    - 2.7
+#    - 3.7
+#    - 3.8
+
+script:
+    - PYTHONWARNINGS=default pytest -s -vv test
+
+jobs:
+    include:
+        - dist: xenial
+          python: 2.7
+          # only test python 2.7 on xenial for inkscape < 0.92.5 (https://packages.ubuntu.com/xenial/inkscape)
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - dist: bionic
+          python: 2.7
+          # only test python 2.7 on bionic for inkscape < 0.92.5 (https://packages.ubuntu.com/bionic/inkscape)
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - dist: focal
+          python: 2.7
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - dist: focal
+          python: 3.7
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - dist: focal
+          python: 3.8
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - dist: focal
+          python: 3.9
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+
+        - name: "Python: 3.9 -- Inkscape 1.0"
+          dist: focal
+          python: 3.9
+          before_install:
+              - sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+              - sudo apt-get update
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+
+        - name: "Python: 3.9 -- Inkscape TRUNK"
+          dist: focal
+          python: 3.9
+          env: INKSCAPE_VERSION=9999
+          before_install:
+              - sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
+              - sudo apt-get update
+          install:
+              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install umockdev
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install pytest
+
+        - name: "Python: 2.7"
+          os: osx
+          osx_image: xcode11.3
+          language: shell
+          before_install:
+              - brew tap homebrew/cask
+              - pushd $( brew --prefix )/Homebrew/Library/Taps/homebrew/homebrew-cask
+              - git checkout 87d3d3f Casks/inkscape.rb # inkscape 0.92.2
+              - ls -l Casks/inkscape.rb
+              - popd
+          install:
+              - brew install --cask inkscape
+          before_script:
+              - inkscape --version
+              - python --version
+              - pip install -r requirements.txt
+              - pip install libusb1
+              - pip install pytest
+
+        - name: "Python: 3.7 -- Inkscape 1.0"
+          os: osx
+          osx_image: xcode11.4
+          language: shell
+          install:
+              - brew install --cask inkscape
+          before_script:
+              - inkscape --version
+              - python3 --version                 # python symlink still point to python2
+              - pip3 install -r requirements.txt  # pip ... 
+              - pip3 install numpy
+              - pip3 install libusb1
+              - pip3 install pytest
+
+        - name: "Python: 2.7"
+          os: windows
+          language: shell
+          env: PATH=/c/Python27:/c/Python27/Scripts:$PATH
+          install:
+              - choco install -y inkscape --version 0.92.5
+              - choco install -y python2
+          before_script:
+              - echo $PATH
+              - inkscape --version
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
+
+        - name: "Python: 3.9"
+          os: windows
+          language: shell
+          env: PATH=/c/Python39:/c/Python39/Scripts:$PATH
+          install:
+              - choco install -y inkscape --version 0.92.5
+              - choco install -y python
+          before_script:
+              - echo $PATH
+              - inkscape --version
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install -r requirements.txt
+              - pip install pytest
+              - sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape 0.92.5 extension: regex should use raw string
+
+        - name: "Python: 3.9 -- Inkscape 1.0"
+          os: windows
+          language: shell
+          env: PATH=/c/Python39:/c/Python39/Scripts:$PATH
+          install:
+              - choco install -y inkscape
+              - choco install -y python
+          before_script:
+              - echo $PATH
+              - inkscape --version
+              - python --version
+              - python -m pip install --upgrade pip
+              - pip install numpy
+              - pip install -r requirements.txt
+              - pip install pytest
+
+    allow_failures:
+        - env: INKSCAPE_VERSION=9999
+#        - env: PATH=/c/Python39:/c/Python39/Scripts:$PATH INKSCAPE_VERSION=1
