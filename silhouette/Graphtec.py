@@ -514,8 +514,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """ Sends a command or a list of commands of type string """
     if isinstance(cmd, str):
       data = cmd
-    elif isinstance(cmd, list) and isinstance(cmd[0], str):
-      data = CMD_ETX.join(cmd)
+    elif isinstance(cmd, list):
+      if not cmd:
+        # if list of commands is empty this function shall do nothing
+        return
+      else:
+        # list must not contain anything but strings
+        for c in cmd:
+          if not isinstance(c, str):
+            raise TypeError("Send Command Exception: %s " % type(cmd))
+        data = CMD_ETX.join(cmd)
     else:
       raise TypeError("Send Command Exception: %s " % type(cmd))
     self.safe_write(data + CMD_ETX)
