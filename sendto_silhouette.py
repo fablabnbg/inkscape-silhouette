@@ -1011,10 +1011,7 @@ class SendtoSilhouette(inkex.Effect):
         print("7 self.docHeight=", self.docHeight, file=self.tty)
         self.docWidth = self.getLength("width", N_PAGE_WIDTH)
         print("8 self.docWidth=", self.docWidth, file=self.tty)
-        if (self.docHeight is None) or (self.docWidth is None):
-            return False
-        else:
-            return True
+        return all((self.docHeight, self.docWidth))
 
 
     def handleViewBox(self):
@@ -1025,8 +1022,8 @@ class SendtoSilhouette(inkex.Effect):
         if self.getDocProps():
             viewbox = self.document.getroot().get("viewBox")
             if viewbox:
-                vinfo = viewbox.strip().replace(", ", " ").split(" ")
-                if (vinfo[2] != 0) and (vinfo[3] != 0):
+                vinfo = viewbox.strip().replace(",", " ").split(" ")
+                if all((vinfo[2], vinfo[3])):
                     sx = self.docWidth / float(vinfo[2])
                     sy = self.docHeight / float(vinfo[3])
                     try:  # Inkscape 1.0
