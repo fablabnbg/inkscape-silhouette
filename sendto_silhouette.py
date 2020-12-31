@@ -278,7 +278,12 @@ class SendtoSilhouette(inkex.Effect):
             self.tty = open(os.devnull, "w")  # "/dev/null" for POSIX, "nul" for Windows.
         # print("__init__", file=self.tty)
 
-        if not hasattr(self, "arg_parser"):  # inkscape 0.9x wrapper function
+        if not hasattr(self, "run"):
+            # fake for inkscape 0.9x compatiblity: affect()
+            self.run = self.affect
+
+        if not hasattr(self, "arg_parser"):
+            # fake for inkscape 0.9x compatiblity: OptionParser.add_option()
             inkex.Boolean = "inkbool"
 
             def add_option_wrapper(*arg, **args):
@@ -1298,17 +1303,11 @@ if __name__ == "__main__":
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
         sys.argv.append(tmpfile.name)
-        if hasattr(e, "run"):     # inkscape 1.0
-            e.run(sys.argv[1:])
-        else:                     # inkscape 0.9x
-            e.affect(sys.argv[1:])
+        e.run(sys.argv[1:])
         os.remove(tmpfile.name)
     else:
         start = time.time()
-        if hasattr(e, "run"):     # inkscape 1.0
-            e.run()
-        else:                     # inkscape 0.9x
-            e.affect()
+        e.run()
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
