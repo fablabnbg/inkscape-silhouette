@@ -1052,7 +1052,7 @@ class SendtoSilhouette(inkex.Effect):
     def effect(self):
         if self.options.version:
             print(__version__)
-            sys.exit(0)
+            return
 
         def write_progress(done, total, msg):
             if "write_start_tstamp" not in self.__dict__:
@@ -1291,9 +1291,9 @@ class SendtoSilhouette(inkex.Effect):
 
 if __name__ == "__main__":
     e = SendtoSilhouette()
-
-    if len(sys.argv) < 2:
-        # write a tempfile that is autoremoved on exit
+    
+    if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
+        # write a tempfile that is removed on exit
         tmpfile=tempfile.NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
