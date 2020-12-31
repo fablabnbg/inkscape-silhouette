@@ -125,6 +125,7 @@ try:     # inkscape 1.0
     from lxml import etree
 except:  # inkscape 0.9x
     import simplepath
+    from simplepath import formatPath as Path  # fake for inkscape 0.9x compatiblity: Path()
     import cubicsuperpath
     from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents
     from bezmisc import beziersplitatt
@@ -674,10 +675,7 @@ class SendtoSilhouette(inkex.Effect):
                     a.append(["l", [0, h]])
                     a.append(["l", [-w, 0]])
                     a.append(["Z", []])
-                    try:  # inkscape 1.0
-                        newpath.set("d", str(Path(a)))
-                    except:  # inkscape 0.9x
-                        newpath.set("d", simplepath.formatPath(a))
+                    newpath.set("d", str(Path(a)))
                     self.plotPath(newpath, transform)
 
             elif node.tag == inkex.addNS("line", "svg") or node.tag == "line":
@@ -716,10 +714,7 @@ class SendtoSilhouette(inkex.Effect):
                     a = []
                     a.append(["M", [x1, y1]])
                     a.append(["L", [x2, y2]])
-                    try:  # Inkscape 1.0
-                        newpath.set("d", str(Path(a)))
-                    except:  # Inkscape 0.9x
-                        newpath.set("d", simplepath.formatPath(a))
+                    newpath.set("d", str(Path(a)))
                     self.plotPath(newpath, transform)
                     if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
