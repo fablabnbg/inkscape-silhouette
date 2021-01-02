@@ -16,6 +16,7 @@ This extension should work with the following devices:
 * Silhouette Cameo
 * Silhouette Cameo 2
 * Silhouette Cameo 3
+* Silhouette Cameo 4
 * Silhouette Curio (partial success confirmed in #36)
 * Craft Robo CC200-20
 * Craft Robo CC300-20
@@ -196,7 +197,7 @@ For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y
 
 * Implement the triangle in a square test cut.
 
-* test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially 
+* test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially
   well suited as a test-case.
 
 * improve MatFree cutting by finding a better scan sort algorithm.
