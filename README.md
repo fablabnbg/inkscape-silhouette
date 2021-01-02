@@ -114,6 +114,13 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
   * **Pressure**            Custom Pressure on the blade. One unit is said to be 7g force.
 7. Press Apply button to start cut.
 
+## Templates
+* Templates showing the cutting mat on a background layer can be found in `examples/mat_templates`
+* Copy those files into the `templates` subdirectory below inkscapes configuration directory
+* To identify the correct path open inkscape's preferences and selecting `System`. There you find the path as `User templates`
+* Those templates can then be selected within the dialog available through `File` &rarr; `New from Template...`
+* Once you have created a new document from those templates you can import other `*.svg`-files and place the contained objects for cutting
+
 ## Troubleshooting
 
 ```python
