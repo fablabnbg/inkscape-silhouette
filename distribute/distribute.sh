@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Determining Version:"
-VERSION=$(echo '<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>' | python ../sendto_silhouette.py --version)
+VERSION=$(python ../sendto_silhouette.py --version)
 
 test -e /usr/bin/xpath || sudo apt-get install libxml-xpath-perl
 test -e /usr/bin/checkinstall || sudo apt-get install checkinstall

@@ -34,7 +34,7 @@ class TestRun(unittest.TestCase):
 
     def test_02version(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py" ,"--version", "examples/testcut_square_triangle.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py" ,"--version"], stderr=subprocess.STDOUT)
             #print(result.decode())
             self.assertIn('1.', str(result))
         except subprocess.CalledProcessError as e:

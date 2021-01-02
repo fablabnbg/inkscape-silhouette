@@ -4,7 +4,7 @@ PREFIX?=/usr
 DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
-VERS=$$(echo '<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>' | python ./sendto_silhouette.py --version)
+VERS=$$(python ./sendto_silhouette.py --version)
 
 ## echo '<xml height="0"/>' | python ./sendto_silhouette.py /dev/stdin
 # 'module' object has no attribute 'core'

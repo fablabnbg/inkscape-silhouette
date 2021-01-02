@@ -125,6 +125,7 @@ try:     # inkscape 1.0
     from lxml import etree
 except:  # inkscape 0.9x
     import simplepath
+    from simplepath import formatPath as Path  # fake for inkscape 0.9x compatiblity: Path()
     import cubicsuperpath
     from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents
     from bezmisc import beziersplitatt
@@ -278,7 +279,12 @@ class SendtoSilhouette(inkex.Effect):
             self.tty = open(os.devnull, "w")  # "/dev/null" for POSIX, "nul" for Windows.
         # print("__init__", file=self.tty)
 
-        if not hasattr(self, "arg_parser"):  # inkscape 0.9x wrapper function
+        if not hasattr(self, "run"):
+            # fake for inkscape 0.9x compatiblity: affect()
+            self.run = self.affect
+
+        if not hasattr(self, "arg_parser"):
+            # fake for inkscape 0.9x compatiblity: OptionParser.add_option()
             inkex.Boolean = "inkbool"
 
             def add_option_wrapper(*arg, **args):
@@ -669,10 +675,7 @@ class SendtoSilhouette(inkex.Effect):
                     a.append(["l", [0, h]])
                     a.append(["l", [-w, 0]])
                     a.append(["Z", []])
-                    try:  # inkscape 1.0
-                        newpath.set("d", str(Path(a)))
-                    except:  # inkscape 0.9x
-                        newpath.set("d", simplepath.formatPath(a))
+                    newpath.set("d", str(Path(a)))
                     self.plotPath(newpath, transform)
 
             elif node.tag == inkex.addNS("line", "svg") or node.tag == "line":
@@ -711,10 +714,7 @@ class SendtoSilhouette(inkex.Effect):
                     a = []
                     a.append(["M", [x1, y1]])
                     a.append(["L", [x2, y2]])
-                    try:  # Inkscape 1.0
-                        newpath.set("d", str(Path(a)))
-                    except:  # Inkscape 0.9x
-                        newpath.set("d", simplepath.formatPath(a))
+                    newpath.set("d", str(Path(a)))
                     self.plotPath(newpath, transform)
                     if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
@@ -1006,10 +1006,7 @@ class SendtoSilhouette(inkex.Effect):
         print("7 self.docHeight=", self.docHeight, file=self.tty)
         self.docWidth = self.getLength("width", N_PAGE_WIDTH)
         print("8 self.docWidth=", self.docWidth, file=self.tty)
-        if (self.docHeight is None) or (self.docWidth is None):
-            return False
-        else:
-            return True
+        return all((self.docHeight, self.docWidth))
 
 
     def handleViewBox(self):
@@ -1020,8 +1017,8 @@ class SendtoSilhouette(inkex.Effect):
         if self.getDocProps():
             viewbox = self.document.getroot().get("viewBox")
             if viewbox:
-                vinfo = viewbox.strip().replace(", ", " ").split(" ")
-                if (vinfo[2] != 0) and (vinfo[3] != 0):
+                vinfo = viewbox.strip().replace(",", " ").split(" ")
+                if all((vinfo[2], vinfo[3])):
                     sx = self.docWidth / float(vinfo[2])
                     sy = self.docHeight / float(vinfo[3])
                     try:  # Inkscape 1.0
@@ -1052,7 +1049,7 @@ class SendtoSilhouette(inkex.Effect):
     def effect(self):
         if self.options.version:
             print(__version__)
-            sys.exit(0)
+            return
 
         def write_progress(done, total, msg):
             if "write_start_tstamp" not in self.__dict__:
@@ -1291,24 +1288,18 @@ class SendtoSilhouette(inkex.Effect):
 
 if __name__ == "__main__":
     e = SendtoSilhouette()
-
-    if len(sys.argv) < 2:
-        # write a tempfile that is autoremoved on exit
+    
+    if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
+        # write a tempfile that is removed on exit
         tmpfile=tempfile.NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
         sys.argv.append(tmpfile.name)
-        if hasattr(e, "run"):     # inkscape 1.0
-            e.run(sys.argv[1:])
-        else:                     # inkscape 0.9x
-            e.affect(sys.argv[1:])
+        e.run(sys.argv[1:])
         os.remove(tmpfile.name)
     else:
         start = time.time()
-        if hasattr(e, "run"):     # inkscape 1.0
-            e.run()
-        else:                     # inkscape 0.9x
-            e.affect()
+        e.run()
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
