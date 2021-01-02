@@ -1008,7 +1008,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return "D%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
 
   def upper_left_mm_cmd(self, mmy, mmx):
-    """ \y,x """
+    r""" \y,x """
     return "\\%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
 
   def lower_right_mm_cmd(self, mmy, mmx):
