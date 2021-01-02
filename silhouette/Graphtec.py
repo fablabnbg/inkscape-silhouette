@@ -1283,9 +1283,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # potentially long command string needs extra care
     self.safe_send_command(cmd_list)
 
-    if self.dev is not None:
-        self.wait_for_ready()
-
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
     if not 'llx' in bbox: bbox['llx'] = 0  # survive empty pathlist
