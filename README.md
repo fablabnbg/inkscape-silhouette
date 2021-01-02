@@ -16,6 +16,7 @@ This extension should work with the following devices:
 * Silhouette Cameo
 * Silhouette Cameo 2
 * Silhouette Cameo 3
+* Silhouette Cameo 4
 * Silhouette Curio (partial success confirmed in #36)
 * Craft Robo CC200-20
 * Craft Robo CC300-20
@@ -114,6 +115,13 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
   * **Pressure**            Custom Pressure on the blade. One unit is said to be 7g force.
 7. Press Apply button to start cut.
 
+## Templates
+* Templates showing the cutting mat on a background layer can be found in `examples/mat_templates`
+* Copy those files into the `templates` subdirectory below inkscapes configuration directory
+* To identify the correct path open inkscape's preferences and selecting `System`. There you find the path as `User templates`
+* Those templates can then be selected within the dialog available through `File` &rarr; `New from Template...`
+* Once you have created a new document from those templates you can import other `*.svg`-files and place the contained objects for cutting
+
 ## Troubleshooting
 
 ```python
@@ -196,7 +204,7 @@ For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y
 
 * Implement the triangle in a square test cut.
 
-* test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially 
+* test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially
   well suited as a test-case.
 
 * improve MatFree cutting by finding a better scan sort algorithm.

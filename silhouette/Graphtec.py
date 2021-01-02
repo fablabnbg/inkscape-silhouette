@@ -682,7 +682,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if resp:
         # response '    0,    0' on portrait
         print("TB71: '%s'" % resp, file=self.log)
-
       # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
       resp = self.send_receive_command("FA")
       if resp:
@@ -1008,7 +1007,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return "D%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
 
   def upper_left_mm_cmd(self, mmy, mmx):
-    """ \y,x """
+    r""" \y,x """
     return "\\%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
 
   def lower_right_mm_cmd(self, mmy, mmx):
@@ -1282,9 +1281,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # potentially long command string needs extra care
     self.safe_send_command(cmd_list)
-
-    if self.dev is not None:
-        self.wait_for_ready()
 
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
