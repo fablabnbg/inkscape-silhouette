@@ -18,7 +18,7 @@
 # 2016-05-16  no reset per default, this helps usbip.
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
 # 2017-04-20  Adding Cameo3 USB IDs
-# 2021-01-02  Adding Cameo4 and refactor code
+# 2020-06-    Adding Cameo4 and refactor code
 
 from __future__ import print_function
 
