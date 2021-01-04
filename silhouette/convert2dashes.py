@@ -22,9 +22,14 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '''
-import bezmisc
-import cubicsuperpath
-import simplestyle
+try:     # inkscape 1.0
+    from inkex.paths import CubicSuperPath
+    from inkex.styles import Style
+    from inkex.bezier import beziertatlength, bezierlength
+except:  # inkscape 0.9x
+    from bezmisc import beziertatlength, bezierlength
+    import cubicsuperpath
+    import simplestyle
 
 
 def tpoint(p1, p2, t = 0.5):
@@ -45,23 +50,29 @@ def cspbezsplit(sp1, sp2, t = 0.5):
 
 def cspbezsplitatlength(sp1, sp2, l = 0.5, tolerance = 0.001):
     bez = (sp1[1][:],sp1[2][:],sp2[0][:],sp2[1][:])
-    t = bezmisc.beziertatlength(bez, l, tolerance)
+    t = beziertatlength(bez, l, tolerance)
     return cspbezsplit(sp1, sp2, t)
 
 
 def cspseglength(sp1,sp2, tolerance = 0.001):
     bez = (sp1[1][:],sp1[2][:],sp2[0][:],sp2[1][:])
-    return bezmisc.bezierlength(bez, tolerance)
+    return bezierlength(bez, tolerance)
 
 
 def splitPath(inkex, node):
     dashes = []
-    style = simplestyle.parseStyle(node.get('style'))
+    try:  # inkscape 1.0
+        style = dict(Style(node.get('style')))
+    except:  # inkscape 0.9x
+        style = simplestyle.parseStyle(node.get('style'))
     if 'stroke-dasharray' in style:
         if style['stroke-dasharray'].find(',') > 0:
             dashes = [float (dash) for dash in style['stroke-dasharray'].split(',') if dash]
     if dashes:
-        p = cubicsuperpath.parsePath(node.get('d'))
+        try:  # inkscape 1.0
+            p = CubicSuperPath(node.get('d'))
+        except:  # inkscape 0.9x
+            p = cubicsuperpath.parsePath(node.get('d'))
         new = []
         for sub in p:
             idash = 0
@@ -86,8 +97,14 @@ def splitPath(inkex, node):
                 else:
                     new[-1].append(sub[i])
                 i+=1
-        node.set('d',cubicsuperpath.formatPath(new))
+        try:  # inkscape 1.0
+            node.set('d', CubicSuperPath(new))
+        except:  # inkscape 0.9x
+            node.set('d',cubicsuperpath.formatPath(new))
         del style['stroke-dasharray']
-        node.set('style', simplestyle.formatStyle(style))
+        try:  # inkscape 1.0
+            node.set('style', Style(style))
+        except:  # inkscape 0.9x
+            node.set('style', simplestyle.formatStyle(style))
         if node.get(inkex.addNS('type','sodipodi')):
             del node.attrib[inkex.addNS('type', 'sodipodi')]
