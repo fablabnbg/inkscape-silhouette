@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # this script reads inkscape dumpfiles and shows the plotter path
+import sys
 import matplotlib.pyplot as plt
-f = open("/tmp/silhouette.dump")
+filename = sys.argv[1] if len(sys.argv)==2 else "/tmp/silhouette.dump"
+f = open(filename)
 lines = f.readlines()
 f.close()
 dump = eval(lines[-1])
