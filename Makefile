@@ -34,7 +34,7 @@ install:
 	mkdir -p $(DEST)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DEST)
-	install -m 755 -t $(DEST) eggbot*.py *silhouette*.py
+	install -m 755 -t $(DEST) *silhouette*.py
 	install -m 644 -t $(DEST) *.inx
 	mkdir -p $(UDEV)/rules.d
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
@@ -45,7 +45,7 @@ install-local:
 	mkdir -p $(DESTLOCAL)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DESTLOCAL)
-	install -m 755 -t $(DESTLOCAL) eggbot*.py *silhouette*.py
+	install -m 755 -t $(DESTLOCAL) *silhouette*.py
 	install -m 644 -t $(DESTLOCAL) *.inx
 
 tar_dist_classic: clean

@@ -887,8 +887,6 @@ class SendtoSilhouette(inkex.Effect):
                 pass
             elif node.tag == inkex.addNS("namedview", "sodipodi") or node.tag == "namedview":
                 pass
-            elif node.tag == inkex.addNS("eggbot", "svg") or node.tag == "eggbot":
-                pass
             elif node.tag == inkex.addNS("title", "svg") or node.tag == "title":
                 pass
             elif node.tag == inkex.addNS("desc", "svg") or node.tag == "desc":
