@@ -75,29 +75,29 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 
 ### Windows
 
-#### Requirements
+#### Driver
 
-* Download http://zadig.akeo.ie/downloads/zadig-2.3.exe
+* Download newest Zadig from http://zadig.akeo.ie/
 * Go to menu options `List all devices`
 * Look for USB Printing Support in the dropdown list
-* Use manufacturer ID: 10B4D Graftek America`
-* Select driver `libusb0 (v1.2.6.0)`
-* Click install driver
-* If you don't have python installed, then install the latest stable version.
-* Download and unpack http://sourceforge.net/projects/pyusb/
-* cd ..\pyusb-1.0.0b1; python.exe setup.py install
-* An error message `ImportError: No module named usb.core` means you are close, but `pyusb` was not correctly installed. Please check, if there are multiple python installations in your system, e.g. one that came with inkscape.
-* Find the path to the `python.exe` in the inkscape directory, e.g. on a Windows 7 (64 bits) it may be `C:\Program Files (x86)\Inkscape\python\python.exe`
-* Change directory to the `pyusb` one and run it again.
+* Ensure USB ID is: `0B4D` (Graftek America)
+* Select driver `libusb-win32 (v1.2.6.0)` which will install a `libusb0`-Port for Windows
+* Click replace driver
+
+#### Python adapter
+
+* Inkscape usually comes with a Version of Python; ensure that feature under `Program Files/Python` is ticked upon installation or change/add features accordingly
+* Install pip (a package manager for python):
+  * Download `get-pip.py` from https://bootstrap.pypa.io/get-pip.py and copy to the `bin` directory, e.g. `C:\Program Files\Inkscape\bin`
+  * Open command line and navigate to the same directory, then enter `.\python.exe '.\get-pip.py'` 
+* Install pyusb:
+  * Still in command line enter `.\python.exe -m pip install pyusb`
 
 #### Silhouette inkscape extension itself
 
-* Download and install `7zip` from https://www.7-zip.org/download.html
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Navigate to your `Downloads` folder and double-click on `inkscape-silhouette-master.zip`
-* Click open the `inkscape-silhouette-master` folder.
-* Select the following three items (with Ctrl-Click): `silhouette`, `sendto_silhouette.inx`, and `sendto_silhouette.py`
-* Extract to `My Computer`: `C:\Program Files\Inkscape\share\extensions` or `C:\Program Files (x86)\Inkscape\share\extensions` if first does not exists.
+* Open the downloaded file and select the following three items: `silhouette`, `sendto_silhouette.inx`, and `sendto_silhouette.py`
+* Extract them to your `share\inkscape\extensions` directory, e.g. `C:\Program Files\Inkscape\share\inkscape\extensions`
 * Restart inkscape
 
 ## Usage
@@ -108,7 +108,7 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 4. Select the parts you want to plot.
 5. Open Extension (Extensions - Export - Send to Silhouette)
 6. Set your desired plot parameters:
-  * **X-Offset, Y-Offset**  An addtitional offset of your drawing from the top left corner. Default is 0/0
+  * **X-Offset, Y-Offset**  An additional offset of your drawing from the top left corner. Default is 0/0
   * **Tool Cut/Pen**        Cut mode drews small circles for orientation of the blade, Pen mode draws exactly as given.
   * **Media**               Select a predfined media or set to custom settings.
   * **Speed**               Custom speed of the movements
