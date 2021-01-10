@@ -116,6 +116,7 @@ jobs:
               - python --version
               - pip install -r requirements.txt
               - pip install pytest
+              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
 
         - name: "Python: 2.7"
           os: osx
