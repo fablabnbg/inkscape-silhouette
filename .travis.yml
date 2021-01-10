@@ -134,6 +134,7 @@ jobs:
               - inkscape --version
               - python --version
               - pip install -r requirements.txt
+              - pip install numpy
               - pip install libusb1
               - pip install pytest
 
