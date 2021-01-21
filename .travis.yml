@@ -4,66 +4,16 @@ language: python
 #
 #python:
 #    - 2.7
-#    - 3.7
 #    - 3.8
+#    - 3.9
 
 script:
     - PYTHONWARNINGS=default pytest -s -vv test
 
 jobs:
     include:
-        - dist: xenial
-          python: 2.7
-          # only test python 2.7 on xenial for inkscape < 0.92.5 (https://packages.ubuntu.com/xenial/inkscape)
-          install:
-              - sudo apt-get -y install inkscape
-              - sudo apt-get -y install umockdev
-          before_script:
-              - inkscape --version
-              - python --version
-              - pip install -r requirements.txt
-              - pip install pytest
-              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
-
-        - dist: bionic
-          python: 2.7
-          # only test python 2.7 on bionic for inkscape < 0.92.5 (https://packages.ubuntu.com/bionic/inkscape)
-          install:
-              - sudo apt-get -y install inkscape
-              - sudo apt-get -y install umockdev
-          before_script:
-              - inkscape --version
-              - python --version
-              - pip install -r requirements.txt
-              - pip install pytest
-              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
-
         - dist: focal
           python: 2.7
-          install:
-              - sudo apt-get -y install inkscape
-              - sudo apt-get -y install umockdev
-          before_script:
-              - inkscape --version
-              - python --version
-              - pip install -r requirements.txt
-              - pip install pytest
-              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
-
-        - dist: focal
-          python: 3.7
-          install:
-              - sudo apt-get -y install inkscape
-              - sudo apt-get -y install umockdev
-          before_script:
-              - inkscape --version
-              - python --version
-              - pip install -r requirements.txt
-              - pip install pytest
-              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
-
-        - dist: focal
-          python: 3.8
           install:
               - sudo apt-get -y install inkscape
               - sudo apt-get -y install umockdev
@@ -137,9 +87,9 @@ jobs:
               - pip install libusb1
               - pip install pytest
 
-        - name: "Python: 3.7 -- Inkscape 1.0"
+        - name: "Python: 3.9 -- Inkscape 1.0"
           os: osx
-          osx_image: xcode11.4
+          osx_image: xcode12.2
           language: shell
           install:
               - brew install --cask inkscape
