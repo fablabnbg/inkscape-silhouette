@@ -57,10 +57,9 @@ This extension should work with the following devices:
 ### Arch Linux
 
 ```shell
-sudo pacman -S inkscape python2 python2-lxml python2-pyusb
+sudo pacman -S inkscape python-lxml python-pyusb
 git clone https://github.com/fablabnbg/inkscape-silhouette.git
 cd inkscape-silhouette
-sudo python2 setup.py build && sudo python2 setup.py install
 sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
 sudo cp -R silhouette /usr/share/inkscape/extensions/
 ```

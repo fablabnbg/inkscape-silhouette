@@ -5,13 +5,18 @@
 # http://docs.python.org/2/distutils/setupscript.html#installing-additional-files
 #
 import sys
-import os
+from os import path
 import glob
 import re
 
 from distutils.core import setup
 from setuptools.command.test import test as TestCommand
 import sendto_silhouette  # for author(), version()
+
+# read the contents of your README file
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 e = sendto_silhouette.SendtoSilhouette()
 m = re.match(r'(.*)\s+<(.*)>', e.author())
@@ -38,13 +43,13 @@ setup(name='inkscape-silhouette',
       author=m.groups()[0],
       author_email=m.groups()[1],
       url='https://github.com/jnweiger/inkscape-silhouette',
-      scripts=filter(os.path.isfile,
-                     ['sendto_silhouette.py',
-                      'sendto_silhouette.inx',
-                      'README.md'] +
-                     glob.glob('silhouette-*') +
-                     glob.glob('misc/*') +
-                     glob.glob('misc/*/*')),
+      #scripts=filter(path.isfile,
+      #               ['sendto_silhouette.py',
+      #                'sendto_silhouette.inx',
+      #                'README.md'] +
+      #               glob.glob('silhouette-*') +
+      #               glob.glob('misc/*') +
+      #               glob.glob('misc/*/*')),
 
       packages=['silhouette'],
       license='GPL-2.0',
@@ -56,7 +61,8 @@ setup(name='inkscape-silhouette',
           'Programming Language :: Python :: 3',
           ],
       cmdclass={'test': PyTest},
-      long_description="".join(open('README.md').readlines()),
+      long_description=long_description,
+      long_description_content_type='text/markdown',
       # tests_require=['pytest', 'scipy'],
       # packages=['pyPdf', 'reportlab.pdfgen', 'reportlab.lib.colors',
       #           'pygame.font' ],
