@@ -109,14 +109,13 @@ jobs:
               - sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
               - sudo apt-get update
           install:
-              - sudo apt-get -y install inkscape
+              - sudo apt-get -y install inkscape-trunk
               - sudo apt-get -y install umockdev
           before_script:
               - inkscape --version
               - python --version
               - pip install -r requirements.txt
               - pip install pytest
-              - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
 
         - name: "Python: 2.7"
           os: osx
