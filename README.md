@@ -25,15 +25,29 @@ This extension should work with the following devices:
 
 ## Installation
 
+### Ubuntu 18.04 or newer
+
+Install Inkscape 1.0+ (optional)
+* `sudo add-apt-repository ppa:inkscape.dev/stable`
+* `sudo apt-get update`
+* `sudo apt install inkscape`
+
+Install requirements
+* `sudo apt install python-usb`
+
+Install inscape-silhouette
+* https://github.com/fablabnbg/inkscape-silhouette/releases
+  Scroll down to Downloads and click on the *.deb file.
+
 ### Ubuntu 16.04
 
-* `apt install python-usb`
+* `sudo apt install python-usb`
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
 
 ### Ubuntu 14.04
 
-* `apt install python-pip python-setuptools`
+* `sudo apt install python-pip python-setuptools`
 * `sudo pip install pyusb`
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
