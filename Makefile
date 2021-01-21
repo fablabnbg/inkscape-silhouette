@@ -4,9 +4,9 @@ PREFIX?=/usr
 DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
-VERS=$$(python ./sendto_silhouette.py --version)
+VERS=$$(python3 ./sendto_silhouette.py --version)
 
-## echo '<xml height="0"/>' | python ./sendto_silhouette.py /dev/stdin
+## echo python3 ./sendto_silhouette.py
 # 'module' object has no attribute 'core'
 # 'module' object has no attribute 'core'
 # done. 0 min 0 sec
@@ -15,7 +15,7 @@ VERS=$$(python ./sendto_silhouette.py --version)
 # --------
 # echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main'
 # apt-get update
-# apt-get -t jessie-backports install python-usb
+# apt-get -t jessie-backports install python3-usb
 # vi /etc/group
 # lp:x:debian
 
@@ -55,7 +55,7 @@ tar_dist_classic: clean
 	@echo version should be $(VERS)
 
 tar_dist:
-	python setup.py sdist --format=bztar
+	python3 setup.py sdist --format=bztar
 	mv dist/*.tar* .
 	rm -rf dist
 

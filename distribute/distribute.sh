@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Determining Version:"
-VERSION=$(python ../sendto_silhouette.py --version)
+VERSION=$(python3 ../sendto_silhouette.py --version)
 
 test -e /usr/bin/xpath || sudo apt-get install libxml-xpath-perl
 test -e /usr/bin/checkinstall || sudo apt-get install checkinstall

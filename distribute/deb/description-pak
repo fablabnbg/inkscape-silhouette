@@ -1,8 +1,8 @@
 An inkscape extension to drive a Silhouette Cameo plotter.
 
-Requires python-usb 1.0.0 -- if this causes errors, please try:
+Requires python3-usb 1.0.0 -- if this causes errors, please try:
 <pre>
-sudo apt install python-pip python-setuptools
-sudo pip install --upgrade pyusb
+sudo apt install python3-pip python3-setuptools
+sudo pip3 install --upgrade pyusb
 </pre>
 
