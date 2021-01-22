@@ -25,7 +25,16 @@ This extension should work with the following devices:
 
 ## Installation
 
-### Ubuntu 18.04 or newer
+### Ubuntu 20.10 or newer (features Inkscape 1.0+ natively)
+
+Install requirements
+* `sudo apt install python3-usb`
+
+Install inscape-silhouette
+* https://github.com/fablabnbg/inkscape-silhouette/releases
+  Scroll down to Downloads and click on the *.deb file.
+
+### Ubuntu 18.04 or 20.04
 
 Install Inkscape 1.0+ (optional)
 * `sudo add-apt-repository ppa:inkscape.dev/stable`
@@ -33,7 +42,7 @@ Install Inkscape 1.0+ (optional)
 * `sudo apt install inkscape`
 
 Install requirements
-* `sudo apt install python-usb`
+* `sudo apt install python3-usb`
 
 Install inscape-silhouette
 * https://github.com/fablabnbg/inkscape-silhouette/releases
@@ -58,7 +67,7 @@ Install inscape-silhouette
 * Copy the folder `silhouette` and the two files `sendto_silhouette.inx` and
 `sendto_silhouette.py` to `~/.config/inkscape/extensions/` or (if you have permissions) `/usr/share/inkscape/extensions/`
 
-* `sudo apt-get install python-usb`
+* `sudo apt-get install python3-usb`
 * restart inkscape, check the menu entry "Extensions -> Export -> Send to Silhouette"
 
 
