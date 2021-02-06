@@ -92,8 +92,13 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 * Install prerequisites:
   * install homebrew http://brew.sh/
   * `brew install libusb`
+  * `brew install python3`
 * Install the extension:
-  * `sudo ./install_osx.py`
+  * `./install_osx.py`
+  * Add brew python for user extensions (see [Extensions_Interpreters](https://wiki.inkscape.org/wiki/index.php/Extension_Interpreters)):
+  ```
+  python-interpreter="/opt/homebrew/bin/python3"
+  ```
 
 ### Windows
 
@@ -111,7 +116,7 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 * Inkscape usually comes with a Version of Python; ensure that feature under `Program Files/Python` is ticked upon installation or change/add features accordingly
 * Install pip (a package manager for python):
   * Download `get-pip.py` from https://bootstrap.pypa.io/get-pip.py and copy to the `bin` directory, e.g. `C:\Program Files\Inkscape\bin`
-  * Open command line and navigate to the same directory, then enter `.\python.exe '.\get-pip.py'` 
+  * Open command line and navigate to the same directory, then enter `.\python.exe '.\get-pip.py'`
 * Install pyusb:
   * Still in command line enter `.\python.exe -m pip install pyusb`
 
