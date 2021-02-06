@@ -67,26 +67,6 @@ jobs:
               - pip install -r requirements.txt
               - pip install pytest
 
-        - name: "Python: 2.7"
-          os: osx
-          osx_image: xcode11.3
-          language: shell
-          before_install:
-              - brew tap homebrew/cask
-              - pushd $( brew --prefix )/Homebrew/Library/Taps/homebrew/homebrew-cask
-              - git checkout 87d3d3f Casks/inkscape.rb # inkscape 0.92.2
-              - ls -l Casks/inkscape.rb
-              - popd
-          install:
-              - brew install --cask inkscape
-          before_script:
-              - inkscape --version
-              - python --version
-              - pip install -r requirements.txt
-              - pip install numpy
-              - pip install libusb1
-              - pip install pytest
-
         - name: "Python: 3.9 -- Inkscape 1.0"
           os: osx
           osx_image: xcode12.2
