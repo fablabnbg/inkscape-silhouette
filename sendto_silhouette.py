@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
@@ -18,7 +18,7 @@
 #
 # 2013-05-09 jw, V0.1 -- initial draught
 # 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
-# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(), 
+# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(),
 #                        improved logging, flipped y-axis.
 # 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected.
 #                        Explicit multipass option added.
@@ -166,7 +166,7 @@ def px2mm(px):
 def parseLengthWithUnits(str):
     """
     Parse an SVG value which may or may not have units attached
-    This version is greatly simplified in that it only allows: no units, 
+    This version is greatly simplified in that it only allows: no units,
     units of px, mm, and %.  Everything else, it returns None for.
     There is a more general routine to consider in scour.py if more
     generality is ever needed.
@@ -296,98 +296,98 @@ class SendtoSilhouette(inkex.Effect):
             self.arg_parser = lambda: None
             self.arg_parser.add_argument = add_option_wrapper
 
-        self.arg_parser.add_argument("--active-tab", dest = "active_tab", 
+        self.arg_parser.add_argument("--active-tab", dest = "active_tab",
                 help=SUPPRESS_HELP)
-        self.arg_parser.add_argument("-d", "--dashes", 
-                dest = "dashes", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-d", "--dashes",
+                dest = "dashes", type = inkex.Boolean, default = False,
                 help="convert paths with dashed strokes to separate subpaths for perforated cuts")
-        self.arg_parser.add_argument("-a", "--autocrop", 
-                dest = "autocrop", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-a", "--autocrop",
+                dest = "autocrop", type = inkex.Boolean, default = False,
                 help="trim away top and left margin (before adding offsets)")
-        self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only", 
-                dest = "bboxonly", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
+                dest = "bboxonly", type = inkex.Boolean, default = False,
                 help="draft the objects bounding box instead of the objects")
-        self.arg_parser.add_argument("-c", "--bladediameter", 
-                dest = "bladediameter", type = float, default = 0.9, 
+        self.arg_parser.add_argument("-c", "--bladediameter",
+                dest = "bladediameter", type = float, default = 0.9,
                 help="[0..2.3] diameter of the used blade [mm], default = 0.9")
-        self.arg_parser.add_argument("-C", "--cuttingmat", 
-                choices=("cameo_12x12", "cameo_12x24", "no_mat"), dest = "cuttingmat", default = "cameo_12x12", 
+        self.arg_parser.add_argument("-C", "--cuttingmat",
+                choices=("cameo_12x12", "cameo_12x24", "no_mat"), dest = "cuttingmat", default = "cameo_12x12",
                 help="Use cutting mat")
-        self.arg_parser.add_argument("-D", "--depth", 
-                dest = "depth", type = int, default = -1, 
+        self.arg_parser.add_argument("-D", "--depth",
+                dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
-        self.arg_parser.add_argument("--dummy", 
-                dest = "dummy", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("--dummy",
+                dest = "dummy", type = inkex.Boolean, default = False,
                 help="Dump raw data to "+self.dumpname+" instead of cutting.")
-        self.arg_parser.add_argument("-g", "--strategy", 
-                dest = "strategy", default = "mintravel", 
-                choices=("mintravel", "mintravelfull", "matfree", "zorder"), 
+        self.arg_parser.add_argument("-g", "--strategy",
+                dest = "strategy", default = "mintravel",
+                choices=("mintravel", "mintravelfull", "matfree", "zorder"),
                 help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
-        self.arg_parser.add_argument("-l", "--sw_clipping", 
-                dest = "sw_clipping", type = inkex.Boolean, default = True, 
+        self.arg_parser.add_argument("-l", "--sw_clipping",
+                dest = "sw_clipping", type = inkex.Boolean, default = True,
                 help="Enable software clipping")
-        self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id", 
-                dest = "media", default = "132", 
-                choices=("100", "101", "102", "106", "111", "112", "113", 
-                "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130", 
-                "131", "132", "133", "134", "135", "136", "137", "138", "300"), 
+        self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id",
+                dest = "media", default = "132",
+                choices=("100", "101", "102", "106", "111", "112", "113",
+                "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130",
+                "131", "132", "133", "134", "135", "136", "137", "138", "300"),
                 help="113 = pen, 132 = printer paper, 300 = custom")
-        self.arg_parser.add_argument("-o", "--overcut", 
-                dest = "overcut", type = float, default = 0.5, 
+        self.arg_parser.add_argument("-o", "--overcut",
+                dest = "overcut", type = float, default = 0.5,
                 help="overcut on circular paths. [mm]")
-        self.arg_parser.add_argument("-M", "--multipass", 
-                dest = "multipass", type = int, default = "1", 
+        self.arg_parser.add_argument("-M", "--multipass",
+                dest = "multipass", type = int, default = "1",
                 help="[1..8], cut/draw each path object multiple times.")
-        self.arg_parser.add_argument("-p", "--pressure", 
-                dest = "pressure", type = int, default = 10, 
+        self.arg_parser.add_argument("-p", "--pressure",
+                dest = "pressure", type = int, default = 10,
                 help="[1..18], or 0 for media default")
-        self.arg_parser.add_argument("-P", "--sharpencorners", 
-                dest = "sharpencorners", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-P", "--sharpencorners",
+                dest = "sharpencorners", type = inkex.Boolean, default = False,
                 help="Lift head at sharp corners")
-        self.arg_parser.add_argument("--sharpencorners_start", 
-                dest = "sharpencorners_start", type = float, default = 0.1, 
+        self.arg_parser.add_argument("--sharpencorners_start",
+                dest = "sharpencorners_start", type = float, default = 0.1,
                 help="Sharpen Corners - Start Ext. [mm]")
-        self.arg_parser.add_argument("--sharpencorners_end", 
-                dest = "sharpencorners_end", type = float, default = 0.1, 
+        self.arg_parser.add_argument("--sharpencorners_end",
+                dest = "sharpencorners_end", type = float, default = 0.1,
                 help="Sharpen Corners - End Ext. [mm]")
-        self.arg_parser.add_argument("-r", "--reversetoggle", 
-                dest = "reversetoggle", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-r", "--reversetoggle",
+                dest = "reversetoggle", type = inkex.Boolean, default = False,
                 help="Cut each path the other direction. Affects every second pass when multipass.")
-        self.arg_parser.add_argument("-s", "--speed", 
-                dest = "speed", type = int, default = 10, 
+        self.arg_parser.add_argument("-s", "--speed",
+                dest = "speed", type = int, default = 10,
                 help="[1..10], or 0 for media default")
-        self.arg_parser.add_argument("-S", "--smoothness", type = float, 
+        self.arg_parser.add_argument("-S", "--smoothness", type = float,
                 dest="smoothness", default=.2, help="Smoothness of curves")
-        self.arg_parser.add_argument("-t", "--tool", 
+        self.arg_parser.add_argument("-t", "--tool",
                 choices=("autoblade", "cut", "pen", "default"), dest = "tool", default = None, help="Optimize for pen or knive")
-        self.arg_parser.add_argument("-T", "--toolholder", 
+        self.arg_parser.add_argument("-T", "--toolholder",
                 choices=("1", "2"), dest = "toolholder", default = None, help="[1..2]")
-        self.arg_parser.add_argument("-V", "--version", 
-                dest = "version", action = "store_true", 
+        self.arg_parser.add_argument("-V", "--version",
+                dest = "version", action = "store_true",
                 help="Just print version number ('"+self.version()+"') and exit.")
-        self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done", 
-                dest = "wait_done", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
+                dest = "wait_done", type = inkex.Boolean, default = False,
                 help="After sending wait til device reports ready")
-        self.arg_parser.add_argument("-x", "--x-off", "--x_off", 
+        self.arg_parser.add_argument("-x", "--x-off", "--x_off",
                 type = float, dest = "x_off", default = 0.0, help="X-Offset [mm]")
-        self.arg_parser.add_argument("-y", "--y-off", "--y_off", 
+        self.arg_parser.add_argument("-y", "--y-off", "--y_off",
                 type = float, dest = "y_off", default = 0.0, help="Y-Offset [mm]")
-        self.arg_parser.add_argument("-R", "--regmark", 
-                dest = "regmark", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("-R", "--regmark",
+                dest = "regmark", type = inkex.Boolean, default = False,
                 help="The document has registration marks.")
-        self.arg_parser.add_argument("--regsearch", 
-                dest = "regsearch", type = inkex.Boolean, default = False, 
+        self.arg_parser.add_argument("--regsearch",
+                dest = "regsearch", type = inkex.Boolean, default = False,
                 help="Search for the registration marks.")
-        self.arg_parser.add_argument("-X", "--reg-x", "--regwidth", 
+        self.arg_parser.add_argument("-X", "--reg-x", "--regwidth",
                 type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
-        self.arg_parser.add_argument("-Y", "--reg-y", "--reglength", 
+        self.arg_parser.add_argument("-Y", "--reg-y", "--reglength",
                 type = float, dest = "reglength", default = 230.0, help="Y mark distance [mm]")
-        self.arg_parser.add_argument("--rego-x",  "--regoriginx", 
+        self.arg_parser.add_argument("--rego-x",  "--regoriginx",
                 type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
-        self.arg_parser.add_argument("--rego-y", "--regoriginy", 
+        self.arg_parser.add_argument("--rego-y", "--regoriginy",
                 type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
-        self.arg_parser.add_argument("-e", "--endposition", "--end-postition", 
-                "--end_position", choices=("start", "below"), 
+        self.arg_parser.add_argument("-e", "--endposition", "--end-postition",
+                "--end_position", choices=("start", "below"),
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
 
 
@@ -491,7 +491,7 @@ class SendtoSilhouette(inkex.Effect):
         We are only plotting *some* layers. Check to see
         whether or not we're going to plot this one.
 
-        First: scan first 4 chars of node id for first non-numeric character, 
+        First: scan first 4 chars of node id for first non-numeric character,
         and scan the part before that (if any) into a number
 
         Then, see if the number matches the layer.
@@ -522,15 +522,15 @@ class SendtoSilhouette(inkex.Effect):
         # Note: this function is only called if we are NOT plotting all layers.
 
 
-    def recursivelyTraverseSvg(self, aNodeList, 
-                parent_visibility="visible", 
+    def recursivelyTraverseSvg(self, aNodeList,
+                parent_visibility="visible",
                 extra_transform=IDENTITY_TRANSFORM):
         """
         Recursively traverse the svg file to plot out all of the
         paths.  The function keeps track of the composite transformation
         that should be applied to each path.
 
-        This function handles path, group, line, rect, polyline, polygon, 
+        This function handles path, group, line, rect, polyline, polygon,
         circle, ellipse and use (clone) elements.  Notable elements not
         handled include text.  Unhandled elements should be converted to
         paths in Inkscape.
@@ -619,9 +619,9 @@ class SendtoSilhouette(inkex.Effect):
 
                 self.pathcount += 1
 
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
+                # if we're in resume mode AND self.pathcount < self.svgLastPath,
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, 
+                # if we're in resume mode and self.pathcount = self.svgLastPath,
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
                 if self.resumeMode and (self.pathcount == self.svgLastPath):
@@ -647,9 +647,9 @@ class SendtoSilhouette(inkex.Effect):
                 # fourth side implicitly
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
+                # if we're in resume mode AND self.pathcount < self.svgLastPath,
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, 
+                # if we're in resume mode and self.pathcount = self.svgLastPath,
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
                 if self.resumeMode and (self.pathcount == self.svgLastPath):
@@ -688,9 +688,9 @@ class SendtoSilhouette(inkex.Effect):
                 #   <path d="MX1, Y1 LX2, Y2"/>
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, 
+                # if we're in resume mode AND self.pathcount < self.svgLastPath,
                 #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, 
+                # if we're in resume mode and self.pathcount = self.svgLastPath,
                 #    then start here, and set
                 # self.nodeCount equal to self.svgLastPathNC
 
@@ -1196,64 +1196,64 @@ class SendtoSilhouette(inkex.Effect):
             self.options.speed = None
         if self.options.depth == -1:
             self.options.depth = None
-        dev.setup(media=int(self.options.media, 10), 
-                pen=self.pen, 
-                toolholder=self.options.toolholder, 
-                cuttingmat=self.options.cuttingmat, 
-                sharpencorners=self.options.sharpencorners, 
-                sharpencorners_start=self.options.sharpencorners_start, 
-                sharpencorners_end=self.options.sharpencorners_end, 
-                autoblade=self.autoblade, 
-                depth=self.options.depth, 
-                sw_clipping=self.options.sw_clipping, 
-                bladediameter=self.options.bladediameter, 
-                pressure=self.options.pressure, 
+        dev.setup(media=int(self.options.media, 10),
+                pen=self.pen,
+                toolholder=self.options.toolholder,
+                cuttingmat=self.options.cuttingmat,
+                sharpencorners=self.options.sharpencorners,
+                sharpencorners_start=self.options.sharpencorners_start,
+                sharpencorners_end=self.options.sharpencorners_end,
+                autoblade=self.autoblade,
+                depth=self.options.depth,
+                sw_clipping=self.options.sw_clipping,
+                bladediameter=self.options.bladediameter,
+                pressure=self.options.pressure,
                 speed=self.options.speed)
 
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
-            bbox = dev.plot(pathlist=cut, 
-                    mediawidth=px2mm(self.docWidth), 
-                    mediaheight=px2mm(self.docHeight), 
-                    margintop=0, 
-                    marginleft=0, 
+            bbox = dev.plot(pathlist=cut,
+                    mediawidth=px2mm(self.docWidth),
+                    mediaheight=px2mm(self.docHeight),
+                    margintop=0,
+                    marginleft=0,
                     bboxonly=None,         # only return the bbox, do not draw it.
-                    endposition="start", 
-                    regmark=self.options.regmark, 
-                    regsearch=self.options.regsearch, 
-                    regwidth=self.options.regwidth, 
-                    reglength=self.options.reglength, 
-                    regoriginx=self.options.regoriginx, 
+                    endposition="start",
+                    regmark=self.options.regmark,
+                    regsearch=self.options.regsearch,
+                    regwidth=self.options.regwidth,
+                    reglength=self.options.reglength,
+                    regoriginx=self.options.regoriginx,
                     regoriginy=self.options.regoriginy)
 
             if len(bbox["bbox"].keys()):
                     print("autocrop left=%.1fmm top=%.1fmm" % (
-                        bbox["bbox"]["llx"]*bbox["unit"], 
+                        bbox["bbox"]["llx"]*bbox["unit"],
                         bbox["bbox"]["ury"]*bbox["unit"]), file=self.tty)
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
-        bbox = dev.plot(pathlist=cut, 
-            mediawidth=px2mm(self.docWidth), 
-            mediaheight=px2mm(self.docHeight), 
-            offset=(self.options.x_off, self.options.y_off), 
-            bboxonly=self.options.bboxonly, 
-            endposition=self.options.endposition, 
-            regmark=self.options.regmark, 
-            regsearch=self.options.regsearch, 
-            regwidth=self.options.regwidth, 
-            reglength=self.options.reglength, 
-            regoriginx=self.options.regoriginx, 
+        bbox = dev.plot(pathlist=cut,
+            mediawidth=px2mm(self.docWidth),
+            mediaheight=px2mm(self.docHeight),
+            offset=(self.options.x_off, self.options.y_off),
+            bboxonly=self.options.bboxonly,
+            endposition=self.options.endposition,
+            regmark=self.options.regmark,
+            regsearch=self.options.regsearch,
+            regwidth=self.options.regwidth,
+            reglength=self.options.reglength,
+            regoriginx=self.options.regoriginx,
             regoriginy=self.options.regoriginy)
         if len(bbox["bbox"].keys()) == 0:
             print("empty page?", file=self.tty)
             print("empty page?", file=sys.stderr)
         else:
             write_progress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
-                        bbox["bbox"]["llx"]*bbox["unit"], 
-                        bbox["bbox"]["ury"]*bbox["unit"], 
-                        bbox["bbox"]["urx"]*bbox["unit"], 
-                        bbox["bbox"]["lly"]*bbox["unit"], 
+                        bbox["bbox"]["llx"]*bbox["unit"],
+                        bbox["bbox"]["ury"]*bbox["unit"],
+                        bbox["bbox"]["urx"]*bbox["unit"],
+                        bbox["bbox"]["lly"]*bbox["unit"],
                         bbox["bbox"]["count"]))
             print("", file=self.tty)
             state = dev.status()
@@ -1286,7 +1286,7 @@ class SendtoSilhouette(inkex.Effect):
 
 if __name__ == "__main__":
     e = SendtoSilhouette()
-    
+
     if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
         # write a tempfile that is removed on exit
         tmpfile=tempfile.NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)

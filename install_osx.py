@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''
 Makes installing inkscape_silhouette easier on OSX
 
@@ -14,7 +14,7 @@ import os, sys, shutil, logging, subprocess
 logger = logging.getLogger(__name__)
 
 prerequisites = ["lxml", "pyusb", "libusb1"]
-extensions_dir = os.path.join(os.path.expanduser("~"), ".config", "inkscape", "extensions")
+extensions_dir = os.path.join(os.path.expanduser("~"), "Library","Application Support","org.inkscape.Inkscape","config","inkscape","extensions")
 extension_files = ["sendto_silhouette.inx", "sendto_silhouette.py", "silhouette"]
 
 
@@ -23,11 +23,11 @@ def install_inkscape_silhouette():
         logger.info("inkscape_silhouette install starting")
 
         # make sure this is os x
-        logger.debug("making sure running on OS X")
+        logger.debug("making sure running on Mac OS")
         sys_platform = sys.platform.lower()
         logger.debug("platform: %s", sys_platform)
         if not sys_platform.startswith('darwin'):
-            logger.error("Installer only works with OS X")
+            logger.error("Installer only works with Mac OS")
             return
 
         if not os.path.isdir(extensions_dir):
@@ -47,11 +47,11 @@ def install_prerequisites():
     for prerequisite in prerequisites:
         logger.debug("installing %s", prerequisite)
         try:
-            return_code = subprocess.call("easy_install {}".format(prerequisite), shell=True)
+            return_code = subprocess.call("pip3 install {}".format(prerequisite), shell=True)
             if return_code > 0:
                 raise OSError("command returned code {}, try running again using sudo".format(return_code))
         except OSError:
-            logger.error("unable to install module. Try running 'easy_install %s' manually", prerequisite)
+            logger.error("unable to install module. Try running 'pip3 install %s' manually", prerequisite)
             raise
 
 
