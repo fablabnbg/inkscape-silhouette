@@ -38,6 +38,7 @@ def install_inkscape_silhouette():
         install_extension()
         check_libusb()
         logger.info("inkscape_silhouette extension install ended")
+        logger.info("Don't forget to add 'python-interpreter=\"%s\"' to your extension preference file.", subprocess.check_output(["which", "python3"]).decode("utf-8").replace("\n", ""))
     except Exception as ex:
         logger.warning("inkscape_silhouette install was unsuccessful. Please check previous messages for the cause. Details: %s", ex)
 
