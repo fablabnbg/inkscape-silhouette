@@ -96,9 +96,8 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 * Install the extension:
   * `./install_osx.py`
   * Add brew python for user extensions (see [Extensions_Interpreters](https://wiki.inkscape.org/wiki/index.php/Extension_Interpreters)):
-  ```
-  python-interpreter="/opt/homebrew/bin/python3"
-  ```
+    * `python-interpreter="/usr/local/bin/python3"` on X86 platform
+    * `python-interpreter="/opt/homebrew/bin/python3"` on ARM platform (Apple Silicon)
 
 ### Windows
 
