@@ -13,7 +13,7 @@ import os, sys, shutil, logging, subprocess
 
 logger = logging.getLogger(__name__)
 
-prerequisites = ["lxml", "pyusb", "libusb1"]
+prerequisites = ["lxml", "pyusb", "libusb1", "numpy"]
 extensions_dir = os.path.join(os.path.expanduser("~"), "Library","Application Support","org.inkscape.Inkscape","config","inkscape","extensions")
 extension_files = ["sendto_silhouette.inx", "sendto_silhouette.py", "silhouette"]
 
