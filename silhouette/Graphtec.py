@@ -837,7 +837,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       if speed is not None:
         if speed < 1: speed = 1
-        if speed > 10: speed = 10
+        if speed > 30: speed = 30
         self.send_command(tool.speed(speed))
         print("speed: %d" % speed, file=self.log)
 
