@@ -749,7 +749,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         media : int, optional
             range is [100..300], "Print Paper Light Weight". Defaults to 132.
         speed : int, optional
-            range is [1..10]. Defaults to None, from paper (132 -> 10).
+            range is [1..10] for Cameo3 and older, 
+            range is [1..30] for Cameo4. Defaults to None, from paper (132 -> 10).
         pressure : int, optional
             range is [1..33], Notice: Cameo runs trackenhancing if you select a pressure of 19 or more. Defaults to None, from paper (132 -> 5).
         toolholder : int, optional
