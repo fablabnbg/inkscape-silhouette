@@ -27,6 +27,11 @@ This extension should work with the following devices:
 
 ### Ubuntu 20.10 or newer (features Inkscape 1.0+ natively)
 
+WARNING: SNAP packages may cause issues.
+
+Install Inkscape
+* `sudo apt install inkscape`
+
 Install requirements
 * `sudo apt install python3-usb`
 
@@ -36,9 +41,13 @@ Install inscape-silhouette
 
 ### Ubuntu 18.04 or 20.04
 
-Install Inkscape 1.0+ (optional)
+WARNING: SNAP packages may cause issues.
+
+Add Inkscape 1.0+ repo (optional)
 * `sudo add-apt-repository ppa:inkscape.dev/stable`
 * `sudo apt-get update`
+
+Install Inkscape
 * `sudo apt install inkscape`
 
 Install requirements
@@ -51,13 +60,6 @@ Install inscape-silhouette
 ### Ubuntu 16.04
 
 * `sudo apt install python-usb`
-* https://github.com/fablabnbg/inkscape-silhouette/releases
-  Scroll down to Downloads and click on the *.deb file.
-
-### Ubuntu 14.04
-
-* `sudo apt install python-pip python-setuptools`
-* `sudo pip install pyusb`
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
 
