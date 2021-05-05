@@ -1,0 +1,81 @@
+name: Run Python tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Inkscape ${{ matrix.inkscape-version }} - Python ${{ matrix.python-version }} - OS ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9']
+        inkscape-version: ['1.0']
+        continue-on-error: [false]
+        include:
+          - { os: 'ubuntu-latest', python-version: '2.7', inkscape-version: '0.92.5', continue-on-error: false }
+          - { os: 'windows-latest', python-version: '2.7', inkscape-version: '0.92.5', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: '0.92.5', continue-on-error: false }
+          - { os: 'windows-latest', python-version: '3.9', inkscape-version: '0.92.5', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'TRUNK', continue-on-error: true }
+    continue-on-error: ${{ matrix.continue-on-error }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: 🐧 add Inkscape 1.0 repo
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == '1.0' }}
+      run: |
+        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+        sudo apt-get update
+    - name: 🐧 add Inkscape TRUNK repo
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
+      run: |
+        sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
+        sudo apt-get update
+    - name: 🐧 install Inkscape & umockdev 
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get -y install inkscape umockdev
+    - name: 🍏 install Inkscape
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        brew install --cask inkscape
+        pip install libusb1
+    - name: 🗖 install Inkscape 0.92.5
+      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '0.92.5' }}
+      run: |
+        choco install -y inkscape --version ${{ matrix.inkscape-version }}
+    - name: 🗖 install Inkscape
+      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.0' }}
+      run: |
+        choco install -y inkscape
+    - name: 🗖 patch Inkscape (0.92.5) simpletransform
+      if: ${{ matrix.inkscape-version == '0.92.5' && matrix.os == 'windows-latest' }}
+      run: |
+        c:
+        sed -i 's:result=re.match("(:result=re.match(r"(:' "C:\\Program Files\\Inkscape\\share\\extensions\\simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+    - name: 🐧 patch Inkscape (0.92.5) simpletransform
+      if: ${{ matrix.inkscape-version == '0.92.5' && matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+    - name: install requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+    - name: test
+      env:
+        PYTHONWARNINGS: default
+      run: |
+        pytest -s -vv test
