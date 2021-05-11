@@ -102,6 +102,18 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
     * `python-interpreter="/usr/local/bin/python3"` on X86 platform
     * `python-interpreter="/opt/homebrew/bin/python3"` on ARM platform (Apple Silicon)
 
+### FreeBSD
+
+```
+sudo pkg install inkscape py37-libusb1
+cd /tmp
+wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip"
+unzip master.zip
+sudo cp -r  inkscape-silhouette-master/silhouette inkscape-silhouette-master/sendto_silhouette.* /usr/local/share/inkscape/extensions
+rm -rf inkscape-silhouette-master/ master.zip
+cd -
+```
+
 ### Windows
 
 #### Driver
