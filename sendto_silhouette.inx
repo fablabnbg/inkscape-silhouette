@@ -106,6 +106,7 @@
       <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>
+      <param name="logfile" type="string" _gui-text="Save log messages in file:"></param>
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>
