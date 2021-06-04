@@ -236,6 +236,18 @@ def subdivideCubicPath(sp, flat, i=1):
         p = [one[2], one[3], two[1]]
         sp[i:1] = [p]
 
+class teeFile:
+    def __init__(self, f1, f2):
+        self.f1 = f1
+        self.f2 = f2
+    def __del__(self, *args):
+        self.close()
+    def write(self, content):
+        self.f1.write(content)
+        self.f2.write(content)
+    def close(self):
+        self.f1.close()
+        self.f2.close()
 
 class SendtoSilhouette(inkex.Effect):
     """
@@ -278,6 +290,7 @@ class SendtoSilhouette(inkex.Effect):
         except:
             self.tty = open(os.devnull, "w")  # "/dev/null" for POSIX, "nul" for Windows.
         # print("__init__", file=self.tty)
+        self.log = self.tty
 
         if not hasattr(self, "run"):
             # fake for inkscape 0.9x compatiblity: affect()
@@ -389,10 +402,16 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("-e", "--endposition", "--end-postition",
                 "--end_position", choices=("start", "below"),
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
+        self.arg_parser.add_argument("--logfile",
+                dest = "logfile", default = None,
+                help="Name of file in which to save log messages.")
+        # Can't set up the log here because arguments have not yet been parsed;
+        # defer that to the top of the effect() method, which is where all
+        # of the real activity happens.
 
 
     def __del__(self, *args):
-        self.tty.close()
+        self.log.close() # will always close tty
 
 
     def version(self):
@@ -1062,15 +1081,18 @@ class SendtoSilhouette(inkex.Effect):
             self.tty.write("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5, buf, msg))
             self.tty.flush()
 
+        if self.options.logfile:
+            self.log = teeFile(self.tty, open(self.options.logfile, "w"))
+
         try:
-            dev = SilhouetteCameo(log=self.tty, progress_cb=write_progress, no_device=self.options.dummy)
+            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, no_device=self.options.dummy)
         except Exception as e:
             print(e, file=self.tty)
             print(e, file=sys.stderr)
             return
         state = dev.status()    # hint at loading paper, if not ready.
-        print("status=%s" % (state), file=self.tty)
-        print("device version: '%s'" % dev.get_version(), file=self.tty)
+        print("status=%s" % (state), file=self.log)
+        print("device version: '%s'" % dev.get_version(), file=self.log)
 
         # Viewbox handling
         self.handleViewBox()
@@ -1178,7 +1200,7 @@ class SendtoSilhouette(inkex.Effect):
                     docname=svg.get(tag)
 
             o = open(self.dumpname, "w")
-            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=self.tty)
+            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=self.log)
             print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=sys.stderr)
             print("device version: '%s'" % dev.get_version(), file=sys.stderr)
             print("driver version: '%s'" % __version__, file=sys.stderr)
@@ -1229,7 +1251,7 @@ class SendtoSilhouette(inkex.Effect):
             if len(bbox["bbox"].keys()):
                     print("autocrop left=%.1fmm top=%.1fmm" % (
                         bbox["bbox"]["llx"]*bbox["unit"],
-                        bbox["bbox"]["ury"]*bbox["unit"]), file=self.tty)
+                        bbox["bbox"]["ury"]*bbox["unit"]), file=self.log)
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
@@ -1246,7 +1268,7 @@ class SendtoSilhouette(inkex.Effect):
             regoriginx=self.options.regoriginx,
             regoriginy=self.options.regoriginy)
         if len(bbox["bbox"].keys()) == 0:
-            print("empty page?", file=self.tty)
+            print("empty page?", file=self.log)
             print("empty page?", file=sys.stderr)
         else:
             write_progress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
@@ -1281,7 +1303,7 @@ class SendtoSilhouette(inkex.Effect):
                 state = dev.status()
             self.device_buffer_perc = 0.0
             write_progress(1, 1, dots)
-        print("\nstatus=%s" % (state), file=self.tty)
+        print("\nstatus=%s" % (state), file=self.log)
 
 
 if __name__ == "__main__":
@@ -1301,6 +1323,6 @@ if __name__ == "__main__":
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
-        print(" done. %d min %d sec" % (mm, ss), file=e.tty)
+        print(" done. %d min %d sec" % (mm, ss), file=e.log)
 
     sys.exit(0)
