@@ -19,6 +19,7 @@
 # 2016-05-21  detect python-usb < 1.0 and give instructions.
 # 2017-04-20  Adding Cameo3 USB IDs
 # 2020-06-    Adding Cameo4 and refactor code
+# 2021-06-03  Adding Cameo4 Pro
 
 from __future__ import print_function
 
@@ -122,8 +123,20 @@ PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
 PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
 PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
+# The following seems like a good bet:
+# PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
+# but I don't have one to check and did not want to jump to conclusions.
+PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
+
+PRODUCT_LINE_CAMEO4 = [
+  PRODUCT_ID_SILHOUETTE_CAMEO4,
+  # PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,  # uncomment when verified
+  PRODUCT_ID_SILHOUETTE_CAMEO4PRO
+]
+
+PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
 
 # End Of Text - marks the end of a command
 CMD_ETX = '\x03'
@@ -168,6 +181,24 @@ DEVICE = [
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
+#### Uncomment when confirmed:
+# { 'vendor_id': VENDOR_ID_GRAPHTEC,
+#   'product_id': VENDOR_ID_SILHOUETTE_CAMEO4PLUS,
+#   'name': 'Silhouette Cameo4 Plus',
+#   'width_mm': 372, # A bit of a guess, not certain what actual cuttable is
+#   'length_mm': 3000,
+#   'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
+##############################
+ { 'vendor_id': VENDOR_ID_GRAPHTEC,
+   'product_id': PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
+   'name': 'Silhouette Cameo4 Pro',
+   'width_mm': 600, # 24 in. is 609.6mm, but Silhouette Studio shows a thin cut
+                    # margin that leaves 600mm of cuttable width. However,
+                    # I am not certain if this should be margin_left_mm = 4.8
+                    # and width_mm = 604.8; trying to leave things as close to
+                    # the prior Cameo4 settings above.
+   'length_mm': 3000,
+   'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft Robo CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft Robo CC300-20' },
@@ -603,7 +634,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.dev is None:
       return 'none'
 
-    if self.product_id() != PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() not in PRODUCT_LINE_CAMEO4:
       return 'none'
 
     # tool setup request.
@@ -675,7 +706,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("FQ2: '%s'" % resp, file=self.log)
     """
 
-    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
 
       # Unknown: 2 five digit numbers. Probably machine stored calibration offset of the regmark sensor optics
       resp = self.send_receive_command("TB71")
@@ -718,7 +749,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         mediaheight : float
             height of the media
     """
-    if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
       return
     if cuttingmat == 'cameo_12x12':
       self.send_command("TG1")
@@ -799,7 +830,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if media < 100 or media > 300: media = 300
 
       # Silhouette Studio does not appear to issue this command
-      if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+      if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
         self.send_command("FW%d" % media)
 
       if pen is None:
@@ -820,13 +851,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if toolholder is None:
       toolholder = 1
 
-    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
       self.send_command(tool.select())
 
     print("toolholder: %d" % toolholder, file=self.log)
 
     # cameo 4 sets some parameters two times (force, acceleration, Cutter offset)
-    if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+    if self.product_id() in PRODUCT_LINE_CAMEO4:
       if pressure is not None:
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
@@ -927,7 +958,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         else:
           self.send_command("FC%d" % _mm_2_SU(bladediameter))
 
-    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
       if autoblade and depth is not None:
         if toolholder == 1:
           if depth < 0: depth = 0
@@ -943,7 +974,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if trackenhancing:
         self.send_command("FY0")
       else:
-        if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+        if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
           pass
         else:
           self.send_command("FY1")
@@ -951,7 +982,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
       pass
     else:
       if landscape is not None:
@@ -1259,7 +1290,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    if self.product_id() not in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+    if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
       self.send_command([
         self.upper_left_mm_cmd(0, 0),
         self.lower_right_mm_cmd(height, width),
@@ -1290,7 +1321,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if not 'urx' in bbox: bbox['urx'] = 0
     if not 'ury' in bbox: bbox['ury'] = 0
     if endposition == 'start':
-      if self.product_id() in [PRODUCT_ID_SILHOUETTE_CAMEO3, PRODUCT_ID_SILHOUETTE_CAMEO4]:
+      if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
         new_home = [
           "L0",
           self.upper_left_mm_cmd(0, 0),
