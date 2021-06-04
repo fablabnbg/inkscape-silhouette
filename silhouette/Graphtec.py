@@ -424,6 +424,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.dev is None or 'width_mm' in self.hardware:
       self.leftaligned = True
     self.enable_sw_clipping = True
+    self.clip_fuzz = 0.05
 
   def product_id(self):
     return self.hardware['product_id'] if 'product_id' in self.hardware else None
@@ -772,7 +773,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
       self.set_boundary(0, 0, bottom, right)
 
-  def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
+  def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """Setup the Silhouette Device
 
     Parameters
@@ -802,6 +803,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             range is [0..10] Defaults to None.
         sw_clipping : bool, optional
             Defaults to True.
+        clip_fuzz : float, optional
+            Defaults to 1/20 mm, the device resolution
         trackenhancing : bool, optional
             Defaults to False.
         bladediameter : float, optional
@@ -967,6 +970,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           print("depth: %d" % depth, file=self.log)
 
     self.enable_sw_clipping = sw_clipping
+    self.clip_fuzz = clip_fuzz
 
     # if enabled, rollers three times forward and back.
     # needs a pressure of 19 or more, else nothing will happen
@@ -1055,6 +1059,35 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return "TB23,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width))
 
 
+  def clip_point(self, x, y, bbox):
+    """
+        Clips coords x and y by the 'clip' element of bbox.
+        Returns the clipped x, clipped y, and a flag which is true if
+        no actual clipping took place.
+    """
+    inside = True
+    if 'clip' not in bbox:
+      return x, y, inside
+    if 'count' not in bbox['clip']:
+      bbox['clip']['count'] = 0
+    if bbox['clip']['llx'] - x > self.clip_fuzz:
+      x = bbox['clip']['llx']
+      inside = False
+    if x - bbox['clip']['urx'] > self.clip_fuzz:
+      x = bbox['clip']['urx']
+      inside = False
+    if bbox['clip']['ury'] - y > self.clip_fuzz:
+      y = bbox['clip']['ury']
+      inside = False
+    if y - bbox['clip']['lly'] > self.clip_fuzz:
+      y = bbox['clip']['lly']
+      inside = False
+    if not inside:
+      #print(f"Clipped point ({x},{y})", file=self.log)
+      bbox['clip']['count'] += 1
+    return x, y, inside
+
+
   def plot_cmds(self, plist, bbox, x_off, y_off):
     """
         bbox coordinates are in mm
@@ -1106,25 +1139,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       _bbox_extend(bbox, x, y)
       bbox['count'] += 1
 
-      if 'clip' in bbox:
-        last_inside = True
-        if x < bbox['clip']['llx']:
-          x = bbox['clip']['llx']
-          last_inside = False
-        if x > bbox['clip']['urx']:
-          x = bbox['clip']['urx']
-          last_inside = False
-        if y < bbox['clip']['ury']:
-          y = bbox['clip']['ury']
-          last_inside = False
-        if y > bbox['clip']['lly']:
-          y = bbox['clip']['lly']
-          last_inside = False
-        if not last_inside:
-          if 'count' in bbox['clip']:
-            bbox['clip']['count'] += 1
-          else:
-            bbox['clip']['count'] = 1
+      x, y, last_inside = self.clip_point(x, y, bbox)
 
       if bbox['only'] is False:
         plotcmds.append(self.move_mm_cmd(y, x))
@@ -1135,25 +1150,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         _bbox_extend(bbox, x, y)
         bbox['count'] += 1
 
-        inside = True
-        if 'clip' in bbox:
-          if x < bbox['clip']['llx']:
-            x = bbox['clip']['llx']
-            inside = False
-          if x > bbox['clip']['urx']:
-            x = bbox['clip']['urx']
-            inside = False
-          if y < bbox['clip']['ury']:
-            y = bbox['clip']['ury']
-            inside = False
-          if y > bbox['clip']['lly']:
-            y = bbox['clip']['lly']
-            inside = False
-          if not inside:
-            if 'count' in bbox['clip']:
-              bbox['clip']['count'] += 1
-            else:
-              bbox['clip']['count'] = 1
+        x, y, inside = self.clip_point(x, y, bbox)
 
         if bbox['only'] is False:
           if not self.enable_sw_clipping or (inside and last_inside):
@@ -1301,6 +1298,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     bbox['clip'] = {'urx':width, 'ury':top, 'llx':left, 'lly':height}
     bbox['only'] = bboxonly
     cmd_list = self.plot_cmds(pathlist,bbox,offset[0],offset[1])
+    print("Final bounding box and point counts: " + str(bbox), file=self.log)
 
     if bboxonly == True:
       # move the bounding box
