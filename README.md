@@ -44,7 +44,7 @@ Install inscape-silhouette
 
 WARNING: SNAP packages may cause issues.
 
-Add Inkscape 1.0+ repo (optional)
+Add Inkscape 1.0+ repo
 * `sudo add-apt-repository ppa:inkscape.dev/stable`
 * `sudo apt-get update`
 
@@ -55,12 +55,6 @@ Install requirements
 * `sudo apt install python3-usb`
 
 Install inscape-silhouette
-* https://github.com/fablabnbg/inkscape-silhouette/releases
-  Scroll down to Downloads and click on the *.deb file.
-
-### Ubuntu 16.04
-
-* `sudo apt install python-usb`
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
 
