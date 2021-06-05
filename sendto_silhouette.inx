@@ -103,6 +103,14 @@
       <param name="mat_free_help" type="description">Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.</param>
       <param name="mintravel_help" type="description">Minimal Traveling: Find the nearest startpoint to minimize travel movements</param>
       <param name="mintravelfull_help" type="description">Minimal Traveling (fully optimized): Additionally search startpoints in closed paths</param>
+      <param name="orient_paths" type="enum" _gui-text="Pre-orient paths:">
+	<item value="natural">As in SVG</item>
+	<item value="desy">Descending Y (pull through tool)</item>
+	<item value="ascy">Ascending Y (push into tool)</item>
+	<item value="desx">Descending X (right to left)</item>
+	<item value="ascx">Ascending X (left to right)</item>
+      </param>
+      <param name="orient_help1" type="description">Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</param>
       <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
       <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
       <param name="dummy_help" type="description">Used for debugging and developent only!</param>

@@ -94,7 +94,7 @@ from __future__ import print_function
 __version__ = "1.24"     # Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, tempfile, math, re
+import sys, os, time, tempfile, math, operator, re
 
 
 # we sys.path.append() the directory where this
@@ -336,6 +336,10 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "strategy", default = "mintravel",
                 choices=("mintravel", "mintravelfull", "matfree", "zorder"),
                 help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
+        self.arg_parser.add_argument("--orient_paths",
+                dest = "orient_paths", default = "natural",
+                choices=("natural","desy","ascy","desx","ascy"),
+                help="Pre-orient paths: natural (as in svg), or [des(cending)|asc(ending)][y|x]")
         self.arg_parser.add_argument("-l", "--sw_clipping",
                 dest = "sw_clipping", type = inkex.Boolean, default = True,
                 help="Enable software clipping")
@@ -1120,6 +1124,34 @@ class SendtoSilhouette(inkex.Effect):
         if self.options.tool == "autoblade":
             self.pen=False
             self.autoblade=True
+
+        if self.options.orient_paths != "natural":
+            index = dict(x=0,y=1)[self.options.orient_paths[-1]]
+            ordered = dict(des=operator.gt, asc=operator.lt)[self.options.orient_paths[0:3]]
+            oldpaths = self.paths
+            self.paths = []
+            oldpaths.reverse() # Since popping from old and appending to new will
+                               # itself reverse
+            while oldpaths:
+                curpath = oldpaths.pop()
+                if ordered(curpath[0][index], curpath[-1][index]):
+                    curpath.reverse()
+                newpath = [curpath.pop()]
+                while curpath:
+                    if ordered(newpath[-1][index],curpath[-1][index]):
+                        newpath.append(curpath.pop())
+                    else:
+                        if len(newpath) == 1:
+                            # Have to make some progress:
+                            newpath = [curpath[-1], newpath[0]]
+                        else:
+                            # Have to put end of newpath back onto curpath to
+                            # keep the segment between it and rest of curpath:
+                            curpath.append(newpath[-1])
+                        break # stop collecting an ordered segment of curpath
+                if curpath: # Some of curpath is left because it was out of order
+                    oldpaths.append(curpath)
+                self.paths.append(newpath)
 
         # scale all points to unit mm
         for path in self.paths:
