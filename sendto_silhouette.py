@@ -329,9 +329,12 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
-        self.arg_parser.add_argument("--dummy",
-                dest = "dummy", type = inkex.Boolean, default = False,
-                help="Dump raw data to "+self.dumpname+" instead of cutting.")
+        self.arg_parser.add_argument("--dump_paths",
+                dest = "dump_paths", type = inkex.Boolean, default = False,
+                help="Dump cut paths to "+self.dumpname)
+        self.arg_parser.add_argument("--dry_run",
+                dest = "dry_run", type = inkex.Boolean, default = False,
+                help="Do not communicate with device")
         self.arg_parser.add_argument("-g", "--strategy",
                 dest = "strategy", default = "mintravel",
                 choices=("mintravel", "mintravelfull", "mintravelfwd", "matfree", "zorder"),
@@ -1089,7 +1092,7 @@ class SendtoSilhouette(inkex.Effect):
             self.log = teeFile(self.tty, open(self.options.logfile, "w"))
 
         try:
-            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, no_device=self.options.dummy)
+            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, no_device=self.options.dry_run)
         except Exception as e:
             print(e, file=self.tty)
             print(e, file=sys.stderr)
@@ -1227,7 +1230,7 @@ class SendtoSilhouette(inkex.Effect):
 
             cut.append(multipath)
 
-        if dev.dev is None:
+        if self.options.dump_paths:
             docname=None
             svg = self.document.getroot()
             # Namespace horrors: Id's expand to full urls, before we can search them.
