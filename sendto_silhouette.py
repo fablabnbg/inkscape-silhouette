@@ -338,7 +338,7 @@ class SendtoSilhouette(inkex.Effect):
                 help="Cutting Strategy: mintravel, mintravelfull, mintravelfwd, matfree or zorder")
         self.arg_parser.add_argument("--orient_paths",
                 dest = "orient_paths", default = "natural",
-                choices=("natural","desy","ascy","desx","ascy"),
+                choices=("natural","desy","ascy","desx","ascx"),
                 help="Pre-orient paths: natural (as in svg), or [des(cending)|asc(ending)][y|x]")
         self.arg_parser.add_argument("-l", "--sw_clipping",
                 dest = "sw_clipping", type = inkex.Boolean, default = True,
@@ -1144,6 +1144,9 @@ class SendtoSilhouette(inkex.Effect):
                         if len(newpath) == 1:
                             # Have to make some progress:
                             newpath = [curpath[-1], newpath[0]]
+                            # Don't leave behind an orphan
+                            if len(curpath) == 1:
+                                curpath = []
                         else:
                             # Have to put end of newpath back onto curpath to
                             # keep the segment between it and rest of curpath:
