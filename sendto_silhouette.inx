@@ -114,8 +114,8 @@
       </param>
       <param name="orient_help1" type="description">Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</param>
       <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
-      <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
-      <param name="dummy_help" type="description">Used for debugging and developent only!</param>
+      <param name="dump_paths" type="boolean" _gui-text="Dump cut paths to /tmp/silhouette.dump (for debugging)">false</param>
+      <param name="dry_run" type="boolean" _gui-text="Dry Run: do not communicate with device">false</param>
       <param name="logfile" type="string" _gui-text="Save log messages in file:"></param>
     </page>
 
