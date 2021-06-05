@@ -145,6 +145,7 @@ from silhouette.Graphtec import SilhouetteCameo
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
 import silhouette.StrategyMinTraveling
+import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
 
 N_PAGE_WIDTH = 3200.0
@@ -380,6 +381,9 @@ class SendtoSilhouette(inkex.Effect):
                 choices=("autoblade", "cut", "pen", "default"), dest = "tool", default = None, help="Optimize for pen or knive")
         self.arg_parser.add_argument("-T", "--toolholder",
                 choices=("1", "2"), dest = "toolholder", default = None, help="[1..2]")
+        self.arg_parser.add_argument("--preview",
+                dest = "preview", type = inkex.Boolean, default = True,
+                help="show cut pattern graphically before sending")
         self.arg_parser.add_argument("-V", "--version",
                 dest = "version", action = "store_true",
                 help="Just print version number ('"+self.version()+"') and exit.")
@@ -1251,6 +1255,9 @@ class SendtoSilhouette(inkex.Effect):
             if docname:
                     print("# docname: '%s'" % docname, file=self.log)
             print(cut, file=self.log)
+
+        if self.options.preview:
+            silhouette.read_dump.plotcuts(cut)
 
         if self.options.pressure == 0:
             self.options.pressure = None
