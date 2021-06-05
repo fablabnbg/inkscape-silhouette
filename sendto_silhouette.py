@@ -283,8 +283,6 @@ class SendtoSilhouette(inkex.Effect):
         self.docHeight = N_PAGE_HEIGHT
         self.docTransform = IDENTITY_TRANSFORM
 
-        self.dumpname= os.path.join(tempfile.gettempdir(), "silhouette.dump")
-
         try:
             self.tty = open("/dev/tty", "w")
         except:
@@ -329,9 +327,9 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
-        self.arg_parser.add_argument("--dump_paths",
+        self.arg_parser.add_argument("--log_paths",
                 dest = "dump_paths", type = inkex.Boolean, default = False,
-                help="Dump cut paths to "+self.dumpname)
+                help="Include final cut paths in log")
         self.arg_parser.add_argument("--dry_run",
                 dest = "dry_run", type = inkex.Boolean, default = False,
                 help="Do not communicate with device")
@@ -1239,18 +1237,11 @@ class SendtoSilhouette(inkex.Effect):
                 if re.search(r"}docname$", tag):
                     docname=svg.get(tag)
 
-            o = open(self.dumpname, "w")
-            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=self.log)
-            print("Dump written to ", self.dumpname, " (", pointcount, " points)", file=sys.stderr)
-            print("device version: '%s'" % dev.get_version(), file=sys.stderr)
-            print("driver version: '%s'" % __version__, file=sys.stderr)
-            print("# device version: '%s'" % dev.get_version(), file=o)
-            print("# driver version: '%s'" % __version__, file=o)
+            print("Logging ", len(cut), " cut paths containing ", pointcount, " points:", file=self.log)
+            print("# driver version: '%s'" % __version__, file=self.log)
             if docname:
-                    print("# docname: '%s'" % docname, file=o)
-                    print("docname: '%s'" % docname, file=sys.stderr)
-            print(cut, file=o)
-            o.close()
+                    print("# docname: '%s'" % docname, file=self.log)
+            print(cut, file=self.log)
 
         if self.options.pressure == 0:
             self.options.pressure = None
