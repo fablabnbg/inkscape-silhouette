@@ -104,9 +104,13 @@
       <param name="mintravel_help" type="description">Minimal Traveling: Find the nearest startpoint to minimize travel movements</param>
       <param name="mintravelfull_help" type="description">Minimal Traveling (fully optimized): Additionally search startpoints in closed paths</param>
       <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
-      <param name="dummy"    type="boolean" _gui-text="Dummy device: Send to /tmp/silhouette.dump">false</param>
-      <param name="dummy_help" type="description">Used for debugging and developent only!</param>
+    </page>
+    <page name='logdump' _gui-text='Log and Dump'>
       <param name="logfile" type="string" _gui-text="Save log messages in file:"></param>
+      <param name="log_paths" type="boolean" _gui-text="Include final cut paths in log (for debugging)">false</param>
+      <param name="cmdfile" type="string" _gui-text="Transcribe cutter commands to file:"></param>
+      <param name="inc_queries" type="boolean" _gui-text="Include cutter queries in command transcript">false</param>
+      <param name="dry_run" type="boolean" _gui-text="Dry Run: do not send commands to device">false</param>
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>

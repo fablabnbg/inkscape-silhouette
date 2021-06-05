@@ -57,9 +57,8 @@ class TestRun(unittest.TestCase):
 
     def test_04dummy_cut(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dummy=True", "examples/testcut_square_triangle.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/testcut_square_triangle.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
-            self.assertIn('Dump written to', str(result))
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -69,9 +68,8 @@ class TestRun(unittest.TestCase):
 
     def test_05dummy_cut(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dummy=True", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
-            self.assertIn('Dump written to', str(result))
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -81,9 +79,8 @@ class TestRun(unittest.TestCase):
 
     def test_06dummy_cut(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dummy=True", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
-            self.assertIn('Dump written to', str(result))
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -93,9 +90,8 @@ class TestRun(unittest.TestCase):
 
     def test_07dummy_cut(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--dummy=True", "examples/dashline.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--dry_run=True", "examples/dashline.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
-            self.assertIn('Dump written to', str(result))
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
