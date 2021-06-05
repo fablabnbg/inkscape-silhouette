@@ -334,8 +334,8 @@ class SendtoSilhouette(inkex.Effect):
                 help="Dump raw data to "+self.dumpname+" instead of cutting.")
         self.arg_parser.add_argument("-g", "--strategy",
                 dest = "strategy", default = "mintravel",
-                choices=("mintravel", "mintravelfull", "matfree", "zorder"),
-                help="Cutting Strategy: mintravel, mintravelfull, matfree or zorder")
+                choices=("mintravel", "mintravelfull", "mintravelfwd", "matfree", "zorder"),
+                help="Cutting Strategy: mintravel, mintravelfull, mintravelfwd, matfree or zorder")
         self.arg_parser.add_argument("--orient_paths",
                 dest = "orient_paths", default = "natural",
                 choices=("natural","desy","ascy","desx","ascy"),
@@ -1165,7 +1165,9 @@ class SendtoSilhouette(inkex.Effect):
         elif self.options.strategy == "mintravel":
             self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
         elif self.options.strategy == "mintravelfull":
-            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, True)
+            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True)
+        elif self.options.strategy == "mintravelfwd":
+            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True, reversible=False)
         # in case of zorder do no reorder
 
         # print(self.paths, file=self.tty)
