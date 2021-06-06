@@ -139,17 +139,30 @@ PRODUCT_LINE_CAMEO4 = [
 PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
 
 # End Of Text - marks the end of a command
-CMD_ETX = '\x03'
+CMD_ETX = b'\x03'
 # Escape - send escape command
-CMD_ESC = '\x1b'
+CMD_ESC = b'\x1b'
 
 ### Escape Commands
 # End Of Transmission - will initialize the device,
-CMD_EOT = '\x04'
+CMD_EOT = b'\x04'
 # Enquiry - Returns device status
-CMD_ENQ = '\x05'
+CMD_ENQ = b'\x05'
 # Negative Acnoledge - Returns device tool setup
-CMD_NAK = '\x15'
+CMD_NAK = b'\x15'
+
+### Query codes
+QUERY_FIRMWARE_VERSION = b'FG'
+
+### Response codes
+RESP_READY    = b'0'
+RESP_MOVING   = b'1'
+RESP_UNLOADED = b'2'
+RESP_DECODING = {
+  RESP_READY:    'ready',
+  RESP_MOVING:   'moving',
+  RESP_UNLOADED: 'unloaded'
+}
 
 SILHOUETTE_CAMEO4_TOOL_EMPTY = 0
 SILHOUETTE_CAMEO4_TOOL_RATCHETBLADE = 1
@@ -252,6 +265,21 @@ def _inch_2_SU(inch):
   """
   return int(round(inch * 508.0))
 
+def to_bytes(b_or_s):
+  """Ensure a value is bytes"""
+  if isinstance(b_or_s, str): return b_or_s.encode()
+  if isinstance(b_or_s, bytes): return b_or_s
+  raise TypeError("Value must be a string or bytes.")
+
+def delimit_commands(cmd_or_list):
+  """
+     Convert a command or list of commands into a properly
+     delimited byte sequence.
+  """
+  lst = cmd_or_list if isinstance(cmd_or_list, list) else [cmd_or_list]
+  return b''.join(to_bytes(c) + CMD_ETX for c in lst)
+
+
 
 class SilhouetteCameoTool:
   def __init__(self, toolholder=1):
@@ -292,14 +320,18 @@ class SilhouetteCameoTool:
       "FF%d,%d,%d" % (start, end, self.toolholder)]
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr, no_device=False, progress_cb=None):
+  def __init__(self, log=sys.stderr, dry_run=False, progress_cb=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
 
-        If no_device is True, the usb device is not actually opened, and all
-        generated data is discarded.
+        If dry_run is True, no commands will be sent to the usb device. The device
+        is still searched for and queries to it are allowed, as the responses
+        might affect inkscape_silhouette's behavior during the dry run. (Note that
+        we might be dumping information from the run for later use that depends
+        on what device is being driven.) Of course, when dry_run is True, it is
+        allowed that there be no device currently attached.
 
         The progress_cb is called with the following parameters:
         int(strokes_done), int(strikes_total), str(status_flags)
@@ -308,14 +340,17 @@ class SilhouetteCameo:
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
+    self.dry_run = dry_run
     self.progress_cb = progress_cb
     dev = None
     self.margins_printed = None
 
-    if no_device is True:
-      self.hardware = { 'name': 'Crashtest Dummy Device' }
-    else:
-      for hardware in DEVICE:
+    if self.dry_run:
+      print("Dry run specified; no commands will be sent to cutter.",
+            file=self.log)
+
+    for hardware in DEVICE:
+      try:
         if sys_platform.startswith('win'):
           print("device lookup under windows not tested. Help adding code!", file=self.log)
           dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
@@ -325,11 +360,14 @@ class SilhouetteCameo:
 
         else:   # linux
           dev = usb.core.find(idVendor=hardware['vendor_id'], idProduct=hardware['product_id'])
-        if dev:
-          self.hardware = hardware
-          break
+      except usb.core.NoBackendError:
+        dev = None
+      if dev:
+        self.hardware = hardware
+        break
 
-      if dev is None:
+    if dev is None:
+      try:
         if sys_platform.startswith('win'):
           print("device fallback under windows not tested. Help adding code!", file=self.log)
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
@@ -338,7 +376,6 @@ class SilhouetteCameo:
             self.hardware['name'] += " 0x%04x" % dev.idProduct
             self.hardware['product_id'] = dev.idProduct
             self.hardware['vendor_id'] = dev.idVendor
-
 
         elif sys_platform.startswith('darwin'):
           print("device fallback under macosx not implemented. Help adding code!", file=self.log)
@@ -350,8 +387,15 @@ class SilhouetteCameo:
             self.hardware['name'] += " 0x%04x" % dev.idProduct
             self.hardware['product_id'] = dev.idProduct
             self.hardware['vendor_id'] = dev.idVendor
+      except usb.core.NoBackendError:
+        dev = None
 
-      if dev is None:
+    if dev is None:
+      if dry_run:
+        print("No device detected; continuing dry run with dummy device",
+              file=self.log)
+        self.hardware = dict(name='Crashtest Dummy Device')
+      else:
         msg = ''
         try:
             for dev in usb.core.find(find_all=True):
@@ -360,18 +404,19 @@ class SilhouetteCameo:
             msg += "unable to list devices on OS X"
         raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
 
-      try:
-        dev_bus = dev.bus
-      except:
-        dev_bus = -1
+    try:
+      dev_bus = dev.bus
+    except:
+      dev_bus = -1
 
-      try:
-        dev_addr = dev.address
-      except:
-        dev_addr = -1
+    try:
+      dev_addr = dev.address
+    except:
+      dev_addr = -1
 
-      print("%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr), file=self.log)
+    print("%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr), file=self.log)
 
+    if dev is not None:
       if sys_platform.startswith('win'):
         print("device init under windows not implemented. Help adding code!", file=self.log)
 
@@ -425,19 +470,33 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.leftaligned = True
     self.enable_sw_clipping = True
     self.clip_fuzz = 0.05
+    self.mock_response = None
+
+  # Class data providing mock responses when there is no device:
+  mock_responses = {
+    CMD_ESC+CMD_ENQ: RESP_READY+CMD_ETX,
+    QUERY_FIRMWARE_VERSION+CMD_ETX: b'None '+CMD_ETX
+  }
 
   def product_id(self):
     return self.hardware['product_id'] if 'product_id' in self.hardware else None
 
-  def write(self, data, timeout=10000):
+  def write(self, data, is_query=False, timeout=10000):
     """Send a command to the device. Long commands are sent in chunks of 4096 bytes.
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
-    if self.dev is None: return None
+    data = to_bytes(data)
 
-    # convert string to bytes if required
-    if isinstance(data, str):
-      data = data.encode()
+    # If there is no device, the only thing we might need to do is mock
+    # a response:
+    if self.dev is None:
+      if data in SilhouetteCameo.mock_responses:
+        self.mock_response = SilhouetteCameo.mock_responses[data]
+      return None
+
+    # If it is a dry run and not a query, we also do nothing:
+    if self.dry_run and not is_query:
+      return None
 
     # robocut/Plotter.cpp:73 says: Send in 4096 byte chunks. Not sure where I got this from, I'm not sure it is actually necessary.
     try:
@@ -510,68 +569,50 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       raise ValueError('write all %d bytes failed: o=%d' % (len(data), o))
 
   def safe_write(self, data):
-    """wrapper for write with special emphasis on not to over-load the cutter with long commands."""
-    if self.dev is None: return None
+    """
+        Wrapper for write with special emphasis not overloading the cutter
+        with long commands.
+        Use this only for commands, not queries.
+    """
 
-    # convert string to bytes if required
-    if isinstance(data, str):
-      data = data.encode()
+    data = to_bytes(data)
 
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
     so = 0
-    delimiter = CMD_ETX.encode()
     while so < len(data):
       safechunksz = min(safemaxchunksz, len(data)-so)
       candidate = data[so:so+safechunksz]
       # strip string candidate of unfinished command at its end
-      safechunk = candidate[0:(candidate.rfind(delimiter) + 1)]
-      self.write(data = safechunk)
+      safechunk = candidate[0:(candidate.rfind(CMD_ETX) + 1)]
+      self.write(data = safechunk, is_query = False)
       # wait for cutter to finish current chunk, otherwise blocking might occur
       while not self.status() == "ready":
         time.sleep(0.05)
       so += len(safechunk)
 
-  def send_command(self, cmd, timeout=10000):
-    """ Sends a command or a list of commands of type string """
-    if isinstance(cmd, str):
-      data = cmd
-    elif isinstance(cmd, list) and isinstance(cmd[0], str):
-      data = CMD_ETX.join(cmd)
-    else:
-      raise TypeError("Send Command Exception: %s " % type(cmd))
-    self.write(data + CMD_ETX, timeout)
+  def send_command(self, cmd, is_query = False, timeout=10000):
+    """ Sends a command or a list of commands """
+    self.write(delimit_commands(cmd), is_query=is_query, timeout=timeout)
 
   def safe_send_command(self, cmd):
-    """ Sends a command or a list of commands of type string """
-    if isinstance(cmd, str):
-      data = cmd
-    elif isinstance(cmd, list):
-      if not cmd:
-        # if list of commands is empty this function shall do nothing
-        return
-      else:
-        # list must not contain anything but strings
-        for c in cmd:
-          if not isinstance(c, str):
-            raise TypeError("Send Command Exception: %s " % type(cmd))
-        data = CMD_ETX.join(cmd)
-    else:
-      raise TypeError("Send Command Exception: %s " % type(cmd))
-    self.safe_write(data + CMD_ETX)
+    data = delimit_commands(cmd)
+    if len(data) == 0: return
+    self.safe_write(data)
 
-  def send_escape(self, esc):
+  def send_escape(self, esc, is_query=False):
     """ Sends a Escape Command """
-    if isinstance(esc, str):
-      self.write(CMD_ESC + esc)
-    else:
-      raise TypeError("Send Escape Exception: %s " % type(esc))
+    self.write(CMD_ESC + esc, is_query=is_query) # Concatenation will typecheck
 
   def read(self, size=64, timeout=5000):
-    """Low level read method"""
-    if self.dev is None: return None
+    """Low level read method, returns response as bytes"""
     endpoint = 0x82
-    if self.need_interface:
+    data = None
+    if self.dev is None:
+      data = self.mock_response
+      self.mock_response = None
+      if data is None: return None
+    elif self.need_interface:
         try:
             data = self.dev.read(endpoint, size, timeout=timeout, interface=0)
         except AttributeError:
@@ -583,13 +624,15 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             data = self.dev.bulkRead(endpoint, size, timeout=timeout)
     if data is None:
       raise ValueError('read failed: none')
-    if isinstance(data, (str, bytes, bytearray)):
-        return data.decode()
+    if isinstance(data, (bytes, bytearray)):
+        return data
+    elif isinstance(data, str):
+        return data.encode()
     else:
         try:
-            return data.tobytes().decode() # with py3
+            return data.tobytes() # with py3
         except:
-            return data.tostring().decode() # with py2/3 - dropped in py39
+            return data.tostring().encode() # with py2/3 - dropped in py39
 
   def try_read(self, size=64, timeout=1000):
     ret=None
@@ -601,49 +644,44 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return ret
 
   def send_receive_command(self, cmd, tx_timeout=10000, rx_timeout=1000):
-      self.send_command(cmd, tx_timeout)
-      try:
-        resp = self.read(timeout=rx_timeout)
-        if len(resp) > 1:
-          return resp[:-1]
-      except:
-        pass
-      return None
+    """ Sends a query and returns its response as a string """
+    self.send_command(cmd, is_query=True, timeout=tx_timeout)
+    try:
+      resp = self.read(timeout=rx_timeout)
+      if len(resp) > 1:
+        return resp[:-1].decode()
+    except:
+      pass
+    return None
 
   def status(self):
     """Query the device status. This can return one of the three strings
        'ready', 'moving', 'unloaded' or a raw (unknown) byte sequence."""
 
-    if self.dev is None: return 'none'
-
     # Status request.
-    self.send_escape(CMD_ENQ)
+    self.send_escape(CMD_ENQ, is_query=True)
     resp = b"None\x03"
     try:
       resp = self.read(timeout=5000)
     except usb.core.USBError as e:
       print("usb.core.USBError:", e, file=self.log)
       pass
-    if resp[-1] != CMD_ETX: raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
-    if resp[:-1] == '0': return "ready"
-    if resp[:-1] == '1': return "moving"
-    if resp[:-1] == '2': return "unloaded"
-    return resp[:-1]
+    if resp[-1] != CMD_ETX[0]:
+      raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
+    return RESP_DECODING.get(resp[:-1], resp[:-1])
 
   def get_tool_setup(self):
     """ gets the type of the tools installed in Cameo 4 """
-    if self.dev is None:
-      return 'none'
 
     if self.product_id() not in PRODUCT_LINE_CAMEO4:
       return 'none'
 
     # tool setup request.
-    self.send_escape(CMD_NAK)
+    self.send_escape(CMD_NAK, is_query=True)
     try:
       resp = self.read(timeout=1000)
       if len(resp) > 1:
-        return resp[:-1]
+        return resp[:-1].decode()
     except:
       pass
     return 'none'
@@ -654,6 +692,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     state = self.status()
     for i in range(1, int(timeout*.5)):
       if (state == 'ready'): break
+      if (state == 'None'):
+        raise NotImplementedError("Waiting for ready but no device exists.")
       if verbose: print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
       if verbose == False:
         if state == 'unloaded':
@@ -729,10 +769,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def get_version(self):
     """Retrieve the firmware version string from the device."""
-
-    if self.dev is None: return None
-
-    return self.send_receive_command("FG", rx_timeout = 10000)
+    return self.send_receive_command(QUERY_FIRMWARE_VERSION, rx_timeout = 10000)
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
@@ -1258,7 +1295,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #    break;
 
       resp = self.read(timeout=40000) ## Allow 20s for reply...
-      if resp != "    0\x03":
+      if resp != b"    0\x03":
         raise ValueError("Couldn't find registration marks. %s" % str(resp))
 
       ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
