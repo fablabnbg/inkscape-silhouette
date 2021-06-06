@@ -410,6 +410,12 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("--logfile",
                 dest = "logfile", default = None,
                 help="Name of file in which to save log messages.")
+        self.arg_parser.add_argument("--cmdfile",
+                dest = "cmdfile", default = None,
+                help="Name of file to save transcript of cutter commands.")
+        self.arg_parser.add_argument("--inc_queries",
+                dest = "inc_queries", type = inkex.Boolean, default = False,
+                help="Include queries in cutter command transcript")
         # Can't set up the log here because arguments have not yet been parsed;
         # defer that to the top of the effect() method, which is where all
         # of the real activity happens.
@@ -1090,7 +1096,10 @@ class SendtoSilhouette(inkex.Effect):
             self.log = teeFile(self.tty, open(self.options.logfile, "w"))
 
         try:
-            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, dry_run=self.options.dry_run)
+            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
+                                  cmdfile=self.options.cmdfile,
+                                  inc_queries=self.options.inc_queries,
+                                  dry_run=self.options.dry_run)
         except Exception as e:
             print(e, file=self.tty)
             print(e, file=sys.stderr)

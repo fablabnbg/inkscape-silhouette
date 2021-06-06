@@ -20,6 +20,7 @@
 # 2017-04-20  Adding Cameo3 USB IDs
 # 2020-06-    Adding Cameo4 and refactor code
 # 2021-06-03  Adding Cameo4 Pro
+# 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
 
 from __future__ import print_function
 
@@ -320,11 +321,18 @@ class SilhouetteCameoTool:
       "FF%d,%d,%d" % (start, end, self.toolholder)]
 
 class SilhouetteCameo:
-  def __init__(self, log=sys.stderr, dry_run=False, progress_cb=None):
+  def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
+               dry_run=False, progress_cb=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
+
+        If cmdfile is specified, it is taken as the name of a file in which to
+        record a transcript of all commands sent to the cutter. If inc_queries is
+        True, then that transcript further includes all of the queries sent to
+        the cutter (but not the responses read back). (The latter parameter
+        inc_queries has no effect when cmdfile is unspecified or falsy.)
 
         If dry_run is True, no commands will be sent to the usb device. The device
         is still searched for and queries to it are allowed, as the responses
@@ -340,6 +348,10 @@ class SilhouetteCameo:
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
+    self.commands = None
+    if cmdfile:
+      self.commands = open(cmdfile, "wb")
+    self.inc_queries = inc_queries
     self.dry_run = dry_run
     self.progress_cb = progress_cb
     dev = None
@@ -472,6 +484,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     self.clip_fuzz = 0.05
     self.mock_response = None
 
+  def __del__(self, *args):
+    if self.commands:
+      self.commands.close()
+
   # Class data providing mock responses when there is no device:
   mock_responses = {
     CMD_ESC+CMD_ENQ: RESP_READY+CMD_ETX,
@@ -486,6 +502,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
        A nonblocking read() is attempted before write(), to find spurious diagnostics."""
 
     data = to_bytes(data)
+
+    # Capture command to transcript if there is one:
+    if self.commands and ((not is_query) or self.inc_queries):
+        self.commands.write(data)
 
     # If there is no device, the only thing we might need to do is mock
     # a response:
