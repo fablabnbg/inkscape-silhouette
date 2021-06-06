@@ -332,7 +332,7 @@ class SendtoSilhouette(inkex.Effect):
                 help="Include final cut paths in log")
         self.arg_parser.add_argument("--dry_run",
                 dest = "dry_run", type = inkex.Boolean, default = False,
-                help="Do not communicate with device")
+                help="Do not send commands to device (queries allowed)")
         self.arg_parser.add_argument("-g", "--strategy",
                 dest = "strategy", default = "mintravel",
                 choices=("mintravel", "mintravelfull", "mintravelfwd", "matfree", "zorder"),
@@ -1090,7 +1090,7 @@ class SendtoSilhouette(inkex.Effect):
             self.log = teeFile(self.tty, open(self.options.logfile, "w"))
 
         try:
-            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, no_device=self.options.dry_run)
+            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress, dry_run=self.options.dry_run)
         except Exception as e:
             print(e, file=self.tty)
             print(e, file=sys.stderr)
