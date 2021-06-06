@@ -31,11 +31,11 @@ jobs:
               - sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
               - sudo apt-get -y install umockdev
 
-        - name: "Python: 3.9 -- Inkscape 1.0"
+        - name: "Python: 3.9 -- Inkscape 1.1"
           dist: focal
           python: 3.9
           before_install:
-              - sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+              - sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.1 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
               - sudo apt-get update
           install:
               - sudo apt-get -y install inkscape
@@ -46,13 +46,13 @@ jobs:
           python: 3.9
           env: INKSCAPE_VERSION=9999
           before_install:
-              - sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape 1.0 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
+              - sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape DEV from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
               - sudo apt-get update
           install:
               - sudo apt-get -y install inkscape-trunk
               - sudo apt-get -y install umockdev
 
-        - name: "Python: 3.9 -- Inkscape 1.0"
+        - name: "Python: 3.9 -- Inkscape 1.1"
           os: osx
           osx_image: xcode12.3
           language: shell
@@ -88,7 +88,7 @@ jobs:
               - python -m pip install --upgrade pip
               - echo $PATH
 
-        - name: "Python: 3.9 -- Inkscape 1.0"
+        - name: "Python: 3.9 -- Inkscape 1.1"
           os: windows
           language: shell
           env: PATH=/c/Python39:/c/Python39/Scripts:$PATH
