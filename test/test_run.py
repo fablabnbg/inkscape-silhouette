@@ -55,10 +55,14 @@ class TestRun(unittest.TestCase):
             assert False
 
 
-    def test_04dummy_cut(self):
+    def test_04dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/testcut_square_triangle.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "examples/testcut_square_triangle.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
+            filehandle = open("silhouette.log",'r')
+            log = filehandle.read()
+            filehandle.close()
+            self.assertIn('driver version', log)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -66,10 +70,14 @@ class TestRun(unittest.TestCase):
             assert False
 
 
-    def test_05dummy_cut(self):
+    def test_05dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
+            filehandle = open("silhouette.log",'r')
+            log = filehandle.read()
+            filehandle.close()
+            self.assertIn('driver version', log)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -77,10 +85,14 @@ class TestRun(unittest.TestCase):
             assert False
 
 
-    def test_06dummy_cut(self):
+    def test_06dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
+            filehandle = open("silhouette.log",'r')
+            log = filehandle.read()
+            filehandle.close()
+            self.assertIn('driver version', log)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
@@ -88,10 +100,14 @@ class TestRun(unittest.TestCase):
             assert False
 
 
-    def test_07dummy_cut(self):
+    def test_07dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--dry_run=True", "examples/dashline.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "examples/dashline.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
+            filehandle = open("silhouette.log",'r')
+            log = filehandle.read()
+            filehandle.close()
+            self.assertIn('driver version', log)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)
