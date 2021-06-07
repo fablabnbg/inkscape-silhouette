@@ -1,25 +1,45 @@
 #!/usr/bin/env python3
 # this script reads inkscape dumpfiles and shows the plotter path
+from __future__ import print_function
+
 import sys
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Button
+except:
+    plt = None
 from pathlib import Path
 
-def plotcuts(cuts):
+def plotcuts(cuts, buttons=False):
     """
         Show a graphical representation of the cut paths in (the argument) cuts,
         and block until the display window has been closed.
+
+        Displays Cut/Cancel buttons if the buttons argument is true (not implemented yet).
+
+        Returns true unless buttons was true, the graphics were displayed, and
+        the Cancel button was pushed, in which case returns false.
     """
+    if plt is None:
+        print("Install matplotlib for python to allow graphical display of cuts",
+              file=sys.stderr)
+        return True
     xy = sum(cuts, [])
+    least = min(min(p[0],p[1]) for p in xy)
+    greatest = max(max(p[0],p[1]) for p in xy)
+    scale = greatest - least
     plt.plot(*zip(*sum(cuts, [])), color="lightsteelblue")
     plt.plot(xy[0][0],xy[0][1],'go')
     plt.plot(xy[-1][0],xy[-1][1],'ro')
     for xy in cuts:
         plt.plot(*zip(*xy), color="tab:blue")
         plt.arrow(xy[-2][0], xy[-2][1], xy[-1][0]-xy[-2][0], xy[-1][1]-xy[-2][1],
-                  color="lightblue", length_includes_head=True, head_width=3)
+                  color="lightblue", length_includes_head=True,
+                  head_width=min(3,scale/50))
     plt.axis([plt.axis()[0], plt.axis()[1], plt.axis()[3], plt.axis()[2]])
     plt.gca().set_aspect('equal')
     plt.show()
+    return True
 
 if __name__ == "__main__":
     # The below is not correct under Windows; please help to correct.
