@@ -586,9 +586,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # strip string candidate of unfinished command at its end
       safechunk = candidate[0:(candidate.rfind(CMD_ETX) + 1)]
       self.write(data = safechunk, is_query = False)
-      # wait for cutter to finish current chunk, otherwise blocking might occur
-      while not self.status() == "ready":
-        time.sleep(0.05)
+      self.wait_for_ready(timeout=120, poll_interval=0.05)
       so += len(safechunk)
 
   def send_command(self, cmd, is_query = False, timeout=10000):
@@ -686,21 +684,25 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
     return 'none'
 
-  def wait_for_ready(self, timeout=30, verbose=True):
+  def wait_for_ready(self, timeout=30, poll_interval=2.0, verbose=False):
     # get_version() is likely to timeout here...
     # if verbose: print("device version: '%s'" % s.get_version(), file=sys.stderr)
     state = self.status()
-    for i in range(1, int(timeout*.5)):
+    if self.dry_run:
+      # not actually sending commands, so don't really care about being ready
+      return state
+    npolls = int(timeout/poll_interval)
+    for i in range(1, npolls):
       if (state == 'ready'): break
       if (state == 'None'):
         raise NotImplementedError("Waiting for ready but no device exists.")
-      if verbose: print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
+      if verbose: print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
       if verbose == False:
         if state == 'unloaded':
-          print(" %d/%d: please load media ...\r" % (i, int(timeout*.5)), end='', file=sys.stderr)
-        elif i > 5:
-          print(" %d/%d: status=%s\r" % (i, int(timeout*.5), state), end='', file=sys.stderr)
-      time.sleep(2.0)
+          print(" %d/%d: please load media ...\r" % (i, npolls, state), end='', file=sys.stderr)
+        elif i > npolls/3:
+          print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
+      time.sleep(poll_interval)
       state = self.status()
     if verbose: print("",file=sys.stderr)
     return state
@@ -1381,12 +1383,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
 
   def move_origin(self, feed_mm):
-    self.wait_for_ready(verbose=False)
+    self.wait_for_ready()
     self.send_command([
       self.move_mm_cmd(feed_mm, 0),
       "SO0",
       "FN0"])
-    self.wait_for_ready(verbose=False)
+    self.wait_for_ready()
 
   def load_dumpfile(self,file):
     """ s is unused
