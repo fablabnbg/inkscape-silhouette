@@ -8,7 +8,10 @@ try:
     from matplotlib.widgets import Button
 except:
     plt = None
-from pathlib import Path
+try:
+    from pathlib import Path
+except:
+    from pathlib2 import Path # backport for Python2
 
 def plotcuts(cuts, buttons=False):
     """
@@ -17,13 +20,14 @@ def plotcuts(cuts, buttons=False):
 
         Displays Cut/Cancel buttons if the buttons argument is true (not implemented yet).
 
-        Returns true unless buttons was true, the graphics were displayed, and
-        the Cancel button was pushed, in which case returns false.
+        Returns whether the cut should be canceled; in other words,
+        returns false unless buttons was true, the graphics were displayed, and
+        the Cancel button was pushed, in which case returns true.
     """
     if plt is None:
         print("Install matplotlib for python to allow graphical display of cuts",
               file=sys.stderr)
-        return True
+        return False
     xy = sum(cuts, [])
     least = min(min(p[0],p[1]) for p in xy)
     greatest = max(max(p[0],p[1]) for p in xy)
@@ -38,8 +42,22 @@ def plotcuts(cuts, buttons=False):
                   head_width=min(3,scale/50))
     plt.axis([plt.axis()[0], plt.axis()[1], plt.axis()[3], plt.axis()[2]])
     plt.gca().set_aspect('equal')
+    class Response:
+        canceled = False
+        def pushedcut(self, event):
+            plt.close('all')
+        def pushedcancel(self, event):
+            self.canceled = True
+            plt.close('all')
+    response = Response()
+    if buttons:
+        bcut = Button(plt.axes([0.7,0.9,0.1,0.075]), 'Cut')
+        bcancel = Button(plt.axes([0.81,0.9,0.1,0.075]), 'Cancel')
+        bcut.on_clicked(response.pushedcut)
+        bcancel.on_clicked(response.pushedcancel)
     plt.show()
-    return True
+
+    return response.canceled
 
 if __name__ == "__main__":
     # The below is not correct under Windows; please help to correct.

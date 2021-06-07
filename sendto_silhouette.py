@@ -1257,7 +1257,9 @@ class SendtoSilhouette(inkex.Effect):
             print(cut, file=self.log)
 
         if self.options.preview:
-            silhouette.read_dump.plotcuts(cut)
+            if silhouette.read_dump.plotcuts(cut, buttons=True):
+                print("Cut canceled via preview button.", file=sys.stderr)
+                return False
 
         if self.options.pressure == 0:
             self.options.pressure = None
