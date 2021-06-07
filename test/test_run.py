@@ -113,3 +113,20 @@ class TestRun(unittest.TestCase):
             print(e)
             self.assertEqual(e.returncode, 0)
             assert False
+
+    def test_08cmd_file(self):
+        try:
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--cmdfile=testcut_square_triangle_o.cmd", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+            print(result.decode())
+            filehandle = open("examples/testcut_square_triangle_o.cmd",'r')
+            cmdref = filehandle.read()
+            filehandle.close()
+            filehandle = open("testcut_square_triangle_o.cmd",'r')
+            cmd = filehandle.read()
+            filehandle.close()
+            self.assertEqual(cmdref, cmd)
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
+            print(e)
+            self.assertEqual(e.returncode, 0)
+            assert False
