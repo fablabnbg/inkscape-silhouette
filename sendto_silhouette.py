@@ -342,6 +342,9 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "orient_paths", default = "natural",
                 choices=("natural","desy","ascy","desx","ascx"),
                 help="Pre-orient paths: natural (as in svg), or [des(cending)|asc(ending)][y|x]")
+        self.arg_parser.add_argument("--fuse_paths",
+                dest = "fuse_paths", type = inkex.Boolean, default = True,
+                help="Merge any path with predecessor that ends at its start.")
         self.arg_parser.add_argument("-l", "--sw_clipping",
                 dest = "sw_clipping", type = inkex.Boolean, default = True,
                 help="Enable software clipping")
@@ -1186,6 +1189,15 @@ class SendtoSilhouette(inkex.Effect):
         elif self.options.strategy == "mintravelfwd":
             self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True, reversible=False)
         # in case of zorder do no reorder
+
+        if self.paths and self.options.fuse_paths:
+            rest_paths = self.paths[1:]
+            self.paths = [self.paths[0]]
+            for path in rest_paths:
+                if path[0] == self.paths[-1][-1]:
+                    self.paths[-1].extend(path[1:])
+                else:
+                    self.paths.append(path)
 
         # print(self.paths, file=self.tty)
         cut = []

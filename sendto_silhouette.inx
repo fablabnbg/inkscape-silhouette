@@ -115,6 +115,8 @@
 	<item value="ascx">Ascending X (left to right)</item>
       </param>
       <param name="orient_help1" type="description">Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</param>
+      <param name="fuse_paths" type="boolean" _gui-text="Fuse coincident paths">true</param>
+      <param name="fuse_help" type="description">Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</param>
       <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
     </page>
 
