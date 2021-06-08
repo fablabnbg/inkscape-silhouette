@@ -1,0 +1,54 @@
+name: Build .deb
+
+on:
+  push:
+    tags:
+      - 'v*'
+#    branches:
+#      - master
+
+jobs:
+  package:
+    name: Create .deb
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: 🐧 install Inkscape
+      run: |
+        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.1 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+        sudo apt-get update
+        sudo apt-get -y install inkscape
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Branch name
+      id: branch_name
+      run: |
+        echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+        echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+        echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+        echo ::set-output name=SOURCE_TAG_VERSION::$( echo ${GITHUB_REF#refs/tags/} | sed -e 's/^v//' )
+        echo ::set-output name=SOURCE_SOURCE_VERSION::$( python3 ./sendto_silhouette.py --version )
+    - name: build .deb Package
+      run: |
+        make dist
+#    - name: branch_version
+#      env:
+#          SOURCE_NAME: ${{ steps.branch_name.outputs.SOURCE_NAME }}
+#          SOURCE_BRANCH: ${{ steps.branch_name.outputs.SOURCE_BRANCH }}
+#          SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}
+#          SOURCE_TAG_VERSION: ${{ steps.branch_name.outputs.SOURCE_TAG_VERSION }}
+#      run: |
+#          echo $SOURCE_NAME
+#          echo $SOURCE_BRANCH
+#          echo $SOURCE_TAG
+#          echo $SOURCE_TAG_VERSION
+    - name: Upload .deb Package
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
+        path: distribute/out/inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
