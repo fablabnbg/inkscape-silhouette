@@ -416,6 +416,9 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("--inc_queries",
                 dest = "inc_queries", type = inkex.Boolean, default = False,
                 help="Include queries in cutter command transcript")
+        self.arg_parser.add_argument("--force_hardware",
+                dest = "force_hardware", default = None,
+                help = "Override hardware model of cutting device.")
         # Can't set up the log here because arguments have not yet been parsed;
         # defer that to the top of the effect() method, which is where all
         # of the real activity happens.
@@ -1099,7 +1102,8 @@ class SendtoSilhouette(inkex.Effect):
             dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
                                   cmdfile=self.options.cmdfile,
                                   inc_queries=self.options.inc_queries,
-                                  dry_run=self.options.dry_run)
+                                  dry_run=self.options.dry_run,
+                                  force_hardware=self.options.force_hardware)
         except Exception as e:
             print(e, file=self.tty)
             print(e, file=sys.stderr)
