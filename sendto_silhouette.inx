@@ -126,6 +126,22 @@
       <param name="cmdfile" type="string" _gui-text="Transcribe cutter commands to file:"></param>
       <param name="inc_queries" type="boolean" _gui-text="Include cutter queries in command transcript">false</param>
       <param name="dry_run" type="boolean" _gui-text="Dry Run: do not send commands to device">false</param>
+      <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
+      <param name="force_hardware" type="enum" _gui-text="Override cutter model to:">
+	<item value="DETECT">-- as detected --</item>
+	<item value="Silhouette Portrait">Silhouette Portrait</item>
+	<item value="Silhouette Portrait2">Silhouette Portrait 2</item>
+	<item value="Silhouette Cameo">Silhouette Cameo</item>
+	<item value="Silhouette Cameo2">Silhouette Cameo 2</item>
+	<item value="Silhouette Cameo3">Silhouette Cameo 3</item>
+	<item value="Silhouette Cameo4">Silhouette Cameo 4</item>
+	<item value="Silhouette Cameo4 Pro">Silhouette Cameo 4 Pro</item>
+	<item value="Craft Robo CC200-20">Craft Robo CC200-20</item>
+	<item value="Craft Robo CC300-20">Craft Robo CC300-20</item>
+	<item value="Silhouette SD 1">Silhouette SD 1</item>
+	<item value="Silhouette SD 2">Silhouette SD 2</item>
+      </param>
+      <param name="force_hw_help" type="description">Using any setting other than `as detected' is not recommended except when performing a dry run.</param>
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>

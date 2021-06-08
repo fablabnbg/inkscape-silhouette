@@ -175,6 +175,7 @@ SILHOUETTE_CAMEO4_TOOL_PEN = 7
 SILHOUETTE_CAMEO4_TOOL_ERROR = 255
 
 DEVICE = [
+ # CAUTION: keep in sync with sendto_silhouette.inx
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette Portrait',
    'width_mm':  206, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT2, 'name': 'Silhouette Portrait2',
@@ -322,7 +323,7 @@ class SilhouetteCameoTool:
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
-               dry_run=False, progress_cb=None):
+               dry_run=False, progress_cb=None, force_hardware=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
@@ -474,6 +475,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           dev.set_interface_altsetting()      # Probably not really necessary.
         except usb.core.USBError:
           pass
+
+    for hardware in DEVICE:
+      if hardware["name"] == force_hardware:
+        print("NOTE: Overriding device from", self.hardware.get('name','None'),
+              "to", hardware['name'], file=self.log)
+        self.hardware = hardware
+        break
 
     self.dev = dev
     self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
@@ -881,8 +889,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if leftaligned is not None:
       self.leftaligned = leftaligned
-
-    if self.dev is None: return None
 
     self.initialize()
 
