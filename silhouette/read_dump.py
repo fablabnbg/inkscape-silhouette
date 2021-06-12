@@ -28,6 +28,9 @@ def plotcuts(cuts, buttons=False):
         print("Install matplotlib for python to allow graphical display of cuts",
               file=sys.stderr)
         return False
+    if cuts == []:
+        print("Empty path", file=sys.stderr)
+        return False
     xy = sum(cuts, [])
     least = min(min(p[0],p[1]) for p in xy)
     greatest = max(max(p[0],p[1]) for p in xy)
