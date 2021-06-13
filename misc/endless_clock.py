@@ -22,7 +22,7 @@ sys.path.extend(['..','.'])	# make it callable from top or misc directory.
 from silhouette.Graphtec import SilhouetteCameo
 
 dev = SilhouetteCameo()
-dev.setup(media=113, pressure=1, trackenhancing=True, return_home=True)	# 113 = Pen
+dev.setup(media=113, pressure=1, trackenhancing=True)	# 113 = Pen
 
 time_window=60		# show the clock every N seconds.
 clock_margin=30		# mm kept clear for clock
@@ -232,7 +232,7 @@ while True:
   clock_path_origin = []
   for poly in clock_path: clock_path_origin.append(translate_poly(poly, -cbox['llx'], -cbox['ury']+cy_off))
   clock_path_origin.append([(0,tmp_fwd+cy_off),(0,tmp_fwd+cy_off)])
-  meta = dev.plot(pathlist=clock_path_origin, offset=(0,0), no_trailer=True)
+  meta = dev.plot(pathlist=clock_path_origin, offset=(0,0))
   dev.wait_for_ready()
   time.sleep(2)	# show the time before doing something else.
   cy_off += int(ystep*1.2)
