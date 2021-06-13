@@ -694,7 +694,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       pass
     if resp[-1] != CMD_ETX[0]:
       raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
-    return RESP_DECODING.get(resp[:-1], resp[:-1])
+    return RESP_DECODING.get(bytes(resp[:-1]), bytes(resp[:-1]))
 
   def get_tool_setup(self):
     """ gets the type of the tools installed in Cameo 4 """
