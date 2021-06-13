@@ -22,10 +22,10 @@ print("status=%s" % dev.wait_for_ready(20))
 
 tmp_fwd=85	# enough to show 20mm of the latest drawing on the far side of the device.
 
-dev.setup(media=113, pressure=0, trackenhancing=True, return_home=False)
+dev.setup(media=113, pressure=0, trackenhancing=True)
 
 for i in range(8):
-  bbox = dev.plot(pathlist=[ arrow1,[(0,tmp_fwd),(0,tmp_fwd)] ], mediaheight=180, offset=(60,0), bboxonly=False, end_paper_offset=-tmp_fwd+1, no_trailer=True)
+  bbox = dev.plot(pathlist=[ arrow1,[(0,tmp_fwd),(0,tmp_fwd)] ], mediaheight=180, offset=(60,0), bboxonly=False, end_paper_offset=-tmp_fwd+1)
   dev.wait_for_ready()
   print(i, "path done.")
   time.sleep(5)

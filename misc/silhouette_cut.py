@@ -20,21 +20,20 @@ ArgParser.add_argument('-y', '--yoff', type=float, default=0.0, help="Vertical o
 #ArgParser.add_argument('-S', '--scale',type=float, default=1.0, help="Scale the design.")
 ArgParser.add_argument('-p', '--pressure', type=int, default=3, help="Pressure value [1..18]")
 ArgParser.add_argument('-s', '--speed', type=int, default=10, help="Speed value [1..10]")
-ArgParser.add_argument('-a', '--advance-origin', action='store_true', help="Set the origin below the design. Default: return home.")
 ArgParser.add_argument('-W', '--width', type=float, default=210.0, help="Media width [mm].")
 ArgParser.add_argument('-H', '--height', type=float, default=297.0, help="Media height [mm].")
 ArgParser.add_argument('dumpfile')
 args = ArgParser.parse_args()
 
 dev = SilhouetteCameo()
-dev.setup(speed=args.speed, pressure=args.pressure, pen=args.pen, return_home=(not args.advance_origin))
+dev.setup(speed=args.speed, pressure=args.pressure, pen=args.pen)
 
 # print args
 
 dumpdata=dev.load_dumpfile(args.dumpfile)
 
 dev.wait_for_ready()
-meta = dev.plot(pathlist=[], bboxonly=args.bbox, no_trailer=True,
+meta = dev.plot(pathlist=[], bboxonly=args.bbox,
                 mediawidth=args.width, mediaheight=args.height, offset=(args.xoff,args.yoff))
 print(meta)
 
