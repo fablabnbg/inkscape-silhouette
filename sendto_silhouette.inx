@@ -74,6 +74,8 @@
         <item value="below">Below Cut-Out</item>
       </param>
       <param name="endposition_help" type="description">Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</param>
+      <param name="end_offset" type="float" min="-3000.0" max="3000.0" _gui-text="End Position Offset [mm]:">0.0</param>
+      <param name="end_off_help" type="description">Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</param>
     </page>
 
     <page name='reg' _gui-text='Regmarks'>
