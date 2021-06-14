@@ -414,6 +414,9 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("-e", "--endposition", "--end-postition",
                 "--end_position", choices=("start", "below"),
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
+        self.arg_parser.add_argument("--end_offset", type = float,
+                dest = "end_offset", default = 0.0,
+                help="Adjustment to the position after cutting")
         self.arg_parser.add_argument("--logfile",
                 dest = "logfile", default = None,
                 help="Name of file in which to save log messages.")
@@ -1326,6 +1329,7 @@ class SendtoSilhouette(inkex.Effect):
             offset=(self.options.x_off, self.options.y_off),
             bboxonly=self.options.bboxonly,
             endposition=self.options.endposition,
+            end_paper_offset=self.options.end_offset,
             regmark=self.options.regmark,
             regsearch=self.options.regsearch,
             regwidth=self.options.regwidth,
