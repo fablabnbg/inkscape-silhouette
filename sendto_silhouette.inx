@@ -104,11 +104,12 @@
         <item value="mintravelfull">Minimized Traveling (fully optimized)</item>
         <item value="mintravelfwd">Minimized Traveling (no reverse)</item>
       </param>
-      <param name="zorder_help" type="description">Z-Order: Leaf cut order as defined in input svg.</param>
-      <param name="mat_free_help" type="description">Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.</param>
-      <param name="mintravel_help" type="description">Minimal Traveling: Find the nearest startpoint to minimize travel movements</param>
-      <param name="mintravelfull_help" type="description">Minimal Traveling (fully optimized): Additionally search startpoints in closed paths</param>
-      <param name="mintravelfwd_help" type="description">Minimal Traveling (no reverse): Like fully optimized but respect original orientations of paths</param>
+      <param name="strategy_help" type="description" xml:space="preserve">
+Z-Order: Leaf cut order as defined in input svg.
+Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.
+Minimal Traveling: Find the nearest startpoint to minimize travel movements
+Minimal Traveling (fully optimized): Additionally search startpoints in closed paths
+Minimal Traveling (no reverse): Like fully optimized but respect original orientations of paths</param>
       <param name="orient_paths" type="enum" _gui-text="Pre-orient paths:">
 	<item value="natural">As in SVG</item>
 	<item value="desy">Descending Y (pull through tool)</item>

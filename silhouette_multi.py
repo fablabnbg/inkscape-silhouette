@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-
-from __future__ import print_function
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -10,6 +7,7 @@ import pickle
 import subprocess
 from threading import Thread
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 from collections import defaultdict, OrderedDict
 import xmltodict
 import traceback
@@ -17,6 +15,7 @@ from io import StringIO
 import wx
 from wx.lib.scrolledpanel import ScrolledPanel
 from wx.lib.agw import ultimatelistctrl as ulc
+from wx.lib.agw import genericmessagedialog as gmd
 from wx.lib.embeddedimage import PyEmbeddedImage
 from collections import defaultdict
 import inkex
@@ -35,7 +34,19 @@ small_down_arrow = PyEmbeddedImage(
     "REFUOI1jZGRiZqAEMFGke9QABgYGBgYWdIH///7+J6SJkYmZEacLkCUJacZqAD5DsInTLhDR"
     "bcPlKrwugGnCFy6Mo3mBAQChDgRlP4RC7wAAAABJRU5ErkJggg==")
 
+multilogfile = None
 
+def emit_to_log(msg, whether=True):
+    if whether:
+        print(msg, file=multilogfile)
+        multilogfile.flush()
+
+def show_log_as_dialog(parent=None):
+    logname = multilogfile.name
+    multilogfile.close()
+    logtext = Path(logname).read_text().strip()
+    if logtext:
+        info_dialog(parent, logtext, caption='Silhouette Multi Log')
 
 def presets_path():
     try:
@@ -51,16 +62,16 @@ def presets_path():
 
 def load_presets():
     try:
-        with open(presets_path(), 'r') as presets:
+        with open(presets_path(), 'rb') as presets:
             presets = pickle.load(presets)
             return presets
     except:
         return {}
 
 
-def save_presets(presets):
-    #print("saving presets", presets)
-    with open(presets_path(), 'w') as presets_file:
+def save_presets(presets, write_log=False):
+    emit_to_log("saving presets: " + str(presets), write_log)
+    with open(presets_path(), 'wb') as presets_file:
         pickle.dump(presets, presets_file)
 
 
@@ -68,10 +79,10 @@ def load_preset(name):
     return load_presets().get(name)
 
 
-def save_preset(name, data):
+def save_preset(name, data, write_log=False):
     presets = load_presets()
     presets[name] = data
-    save_presets(presets)
+    save_presets(presets, write_log)
 
 
 def delete_preset(name):
@@ -87,8 +98,17 @@ def confirm_dialog(parent, question, caption = 'Silhouette Multiple Actions'):
     return result
 
 
-def info_dialog(parent, message, caption = 'Silhouette Multiple Actions'):
-    dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.ICON_INFORMATION)
+def info_dialog(parent, message, extended = '',
+                caption = 'Silhouette Multiple Actions',):
+    dlg = gmd.GenericMessageDialog(
+        parent, message, caption, wrap=1000,
+        agwStyle=wx.OK | wx.ICON_INFORMATION | gmd.GMD_USE_AQUABUTTONS)
+    # You might wonder about the choice of "aquabuttons" above. It's the
+    # only option that led to the buttons being visible on the system
+    # this was first tested on.
+    dlg.SetLayoutAdaptationMode(wx.DIALOG_ADAPTATION_MODE_ENABLED)
+    if extended:
+        dlg.SetExtendedMessage(extended)
     dlg.ShowModal()
     dlg.Destroy()
 
@@ -107,14 +127,15 @@ class ParamsNotebook(wx.Notebook):
         self.add_tabs()
 
     def load_inx(self):
-        with open('sendto_silhouette.inx') as inx_file:
+        with open('sendto_silhouette.inx', 'rb') as inx_file:
             self.inx = xmltodict.parse(inx_file, force_list=('param',))
 
     def create_tabs(self):
         self.notebook = self.inx['inkscape-extension']['param'][0]
 
         if self.notebook['@type'] != 'notebook':
-            print("unexpected INX format", file=sys.stderr)
+            emit_to_log("unexpected INX format: '"
+                        + self.notebook['@type'] +"'")
             return
 
         self.tabs = []
@@ -167,8 +188,6 @@ class ParamsTab(ScrolledPanel):
         self.defaults = {}
 
         self.settings_grid = wx.GridBagSizer(hgap=0, vgap=0)
-        self.settings_grid.AddGrowableCol(0, 1)
-        self.settings_grid.SetFlexibleDirection(wx.HORIZONTAL)
 
         self.__set_properties()
         self.__do_layout()
@@ -223,32 +242,50 @@ class ParamsTab(ScrolledPanel):
         for row, param in enumerate(self.params):
             param_type = param['@type']
             param_name = param['@name']
+            display_text = param.get('@_gui-text', '')
+            text_span = (1, 2)
+            text_pos = (row, 0)
+            text_flag = wx.EXPAND|wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL
+            input = None
+            ipos = (row, 2)
+            iflag = wx.ALIGN_CENTER_VERTICAL
             if param_type == 'description':
-                self.settings_grid.Add(wx.StaticText(self, label=param.get('#text', '')),
-                                       pos=(row, 0), span=(1, 2), flag=wx.EXPAND|wx.LEFT|wx.ALIGN_TOP, border=10)
-            else:
-                self.settings_grid.Add(wx.StaticText(self, label=param.get('@_gui-text', '')),
-                                       pos=(row, 0), flag=wx.EXPAND|wx.TOP|wx.ALIGN_TOP, border=5)
+                display_text = param.get('#text', '')
+                text_span = (1,3)
+                text_flag |= wx.BOTTOM
+            elif param_type == 'boolean':
+                input = wx.CheckBox(self)
+                text_pos = (row, 1)
+                ipos = (row,0)
+            elif param_type == 'float':
+                input = wx.SpinCtrlDouble(
+                    self, wx.ID_ANY, min=float(param.get('@min', 0.0)),
+                    max=float(param.get('@max', 2.0**32)), inc=0.1,
+                    value=param.get('#text', ''))
+            elif param_type == 'int':
+                input = wx.SpinCtrl(
+                    self, wx.ID_ANY, min=int(param.get('@min', 0)),
+                    max=int(param.get('@max', 2**32)),
+                    value=param.get('#text', ''))
+            elif param_type == 'enum':
+                choices = OrderedDict((item['#text'], item['@value']) for item in param['item'])
+                self.choices_by_label[param_name] = choices
+                self.choices_by_value[param_name] = { v: k for k, v in choices.items() }
+                choice_list = list(choices.keys())
+                input = wx.Choice(self, wx.ID_ANY, choices=choice_list,
+                                  style=wx.LB_SINGLE)
+                input.SetStringSelection(choice_list[0])
+            elif param_type == 'string':
+                input = wx.TextCtrl(self)
+                iflag |= wx.EXPAND
 
-                if param_type == 'boolean':
-                    input = wx.CheckBox(self)
-                elif param_type == 'float':
-                    input = wx.SpinCtrlDouble(self, wx.ID_ANY, min=float(param.get('@min', 0.0)), max=float(param.get('@max', 2.0**32)), inc=0.1, value=param.get('#text', ''))
-                elif param_type == 'int':
-                    input = wx.SpinCtrl(self, wx.ID_ANY, min=int(param.get('@min', 0)), max=int(param.get('@max', 2**32)), value=param.get('#text', ''))
-                elif param_type == 'enum':
-                    choices = OrderedDict((item['#text'], item['@value']) for item in param['item'])
-                    self.choices_by_label[param_name] = choices
-                    self.choices_by_value[param_name] = { v: k for k, v in choices.items() }
-                    input = wx.Choice(self, wx.ID_ANY, choices=choices.keys(), style=wx.LB_SINGLE)
-                    input.SetStringSelection(choices.keys()[0])
-                else:
-                    # not sure what else to do here...
-                    continue
-
+            textbox = wx.StaticText(self, label=display_text)
+            textbox.Wrap(800)
+            self.settings_grid.Add(textbox, pos=text_pos, span=text_span,
+                                   border=10, flag=text_flag)
+            if input:
                 self.param_inputs[param_name] = input
-
-                self.settings_grid.Add(input, pos=(row, 1), flag=wx.ALIGN_BOTTOM|wx.TOP, border=5)
+                self.settings_grid.Add(input, pos=ipos, border=5, flag=iflag)
 
         self.defaults = self.get_values()
 
@@ -297,13 +334,17 @@ class SilhouetteMultiFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.close, self.cancel_button)
 
         self._load_preset('__LAST__', silent=True)
-
         self.__set_properties()
         self.__do_layout()
         # end wxGlade
 
-    def close(self, event):
+    def wrapup(self):
+        if self.options.unblock_inkscape:
+            show_log_as_dialog(self)
         self.Close()
+
+    def close(self, event):
+        self.wrapup()
 
     def load_preset(self, event):
         preset_name = self.get_preset_name()
@@ -321,7 +362,7 @@ class SilhouetteMultiFrame(wx.Frame):
             info_dialog(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
 
         self.save_color_settings()
-        save_preset(preset_name, self.get_preset_data())
+        save_preset(preset_name, self.get_preset_data(), self.options.verbose)
         self.update_preset_list()
 
         event.Skip()
@@ -367,7 +408,8 @@ class SilhouetteMultiFrame(wx.Frame):
     def _load_preset(self, preset_name, silent=False):
         preset = load_preset(preset_name)
 
-        #print(preset, file=sys.stderr)
+        emit_to_log("Loaded preset " + preset_name + ": "
+                    + str(preset), not silent)
 
         if not preset:
             return
@@ -406,9 +448,13 @@ class SilhouetteMultiFrame(wx.Frame):
 
         message = []
 
-        #print(reassigned, extra_colors, file=sys.stderr)
-        #print(self.colors, file=sys.stderr)
-        #print(self.color_settings, file=sys.stderr)
+        emit_to_log("Reassigned " + str(reassigned) + " colors.",
+                    self.options.verbose)
+        emit_to_log("Colors remaining: " + str(extra_colors),
+                    self.options.verbose)
+        emit_to_log("Final colors: " + str(self.colors), self.options.verbose)
+        emit_to_log("Color settings: " + str(self.color_settings),
+                    self.options.verbose)
 
         if reassigned:
             message.append("%d colors were reassigned." % reassigned)
@@ -509,7 +555,7 @@ class SilhouetteMultiFrame(wx.Frame):
             self.notebook.set_defaults()
 
     def save_color_settings(self):
-        #print("save:", self.selected)
+        emit_to_log("save: " + str(self.selected), self.options.verbose)
 
         if self.selected is None:
             return
@@ -518,7 +564,7 @@ class SilhouetteMultiFrame(wx.Frame):
         settings = self.notebook.get_values()
         self.color_settings[color] = settings
 
-        #print("settings:", settings)
+        emit_to_log("settings: " + str(settings), self.options.verbose)
 
     def item_checked(self, event):
         item = event.m_itemIndex
@@ -553,8 +599,14 @@ class SilhouetteMultiFrame(wx.Frame):
     def refresh_actions(self):
         for i, color in enumerate(self.colors):
             item = self.actions.GetItem(i, 1)
-            item.SetMask(ulc.ULC_MASK_BACKCOLOUR)
-            item.SetBackgroundColour(wx.Colour(*color))
+            item.SetMask(ulc.ULC_MASK_BACKCOLOUR|ulc.ULC_MASK_TEXT)
+            wxcol = wx.Colour(255,255,255)
+            if color != 'colorless':
+                item.SetText(' ')
+                wxcol = wx.Colour(*color)
+            else:
+                item.SetText('<no color>')
+            item.SetBackgroundColour(wxcol)
             self.actions.SetItem(item)
 
             item = self.actions.GetItem(i, 2)
@@ -596,7 +648,7 @@ class SilhouetteMultiFrame(wx.Frame):
 
         sizer_6 = wx.BoxSizer(wx.VERTICAL)
         sizer_6.Add(self.run_button, 0, flag=wx.ALIGN_RIGHT|wx.BOTTOM, border=10)
-        sizer_6.Add(self.cancel_button, 0, flag=wx.ALIGN_RIGHT|wx.EXPAND)
+        sizer_6.Add(self.cancel_button, 0, flag=wx.ALIGN_RIGHT)
         sizer_2.Add(sizer_6, 0, flag=wx.ALIGN_CENTER_VERTICAL|wx.LEFT, border=30)
 
         sizer_1.Add(sizer_2, 0, flag=wx.EXPAND|wx.ALL, border=10)
@@ -612,32 +664,65 @@ class SilhouetteMulti(inkex.Effect):
     def __init__(self, *args, **kwargs):
         inkex.Effect.__init__(self, *args, **kwargs)
 
-        self.OptionParser.add_option("-d", "--dry_run", type='inkbool', default=False)
+        self.saved_argv = list(sys.argv)
+
+        # Patch methods as in sendto_silhouette.py
+        # for inkscape 0.9x compatibility:
+        if not hasattr(self, "run"): self.run = self.affect
+        if not hasattr(self, "arg_parser"):
+            inkex.Boolean = "inkbool"
+            def add_option_wrapper(*arg, **args):
+                args["action"] = "store"
+                if hasattr(args, "type"):
+                    args["type"] = re.split("'", str(args["type"]))[1]
+                self.OptionParser.add_option(*arg, **args)
+
+            self.arg_parser = lambda: None
+            self.arg_parser.add_argument = add_option_wrapper
+        if not hasattr(self, "svg"):
+            self.svg = self # This way, self.svg.selected just turns into
+                            # self.selected
+
+        self.arg_parser.add_argument(
+            "-d", "--dry_run", dest="dry_run", type=inkex.Boolean,
+            default=False,
+            help="Display generated commands but do not run them")
+        self.arg_parser.add_argument(
+            "-v", "--verbose", dest="verbose", type=inkex.Boolean,
+            default=False,
+            help="Enable verbose logging")
+        self.arg_parser.add_argument(
+            "-b", "--block", dest="block_inkscape", type=inkex.Boolean,
+            default=False,
+            help="Make inkscape wait until silhouette_multi is done")
 
     def get_style(self, element):
-        if element.get('style') is not None:
-            return simplestyle.parseStyle(element.get('style'))
-        else:
-            return {}
-
-        return style
+        element_style = element.get('style')
+        if element_style is not None:
+            if hasattr(inkex, 'Style') and hasattr(inkex.Style, 'parse_str'):
+                return dict(inkex.Style.parse_str(element_style))     # >= 1.0
+            else:
+                return simplestyle.parseStyle(element_style)  # inkscape < 1.0
+        return {}
 
     def get_color(self, element):
-        if element.tag == inkex.addNS( 'g', 'svg'):
-            # Sometimes Inkscape sets a stroke style on a group, which seems to
-            # have no visual effect.  If we didn't ignore those, we'd cut those
-            # objects twice.
+        if (element.tag == inkex.addNS( 'g', 'svg')
+            or element.tag == inkex.addNS( 'svg', 'svg' )):
+            # Make sure we don't report a color on a group or on the svg as a whole
+            # (to avoid duplicate cutting)
             return None
 
-        color = self.get_style(element).get('stroke', 'none')
+        color = self.get_style(element).get('stroke', 'colorless')
 
-        if color == 'none':
-            color = self.get_style(element).get('fill', 'none')
+        if color == 'colorless':
+            color = self.get_style(element).get('fill', 'colorless')
 
-        if color != 'none':
-            return simplestyle.parseColor(color)
-        else:
-            return None
+        if color != 'colorless':
+            if hasattr(inkex, 'Color'):
+                color = inkex.Color(color).to_rgb()   # inkscape >= 1.0
+            else:
+                color = simplestyle.parseColor(color)  # inkscape < 1.0
+        return color
 
     def load_selected_objects(self):
         self.selected_objects = []
@@ -651,7 +736,7 @@ class SilhouetteMulti(inkex.Effect):
             if visibility == 'inherit':
                 visibility = parent_visibility
 
-            if element.get('id') in self.selected:
+            if element.get('id') in self.svg.selected:
                 selected = True
 
             if selected and visibility not in ('hidden', 'collapse'):
@@ -661,7 +746,7 @@ class SilhouetteMulti(inkex.Effect):
                 traverse_element(child, selected, visibility)
 
         # if they haven't selected specific objects, then process all objects
-        if self.selected:
+        if self.svg.selected:
             select_all = False
         else:
             select_all = True
@@ -678,16 +763,28 @@ class SilhouetteMulti(inkex.Effect):
                 self.objects_by_color[color].append(obj)
 
     def effect(self):
+        emit_to_log("silhouette_multi.py was called via: "
+                    + str(self.saved_argv), self.options.verbose)
+        setattr(self.options, 'unblock_inkscape',
+                not self.options.block_inkscape)
         app = wx.App()
         self.split_objects_by_color()
-        self.frame = SilhouetteMultiFrame(colors=self.objects_by_color.keys(), run_callback=self.run, options=self.options)
+        emit_to_log("Color keys are " + str(self.objects_by_color.keys()),
+                    self.options.verbose)
+        self.frame = SilhouetteMultiFrame(
+            colors=list(self.objects_by_color.keys()),
+            run_callback=self.run_multi, options=self.options)
         self.frame.Show()
         app.MainLoop()
 
     def save_copy(self):
-        self.svg_file = NamedTemporaryFile(suffix='.svg', prefix='silhouette-multiple-actions')
-        self.document.write(self.svg_file)
-        self.svg_file.flush()
+        self.svg_copy_file = NamedTemporaryFile(
+            suffix='.svg', prefix='silhouette-multiple-actions',
+            delete=False) # this way the temp file will remain if error
+        self.svg_copy_file_name = self.svg_copy_file.name
+        self.document.write(self.svg_copy_file)
+        self.svg_copy_file.flush()
+        self.svg_copy_file.close()
 
     def format_args(self, args):
         if isinstance(args, dict):
@@ -702,34 +799,41 @@ class SilhouetteMulti(inkex.Effect):
         commands = []
 
         for color, settings in actions:
-            command = "python sendto_silhouette.py"
+            command = sys.executable
+            command += " sendto_silhouette.py"
             command += " " + self.format_args(settings)
             command += " " + self.id_args(self.objects_by_color[color])
-            command += " " + self.svg_file.name
+            command += " " + self.svg_copy_file_name
 
             commands.append(command)
 
         return commands
 
-    def run(self, actions):
-        self.frame.Close()
-        restore_stderr()
-
+    def run_multi(self, actions):
         self.save_copy()
 
         commands = self.format_commands(actions)
 
         if self.options.dry_run:
-            print("\n\n".join(commands), file=sys.stderr)
-        else:
+            emit_to_log("\n\n".join(commands))
+
+        self.frame.wrapup()
+
+        if not self.options.dry_run:
             self.run_commands_with_dialog(commands)
+
+        os.remove(self.svg_copy_file_name)
 
     def run_commands_with_dialog(self, commands):
         for i, command in enumerate(commands):
             if not self.run_command_with_dialog(command, step=i + 1, total=len(commands)):
-                info_dialog(None, "Action failed.")
-                print("The command that failed:", file=sys.stderr)
-                print(command, file=sys.stderr)
+                # At this point, we have already displayed the log if we are
+                # going to. So if we want the user to see the failed command
+                # we just have to go ahead and display it.
+                # But we will use the dialog's extended message to reduce
+                # visual clutter
+                info_dialog(None, "Action failed.",
+                            extended = "Command: '" + command + "'")
 
                 sys.exit(1)
 
@@ -769,41 +873,46 @@ class SilhouetteMulti(inkex.Effect):
         wx.Yield()
         return process.returncode == 0
 
-
-def save_stderr():
-    # GTK likes to spam stderr, which inkscape will show in a dialog.
-    null = open('/dev/null', 'w')
-    sys.stderr_dup = os.dup(sys.stderr.fileno())
-    os.dup2(null.fileno(), 2)
-    sys.stderr_backup = sys.stderr
-    sys.stderr = StringIO()
+    # end of class MyFrame
 
 
-def restore_stderr():
-    if hasattr(sys, "stderr_backup"):
-        os.dup2(sys.stderr_dup, 2)
-        sys.stderr_backup.write(sys.stderr.getvalue())
-        sys.stderr = sys.stderr_backup
-
-        del sys.stderr_backup
-
-
-# end of class MyFrame
 if __name__ == "__main__":
 
-    pid = os.fork()
-    if pid == 0:
-        # Forking and closing stdout and stderr allows inkscape to continue on
+    unblock_inkscape = True
+    if '--block=true' in sys.argv:
+        unblock_inkscape = False
+
+    pid = 0
+
+    if unblock_inkscape: pid = os.fork()
+
+    if pid != 0:
+        # We forked and this is the "parent", so just return
+        sys.exit(0)
+
+    # Here we are in the process that will do the actual work:
+
+    if unblock_inkscape:
+        # Closing stdout and stderr allows inkscape to continue on
         # while the silhouette machine is cutting.  This is useful if you're
         # cutting something really big and want to work on another document.
         os.close(1)
         os.close(2)
 
-        try:
-            e = SilhouetteMulti()
-            e.affect()
-        except:
-            traceback.print_exc()
+        multilogfile = NamedTemporaryFile(
+            suffix='.log', prefix='silhouette-multiple-actions',
+            mode='w', delete=False)
+    else:
+        multilogfile = sys.stderr
 
+    try:
+        e = SilhouetteMulti()
+        e.run()
+    except:
+        traceback.print_exc(file=multilogfile)
+        # SilhouetteMultiFrame.wrapup likely never called if there was
+        # an exception, so:
+        if unblock_inkscape:
+            show_log_as_dialog()
 
     sys.exit(0)

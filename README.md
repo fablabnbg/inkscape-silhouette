@@ -37,7 +37,7 @@ Install Inkscape
 Install requirements
 * `sudo apt install python3-usb`
 
-Install inscape-silhouette
+Install inkscape-silhouette
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
 
@@ -55,25 +55,26 @@ Install Inkscape
 Install requirements
 * `sudo apt install python3-usb`
 
-Install inscape-silhouette
+Install inkscape-silhouette
 * https://github.com/fablabnbg/inkscape-silhouette/releases
   Scroll down to Downloads and click on the *.deb file.
 
 ### Other Debian based Linux
 
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Copy the folder `silhouette` and the two files `sendto_silhouette.inx` and
-`sendto_silhouette.py` to `~/.config/inkscape/extensions/` or (if you have permissions) `/usr/share/inkscape/extensions/`
+* Unzip the archive into a directory (which will be called inkscape-silhouette-master by default)
+* In a terminal, change into that directory
+* Execute `make install-local` to install just in your user account, or (if you have permissions) `sudo make install`
+to install for all users
 
-* `sudo apt-get install python3-usb`
-* restart inkscape, check the menu entry "Extensions -> Export -> Send to Silhouette"
+* `sudo apt-get install python3-usb` if you have permissions, otherwise `python3 -m pip install usb`
+* restart inkscape, check that you see new menu entries "Extensions -> Export -> Send to Silhouette"
+and " ... -> Silhouette Multi Action".
 
 
 ### openSUSE
 
-* `~/.config/inkscape/extensions/` or
-* `/usr/share/inkscape/extensions/`
-* and run `sudo zypper in python-usb`
+* Same as Debian-based, except install the usb package with `sudo zypper in python-usb`
 
 ### Arch Linux
 
@@ -81,9 +82,9 @@ Install inscape-silhouette
 sudo pacman -S inkscape python-lxml python-pyusb
 git clone https://github.com/fablabnbg/inkscape-silhouette.git
 cd inkscape-silhouette
-sudo cp sendto_silhouette.* /usr/share/inkscape/extensions/
-sudo cp -R silhouette /usr/share/inkscape/extensions/
 ```
+
+and then either `make install-local` to install just for your user account, or `sudo make install`
 
 ### Mac OS X
 
@@ -99,14 +100,16 @@ sudo cp -R silhouette /usr/share/inkscape/extensions/
 
 ### FreeBSD
 
+Note the recipe here specifies `py37-libusb1`, but that is by now likely out of date. Therefore, you need to choose
+the usb package appropriate to the version of python that runs by default as `python3`.
+
 ```
 sudo pkg install inkscape py37-libusb1
 cd /tmp
 wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip"
 unzip master.zip
-sudo cp -r  inkscape-silhouette-master/silhouette inkscape-silhouette-master/sendto_silhouette.* /usr/local/share/inkscape/extensions
-rm -rf inkscape-silhouette-master/ master.zip
-cd -
+cd inkscape-silhouette-master
+sudo make install   # OR: make install-local  # latter installs only for this user
 ```
 
 ### Windows
@@ -132,7 +135,7 @@ cd -
 #### Silhouette inkscape extension itself
 
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Open the downloaded file and select the following three items: `silhouette`, `sendto_silhouette.inx`, and `sendto_silhouette.py`
+* Open the downloaded file and select the following five items: `silhouette`, `sendto_silhouette.inx`, `sendto_silhouette.py`, `silhouette_multi.inx`, `silhouette_multi.py`
 * Extract them to your `share\inkscape\extensions` directory, e.g. `C:\Program Files\Inkscape\share\inkscape\extensions`
 * Restart inkscape
 
@@ -142,14 +145,17 @@ cd -
 2. Ensure the unit of document width and height is mm or inch, but not px. (File - Document settings - Page - Custom - Unit mm) Otherwise you may observe differences in dimensions at inkscape 0.91/0.92, because default dpi has changed from 90 to 96.
 3. Convert all objects and texts to paths (Path - Convert object to path)
 4. Select the parts you want to plot.
-5. Open Extension (Extensions - Export - Send to Silhouette)
-6. Set your desired plot parameters:
+5. Open the extension. If you want to use the same cut settings for all of the paths in your file, use "Extensions -> Export -> Send to Silhouette." If you want use different cut settings based on the colors of different items in your file, use "Extensions -> Export -> Silhouette Multi Action."
+6. In the case of Multi Action, there is a first screen that is primarily for debugging. Typically you can just leave all of the boxes on this unchecked and click "Apply."
+7. Set your desired plot parameters. There are numerous aspects you can control with the dialog, here are just the core highlights:
   * **X-Offset, Y-Offset**  An additional offset of your drawing from the top left corner. Default is 0/0
   * **Tool Cut/Pen**        Cut mode drews small circles for orientation of the blade, Pen mode draws exactly as given.
   * **Media**               Select a predfined media or set to custom settings.
   * **Speed**               Custom speed of the movements
   * **Pressure**            Custom Pressure on the blade. One unit is said to be 7g force.
-7. Press Apply button to start cut.
+
+  In Multi Action, you can select the color you want settings to apply to and then set all the same parameters, but with potentially different settings for each color. You can also change the order in which the colors are cut, and uncheck the box in the "Perform Action?" column to ignore a color altogether.
+8. To start the cut, in "Send to Silhouette, click the "Apply" button; in "Silhouette Multi" click the "Execute" button.
 
 ## Templates
 * Templates showing the cutting mat on a background layer can be found in `examples/mat_templates`
