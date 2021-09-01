@@ -116,7 +116,21 @@ else:   # linux
     sys.path.append("/usr/share/inkscape/extensions")
 
 # We will use the inkex module with the predefined Effect base class.
+# As of Inkscape 1.1, inkex cannot be loaded if stdout is closed,
+# which it might be if we are coming here via silhouette_multi.
+# This manipulation of sys.stdout should be removed if the issue
+# https://gitlab.com/inkscape/extensions/-/issues/412
+# is resolved in a future version.
+dummy_stdout=False
+if not sys.stdout:
+    sys.stdout=os.fdopen(os.open(os.devnull, os.O_WRONLY|os.O_APPEND), 'w')
+    dummy_stdout=True
+
 import inkex
+
+if dummy_stdout:
+    sys.stdout.close()
+    sys.stdout=None
 
 try:     # inkscape 1.0
     from inkex.paths import Path, CubicSuperPath
@@ -198,7 +212,6 @@ def parseLengthWithUnits(str):
     try:
         v = float(s)
     except:
-        print("parseLengthWithUnits: unknown unit ", s, file=sys.stderr)
         return None, None
 
     return v, u
@@ -287,8 +300,7 @@ class SendtoSilhouette(inkex.Effect):
         try:
             self.tty = open("/dev/tty", "w")
         except:
-            self.tty = open(os.devnull, "w")  # "/dev/null" for POSIX, "nul" for Windows.
-        # print("__init__", file=self.tty)
+            self.tty = None
         self.log = self.tty
 
         if not hasattr(self, "run"):
@@ -435,7 +447,8 @@ class SendtoSilhouette(inkex.Effect):
 
 
     def __del__(self, *args):
-        self.log.close() # will always close tty
+        if self.log:
+            self.log.close() # will always close tty if there is one
 
 
     def version(self):
@@ -446,14 +459,39 @@ class SendtoSilhouette(inkex.Effect):
         return __author__
 
 
+    def report(self, message, level):
+        """ Display `message` to the appropriate output stream(s).
+Each of the following `level` values encompasses all of the later ones:
+    error - display to standard error
+    log   - record in logfile if there is one
+    tty   - write to tty and flush if there is one
+        """
+        if level == 'tty':
+            if self.tty:
+                print(message, file=self.tty)
+                self.tty.flush()
+            return
+        if level == 'log' or level == 'error':
+            if self.log:
+                print(message, file=self.log)
+                # That handles the tty also, because of the tee, but
+                # we have to flush the tty:
+                if self.tty:
+                    self.tty.flush()
+            if level == 'log':
+                return
+        print(message, file=sys.stderr)
+        if level != 'error':
+            # oops accidentally used an invalid level
+            print("  ... WARNING: message issued at invalid level " + level,
+                  file=sys.stderr)
+
     def penUp(self):
-        # print("\r penUp", [(self.fPrevX, self.fPrevY), (self.fX, self.fY)], file=self.tty)
         self.fPrevX = None              # flag that we are up
         self.fPrevY = None
 
 
     def penDown(self):
-        # print("\r penDown", [(self.fPrevX, self.fPrevY), (self.fX, self.fY)], file=self.tty)
         self.paths.append([(self.fX, self.fY)])
         self.fPrevX = self.fX       # flag that we are down
         self.fPrevY = self.fY
@@ -471,8 +509,6 @@ class SendtoSilhouette(inkex.Effect):
             return
         # assuming that penDown() was called before.
         self.paths[-1].append((self.fX, self.fY))
-
-        # print("\r plotLineAndTime((%g, %g)-(%g, %g)) " % (self.fPrevX, self.fPrevY, self.fX, self.fY), file=self.tty)
 
 
     def plotPath(self, path, matTransform):
@@ -944,7 +980,7 @@ class SendtoSilhouette(inkex.Effect):
                 if len(texts):
                     plaintext = "', '".join(texts).encode("latin-1")
                     # encode_("latin-1") prevents 'ordinal not in range(128)' errors.
-                    print("Text ignored: '%s'" % (plaintext), file=self.tty)
+                    self.report("Text ignored: '%s'" % (plaintext), 'log')
                     plaintext = "\n".join(texts)+"\n"
 
                     if "text" not in self.warnings and self.plotCurrentLayer:
@@ -993,8 +1029,10 @@ class SendtoSilhouette(inkex.Effect):
             else:
                 if str(node.tag) not in self.warnings:
                     t = str(node.tag).split("}")
-                    inkex.errormsg(gettext.gettext("Warning: unable to draw <" + str(t[-1]) +
-                            "> object, please convert it to a path first."))
+                    self.report(gettext.gettext(
+                        "Warning: unable to draw <" + str(t[-1])
+                        + "> object, please convert it to a path first."),
+                                'error')
                     self.warnings[str(node.tag)] = 1
                 pass
 
@@ -1006,12 +1044,12 @@ class SendtoSilhouette(inkex.Effect):
         no units (""), units of pixels ("px"), and units of percentage ("%").
         """
         str = self.document.getroot().get(name)
-        # print("getLength.str", str, file=self.tty)
         if str:
             v, u = parseLengthWithUnits(str)
-            # print("parseLengthWithUnits: ", str, u, v, file=self.tty)
             if not v:
                 # Couldn't parse the value
+                self.report("getLength: unknown unit in '" + str + "'",
+                            'error')
                 return None
             elif (u == "") or (u == "px"):
                 return v
@@ -1028,8 +1066,7 @@ class SendtoSilhouette(inkex.Effect):
             elif u == "%":
                 return float(default) * v / 100.0
             else:
-                print("unknown unit ", u, file=sys.stderr)
-                print("unknown unit ", u, file=self.tty)
+                self.report("getLength: Unknown unit: '" + u + "'", 'error')
                 return None
         else:
             # No width specified; assume the default value
@@ -1044,9 +1081,9 @@ class SendtoSilhouette(inkex.Effect):
         """
 
         self.docHeight = self.getLength("height", N_PAGE_HEIGHT)
-        print("7 self.docHeight=", self.docHeight, file=self.tty)
+        self.report("7 self.docHeight= " + str(self.docHeight), 'tty')
         self.docWidth = self.getLength("width", N_PAGE_WIDTH)
-        print("8 self.docWidth=", self.docWidth, file=self.tty)
+        self.report("8 self.docWidth= " + str(self.docWidth), 'tty')
         return all((self.docHeight, self.docWidth))
 
 
@@ -1102,11 +1139,14 @@ class SendtoSilhouette(inkex.Effect):
             buf = ""
             if self.device_buffer_perc > 1.0:
                 buf = " (+%d%%)" % (self.device_buffer_perc+.5)
-            self.tty.write("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5, buf, msg))
-            self.tty.flush()
+            self.report("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5,
+                                         buf, msg),
+                        'tty')
 
         if self.options.logfile:
-            self.log = teeFile(self.tty, open(self.options.logfile, "w"))
+            self.log = open(self.options.logfile, "w")
+            if self.tty:
+                self.log = teeFile(self.tty, self.log)
 
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
@@ -1115,12 +1155,11 @@ class SendtoSilhouette(inkex.Effect):
                                   dry_run=self.options.dry_run,
                                   force_hardware=self.options.force_hardware)
         except Exception as e:
-            print(e, file=self.tty)
-            print(e, file=sys.stderr)
+            self.report(e, 'error')
             return
         state = dev.status()    # hint at loading paper, if not ready.
-        print("status=%s" % (state), file=self.log)
-        print("device version: '%s'" % dev.get_version(), file=self.log)
+        self.report("status=%s" % (state), 'log')
+        self.report("device version: '%s'" % dev.get_version(), 'log')
 
         # Viewbox handling
         self.handleViewBox()
@@ -1206,7 +1245,6 @@ class SendtoSilhouette(inkex.Effect):
                 else:
                     self.paths.append(path)
 
-        # print(self.paths, file=self.tty)
         cut = []
         pointcount = 0
         for mm_path in self.paths:
@@ -1269,15 +1307,16 @@ class SendtoSilhouette(inkex.Effect):
                 if re.search(r"}docname$", tag):
                     docname=svg.get(tag)
 
-            print("Logging ", len(cut), " cut paths containing ", pointcount, " points:", file=self.log)
-            print("# driver version: '%s'" % __version__, file=self.log)
+            self.report("Logging " + str(len(cut)) + " cut paths containing "
+                        + str(pointcount) + " points:", 'log')
+            self.report("# driver version: '%s'" % __version__, 'log')
             if docname:
-                    print("# docname: '%s'" % docname, file=self.log)
-            print(cut, file=self.log)
+                    self.report("# docname: '%s'" % docname, 'log')
+            self.report(cut, 'log')
 
         if self.options.preview:
             if silhouette.read_dump.plotcuts(cut, buttons=True):
-                print("Cut canceled via preview button.", file=sys.stderr)
+                self.report("Cut canceled via preview button.", 'error')
                 return False
 
         if self.options.pressure == 0:
@@ -1317,9 +1356,10 @@ class SendtoSilhouette(inkex.Effect):
                     regoriginy=self.options.regoriginy)
 
             if len(bbox["bbox"].keys()):
-                    print("autocrop left=%.1fmm top=%.1fmm" % (
-                        bbox["bbox"]["llx"]*bbox["unit"],
-                        bbox["bbox"]["ury"]*bbox["unit"]), file=self.log)
+                    self.report(
+                        "autocrop left=%.1fmm top=%.1fmm" % (
+                            bbox["bbox"]["llx"]*bbox["unit"],
+                            bbox["bbox"]["ury"]*bbox["unit"]), 'log')
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
@@ -1337,8 +1377,7 @@ class SendtoSilhouette(inkex.Effect):
             regoriginx=self.options.regoriginx,
             regoriginy=self.options.regoriginy)
         if len(bbox["bbox"].keys()) == 0:
-            print("empty page?", file=self.log)
-            print("empty page?", file=sys.stderr)
+            self.report("empty page?", 'error')
         else:
             write_progress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
                         bbox["bbox"]["llx"]*bbox["unit"],
@@ -1346,7 +1385,7 @@ class SendtoSilhouette(inkex.Effect):
                         bbox["bbox"]["urx"]*bbox["unit"],
                         bbox["bbox"]["lly"]*bbox["unit"],
                         bbox["bbox"]["count"]))
-            print("", file=self.tty)
+            self.report("", 'tty')
             state = dev.status()
             write_duration = time.time() - self.write_start_tstamp
             # we took write_duration seconds for actualy cutting
@@ -1372,7 +1411,7 @@ class SendtoSilhouette(inkex.Effect):
                 state = dev.status()
             self.device_buffer_perc = 0.0
             write_progress(1, 1, dots)
-        print("\nstatus=%s" % (state), file=self.log)
+        self.report("\nstatus=%s" % (state), 'log')
 
 
 if __name__ == "__main__":
@@ -1392,6 +1431,6 @@ if __name__ == "__main__":
         ss = int(time.time()-start+.5)
         mm = int(ss/60)
         ss -= mm*60
-        print(" done. %d min %d sec" % (mm, ss), file=e.log)
+        e.report(" done. %d min %d sec" % (mm, ss), 'log')
 
     sys.exit(0)
