@@ -114,6 +114,14 @@ MEDIA = [
   ( 300, None,   None,None,  "custom", "Custom"),
 ]
 
+CAMEO_MATS = dict(
+  no_mat=('0', False, False),
+  cameo_12x12=('1', 12, 12),
+  cameo_12x24=('2', 24, 12),
+  cameo_plus_15x15=('8', 15, 15),
+  cameo_pro_24x24=('9', 24, 24)
+)
+
 #  robocut/Plotter.h:53 ff
 VENDOR_ID_GRAPHTEC = 0x0b4d
 PRODUCT_ID_CC200_20 = 0x110a
@@ -329,7 +337,7 @@ class SilhouetteCameo:
         (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
 
-        If cmdfile is specified, it is taken as the name of a file in which to
+        If cmdfile is specified, it is taken as a file-like object in which to
         record a transcript of all commands sent to the cutter. If inc_queries is
         True, then that transcript further includes all of the queries sent to
         the cutter (but not the responses read back). (The latter parameter
@@ -349,9 +357,7 @@ class SilhouetteCameo:
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
-    self.commands = None
-    if cmdfile:
-      self.commands = open(cmdfile, "wb")
+    self.commands = cmdfile
     self.inc_queries = inc_queries
     self.dry_run = dry_run
     self.progress_cb = progress_cb
@@ -810,7 +816,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     Parameters
     ----------
-        cuttingmat : {'cameo_12x12', 'cameo_12x24'. None}
+        cuttingmat : any key in CAMEO_MATS or None
             type of the cutting mat
         mediawidth : float
             width of the media
@@ -819,22 +825,22 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """
     if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
       return
-    if cuttingmat == 'cameo_12x12':
-      self.send_command("TG1")
-    elif cuttingmat == 'cameo_12x24':
-      self.send_command("TG2")
-    else:
-      self.send_command("TG0")
+    mat_command = 'TG'
+
+    matparms = CAMEO_MATS.get(cuttingmat, ('0', False, False))
+    self.send_command(mat_command + matparms[0])
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
     self.send_command(["FN0", "TB50,0"])
 
-    if cuttingmat == 'cameo_12x12':
-      self.set_boundary(0, 0, _inch_2_SU(12), _inch_2_SU(12))
-    elif cuttingmat == 'cameo_12x24':
-      self.set_boundary(0, 0, _inch_2_SU(24), _inch_2_SU(12))
+    if matparms[1]:
+      # Note this does _not_ reproduce the \left,bot and Zright,top
+      # commands emitted by Silhouette Studio (see ../Commands.md), although
+      # it's close. Is that OK or are we creating potential (minor) problems?
+      self.set_boundary(
+        0, 0, _inch_2_SU(matparms[1]), _inch_2_SU(matparms[2]))
     else:
       bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
       right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
@@ -856,7 +862,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             range is [1..2]. Defaults to 1.
         pen : bool, optional
             media dependent. Defaults to None.
-        cuttingmat : {'cameo_12x12', 'cameo_12x24'}, optional
+        cuttingmat : Any key in CAMEO_MATS, optional
             setting the cutting mat. Defaults to None.
         sharpencorners : bool, optional
             Defaults to False.

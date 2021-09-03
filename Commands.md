@@ -15,6 +15,178 @@ Resources
  * https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L305-L419
  * https://github.com/Skrupellos/silhouette/blob/master/decode
 
+Command Summary
+---------------
+
+This section summarizes in ASCII order the known and observed commands understood by one or more
+models in the Silhouette Cameo line (along with some Graphtec models not sold under the
+Silhouette brand). The original source for most of these commands is the GPGL reference for the
+CraftRoboPro S, CE5000-60, and CE5000-120 from Graphtec. Ths reference is no longer available
+at the first link above but still accessible via
+
+https://web.archive.org/web/20160801023226/http://ohthehugemanatee.net/uploads/2011/07/GP-GL.pdf
+
+Commands listed in the reference have a (G) in their comments. Others were determined by USB
+capture or similar means. In the specification of the commands, all characters are literal
+(with for example ^C meaning Ctrl-C, i.e. ASCII 03, not the two characters ^ and C)
+except for lower case letter-sequences, brackets/parens that occur after the first character,
+and ellipses (...). Lower-case letter sequences stand for ASCII-encoded numeric values,
+brackets/parens were in the original spec and likely indicate optional elements, athough it's
+not clear if there is a difference between brackets and parens, and ellipses stand for arbitrary
+repetition of prior elements.
+
+Letter sequences starting with r,x,y,z are coordinates and can include decimals; those starting
+with t are angles (theta, in degrees, not sure if decimals are allowed); and the remainder are
+integers, usually nonnegative. The commands omit the trailing Ctrl-C (^C) command terminator.
+
+Also note that in the Graphtec reference, many of the commands include a notation of `[t]` at the
+end; for example the original spec of the Draw command is `Dx1,y1,x2,y2,...xn,yn[t]`. It is not
+clear from the document (at least not to me) what these `[t]` notations mean, but I put it after
+the (G) in comments if it was there, to preserve the information.
+
+<pre>
+Command                              Name                   Comments
+------------------------             -------------------    ----------------------------------------------------
+^[^D                                 Initialize Device
+^[^E                                 Query Status
+^[^K                                 Query Firmware         Not sure how this differs from the FG command below,
+                                         but recent Silhouette Studio with Cameo 4 Pro issues both
+^[^O                                 Query Tool Setup
+!l[,n]                               Speed                  (G)[t]  n is from 1 to 8, and so is probably the pen
+                                         number; l is labeled as being from 1 to 10 or 101 to 160, with the
+                                         comments that for l < 11, V = (Max Speed) x l/10, and for l > 100,
+                                         V = l - 100
+"m,                                  Error Mask             (G)  In "Interface Control" section
+#                                    Read Status Word 3     (G)
+$n,(m,)                              Font                   (G)  Not sure what the parameters mean
+%n,x,y,d,t                           Hatching               (G)[t]  for n from 1 to 3
+%n,ra,rb,ta,tb,d,t                   Hatching                       for n from 11 to 13
+%n,dt,xa,ya,xb,yb,...;,xn,yn         Hatching                       for n from 21 to 23
+&p,q,r,                              Factor                 (G)  ??
+(na,nb,...,nn                        User's Pattern         (G)[t]  Marked as a no-op
+(P[p,]xa,ya,[p,]xb,yb,...;[p,]xn,yn  User's Program Pattern (G)  Purpose unclear; coordinates are deltas
+)a,x,y,ra,rb,ta,tb,tc                Ellipse                (G)  Not clear what a means or why there are three
+                                         angles (possibly two for the limits of the arc and one for the
+                                         rotation of the major axis??)
+* a,f[,n]                            Pen Acceleration&Force (G)[t] n is from 1 to 8, and so is probably the pen
+                                         number; a is labeled as being from 1 to 3; and f from 1 to some value in
+                                         the thirties depending on model. Seems to have been supplanted by TJ and FX
+/x,y,t;,                             Rotate                 (G)  Maybe gives center and angle of rotation of
+                                         coordinate system?
+:                                    Clear                  (G)  In "Interface Control" section
+;                                    Interface Clear        (G)  In "Interface Control" section
+=na,nb                               Term                   (G)  In "Interface Control" section, ??
+>xa,ya,...;xn,yn                     Clipping               (G)[t]  Unclear how coordinates are interpreted
+?                                    Read Offset            (G)  In "Output Coordinates" section
+@                                    Read Status Word 2     (G)
+A                                    Alpha Reset            (G)  ??
+Bl,                                  Line Scale             (G)  Meaning unclear
+BEn                                  <UNKNOWN>              Observed in Cameo 4 Pro capture
+BS sa,sb,sc,sd                       Buffer Size            (G)  Marked as a no-op
+BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]     Bezier Curve           (G)[t]  Not clear what a or [,d] mean
+C                                    Call GIN               (G)  In "Output Coordinates" section, otherwise unclear
+Dxa,ya,xb,yb,...,xn,yn               Draw                   (G)[t]  Cuts from the current position to each
+                                         of the given points in turn
+DPra,ta,tb,tb,...,rn,tn              Draw Polar             (G)[t]  Like Draw but with polar coordinates
+Exa,ya,xb,yb,...,xn,yn               Relative Draw          (G)[t]  Coordinates are deltas instead of absolute
+                                         positions; not clear if xb,yb is relative to the result of displacing
+                                         by xa,ya, or from the position at the commencement of the command
+EPr,t                                Relative Draw Polar    (G)[t]
+Fl                                   Chart Feed             (G)[t]  ??
+FA                                   Calibration Query      Exact semantics/responses unclear; see silhouette/graphtec.py
+FBrc,rr                              Set Motion Scaling     rc and rr scale carriage and roller movements by basis points
+                                         (see examples below); used only for calibration, as effects are permanent
+FCp,q[,n]                            Cutter Offset          (G)[t]  Not clear what p,q mean, but Silhouette Studio
+                                         definitely emits this command, see below for some apparent p-values;
+                                         silhouette/Graphtec.py says p and q are millimeter offsets;
+                                         n is apparently the pen
+FDt                                  Blade Rotation Control (G)[t]  Don't think any Silhouette models can do this
+FEl[,n]                              Lift Control           l=1 lift, l=0 unlift, n is the pen
+FFs,e,n                              Sharpen Corners        s=start, e=end (0 resets?), n is the pen
+FG                                   Query Firmware Version
+FMn                                  <UNKNOWN>              n can be 0 or 1; Silhouette Studio generally seems to emit an
+                                         FM1, but silhouette/Graphtec.py does not
+FNn                                  Set Orientation        n=0 portrait, n=1 landscape
+FOn                                  Feed                   n is the distance to feed
+FQ0                                  Speed Query            Maybe?
+FQ2                                  Offset Query           Maybe?
+FQ5                                  Regmark Query
+FUh[,w]                              Set Page Dimensions    silhouette/Graphtec.py says only needed for trackenhancing
+FWn                                  Set Media              n from 100-138 or 300
+FXn                                  Set Downward Force     n from 1 to something in thirties depending on model
+FYn                                  Track Enhance Control  comments/examples below mean n=0 is on, n=1 off, oddly enough
+G                                    GIN                    (G)  In "Output Coordinates" section, otherwise unclear
+H                                    Home                   (G)
+Ip,                                  Alpha Italic           (G)  Presumably makes text drawn with Print italic,
+                                         but unclear how p is interpreted
+Jn,(m)                               New Pen                (G)  n is labeled as running from 1 to 8, and is
+                                         presumably the pen/tool number; not clear what m is
+Kca,cb,...,cn                        Kana(Greek)            (G)[t] In "Character and Symbol" section, so perhaps
+                                         draws/cuts the given Greek or special characters (unclear how
+                                         they are specified)
+Lp,                                  Line Type              (G)  Meaning of p unclear; Silhouette Studio generally emits L0
+LPn                                  Label Position         (G)[t]  Meaning of n unclear
+Mx,y                                 Move                   (G)  Moves the head without cutting
+MPr,t                                Move Polar             (G)[t]
+Nn,                                  Mark                   (G)  In "Character and Symbol", so perhaps draws
+                                         the nth point marker (like a small dot, square, triangle, etc)
+Ox,y                                 Relative Move          (G)  Coordinates are deltas
+OPr,t                                Relative Move Polar    (G)[t]
+Pca,cb,...,cn                        Print                  (G)[t] In "Character and Symbol", so perhaps
+                                         draws/cuts the given characters (given by ASCII values? unclear)
+Ql(k,)                               Alpha Space            (G)  ??
+Rt,                                  Alpha Rotate           (G)  Presumably rotates text drawn by Print
+RC c,xa,ya,[P,],xb,yb,[P1,]...xn,yn  Replot Character       (G)[t]  ??
+RPt,za,zb                            Radius Plot            (G)  Unclear what this does
+Sn,(m,)                              Alpha Scale            (G)  Presumably sets the size letters are drawn, but
+                                         the meaning of n and m are unclear
+SOn                                  Set Origin             (G)  Apparently sets the current location to be the
+                                         coordinate system origin going forward; unclear what n means
+SPc                                  Select Point Mark      (G)[t]  Unclear what this does
+T n                                  Buzzer                 (G)  Unclear what n means
+TB50,n                               Set Orientation        n=0 portrait, n=1 landscape; seems redundant with FN, but
+                                         Silhouette Studio issues both, so we do too; but judging from the following
+                                         commands, maybe has to do with regmarks orientation
+TB23,h,w                             Manual Regmark         Unclear why this and TB51/TB53 both have dimensions
+TB51,l                               Set Regmark Length
+TB52,n                               Set Regmark Type       n=0 is Original,SD, n=2 is Cameo,Portrait
+TB53,w                               Set Regmark Width
+TB55,n                               Regmark <Unknown>      Something to do with Regmarks; see silhouette/Graphtec.py
+TB99                                 Use Regmarks           Apparently, anyway
+TB70                                 Cut Calibration Cross
+TB71                                 Calibration Query      Exact semantics/responses unclear, see silhouette/Graphtec.py
+TB72,rv,rh                           Set Regmark Offset     Only for calibration, effect is permanent
+TB123,h,w,u,l                        Automatic Regmark      height, width, upper (i.e. top dimension), left
+TC                                   <Unknown> Query
+TFd,n                                Set Tool Depth         For Autoblade; d is depth, n is tool (generally must be 1)
+TGn                                  Set Cutting Mat        n values: 0 - None, 1 - Cameo 12x12, 2 - Cameo 12x24
+                                         8 - Cameo 15x15, 9 - Cameo 24x24 (must be others)
+TI                                   Query Name
+TJa                                  Set Acceleration       Seems to have supplanted *
+TO                                   <UNKNOWN> Query        Observed in connecting to Silhouette Cameo 4 Pro
+TT                                   Home Cutter            Earlier models and/or versions of Silhouette Studio
+U                                    Read Upper Right       (G)
+V                                    Read Status Word 1     (G)
+Wx,y,ra,rb,ta,tb[,d]                 Circle                 (G)[t]  Unclear why there are two radii or what the
+                                         angles are for (maybe to draw an arc rather than a full circle?);
+                                         unclear what the [,d] part is
+WPxa,ya,xb,yb,xc,yc[,d]              3-Point Circle         (G)[t]  Unclear what the [,d] part is
+Xp,q,r[,n1,n2]                       Axis                   (G)[t]  Presumably draws axes but parameters unclear
+Ya,xa,ya,xb,yb,...;xn,yn             Curve                  (G)[t]  Unclear what the first parameter a means, or
+                                         what precisely this does
+Zx,y,                                Write Upper Right      (G)  Apparently sets the coordinate of the upper right
+                                         of the cut area
+[                                    Read Lower Left        (G)
+\x,y,                                Write Lower Left       (G)  Apparently sets the coordinate of the lower left
+                                         of the cut area
+]ra,rb,ta,tb[,d]                     Relative Circle        (G)[t]  Presumably like Circle but centered at the
+                                         current location; still unclear why two radii, or what [,d] is about
+^x,y,                                Offset                 (G)  Maybe adds or subtracts from all following coords?
+^Px,y[,t[f]]                         Offset Polar           (G)[t]  This is a literal caret and P, parameters unclear
+_a,xa,ya,xb,yb,...xn,yn              Relative Curve         (G)[t]  Presumably like Curve, but with deltas rather
+                                         than absolute commands; same other comments as for Curve
+
+
 Typical sequence
 ----------------
 
@@ -256,3 +428,33 @@ FX5!10FC18FE0,0FF0,0,0L0\0,0M0,0FN0TB50,0
 
 ---> FY0 track enhancing
 ---> FU5440 usable length (rollers not to end of page)
+
+Cameo 4 Pro
+-----------
+Captured on Windows 10 using USBpcap running Silhouette Studio 4.4.476ss on 2021 Sep 2
+
+Multiple commands on one line separated by spaces (in place of ^C, command terminator)
+were sent in a single packet. The first several commands (up to TG9) were all various
+queries; there were also multiple ^[^E status queries and ^[^O tool queries throughout
+which have been suppressed in the transcripts below. The BE command appears entirely new
+and I have no idea what function it served. Note there is no D command, yet one slit was
+cut; I am confused about that.
+
+with Cameo Pro 24x24 mat:
+
+FG
+TI
+TO
+TB71
+FA
+^[^K
+TG9 FN0 TB50,0 FM1 \30,30 Z12162,12162
+J1 FX15,1 TJ0 !10,1 FC0,1,1
+FE0,1 FF1,0,1 FF1,1,1 FX15,1 TJ3
+FC18,1,1
+M301,356 BE2
+L0 \0,0 M0,0 J0 FN0 TB50,0
+
+with Cameo Plus 15x15 mat, all was the same except the 7th line was replaced with:
+
+TG8 FN0 TB50,0 FM1 \30,9 Z7590,7320
