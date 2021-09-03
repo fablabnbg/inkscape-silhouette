@@ -12,6 +12,8 @@
       <param name="cuttingmat" type="enum" _gui-text="Cutting Mat:">
         <item value="cameo_12x12">Cameo 12x12</item>
         <item value="cameo_12x24">Cameo 12x24</item>
+        <item value="cameo_plus_15x15">Cameo Plus 15x15</item>
+        <item value="cameo_pro_24x24">Cameo Pro 24x24</item>
         <item value="no_mat">None</item>
       </param>
       <param name="toolholder" type="enum" _gui-text="Tool Holder:">
@@ -128,6 +130,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <param name="log_paths" type="boolean" _gui-text="Include final cut paths in log (for debugging)">false</param>
       <param name="cmdfile" type="string" _gui-text="Transcribe cutter commands to file:"></param>
       <param name="inc_queries" type="boolean" _gui-text="Include cutter queries in command transcript">false</param>
+      <param name="append_logs" type="boolean" _gui-text="Append to log/dump files rather than overwriting">false</param>
       <param name="dry_run" type="boolean" _gui-text="Dry Run: do not send commands to device">false</param>
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="enum" _gui-text="Override cutter model to:">

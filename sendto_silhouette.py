@@ -155,7 +155,7 @@ try:
 except:
     inkex.localize()    # inkscape 0.9x
 
-from silhouette.Graphtec import SilhouetteCameo
+from silhouette.Graphtec import SilhouetteCameo, CAMEO_MATS
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import splitPath
 import silhouette.StrategyMinTraveling
@@ -335,14 +335,17 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "bladediameter", type = float, default = 0.9,
                 help="[0..2.3] diameter of the used blade [mm], default = 0.9")
         self.arg_parser.add_argument("-C", "--cuttingmat",
-                choices=("cameo_12x12", "cameo_12x24", "no_mat"), dest = "cuttingmat", default = "cameo_12x12",
-                help="Use cutting mat")
+                choices=list(CAMEO_MATS.keys()), dest = "cuttingmat",
+                default = "cameo_12x12", help="Use cutting mat")
         self.arg_parser.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
         self.arg_parser.add_argument("--log_paths",
                 dest = "dump_paths", type = inkex.Boolean, default = False,
                 help="Include final cut paths in log")
+        self.arg_parser.add_argument("--append_logs",
+                dest = "append_logs", type = inkex.Boolean, default = False,
+                help="Append to log and dump files rather than overwriting")
         self.arg_parser.add_argument("--dry_run",
                 dest = "dry_run", type = inkex.Boolean, default = False,
                 help="Do not send commands to device (queries allowed)")
@@ -1144,13 +1147,19 @@ Each of the following `level` values encompasses all of the later ones:
                         'tty')
 
         if self.options.logfile:
-            self.log = open(self.options.logfile, "w")
+            mode = "a" if self.options.append_logs else "w"
+            self.log = open(self.options.logfile, mode)
             if self.tty:
                 self.log = teeFile(self.tty, self.log)
 
+        command_file = None
+        if self.options.cmdfile:
+            mode = "ab" if self.options.append_logs else "wb"
+            command_file = open(self.options.cmdfile, mode)
+
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
-                                  cmdfile=self.options.cmdfile,
+                                  cmdfile=command_file,
                                   inc_queries=self.options.inc_queries,
                                   dry_run=self.options.dry_run,
                                   force_hardware=self.options.force_hardware)
