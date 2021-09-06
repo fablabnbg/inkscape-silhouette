@@ -13,6 +13,19 @@ try:
 except:
     from pathlib2 import Path # backport for Python2
 
+
+# From https://stackoverflow.com/questions/24852345/hsv-to-rgb-color-conversion
+def hsv_to_rgb(h, s, v):
+    if s == 0.0: return (v, v, v)
+    i = int(h*6.)
+    f = (h*6.)-i; p,q,t = v*(1.-s), v*(1.-s*f), v*(1.-s*(1.-f)); i%=6
+    if i == 0: return (v, t, p)
+    if i == 1: return (q, v, p)
+    if i == 2: return (p, v, t)
+    if i == 3: return (p, q, v)
+    if i == 4: return (t, p, v)
+    if i == 5: return (v, p, q)
+
 def plotcuts(cuts, buttons=False):
     """
         Show a graphical representation of the cut paths in (the argument) cuts,
@@ -38,8 +51,10 @@ def plotcuts(cuts, buttons=False):
     plt.plot(*zip(*sum(cuts, [])), color="lightsteelblue")
     plt.plot(xy[0][0],xy[0][1],'go')
     plt.plot(xy[-1][0],xy[-1][1],'ro')
-    for xy in cuts:
-        plt.plot(*zip(*xy), color="tab:blue")
+    ncuts = len(cuts)
+    maxhue = 0.33
+    for i, xy in enumerate(cuts):
+        plt.plot(*zip(*xy), color=hsv_to_rgb(maxhue*(1.0-i/ncuts),0.9,0.7))
         plt.arrow(xy[-2][0], xy[-2][1], xy[-1][0]-xy[-2][0], xy[-1][1]-xy[-2][1],
                   color="lightblue", length_includes_head=True,
                   head_width=min(3,scale/50))
