@@ -1,6 +1,6 @@
 # inkscape-silhouette
 
-[![Build Status](https://travis-ci.com/fablabnbg/inkscape-silhouette.svg?branch=master)](https://travis-ci.com/fablabnbg/inkscape-silhouette)
+[![Build Status](https://travis-ci.com/fablabnbg/inkscape-silhouette.svg?branch=main)](https://travis-ci.com/fablabnbg/inkscape-silhouette)
 [![Run Python tests](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml/badge.svg)](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml)
 
 An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
@@ -61,8 +61,8 @@ Install inkscape-silhouette
 
 ### Other Debian based Linux
 
-* Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Unzip the archive into a directory (which will be called inkscape-silhouette-master by default)
+* Download https://github.com/fablabnbg/inkscape-silhouette/archive/main.zip
+* Unzip the archive into a directory (which will be called inkscape-silhouette-main by default)
 * In a terminal, change into that directory
 * Execute `make install-local` to install just in your user account, or (if you have permissions) `sudo make install`
 to install for all users
@@ -106,9 +106,9 @@ the usb package appropriate to the version of python that runs by default as `py
 ```
 sudo pkg install inkscape py38-libusb1
 cd /tmp
-wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip"
-unzip master.zip
-cd inkscape-silhouette-master
+wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/main.zip"
+unzip main.zip
+cd inkscape-silhouette-main
 sudo make install   # OR: make install-local  # latter installs only for this user
 ```
 
@@ -134,7 +134,7 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 
 #### Silhouette inkscape extension itself
 
-* Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
+* Download https://github.com/fablabnbg/inkscape-silhouette/archive/main.zip
 * Open the downloaded file and select the following five items: `silhouette`, `sendto_silhouette.inx`, `sendto_silhouette.py`, `silhouette_multi.inx`, `silhouette_multi.py`
 * Extract them to your `share\inkscape\extensions` directory, e.g. `C:\Program Files\Inkscape\share\inkscape\extensions`
 * Restart inkscape

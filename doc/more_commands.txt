@@ -9,7 +9,7 @@
 "FN0\x03TB50,0\x03"           # portrait mode in CAMEO 1
 "FE0,0\x03"                   # Don't lift plotter head between paths.
 "D%d,%d" % (y,x)              # draw, move with blade down.
-"TB50,0\x03"                  # Unknown. Seen with registration marks 
+"TB50,0\x03"                  # Unknown. Seen with registration marks
 "TB99\x03"                    # Unknown
 "TB52,2\x03"                  # set type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
 "TB51,400\x03"                # length of regmarks
@@ -20,6 +20,6 @@
 "FO%d\x03" % (height-top))    # ? a feed command. Sometimes it is 5588
 ```
 
-There is some more guesswork in the comments near https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L868
+There is some more guesswork in the comments near https://github.com/fablabnbg/inkscape-silhouette/blob/main/silhouette/Graphtec.py#L788
 
-https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L868
+https://github.com/fablabnbg/inkscape-silhouette/blob/main/silhouette/Graphtec.py#L788
