@@ -1,15 +1,13 @@
-#! /usr/bin/python
+#!/bin/env python3
 #
 # This test cut differs from the test cut in Silhouette Studio:
 # as our triangle is not a simple triangle, but a more complex
 # Arrow head. The outer square is an ordinary 1cm x 1cm square.
 #
 
-from __future__ import print_function
-
-import sys
+import sys, os
 sys.path.append('/usr/share/inkscape/extensions')
-sys.path.append('/home/jw/src/github/fablabnbg/inkscape-silhouette')
+sys.path.append(os.path.expanduser('~/.config/inkscape/extensions/'))
 from silhouette.Graphtec import SilhouetteCameo
 
 __version__ = '0.1'
@@ -28,7 +26,7 @@ def write_progress(done, total, msg):
     perc = 100.*done/total
     print("%d%% %s\r" % (perc, msg))
 
-dev = SilhouetteCameo(progress_cb=write_progress, no_device=False)
+dev = SilhouetteCameo(progress_cb=write_progress, dry_run=False)
 state = dev.status()    # hint at loading paper, if not ready.
 print("status=%s" % (state))
 print("device version: '%s'" % dev.get_version())
