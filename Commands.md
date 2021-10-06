@@ -147,10 +147,10 @@ T n                                  Buzzer                 (G)  Unclear what n 
 TB50,n                               Set Orientation        n=0 portrait, n=1 landscape; seems redundant with FN, but
                                          Silhouette Studio issues both, so we do too; but judging from the following
                                          commands, maybe has to do with regmarks orientation
-TB23,h,w                             Manual Regmark         Unclear why this and TB51/TB53 both have dimensions
-TB51,l                               Set Regmark Length
+TB23,h,w                             Set Regmark Area       Distances between marks, ignoring strokes (mark width)
+TB51,l                               Set Regmark Length     Length of one arm of the right angle marks
 TB52,n                               Set Regmark Type       n=0 is Original,SD, n=2 is Cameo,Portrait
-TB53,w                               Set Regmark Width
+TB53,w                               Set Regmark Width      Mark stroke thickness
 TB55,n                               Regmark <Unknown>      Something to do with Regmarks; see silhouette/Graphtec.py
 TB99                                 Use Regmarks           Apparently, anyway
 TB70                                 Cut Calibration Cross
