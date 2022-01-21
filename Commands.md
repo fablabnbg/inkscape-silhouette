@@ -64,7 +64,8 @@ $n,(m,)                              Font                   (G)  Selects the cod
 %n,x,y,d,t                           Hatching               (G)[t]  for n from 1 to 3
 %n,ra,rb,ta,tb,d,t                   Hatching                       for n from 11 to 13
 %n,dt,xa,ya,xb,yb,...;,xn,yn         Hatching                       for n from 21 to 23
-&p,q,r,                              Factor                 (G)  Specifies the magnification (All coordinates, lengths,
+&p,q,r,                              Factor                 (G)  Specifies the magnification (All coordinates, 
+                                         lengths,
                                          character sizes are multiplied by p/r or q/r but parameters of OFFSET,
 					 UR and LL commands are not affected)
 (na,nb,...,nn                        User's Pattern         (G)[t]  Marked as a no-op
@@ -76,26 +77,30 @@ $n,(m,)                              Font                   (G)  Selects the cod
 					 ta and tb - initial and final angles. tc - angle between major axis
 					 and X-axis.
 * a,f[,n]                            Pen Acceleration&Force (G)[t] n is from 1 to 8, and so is probably the pen
-                                         number; a is labeled as being from 1 to 3; and f from 1 to some value in
-                                         the thirties depending on model. Seems to have been supplanted by TJ and FX
+                                         number; a is labeled as being from 1 to 3; and f from 1 to some value 
+					 in the thirties depending on model. Seems to have been supplanted by 
+					 TJ and FX
 /x,y,t;,                             Rotate                 (G)  Rotates coordination system
 :                                    Clear                  (G)  In "Interface Control" section
 ;                                    Interface Clear        (G)  In "Interface Control" section
-=na nb                               Term                   (G)  In "Interface Control" section, specifies the data terminator(s)
->xa,ya,...;xn,yn                     Clipping               (G)[t]  Coordinates are connected to closed line, making it possible
-                                         to plot only inside of it (last point is connected to the first one)
+=na nb                               Term                   (G)  In "Interface Control" section, specifies the 
+                                                                 data terminator(s)
+>xa,ya,...;xn,yn                     Clipping               (G)[t]  Coordinates are connected to closed line,
+                                         making it possible to plot only inside of it (last point is connected 
+					 to the first one)
 ?                                    Read Offset            (G)  In "Output Coordinates" section
 @                                    Read Status Word 2     (G)  
-A                                    Alpha Reset            (G)  Returns the parameters of font, alpha scale, alpha space, alpha
-                                         rotate, alpha italic, label position, point mark to the values set at the initialization
-					 of the plotter
-Bl,                                  Line Scale             (G)  Specifies the pitch of broken lines (needed if non-0 line type 
-                                         is used)
+A                                    Alpha Reset            (G)  Returns the parameters of font, alpha scale, 
+                                         alpha space, alpha rotate, alpha italic, label position, point mark 
+					 to the values set at the initialization of the plotter
+Bl,                                  Line Scale             (G)  Specifies the pitch of broken lines (needed if 
+                                         non-0 line type is used)
 BEn                                  <UNKNOWN>              Observed in Cameo 4 Pro capture
 BS sa,sb,sc,sd                       Buffer Size            (G)  Marked as a no-op
 BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]     Bezier Curve           (G)[t]  Not clear what a or [,d] mean
-C                                    Call GIN               (G)  In "Output Coordinates" section, puts the plotter
-                                         in digitaztion mode, and outputs the coords and status (pen number and up/down)
+C                                    Call GIN               (G)  In "Output Coordinates" section, puts the 
+                                         plotter in digitaztion mode, and outputs the coords and status 
+					 (pen number and up/down)
 Dxa,ya,xb,yb,...,xn,yn               Draw                   (G)[t]  Cuts from the current position to each
                                          of the given points in turn
 DPra,ta,tb,tb,...,rn,tn              Draw Polar             (G)[t]  Like Draw but with polar coordinates
@@ -104,54 +109,62 @@ Exa,ya,xb,yb,...,xn,yn               Relative Draw          (G)[t]  Coordinates 
                                          by xa,ya, or from the position at the commencement of the command
 EPr,t                                Relative Draw Polar    (G)[t]
 Fl                                   Chart Feed             (G)[t]  ??
-FA                                   Calibration Query      Exact semantics/responses unclear; see silhouette/graphtec.py
-FBrc,rr                              Set Motion Scaling     rc and rr scale carriage and roller movements by basis points
-                                         (see examples below); used only for calibration, as effects are permanent
-FCp,q[,n]                            Cutter Offset          (G)[t]  Not clear what p,q mean, but Silhouette Studio
-                                         definitely emits this command, see below for some apparent p-values;
-                                         silhouette/Graphtec.py says p and q are millimeter offsets;
-                                         n is apparently the pen
-FDt                                  Blade Rotation Control (G)[t]  Don't think any Silhouette models can do this
+FA                                   Calibration Query      Exact semantics/responses unclear; see 
+                                         silhouette/graphtec.py
+FBrc,rr                              Set Motion Scaling     rc and rr scale carriage and roller movements by 
+                                         basis points (see examples below); used only for calibration, as 
+					 effects are permanent
+FCp,q[,n]                            Cutter Offset          (G)[t]  Not clear what p,q mean, but Silhouette 
+                                         Studio definitely emits this command, see below for some apparent
+                                          p-values; silhouette/Graphtec.py says p and q are millimeter 
+                                          offsets; n is apparently the pen
+FDt                                  Blade Rotation Control (G)[t]  Don't think any Silhouette models can do
+                                          this
 FEl[,n]                              Lift Control           l=1 lift, l=0 unlift, n is the pen
 FFs,e,n                              Sharpen Corners        s=start, e=end (0 resets?), n is the pen
 FG                                   Query Firmware Version
-FMn                                  <UNKNOWN>              n can be 0 or 1; Silhouette Studio generally seems to emit an
-                                         FM1, but silhouette/Graphtec.py does not
+FMn                                  <UNKNOWN>              n can be 0 or 1; Silhouette Studio generally 
+                                         seems to emit an FM1, but silhouette/Graphtec.py does not
 FNn                                  Set Orientation        n=0 portrait, n=1 landscape
 FOn                                  Feed                   n is the distance to feed
 FQ0                                  Speed Query            Maybe?
 FQ2                                  Offset Query           Maybe?
 FQ5                                  Regmark Query
-FUh[,w]                              Set Page Dimensions    silhouette/Graphtec.py says only needed for trackenhancing
+FUh[,w]                              Set Page Dimensions    silhouette/Graphtec.py says only needed for 
+                                         trackenhancing
 FWn                                  Set Media              n from 100-138 or 300
 FXn                                  Set Downward Force     n from 1 to something in thirties depending on model
-FYn                                  Track Enhance Control  comments/examples below mean n=0 is on, n=1 off, oddly enough
-G                                    GIN                    (G)  In "Output Coordinates" section, outputs the coordinates
-                                         of the pen and its status (up/down)
+FYn                                  Track Enhance Control  comments/examples below mean n=0 is on, n=1 off, 
+                                         oddly enough
+G                                    GIN                    (G)  In "Output Coordinates" section, outputs the 
+                                         coordinates of the pen and its status (up/down)
 H                                    Home                   (G)
 Ip,                                  Alpha Italic           (G)  Presumably makes text drawn with Print italic,
-                                         p - tilt calculated with formula p = 256 * tan(a), where a is angle in rads
+                                         p - tilt calculated with formula p = 256 * tan(a), where a is angle 
+					 in rads
 Jn,(m)                               New Pen                (G)  n is labeled as running from 1 to 8, and is
                                          presumably the pen/tool number; not clear what m is
 Kca,cb,...,cn                        Kana(Greek)            (G)[t] In "Character and Symbol" section, so perhaps
-                                         draws/cuts the given Greek or special characters (look to the Graphtec GP-GL manual)
+                                         draws/cuts the given Greek or special characters (look to the Graphtec 
+					 GP-GL manual)
 Lp,                                  Line Type              (G)  Specifies the type of line (like "-- - --" or
-                                         ". . ." where p - parameter from 0 to 8 (look to the Graphtec GP-GL manual)
-LPn                                  Label Position         (G)[t]  Moves pen to label position, the label itself is put in
-                                         square and n specifies its element (1 - bottom-left vertex, 2 - middle of left side,
-					 3 - top-left vertex, 4 - middle of bottom side, 5 - center of square, 6 - middle of
-					 top side, 7 - bottom-right vertex, 8 - middle of right side, 9 - top-right vertex)
+                                         ". . ." where p - parameter from 0 to 8 (see the Graphtec GP-GL manual)
+LPn                                  Label Position         (G)[t]  Moves pen to label position, the label 
+                                         tself is put in square and n specifies its element (1 - bottom-left 
+					 vertex, 2 - middle of left side, 3 - top-left vertex, 4 - middle of 
+					 bottom side, 5 - center of square, 6 - middle of top side, 7 - 
+					 bottom-right vertex, 8 - middle of right side, 9 - top-right vertex)
 Mx,y                                 Move                   (G)  Moves the head without cutting
 MPr,t                                Move Polar             (G)[t]
 Nn,                                  Mark                   (G)  In "Character and Symbol", so perhaps draws
                                          the nth point marker (like a small dot, square, triangle, etc)
 Ox,y                                 Relative Move          (G)  Coordinates are deltas
 OPr,t                                Relative Move Polar    (G)[t]
-Pca,cb,...,cn                        Print                  (G)[t] In "Character and Symbol", draws/cuts given characters
-                                         from the pattern chart (look to the Graphtec GP-GL manual)
-Ql(k,)                               Alpha Space            (G)  Specifies the spacing between the start point of one 
-                                         character and the start point of the next character, l - displacement in X axis,
-					 k - displacement in Y axis
+Pca,cb,...,cn                        Print                  (G)[t] In "Character and Symbol", draws/cuts given 
+                                         characters from the pattern chart (see the Graphtec GP-GL manual)
+Ql(k,)                               Alpha Space            (G)  Specifies the spacing between the start point 
+                                         of one character and the start point of the next character, l - 
+					 displacement in X axis, k - displacement in Y axis
 Rt,                                  Alpha Rotate           (G)  Rotates text drawn by Print, t - angle with X axis
 RC c,xa,ya,[P,],xb,yb,[P1,]...xn,yn  Replot Character       (G)[t]  ??
 RPt,za,zb                            Radius Plot            (G)  Unclear what this does
@@ -160,7 +173,7 @@ Sn,(m,)                              Alpha Scale            (G)  Sets the size l
 SOn                                  Set Origin             (G)  Apparently sets the current location to be the
                                          coordinate system origin going forward; unclear what n means
 SPc                                  Select Point Mark      (G)[t]  Unclear what this does
-T n                                  Buzzer                 (G)  Turns on and off the PROMPT lamp (or maybe buzzer somewhere)
+T n                                  Buzzer                 (G)  Turns on and off the PROMPT lamp (or buzzer)
 TB50,n                               Set Orientation        n=0 portrait, n=1 landscape; seems redundant with FN, but
                                          Silhouette Studio issues both, so we do too; but judging from the following
                                          commands, maybe has to do with regmarks orientation
