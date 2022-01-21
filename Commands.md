@@ -14,6 +14,7 @@ Resources
  * https://github.com/jnweiger/robocut/blob/master/Plotter.cpp#L344-L586
  * https://github.com/fablabnbg/inkscape-silhouette/blob/master/silhouette/Graphtec.py#L305-L419
  * https://github.com/Skrupellos/silhouette/blob/master/decode
+ * https://github.com/Snow4DV/graphtec-gp-gl-manual/raw/main/Manual.pdf
 
 Command Summary
 ---------------
@@ -62,29 +63,38 @@ $n,(m,)                              Font                   (G)  Not sure what t
 %n,x,y,d,t                           Hatching               (G)[t]  for n from 1 to 3
 %n,ra,rb,ta,tb,d,t                   Hatching                       for n from 11 to 13
 %n,dt,xa,ya,xb,yb,...;,xn,yn         Hatching                       for n from 21 to 23
-&p,q,r,                              Factor                 (G)  ??
+&p,q,r,                              Factor                 (G)  Specifies the magnification (All coordinates, lengths,
+                                         character sizes are multiplied by p/r or q/r but parameters of OFFSET,
+					 UR and LL commands are not affected)
 (na,nb,...,nn                        User's Pattern         (G)[t]  Marked as a no-op
-(P[p,]xa,ya,[p,]xb,yb,...;[p,]xn,yn  User's Program Pattern (G)  Purpose unclear; coordinates are deltas
-)a,x,y,ra,rb,ta,tb,tc                Ellipse                (G)  Not clear what a means or why there are three
-                                         angles (possibly two for the limits of the arc and one for the
-                                         rotation of the major axis??)
+(P[p,]xa,ya,[p,]xb,yb,...;[p,]xn,yn  User's Program Pattern (G)  This command enables you to draw characters,
+                                         symbols which are not in the character code charts (chart from
+					 Graphtec GP-GL manual may work)
+)a,x,y,ra,rb,ta,tb,tc                Ellipse                (G)  a describes how it moves to the start point - 
+                                         if a = 0 it moves the pen raised, if a = 1 it moves the pen lowered.
+					 ta and tb - initial and final angles. tc - angle between major axis
+					 and X-axis.
 * a,f[,n]                            Pen Acceleration&Force (G)[t] n is from 1 to 8, and so is probably the pen
                                          number; a is labeled as being from 1 to 3; and f from 1 to some value in
                                          the thirties depending on model. Seems to have been supplanted by TJ and FX
-/x,y,t;,                             Rotate                 (G)  Maybe gives center and angle of rotation of
-                                         coordinate system?
+/x,y,t;,                             Rotate                 (G)  Rotates coordination system
 :                                    Clear                  (G)  In "Interface Control" section
 ;                                    Interface Clear        (G)  In "Interface Control" section
-=na,nb                               Term                   (G)  In "Interface Control" section, ??
->xa,ya,...;xn,yn                     Clipping               (G)[t]  Unclear how coordinates are interpreted
+=na nb                               Term                   (G)  In "Interface Control" section, specifies the data terminator(s)
+>xa,ya,...;xn,yn                     Clipping               (G)[t]  Coordinates are connected to closed line, making it possible
+                                         to plot only inside of it (last point is connected to the first one)
 ?                                    Read Offset            (G)  In "Output Coordinates" section
-@                                    Read Status Word 2     (G)
-A                                    Alpha Reset            (G)  ??
-Bl,                                  Line Scale             (G)  Meaning unclear
+@                                    Read Status Word 2     (G)  
+A                                    Alpha Reset            (G)  Returns the parameters of font, alpha scale, alpha space, alpha
+                                         rotate, alpha italic, label position, point mark to the values set at the initialization
+					 of the plotter
+Bl,                                  Line Scale             (G)  Specifies the pitch of broken lines (needed if non-0 line type 
+                                         is used)
 BEn                                  <UNKNOWN>              Observed in Cameo 4 Pro capture
 BS sa,sb,sc,sd                       Buffer Size            (G)  Marked as a no-op
 BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]     Bezier Curve           (G)[t]  Not clear what a or [,d] mean
-C                                    Call GIN               (G)  In "Output Coordinates" section, otherwise unclear
+C                                    Call GIN               (G)  In "Output Coordinates" section, puts the plotter
+                                         in digitaztion mode, and outputs the coords and status (pen number and up/down)
 Dxa,ya,xb,yb,...,xn,yn               Draw                   (G)[t]  Cuts from the current position to each
                                          of the given points in turn
 DPra,ta,tb,tb,...,rn,tn              Draw Polar             (G)[t]  Like Draw but with polar coordinates
@@ -115,35 +125,41 @@ FUh[,w]                              Set Page Dimensions    silhouette/Graphtec.
 FWn                                  Set Media              n from 100-138 or 300
 FXn                                  Set Downward Force     n from 1 to something in thirties depending on model
 FYn                                  Track Enhance Control  comments/examples below mean n=0 is on, n=1 off, oddly enough
-G                                    GIN                    (G)  In "Output Coordinates" section, otherwise unclear
+G                                    GIN                    (G)  In "Output Coordinates" section, outputs the coordinates
+                                         of the pen and its status (up/down)
 H                                    Home                   (G)
 Ip,                                  Alpha Italic           (G)  Presumably makes text drawn with Print italic,
-                                         but unclear how p is interpreted
+                                         p - tilt calculated with formula p = 256 * tan(a), where a is angle in rads
 Jn,(m)                               New Pen                (G)  n is labeled as running from 1 to 8, and is
                                          presumably the pen/tool number; not clear what m is
 Kca,cb,...,cn                        Kana(Greek)            (G)[t] In "Character and Symbol" section, so perhaps
-                                         draws/cuts the given Greek or special characters (unclear how
-                                         they are specified)
-Lp,                                  Line Type              (G)  Meaning of p unclear; Silhouette Studio generally emits L0
-LPn                                  Label Position         (G)[t]  Meaning of n unclear
+                                         draws/cuts the given Greek or special characters (look to the Graphtec GP-GL manual)
+Lp,                                  Line Type              (G)  Specifies the type of line (like "-- - --" or
+                                         ". . ." where p - parameter from 0 to 8 (look to the Graphtec GP-GL manual)
+LPn                                  Label Position         (G)[t]  Moves pen to label position, the label itself is put in
+                                         square and n specifies its element (1 - bottom-left vertex, 2 - middle of left side,
+					 3 - top-left vertex, 4 - middle of bottom side, 5 - center of square, 6 - middle of
+					 top side, 7 - bottom-right vertex, 8 - middle of right side, 9 - top-right vertex)
 Mx,y                                 Move                   (G)  Moves the head without cutting
 MPr,t                                Move Polar             (G)[t]
 Nn,                                  Mark                   (G)  In "Character and Symbol", so perhaps draws
                                          the nth point marker (like a small dot, square, triangle, etc)
 Ox,y                                 Relative Move          (G)  Coordinates are deltas
 OPr,t                                Relative Move Polar    (G)[t]
-Pca,cb,...,cn                        Print                  (G)[t] In "Character and Symbol", so perhaps
-                                         draws/cuts the given characters (given by ASCII values? unclear)
-Ql(k,)                               Alpha Space            (G)  ??
-Rt,                                  Alpha Rotate           (G)  Presumably rotates text drawn by Print
+Pca,cb,...,cn                        Print                  (G)[t] In "Character and Symbol", draws/cuts given characters
+                                         from the pattern chart (look to the Graphtec GP-GL manual)
+Ql(k,)                               Alpha Space            (G)  Specifies the spacing between the start point of one 
+                                         character and the start point of the next character, l - displacement in X axis,
+					 k - displacement in Y axis
+Rt,                                  Alpha Rotate           (G)  Rotates text drawn by Print, t - angle with X axis
 RC c,xa,ya,[P,],xb,yb,[P1,]...xn,yn  Replot Character       (G)[t]  ??
 RPt,za,zb                            Radius Plot            (G)  Unclear what this does
-Sn,(m,)                              Alpha Scale            (G)  Presumably sets the size letters are drawn, but
-                                         the meaning of n and m are unclear
+Sn,(m,)                              Alpha Scale            (G)  Sets the size letters are drawn, n - height,
+                                         m - width
 SOn                                  Set Origin             (G)  Apparently sets the current location to be the
                                          coordinate system origin going forward; unclear what n means
 SPc                                  Select Point Mark      (G)[t]  Unclear what this does
-T n                                  Buzzer                 (G)  Unclear what n means
+T n                                  Buzzer                 (G)  Turns on and off the PROMPT lamp (or maybe buzzer somewhere)
 TB50,n                               Set Orientation        n=0 portrait, n=1 landscape; seems redundant with FN, but
                                          Silhouette Studio issues both, so we do too; but judging from the following
                                          commands, maybe has to do with regmarks orientation
@@ -167,24 +183,30 @@ TO                                   <UNKNOWN> Query        Observed in connecti
 TT                                   Home Cutter            Earlier models and/or versions of Silhouette Studio
 U                                    Read Upper Right       (G)
 V                                    Read Status Word 1     (G)
-Wx,y,ra,rb,ta,tb[,d]                 Circle                 (G)[t]  Unclear why there are two radii or what the
-                                         angles are for (maybe to draw an arc rather than a full circle?);
-                                         unclear what the [,d] part is
-WPxa,ya,xb,yb,xc,yc[,d]              3-Point Circle         (G)[t]  Unclear what the [,d] part is
-Xp,q,r[,n1,n2]                       Axis                   (G)[t]  Presumably draws axes but parameters unclear
-Ya,xa,ya,xb,yb,...;xn,yn             Curve                  (G)[t]  Unclear what the first parameter a means, or
-                                         what precisely this does
+Wx,y,ra,rb,ta,tb[,d]                 Circle                 (G)[t] x,y - center; ra,rb - initial and final radii,
+                                         ta,tb - initial and final angles; d - angle,when d>0: subtends the given 
+					 angle with segments of the circle (d - 100 gives 10° segments), when d<0:
+					 gives the number of segments of the circle (d = -5 divides circle into 5)
+WPxa,ya,xb,yb,xc,yc[,d]              3-Point Circle         (G)[t]  d acts in the same way as in Circle?
+Xp,q,r[,n1,n2]                       Axis                   (G)[t]  Draws coordinate axis and scale lines parallel 
+                                         to X or Y axis. p - sets axial direction and behavior of q param: 
+					 p = 0 - axial direction is Y, r - number of repeats of scale lines,
+					 p = 1 - same but axial direction i X. p = 2 - axial direction is Y,
+					 r - number of divisions (of scale lines), p = 3 - same but axial 
+					 direction is X
+Ya,xa,ya,xb,yb,...;xn,yn             Curve                  (G)[t]  Draws a cubic curve through given points,
+                                         a = 0 - open curve, a = 1 - closed curve
 Zx,y,                                Write Upper Right      (G)  Apparently sets the coordinate of the upper right
                                          of the cut area
 [                                    Read Lower Left        (G)
 \x,y,                                Write Lower Left       (G)  Apparently sets the coordinate of the lower left
                                          of the cut area
-]ra,rb,ta,tb[,d]                     Relative Circle        (G)[t]  Presumably like Circle but centered at the
-                                         current location; still unclear why two radii, or what [,d] is about
-^x,y,                                Offset                 (G)  Maybe adds or subtracts from all following coords?
+]ra,rb,ta,tb[,d]                     Relative Circle        (G)[t]  Like Circle but centered at the
+                                         current location; 
+^x,y,                                Offset                 (G)  Moves the coordinate origin to the specified coordinates
 ^Px,y[,t[f]]                         Offset Polar           (G)[t]  This is a literal caret and P, parameters unclear
 _a,xa,ya,xb,yb,...xn,yn              Relative Curve         (G)[t]  Presumably like Curve, but with deltas rather
-                                         than absolute commands; same other comments as for Curve
+                                         than absolute commands;
 
 
 Typical sequence
