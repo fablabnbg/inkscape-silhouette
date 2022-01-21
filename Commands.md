@@ -59,7 +59,8 @@ Command                              Name                   Comments
                                          V = l - 100
 "m,                                  Error Mask             (G)  In "Interface Control" section
 #                                    Read Status Word 3     (G)
-$n,(m,)                              Font                   (G)  Not sure what the parameters mean
+$n,(m,)                              Font                   (G)  Selects the code chart for the chars (see
+                                         Graphtec manual pdf 1-32 for more
 %n,x,y,d,t                           Hatching               (G)[t]  for n from 1 to 3
 %n,ra,rb,ta,tb,d,t                   Hatching                       for n from 11 to 13
 %n,dt,xa,ya,xb,yb,...;,xn,yn         Hatching                       for n from 21 to 23
