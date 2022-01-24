@@ -181,7 +181,7 @@ TB23,h,w                             Set Regmark Area       Distances between ma
 TB51,l                               Set Regmark Length     Length of one arm of the right angle marks
 TB52,n                               Set Regmark Type       n=0 is Original,SD, n=2 is Cameo,Portrait
 TB53,w                               Set Regmark Width      Mark stroke thickness
-TB55,n                               Regmark <Unknown>      Something to do with Regmarks; see silhouette/Graphtec.py
+TB55,n                               Regmark                Something to do with Regmarks; see silhouette/Graphtec.py
 TB99                                 Use Regmarks           Apparently, anyway
 TB70                                 Cut Calibration Cross
 TB71                                 Calibration Query      Exact semantics/responses unclear, see silhouette/Graphtec.py
