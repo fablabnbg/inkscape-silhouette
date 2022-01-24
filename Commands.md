@@ -95,7 +95,7 @@ A                                    Alpha Reset            (G)  Returns the par
 					                    to the values set at the initialization of the plotter
 Bl,                                  Line Scale             (G)  Specifies the pitch of broken lines (needed if
                                                             non-0 line type is used)
-BEn                                  <UNKNOWN>              Observed in Cameo 4 Pro capture
+BEn                                                         Observed in Cameo 4 Pro capture
 BS sa,sb,sc,sd                       Buffer Size            (G)  Marked as a no-op
 BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]     Bezier Curve           (G)[t]  Not clear what a or [,d] mean
 C                                    Call GIN               (G)  In "Output Coordinates" section, puts the
@@ -123,7 +123,7 @@ FDt                                  Blade Rotation Control (G)[t]  Don't think 
 FEl[,n]                              Lift Control           l=1 lift, l=0 unlift, n is the pen
 FFs,e,n                              Sharpen Corners        s=start, e=end (0 resets?), n is the pen
 FG                                   Query Firmware Version
-FMn                                  <UNKNOWN>              n can be 0 or 1; Silhouette Studio generally
+FMn                                                         n can be 0 or 1; Silhouette Studio generally
                                                             seems to emit an FM1, but silhouette/Graphtec.py does not
 FNn                                  Set Orientation        n=0 portrait, n=1 landscape
 FOn                                  Feed                   n is the distance to feed
@@ -193,7 +193,7 @@ TGn                                  Set Cutting Mat        n values: 0 - None, 
                                                             8 - Cameo 15x15, 9 - Cameo 24x24 (must be others)
 TI                                   Query Name
 TJa                                  Set Acceleration       Seems to have supplanted *
-TO                                   <UNKNOWN> Query        Observed in connecting to Silhouette Cameo 4 Pro
+TO                                   Query                  Observed in connecting to Silhouette Cameo 4 Pro
 TT                                   Home Cutter            Earlier models and/or versions of Silhouette Studio
 U                                    Read Upper Right       (G)
 V                                    Read Status Word 1     (G)
