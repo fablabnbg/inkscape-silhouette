@@ -8,12 +8,13 @@ An extension to drive a Silhoutte Cameo and similar plotter devices from within 
 
 Here is the wiki with photos and a video: https://github.com/fablabnbg/inkscape-silhouette/wiki
 
-## Suported Devices
+## Supported Devices
 
 This extension should work with the following devices:
 
 * Silhouette Portrait
 * Silhouette Portrait 2 (working confirmed)
+* Silhouette Portrait 3
 * Silhouette Cameo
 * Silhouette Cameo 2
 * Silhouette Cameo 3
