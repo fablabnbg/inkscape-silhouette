@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-#
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
 # (C) 2014, 2015 juewei@fabmail.org
@@ -91,16 +89,7 @@
 
 from __future__ import print_function
 
-__version__ = "1.25"     # Keep in sync with sendto_silhouette.inx ca line 79
-__author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
-
 import sys, os, time, tempfile, math, operator, re
-
-
-# we sys.path.append() the directory where this
-# sendto_silhouette.py script lives. Attempt to help with
-# https://github.com/jnweiger/inkscape-silhouette/issues/3
-sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith("win"):
@@ -126,6 +115,7 @@ if not sys.stdout:
     sys.stdout=os.fdopen(os.open(os.devnull, os.O_WRONLY|os.O_APPEND), 'w')
     dummy_stdout=True
 
+from silhouette import __version__
 import inkex
 
 if dummy_stdout:
@@ -404,7 +394,7 @@ class SendtoSilhouette(inkex.Effect):
                 help="show cut pattern graphically before sending")
         self.arg_parser.add_argument("-V", "--version",
                 dest = "version", action = "store_true",
-                help="Just print version number ('"+self.version()+"') and exit.")
+                help="Just print version number and exit.")
         self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
                 dest = "wait_done", type = inkex.Boolean, default = False,
                 help="After sending wait til device reports ready")
@@ -452,15 +442,6 @@ class SendtoSilhouette(inkex.Effect):
     def __del__(self, *args):
         if self.log:
             self.log.close() # will always close tty if there is one
-
-
-    def version(self):
-        return __version__
-
-
-    def author(self):
-        return __author__
-
 
     def report(self, message, level):
         """ Display `message` to the appropriate output stream(s).
@@ -1423,7 +1404,7 @@ Each of the following `level` values encompasses all of the later ones:
         self.report("\nstatus=%s" % (state), 'log')
 
 
-if __name__ == "__main__":
+def main():
     e = SendtoSilhouette()
 
     if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
@@ -1442,4 +1423,7 @@ if __name__ == "__main__":
         ss -= mm*60
         e.report(" done. %d min %d sec" % (mm, ss), 'log')
 
-    sys.exit(0)
+
+if __name__ == '__main__':
+    # only needed for the build system
+    main()

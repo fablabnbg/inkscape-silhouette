@@ -4,7 +4,7 @@
   <id>com.github.jnweiger.inskscape-silhouette-multi</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="extensions">inkex.py</dependency>
-  <dependency type="executable" location="extensions">silhouette_multi.py</dependency>
+  <dependency type="executable" location="path">silhouette_multi</dependency>
 
   <param name="multi_help" type="description" xml:space="preserve">
 Debugging/Logging Settings:
@@ -21,8 +21,8 @@ Cutting settings will show up once you click "Apply."
       <submenu _name="Export"/>
     </effects-menu>
   </effect>
-  
+
   <script>
-      <command reldir="extensions" interpreter="python">silhouette_multi.py</command>
+    <command reldir="path">silhouette_multi</command>
   </script>
 </inkscape-extension>

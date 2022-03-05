@@ -135,8 +135,13 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 #### Silhouette inkscape extension itself
 
 * Download https://github.com/fablabnbg/inkscape-silhouette/archive/master.zip
-* Open the downloaded file and select the following five items: `silhouette`, `sendto_silhouette.inx`, `sendto_silhouette.py`, `silhouette_multi.inx`, `silhouette_multi.py`
-* Extract them to your `share\inkscape\extensions` directory, e.g. `C:\Program Files\Inkscape\share\inkscape\extensions`
+* Open and extract the downloaded archive and install the python pkg using
+  `pip install .`.
+* Make sure that the two executables (`sendto_silhouette` and
+  `silhouette_multi`) are executable.
+* Copy the two inkscape extension files (with the extension `.inx`) into
+  your extensions directory (e.g. `/usr/share/inkscape/extensions/`,
+  `~/.config/inkscape/extensions` or for Windows into `C:\Program Files\Inkscape\share\inkscape\extensions`)
 * Restart inkscape
 
 ## Usage
