@@ -925,6 +925,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if toolholder is None:
       toolholder = 1
 
+    tool_setup = self.get_tool_setup()
+    if tool_setup == 'none':
+      current_tool = None
+    else:
+      current_tool = int(tool_setup.split(',')[toolholder - 1])
+
     if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
       self.send_command(tool.select())
 
@@ -1034,7 +1040,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
       if autoblade and depth is not None:
-        if toolholder == 1:
+        if current_tool not in (None, SILHOUETTE_CAMEO4_TOOL_AUTOBLADE, SILHOUETTE_CAMEO4_TOOL_EMPTY):
+          print("Expected the tool to be an AutoBlade, found %s. Not setting depth." % (current_tool,), file=self.log)
+        elif toolholder != 1:
+          print("AutoBlade depth can only be set for tool holder 1, not %s" % (toolholder,), file=self.log)
+        else:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
           self.send_command(tool.depth(depth))
