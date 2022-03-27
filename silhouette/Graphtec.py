@@ -733,7 +733,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if verbose: print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
       if verbose == False:
         if state == 'unloaded':
-          print(" %d/%d: please load media ...\r" % (i, npolls, state), end='', file=sys.stderr)
+          print(" %d/%d: please load media ...\r" % (i, npolls), end='', file=sys.stderr)
         elif i > npolls/3:
           print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
       time.sleep(poll_interval)
