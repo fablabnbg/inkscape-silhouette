@@ -137,6 +137,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<item value="DETECT">-- as detected --</item>
 	<item value="Silhouette Portrait">Silhouette Portrait</item>
 	<item value="Silhouette Portrait2">Silhouette Portrait 2</item>
+	<item value="Silhouette Portrait3">Silhouette Portrait 3</item>
 	<item value="Silhouette Cameo">Silhouette Cameo</item>
 	<item value="Silhouette Cameo2">Silhouette Cameo 2</item>
 	<item value="Silhouette Cameo3">Silhouette Cameo 3</item>
