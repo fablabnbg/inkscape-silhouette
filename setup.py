@@ -6,20 +6,18 @@
 #
 import sys
 from os import path
-import glob
 import re
 
 from distutils.core import setup
 from setuptools.command.test import test as TestCommand
-import sendto_silhouette  # for author(), version()
+import silhouette  # for author, version
 
 # read the contents of your README file
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-e = sendto_silhouette.SendtoSilhouette()
-m = re.match(r'(.*)\s+<(.*)>', e.author())
+m = re.match(r'(.*)\s+<(.*)>', silhouette.__author__)
 
 # print('.',['Makefile']+glob.glob('silhouette-*')),('misc',glob.glob('misc/*'))
 
@@ -38,20 +36,13 @@ class PyTest(TestCommand):
 
 
 setup(name='inkscape-silhouette',
-      version=e.version(),
+      version=silhouette.__version__,
       description='Inkscape extension for driving a silhouette cameo',
       author=m.groups()[0],
       author_email=m.groups()[1],
       url='https://github.com/jnweiger/inkscape-silhouette',
-      scripts=['sendto_silhouette.py'],
-      #scripts=filter(path.isfile,
-      #               ['sendto_silhouette.py',
-      #                'sendto_silhouette.inx',
-      #                'README.md'] +
-      #               glob.glob('silhouette-*') +
-      #               glob.glob('misc/*') +
-      #               glob.glob('misc/*/*')),
-
+      entry_points={"console_scripts": ["sendto_silhouette=silhouette.send:main",
+                                        "silhouette_multi=silhouette.multi:main"]},
       packages=['silhouette'],
       license='GPL-2.0',
       classifiers=[

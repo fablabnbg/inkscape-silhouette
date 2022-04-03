@@ -75,6 +75,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest
+    - name: install pkg
+      run: |
+        pip install .
     - name: test
       env:
         PYTHONWARNINGS: default

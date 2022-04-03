@@ -4,7 +4,7 @@
   <id>com.github.jnweiger.inskscape-silhouette</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="extensions">inkex.py</dependency>
-  <dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
+  <dependency type="executable" location="path">sendto_silhouette</dependency>
   <param name="active-tab" type="notebook">
     <page name='silhouette' _gui-text='Silhouette'>
       <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" _gui-text="X-Offset [mm]">0.0</param>
@@ -172,7 +172,7 @@ Always use the least amount of blade possible.
     </page>
     <page name='about' _gui-text='About'>
       <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/fablabnbg/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</param>
-      <!-- Keep in sync with sendto_silhouette.py line 94 __version__ = ... -->
+      <!-- Keep in sync with the version in setup.py -->
       <param name="about_version" type="description">Version 1.25</param>
     </page>
   </param>
@@ -185,6 +185,6 @@ Always use the least amount of blade possible.
   </effect>
 
   <script>
-      <command reldir="extensions" interpreter="python">sendto_silhouette.py</command>
+    <command reldir="path">sendto_silhouette</command>
   </script>
 </inkscape-extension>

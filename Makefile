@@ -4,7 +4,7 @@ PREFIX?=/usr
 DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
-VERS=$$(python3 ./sendto_silhouette.py --version)
+VERS=$$(python3 ./silhouette/send.py --version)
 
 ## echo python3 ./sendto_silhouette.py
 # 'module' object has no attribute 'core'
@@ -43,15 +43,13 @@ install:
 
 install-local:
 	mkdir -p $(DESTLOCAL)
-	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
-	cp -r silhouette $(DESTLOCAL)
-	install -m 755 -t $(DESTLOCAL) *silhouette*.py
+	pip install .
 	install -m 644 -t $(DESTLOCAL) *.inx
 
 tar_dist_classic: clean
 	name=$(DISTNAME)-$(VERS); echo "$$name"; echo; \
 	tar jcvf $$name.tar.bz2 $(EXCL) --transform="s,^,$$name/," $(ALL)
-	grep about_version ./sendto_silhouette.inx 
+	grep about_version ./sendto_silhouette.inx
 	@echo version should be $(VERS)
 
 tar_dist:

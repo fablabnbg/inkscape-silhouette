@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import sys
 import time
@@ -666,7 +664,7 @@ class SilhouetteMulti(inkex.Effect):
 
         self.saved_argv = list(sys.argv)
 
-        # Patch methods as in sendto_silhouette.py
+        # Patch methods as in send.py
         # for inkscape 0.9x compatibility:
         if not hasattr(self, "run"): self.run = self.affect
         if not hasattr(self, "arg_parser"):
@@ -799,8 +797,7 @@ class SilhouetteMulti(inkex.Effect):
         commands = []
 
         for color, settings in actions:
-            command = sys.executable
-            command += " sendto_silhouette.py"
+            command = "sendto_silhouette"
             command += " " + self.format_args(settings)
             command += " " + self.id_args(self.objects_by_color[color])
             command += " " + self.svg_copy_file_name
@@ -876,8 +873,7 @@ class SilhouetteMulti(inkex.Effect):
     # end of class MyFrame
 
 
-if __name__ == "__main__":
-
+def main():
     unblock_inkscape = True
     if '--block=true' in sys.argv:
         unblock_inkscape = False
@@ -914,5 +910,3 @@ if __name__ == "__main__":
         # an exception, so:
         if unblock_inkscape:
             show_log_as_dialog()
-
-    sys.exit(0)
