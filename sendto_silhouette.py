@@ -1325,7 +1325,7 @@ Each of the following `level` values encompasses all of the later ones:
 
         if self.options.preview:
             if silhouette.read_dump.plotcuts(cut, buttons=True):
-                self.report("Cut canceled via preview button.", 'error')
+                self.report("Cut canceled via preview button.", 'log')
                 return False
 
         if self.options.pressure == 0:
