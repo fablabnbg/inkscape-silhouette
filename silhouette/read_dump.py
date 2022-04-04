@@ -31,11 +31,10 @@ def plotcuts(cuts, buttons=False):
         Show a graphical representation of the cut paths in (the argument) cuts,
         and block until the display window has been closed.
 
-        Displays Cut/Cancel buttons if the buttons argument is true (not implemented yet).
+        Displays Cut/Cancel buttons if the buttons argument is true.
 
-        Returns whether the cut should be canceled; in other words,
-        returns false unless buttons was true, the graphics were displayed, and
-        the Cancel button was pushed, in which case returns true.
+        Returns True if the cut should be canceled,
+        which means that buttons were shown and the user did not confirm the cut.
     """
     if plt is None:
         print("Install matplotlib for python to allow graphical display of cuts",
@@ -61,11 +60,11 @@ def plotcuts(cuts, buttons=False):
     plt.axis([plt.axis()[0], plt.axis()[1], plt.axis()[3], plt.axis()[2]])
     plt.gca().set_aspect('equal')
     class Response:
-        canceled = False
+        canceled = buttons
         def pushedcut(self, event):
+            self.canceled = False
             plt.close('all')
         def pushedcancel(self, event):
-            self.canceled = True
             plt.close('all')
     response = Response()
     if buttons:
