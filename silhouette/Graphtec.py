@@ -148,6 +148,7 @@ PRODUCT_LINE_CAMEO4 = [
 ]
 
 PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
+PRODUCTS_WITH_TWO_TOOLS = [p for p in PRODUCT_LINE_CAMEO3_ON if p != PRODUCT_ID_SILHOUETTE_PORTRAIT3]
 
 # End Of Text - marks the end of a command
 CMD_ETX = b'\x03'
@@ -935,7 +936,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     else:
       current_tool = int(tool_setup.split(',')[toolholder - 1])
 
-    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
+    if self.product_id() in PRODUCTS_WITH_TWO_TOOLS:
       self.send_command(tool.select())
 
     print("toolholder: %d" % toolholder, file=self.log)
