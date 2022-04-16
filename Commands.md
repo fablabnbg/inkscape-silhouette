@@ -95,7 +95,9 @@ A                                    Alpha Reset            (G)  Returns the par
 					                    to the values set at the initialization of the plotter
 Bl,                                  Line Scale             (G)  Specifies the pitch of broken lines (needed if
                                                             non-0 line type is used)
-BEn                                                         Observed in Cameo 4 Pro capture
+BEn                                                         Binary encoded Relative Draw, n says how many bytes to read (1-3).
+                                                            Observed on Cameo 4 Pro and Portrait 3.
+                                                            For coordinate encoding see beutil.py
 BS sa,sb,sc,sd                       Buffer Size            (G)  Marked as a no-op
 BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]     Bezier Curve           (G)[t]  Not clear what a or [,d] mean
 C                                    Call GIN               (G)  In "Output Coordinates" section, puts the
@@ -109,11 +111,10 @@ Exa,ya,xb,yb,...,xn,yn               Relative Draw          (G)[t]  Coordinates 
                                                             by xa,ya, or from the position at the commencement of the command
 EPr,t                                Relative Draw Polar    (G)[t]
 Fl                                   Chart Feed             (G)[t]  ??
-FA                                   Calibration Query      Exact semantics/responses unclear; see
-                                                            silhouette/graphtec.py
+FA                                   Calibration Query      Returns values set with FBrc,rr.
 FBrc,rr                              Set Motion Scaling     rc and rr scale carriage and roller movements by
                                                             basis points (see examples below); used only for calibration, as
-					                    effects are permanent
+                                                            effects are permanent.
 FCp,q[,n]                            Cutter Offset          (G)[t]  Not clear what p,q mean, but Silhouette
                                                             Studio definitely emits this command, see below for some apparent
                                                             p-values; silhouette/Graphtec.py says p and q are millimeter
