@@ -494,3 +494,9 @@ L0 \0,0 M0,0 J0 FN0 TB50,0
 with Cameo Plus 15x15 mat, all was the same except the 7th line was replaced with:
 
 TG8 FN0 TB50,0 FM1 \30,9 Z7590,7320
+
+Portrait 3 Firmware Upgrade
+---------------------------
+Upgrading the firmware is a stream of `S{address}{data}\n`, with no 0x03 in sight.
+There is no initialisation protocol, the Portrait3_V104_R0001.S that comes with Silhouette Studio is streamed as is.
+This was observed when upgrading from V1.01 to V1.04.
