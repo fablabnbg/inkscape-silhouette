@@ -141,7 +141,7 @@ except:  # inkscape 0.9x
     import simplepath
     from simplepath import formatPath as Path  # fake for inkscape 0.9x compatiblity: Path()
     import cubicsuperpath
-    from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents
+    from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents, invertTransform
     from bezmisc import beziersplitatt
     from cspsubdiv import maxdist
     from inkex import etree
@@ -683,13 +683,15 @@ Each of the following `level` values encompasses all of the later ones:
                         x = float(node.get("x", "0"))
                         y = float(node.get("y", "0"))
                         # Note: the transform has already been applied
-                        if (x != 0) or (y != 0):
-                            try:  # inkscape 1.0
-                                transform = transform * Transform("translate(%f, %f)" % (x, y))
-                            except:  # inkscape 0.9x
-                                transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
+                        try:  # inkscape 1.0
+                            refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
+                            # The docTransform will get applied again inside the recursive call
+                            refnode_transform *= -Transform(self.docTransform)
+                        except:  # inkscape 0.9x
+                            refnode_transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
+                            refnode_transform = composeTransform(refnode_transform, invertTransform(self.docTransform))
                         v = node.get("visibility", v)
-                        self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=transform)
+                        self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
                     else:
                         pass
                 else:
