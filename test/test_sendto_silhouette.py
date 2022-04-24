@@ -15,8 +15,14 @@ def data_dir():
 
 def test_loading_duplicated_path(data_dir):
     effect = SendtoSilhouette()
-    effect.parse_arguments([str(data_dir / 'plus_with_duplicate.svg')])
-    effect.load_raw()
+    svg_path = str(data_dir / 'plus_with_duplicate.svg')
+    if hasattr(effect, 'parse_arguments'):  # Inkscape 1.x
+        effect.parse_arguments([svg_path])
+        effect.load_raw()
+    else:  # Inkscape 0.9x
+        effect.getoptions([svg_path])
+        effect.parse(svg_path)
+
     effect.recursivelyTraverseSvg(effect.document.getroot())
 
     assert effect.paths == [
