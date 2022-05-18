@@ -17,10 +17,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.10']
-        inkscape-version: ['1.1']
+        inkscape-version: ['1.2']
         continue-on-error: [false]
+        exclude:
+          - { os: 'ubuntu-latest', python-version: '3.10', inkscape-version: '1.2', continue-on-error: false }
+          - { os: 'macos-latest', python-version: '3.10', inkscape-version: '1.2', continue-on-error: false }
         include:
+          - { os: 'macos-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
+          - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '2.7', inkscape-version: '0.92.5', continue-on-error: false }
           - { os: 'windows-latest', python-version: '2.7', inkscape-version: '0.92.5', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.10', inkscape-version: '0.92.5', continue-on-error: false }
@@ -45,9 +50,13 @@ jobs:
         sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape DEV from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
         sudo apt-get update
     - name: 🐧 install Inkscape & umockdev 
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version != 'TRUNK' }}
       run: |
         sudo apt-get -y install inkscape umockdev
+    - name: 🐧 install Inkscape TRUNK & umockdev 
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
+      run: |
+        sudo apt-get -y install inkscape-trunk umockdev
     - name: 🍏 install Inkscape
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
@@ -57,8 +66,12 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '0.92.5' }}
       run: |
         choco install -y inkscape --version ${{ matrix.inkscape-version }}
-    - name: 🗖 install Inkscape
+    - name: 🗖 install Inkscape 1.1
       if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.1' }}
+      run: |
+        choco install -y inkscape --version ${{ matrix.inkscape-version }}
+    - name: 🗖 install Inkscape
+      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.2' }}
       run: |
         choco install -y inkscape
     - name: 🗖 patch Inkscape (0.92.5) simpletransform
@@ -70,9 +83,13 @@ jobs:
       if: ${{ matrix.inkscape-version == '0.92.5' && matrix.os == 'ubuntu-latest' }}
       run: |
         sudo sed -i 's:result=re.match("(:result=re.match(r"(:' "/usr/share/inkscape/extensions/simpletransform.py" # fix bug in inkscape extension: regex should use raw string
+    - name: inkscape version
+      run: |
+        inkscape --version
     - name: install requirements
       run: |
         python -m pip install --upgrade pip
+        pip install cssselect   # required for inkscape 1.2
         pip install -r requirements.txt
         pip install pytest
     - name: test
