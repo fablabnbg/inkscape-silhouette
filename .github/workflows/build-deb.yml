@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: 3.9
     - name: 🐧 install Inkscape
@@ -46,7 +46,7 @@ jobs:
 #          echo $SOURCE_TAG
 #          echo $SOURCE_TAG_VERSION
     - name: Upload .deb Package
-      uses: actions/upload-artifact@v2.2.3
+      uses: actions/upload-artifact@v3
       with:
         name: inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
         path: distribute/out/inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
