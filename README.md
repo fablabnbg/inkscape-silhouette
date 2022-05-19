@@ -1,6 +1,5 @@
 # inkscape-silhouette
 
-[![Build Status](https://travis-ci.com/fablabnbg/inkscape-silhouette.svg?branch=main)](https://travis-ci.com/fablabnbg/inkscape-silhouette)
 [![Run Python tests](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml/badge.svg)](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml)
 
 An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
