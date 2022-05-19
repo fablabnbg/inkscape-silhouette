@@ -524,7 +524,7 @@ Each of the following `level` values encompasses all of the later ones:
 
         d = path.get("d")
 
-        try:  # inkscape 1.0
+        try:  # inkscape 1.0+
             p = CubicSuperPath(d).transform(Transform(matTransform))
         except:  # inkscape 0.9x
             if len(simplepath.parsePath(d)) == 0:
@@ -636,14 +636,19 @@ Each of the following `level` values encompasses all of the later ones:
                 continue
 
             # calculate this object's transform
-            try:  # inkscape 1.0
+            try:  # inkscape 1.2
                 transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
-                transform = Transform(self.docTransform) * transform
-                transform = Transform(extra_transform) * transform
-            except:  # inkscape 0.9x
-                transform = composeParents(node, IDENTITY_TRANSFORM)
-                transform = composeTransform(self.docTransform, transform)
-                transform = composeTransform(extra_transform, transform)
+                transform = Transform(self.docTransform) @ transform
+                transform = Transform(extra_transform) @ transform
+            except:
+                try:  # inkscape 1.0
+                    transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
+                    transform = Transform(self.docTransform) * transform
+                    transform = Transform(extra_transform) * transform
+                except:  # inkscape 0.9x
+                    transform = composeParents(node, IDENTITY_TRANSFORM)
+                    transform = composeTransform(self.docTransform, transform)
+                    transform = composeTransform(extra_transform, transform)
 
             if node.tag == inkex.addNS("g", "svg") or node.tag == "g":
 
@@ -683,13 +688,18 @@ Each of the following `level` values encompasses all of the later ones:
                         x = float(node.get("x", "0"))
                         y = float(node.get("y", "0"))
                         # Note: the transform has already been applied
-                        try:  # inkscape 1.0
-                            refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
+                        try:  # inkscape 1.2
+                            refnode_transform = transform @ Transform("translate(%f, %f)" % (x, y))
                             # The docTransform will get applied again inside the recursive call
-                            refnode_transform *= -Transform(self.docTransform)
-                        except:  # inkscape 0.9x
-                            refnode_transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
-                            refnode_transform = composeTransform(refnode_transform, invertTransform(self.docTransform))
+                            refnode_transform @= -Transform(self.docTransform)
+                        except:
+                            try:  # inkscape 1.0
+                                refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
+                                # The docTransform will get applied again inside the recursive call
+                                refnode_transform *= -Transform(self.docTransform)
+                            except:  # inkscape 0.9x
+                                refnode_transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
+                                refnode_transform = composeTransform(refnode_transform, invertTransform(self.docTransform))
                         v = node.get("visibility", v)
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
                     else:
@@ -1104,7 +1114,7 @@ Each of the following `level` values encompasses all of the later ones:
                 if all((vinfo[2], vinfo[3])):
                     sx = self.docWidth / float(vinfo[2])
                     sy = self.docHeight / float(vinfo[3])
-                    try:  # Inkscape 1.0
+                    try:  # Inkscape 1.0+
                         self.docTransform = Transform("scale(%f, %f)" % (sx, sy))
                     except:  # Inkscape 0.9x
                         self.docTransform = parseTransform("scale(%f, %f)" % (sx, sy))
@@ -1120,7 +1130,10 @@ Each of the following `level` values encompasses all of the later ones:
 
         trans = node.get("transform")
         if trans:
-            mat = Transform(trans) * mat
+            try:  # inkscape 1.2
+                mat = Transform(trans) @ mat
+            except:  # inkscape 1.0
+                mat = Transform(trans) * mat
 
         if node.getparent() is not None:
             if node.getparent().tag == inkex.addNS("g", "svg"):
