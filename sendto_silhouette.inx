@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
   <_name>Send to Silhouette</_name>
-  <id>com.github.jnweiger.inskscape-silhouette</id>
+  <id>com.github.fablabnbg.inkscape-silhouette.sendto_silhouette</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
-  <dependency type="executable" location="extensions">inkex.py</dependency>
   <dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
   <param name="active-tab" type="notebook">
     <page name='silhouette' _gui-text='Silhouette'>
@@ -26,7 +25,7 @@
         <item value="cut">Cut</item>
         <item value="autoblade">AutoBlade</item>
       </param>
-      <param name="pen_help" type="description">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</param>
+      <label>'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</label>
       <!-- CAUTION: keep media list in sync with silhouette/Graphtec.py -->
       <param name="media" type="enum" _gui-text="Media:">
         <item value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</item>
@@ -60,42 +59,42 @@
       <param name="speed" type="int" min="0" max="30" _gui-text="Speed">0</param>
       <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">0</param>
       <param name="depth" type="int" min="-1" max="10" _gui-text="Blade Depth (for AutoBlade)">-1</param>
-      <param name="speed_help" type="description">Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</param>
-      <param name="preview" type="boolean" _gui-text="Preview: show cut pattern before sending">true</param>
-      <param name="preview_help" type="description">Note that for Preview to operate, the `matplotlib' package for Python must be installed.</param> 
+      <label>Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</label>
+      <param name="preview" type="bool" _gui-text="Preview: show cut pattern before sending">true</param>
+      <label>Note that for Preview to operate, the `matplotlib' package for Python must be installed.</label>
     </page>
     <page name='opt' _gui-text='Options'>
-      <param name="dashes" type="boolean" _gui-text="Convert to dashes">false</param> <param name="dashes_help" type="description">Convert paths with dashed strokes to separate subpaths for perforated cuts.</param>
-      <param name="autocrop" type="boolean" _gui-text="Trim margins">false</param> <param name="autocrop_help" type="description">Shift to the top lefthand corner, then do offsets.</param>
-      <param name="bbox_only" type="boolean" _gui-text="Draft Bounding Box Only">false</param>
-      <param name="bbox_help" type="description">To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</param>
+      <param name="dashes" type="bool" _gui-text="Convert to dashes">false</param> <label>Convert paths with dashed strokes to separate subpaths for perforated cuts.</label>
+      <param name="autocrop" type="bool" _gui-text="Trim margins">false</param> <label>Shift to the top lefthand corner, then do offsets.</label>
+      <param name="bbox-only" type="bool" _gui-text="Draft Bounding Box Only">false</param>
+      <label>To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</label>
       <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
-      <param name="reversetoggle" type="boolean" _gui-text="Cut in opposite direction(s)">false</param>
+      <param name="reversetoggle" type="bool" _gui-text="Cut in opposite direction(s)">false</param>
       <param name="endposition" type="enum" _gui-text="Position After Cutting:">
         <item value="start">Start Position</item>
         <item value="below">Below Cut-Out</item>
       </param>
-      <param name="endposition_help" type="description">Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</param>
+      <label>Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</label>
       <param name="end_offset" type="float" min="-3000.0" max="3000.0" _gui-text="End Position Offset [mm]:">0.0</param>
-      <param name="end_off_help" type="description">Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</param>
+      <label>Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</label>
     </page>
 
     <page name='reg' _gui-text='Regmarks'>
-      <param name="regmark" type="boolean" _gui-text="The document has registration marks">false</param>
-      <param name="regmark_help" type="description">The document contains printed registration marks</param>
-      <param name="regsearch" type="boolean" _gui-text="Search for the registration marks automatically">false</param>
-      <param name="regsearch_help" type="description">Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</param>
+      <param name="regmark" type="bool" _gui-text="The document has registration marks">false</param>
+      <label>The document contains printed registration marks</label>
+      <param name="regsearch" type="bool" _gui-text="Search for the registration marks automatically">false</param>
+      <label>Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
       <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
       <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
       <param name="regoriginx" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document left [mm]">15</param>
       <param name="regoriginy" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document top [mm]">20</param>
-      <param name="regdistance_help" type="description">Distance of the registration mark edges</param>
+      <label>Distance of the registration mark edges</label>
     </page>
 
     <page name='advanced' _gui-text='Advanced'>
-      <param name="wait_done" type="boolean" _gui-text="Wait til done, after all data is sent">false</param>
-      <param name="wait_done_help" type="description">Keep dialog open until device becomes idle again.</param>
-      <param name="sharpencorners" type="boolean" _gui-text="Sharpen Corners">false</param> <param name="sharpencorners_help" type="description">Lift head at sharp corners</param>
+      <param name="wait_done" type="bool" _gui-text="Wait til done, after all data is sent">false</param>
+      <label>Keep dialog open until device becomes idle again.</label>
+      <param name="sharpencorners" type="bool" _gui-text="Sharpen Corners">false</param> <label>Lift head at sharp corners</label>
       <param name="sharpencorners_start" type="float" min="0.1" max="0.9" _gui-text="Sharpen Corners - Start Ext. [mm]">0.1</param>
       <param name="sharpencorners_end" type="float" min="0.1" max="0.9" _gui-text="Sharpen Corners - End Ext. [mm]">0.1</param>
       <param name="overcut" type="float" min="0.0" max="5.0" _gui-text="Overcut on closed paths [mm]">0.5</param>
@@ -106,12 +105,12 @@
         <item value="mintravelfull">Minimized Traveling (fully optimized)</item>
         <item value="mintravelfwd">Minimized Traveling (no reverse)</item>
       </param>
-      <param name="strategy_help" type="description" xml:space="preserve">
+      <label xml:space="preserve">
 Z-Order: Leaf cut order as defined in input svg.
 Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.
 Minimal Traveling: Find the nearest startpoint to minimize travel movements
 Minimal Traveling (fully optimized): Additionally search startpoints in closed paths
-Minimal Traveling (no reverse): Like fully optimized but respect original orientations of paths</param>
+Minimal Traveling (no reverse): Like fully optimized but respect original orientations of paths</label>
       <param name="orient_paths" type="enum" _gui-text="Pre-orient paths:">
 	<item value="natural">As in SVG</item>
 	<item value="desy">Descending Y (pull through tool)</item>
@@ -119,19 +118,19 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<item value="desx">Descending X (right to left)</item>
 	<item value="ascx">Ascending X (left to right)</item>
       </param>
-      <param name="orient_help1" type="description">Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</param>
-      <param name="fuse_paths" type="boolean" _gui-text="Fuse coincident paths">true</param>
-      <param name="fuse_help" type="description">Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</param>
-      <param name="sw_clipping" type="boolean" _gui-text="Enable Software Clipping">true</param>
+      <label>Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</label>
+      <param name="fuse_paths" type="bool" _gui-text="Fuse coincident paths">true</param>
+      <label>Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</label>
+      <param name="sw_clipping" type="bool" _gui-text="Enable Software Clipping">true</param>
     </page>
 
     <page name="logdump" _gui-text="Log and Dump">
       <param name="logfile" type="string" _gui-text="Save log messages in file:"></param>
-      <param name="log_paths" type="boolean" _gui-text="Include final cut paths in log (for debugging)">false</param>
+      <param name="log_paths" type="bool" _gui-text="Include final cut paths in log (for debugging)">false</param>
       <param name="cmdfile" type="string" _gui-text="Transcribe cutter commands to file:"></param>
-      <param name="inc_queries" type="boolean" _gui-text="Include cutter queries in command transcript">false</param>
-      <param name="append_logs" type="boolean" _gui-text="Append to log/dump files rather than overwriting">false</param>
-      <param name="dry_run" type="boolean" _gui-text="Dry Run: do not send commands to device">false</param>
+      <param name="inc_queries" type="bool" _gui-text="Include cutter queries in command transcript">false</param>
+      <param name="append_logs" type="bool" _gui-text="Append to log/dump files rather than overwriting">false</param>
+      <param name="dry_run" type="bool" _gui-text="Dry Run: do not send commands to device">false</param>
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="enum" _gui-text="Override cutter model to:">
 	<item value="DETECT">-- as detected --</item>
@@ -148,11 +147,11 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<item value="Silhouette SD 1">Silhouette SD 1</item>
 	<item value="Silhouette SD 2">Silhouette SD 2</item>
       </param>
-      <param name="force_hw_help" type="description">Using any setting other than `as detected' is not recommended except when performing a dry run.</param>
+      <label>Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
 
     <page name='blade' _gui-text='Blade Setting'>
-      <param name="blade_help" type="description" xml:space="preserve">
+      <label xml:space="preserve">
 Always use the least amount of blade possible.
 
 1) Take a sheet of the media you are trying to cut and fold it in half.
@@ -166,14 +165,14 @@ Always use the least amount of blade possible.
 5) Keep doing this until you reach the correct setting to cut the top layer without cutting the back.
 
 6) Once this is done the blade can be put back in to the machine.
-      </param>
+      </label>
       <param name="bladediameter" type="float" min="0.0" max="2.3" _gui-text="Diameter of the used blade type [mm]">0.9</param>
-      <param name="bladediameter_help" type="description">Correct value for the silhouette blade is 0.9mm</param>
+      <label>Correct value for the silhouette blade is 0.9mm</label>
     </page>
     <page name='about' _gui-text='About'>
-      <param name="about_who" type="description">inkscape-silhouette extension from https://github.com/fablabnbg/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</param>
+      <label>inkscape-silhouette extension from https://github.com/fablabnbg/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</label>
       <!-- Keep in sync with sendto_silhouette.py line 94 __version__ = ... -->
-      <param name="about_version" type="description">Version 1.25</param>
+      <label>Version 1.25</label>
     </page>
   </param>
 

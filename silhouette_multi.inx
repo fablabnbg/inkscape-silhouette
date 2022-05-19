@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
   <_name>Silhouette Multiple Actions</_name>
-  <id>com.github.jnweiger.inskscape-silhouette-multi</id>
+  <id>com.github.fablabnbg.inskscape-silhouette.silhouette_multi</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
-  <dependency type="executable" location="extensions">inkex.py</dependency>
   <dependency type="executable" location="extensions">silhouette_multi.py</dependency>
 
-  <param name="multi_help" type="description" xml:space="preserve">
+  <label xml:space="preserve">
 Debugging/Logging Settings:
 In ordinary use you can leave these all unchecked.
 Cutting settings will show up once you click "Apply."
-  </param>
-  <param name="dry_run" type="boolean" _gui-text="Only show commands, instead of running them">false</param>
-  <param name="block" type="boolean" _gui-text="Wait for cutter to finish before returning to Inkscape">false</param>
-  <param name="verbose" type="boolean" _gui-text="Enable verbose logging">false</param>
+  </label>
+  <param name="dry_run" type="bool" _gui-text="Only show commands, instead of running them">false</param>
+  <param name="block" type="bool" _gui-text="Wait for cutter to finish before returning to Inkscape">false</param>
+  <param name="verbose" type="bool" _gui-text="Enable verbose logging">false</param>
 
   <effect needs-live-preview="false" >
     <object-type>all</object-type>
