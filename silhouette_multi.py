@@ -862,14 +862,15 @@ class SilhouetteMulti(inkex.Effect):
 
     def run_commands_with_dialog(self, commands):
         for i, command in enumerate(commands):
-            if not self.run_command_with_dialog(command, step=i + 1, total=len(commands)):
+            returncode = self.run_command_with_dialog(command, step=i + 1, total=len(commands))
+            if returncode != 0:
                 # At this point, we have already displayed the log if we are
                 # going to. So if we want the user to see the failed command
                 # we just have to go ahead and display it.
                 # But we will use the dialog's extended message to reduce
                 # visual clutter
                 info_dialog(None, "Action failed.",
-                            extended = "Command: '" + command + "'")
+                            extended = f"Return code: {returncode}\nCommand: '{command}'")
 
                 sys.exit(1)
 
@@ -907,7 +908,7 @@ class SilhouetteMulti(inkex.Effect):
 
         dialog.Destroy()
         wx.Yield()
-        return process.returncode == 0
+        return process.returncode
 
     # end of class MyFrame
 
