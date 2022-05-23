@@ -127,20 +127,56 @@ class ParamsNotebook(wx.Notebook):
         self.add_tabs()
 
     def load_inx(self):
+        notebook = {}
+
+        def addToPage(path, item):
+            # This function will process all of the fourth-level tags in
+            # sendto_silhouette.inx. We want all of the items on all of the
+            # "pages" of the "notebook". First we ignore the only other
+            # second-level tag that has fourth-level descendents:
+            (booktag, bookattrs) = path[1]
+            if booktag == 'effect':
+                return True
+            # Next we check that we are indeed in the notebook 2nd-level tag:
+            if booktag != 'param' or bookattrs['type'] != 'notebook':
+                emit_to_log(f"unexpected INX format: '{path[1]}'")
+                return False
+            # And we make sure we are on a "page" of that notebook:
+            (pagetag, pageattrs) = path[2]
+            if pagetag != 'page':
+                emit_to_log(f"unexpected INX notebook format: '{path[2]}'")
+                return False
+            pagename = pageattrs['name']
+            # If it is a new page we have to initialize it:
+            if not pagename in notebook:
+                pagetitle = pageattrs['_gui-text']
+                notebook[pagename] = dict(title=pagetitle, param=[])
+            # Ultimately we want a dict to represent the item on the page,
+            # but if there is a text body to the tag, it comes as a string:
+            if isinstance(item, str):
+                item = {'#text': item.strip()}
+            # path[3] is the fourth-level tag itself:
+            (tagname, tagattrs) = path[3]
+            # rebuild the dict as it would have been without an item handler:
+            for attr in tagattrs or []:
+                item['@'+attr] = path[3][1][attr]
+            if tagname == 'label':
+                item['@type'] = 'description'  # re-create the old .inx format
+            elif tagname != 'param':
+                emit_to_log(f"unexpected INX item format: '{path[3]}'")
+                return False
+            notebook[pagename]['param'].append(item)
+            return True
+
         with open('sendto_silhouette.inx', 'rb') as inx_file:
-            self.inx = xmltodict.parse(inx_file, force_list=('param',))
+            self.inx = xmltodict.parse(
+                inx_file, item_depth = 4, item_callback = addToPage)
+        self.notebook = notebook
 
     def create_tabs(self):
-        self.notebook = self.inx['inkscape-extension']['param'][0]
-
-        if self.notebook['@type'] != 'notebook':
-            emit_to_log("unexpected INX format: '"
-                        + self.notebook['@type'] +"'")
-            return
-
         self.tabs = []
-        for page in self.notebook['page']:
-            self.tabs.append(ParamsTab(self, wx.ID_ANY, name=page['@name'], title=page['@_gui-text'], params=page['param']))
+        for pagename, attrs in self.notebook.items():
+            self.tabs.append(ParamsTab(self, wx.ID_ANY, name=pagename, title=attrs['title'], params=attrs['param']))
 
     def add_tabs(self):
         for tab in self.tabs:
@@ -241,7 +277,7 @@ class ParamsTab(ScrolledPanel):
 
         for row, param in enumerate(self.params):
             param_type = param['@type']
-            param_name = param['@name']
+            param_name = param.get('@name','**unnamed**')
             display_text = param.get('@_gui-text', '')
             text_span = (1, 2)
             text_pos = (row, 0)
@@ -253,7 +289,7 @@ class ParamsTab(ScrolledPanel):
                 display_text = param.get('#text', '')
                 text_span = (1,3)
                 text_flag |= wx.BOTTOM
-            elif param_type == 'boolean':
+            elif param_type == 'bool':
                 input = wx.CheckBox(self)
                 text_pos = (row, 1)
                 ipos = (row,0)
