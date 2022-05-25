@@ -114,13 +114,24 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 
 ### Windows
 
-#### Driver
+#### Driver 
+
+These steps must be done with Silhouette device plugged in to USB port.
 
 * Download newest Zadig from http://zadig.akeo.ie/
 * Go to menu options `List all devices`
 * Look for USB Printing Support in the dropdown list
 * Ensure USB ID is: `0B4D` (Graftek America)
 * Select driver `libusb-win32 (v1.2.6.0)` which will install a `libusb0`-Port for Windows
+* Click replace driver
+
+To later undo:
+
+* Run Zadig again
+* Go to menu options `List all devices`
+* Look for USB Printing Support in the dropdown list
+* Ensure USB ID is: `0B4D` (Graftek America)
+* Select driver `WinUsb` which will undo the prior change.
 * Click replace driver
 
 #### Python adapter
