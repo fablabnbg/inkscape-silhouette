@@ -22,8 +22,22 @@ mkdir $name
 cp ../README.md $name/README
 cp ../LICENSE* $name/
 cp -a ../silhouette $name/
-cp ../*.py ../*.inx ../Makefile $name/
-cp ../*.sh ../*.rules ../*.png  $name/
+cp ../*silhouette*.py ../*.inx $name/
+
+
+echo "****************************************************************"
+echo "Build Windows Version (Y/n)?"
+read answer
+if [ "$answer" != "n" ]
+then
+  mkdir -p out
+  zip -r out/$name-winpackage_$VERSION.zip $name --exclude \*.pyc \*__pycache__\*
+  zip -j out/$name-winpackage_$VERSION.zip win/*
+fi
+
+
+# add linux-specific content
+cp ../*.sh ../*.rules ../*.png ../Makefile $name/
 
 
 echo "****************************************************************"
