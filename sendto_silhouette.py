@@ -91,7 +91,7 @@
 
 from __future__ import print_function
 
-__version__ = "1.25"     # Keep in sync with sendto_silhouette.inx ca line 79
+__version__ = "1.26"     # Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
 import sys, os, time, tempfile, math, operator, re
