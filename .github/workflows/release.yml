@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create Release Package
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: 🐧 Install Inkscape
+      run: |
+        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.2 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+        sudo apt-get update
+        sudo apt-get -y install inkscape
+        sudo apt-get -y install checkinstall libxml-xpath-perl  # xpath
+        inkscape --version
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Branch name
+      id: branch_name
+      run: |
+        echo ::set-output name=TAG_VERSION::$( echo ${GITHUB_REF#refs/tags/} | sed -e 's/^v//' )
+        echo ::set-output name=SOURCE_VERSION::$( python ./sendto_silhouette.py --version )
+        echo ::set-output name=INX_VERSION::$( xpath -q -e '//*[@name="about_version"]/text()' sendto_silhouette.inx | sed -e 's/^version //i' )
+    - name: Version Check
+      env:
+          TAG_VERSION: ${{ steps.branch_name.outputs.TAG_VERSION }}
+          SOURCE_VERSION: ${{ steps.branch_name.outputs.SOURCE_VERSION }}
+          INX_VERSION: ${{ steps.branch_name.outputs.INX_VERSION }}
+      run: |
+          echo "::notice::tag version: $TAG_VERSION"
+          echo "::notice::source version: $SOURCE_VERSION"
+          echo "::notice::inx version: $INX_VERSION"
+          [ "$SOURCE_VERSION" == "$INX_VERSION" ] || ( echo "::error::Error: source version and .inx version differ" && exit 1 )
+          [ "$SOURCE_VERSION" == "$TAG_VERSION" ] || ( echo "::error::Error: source version and git tag differ" && exit 1 )
+    - name: Build Release Package
+      run: |
+        make dist
+#    - name: Upload .deb Package
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
+#        path: distribute/out/inkscape-silhouette_${{ steps.branch_name.outputs.SOURCE_SOURCE_VERSION }}-1_all.deb
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        draft: true
+        files: |
+          distribute/out/*

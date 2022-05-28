@@ -1,13 +1,12 @@
 #!/bin/bash
-echo "Determining Version:"
-VERSION=$(python3 ../sendto_silhouette.py --version)
-
 test -e /usr/bin/xpath || sudo apt-get install libxml-xpath-perl
 test -e /usr/bin/checkinstall || sudo apt-get install checkinstall
 #
-# grep Version ../*.inx
-xpath -q -e '//param[@name="about_version"]/text()' ../sendto_silhouette.inx
-echo "Version should be: \"$VERSION\""
+VERSION=$( python3 ../sendto_silhouette.py --version )
+INX_VERSION=$( xpath -q -e '//*[@name="about_version"]/text()' ../sendto_silhouette.inx | sed -e 's/^version //i' ) # grep Version ../*.inx
+echo "Source version is: \"$VERSION\""
+echo "INX version is: \"$INX_VERSION\""
+test "$VERSION" = "$INX_VERSION" || ( echo "Error: python source and .inx version differ" && exit 1 )
 
 
 
