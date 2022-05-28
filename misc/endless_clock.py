@@ -9,8 +9,6 @@
 # Modelled after https://github.com/rougier/freetype-py/blob/master/examples/glyph-vector.py
 # first working draft, doing 2 things at a time.
 
-from __future__ import print_function
-
 import sys,time,gtk
 from goocanvas import *
 import cairo,random

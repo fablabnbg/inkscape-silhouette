@@ -5,8 +5,6 @@
 #
 # Requires: python-usb  # from Factory
 
-from __future__ import print_function
-
 import re,time,sys,string,argparse
 
 sys.path.extend(['..','.'])	# make it callable from top or misc directory.

@@ -31,8 +31,6 @@
 #                          ccw() and sharp_turn*() now global. No class needed.
 #                          Using class Barrier from Geomentry in the main loop of pyramids_barrier()
 
-from __future__ import print_function
-
 import copy     # deepcopy
 import math     # sqrt
 import sys      # maxsize

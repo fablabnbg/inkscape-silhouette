@@ -89,8 +89,6 @@
 # 2020-07-01 uw, v1.23 -- port to inkscape version 1.00
 # 2020-12-29 tb, v1.24 -- restore compatiblity with any inkscape version, add automated tests for win, osx, linux, lots of bugfixes
 
-from __future__ import print_function
-
 __version__ = "1.26"     # Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 

@@ -21,8 +21,6 @@
 #
 # Requires: python-goocanvas
 
-from __future__ import print_function
-
 import sys
 import gtk
 from goocanvas import *

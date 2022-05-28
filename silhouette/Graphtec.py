@@ -22,8 +22,6 @@
 # 2021-06-03  Adding Cameo4 Pro
 # 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
 
-from __future__ import print_function
-
 import os
 import re
 import sys

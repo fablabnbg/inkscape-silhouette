@@ -3,7 +3,6 @@
 # Conversion utilities for printer's binary encoding commands
 # (c) 2018 D. Bajar
 
-from __future__ import print_function
 import sys
 
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # this script reads inkscape dumpfiles and shows the plotter path
-from __future__ import print_function
 
 import sys
 try:
