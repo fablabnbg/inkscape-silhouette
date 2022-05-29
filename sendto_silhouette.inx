@@ -134,18 +134,18 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="enum" _gui-text="Override cutter model to:">
 	<item value="DETECT">-- as detected --</item>
-	<item value="Silhouette Portrait">Silhouette Portrait</item>
-	<item value="Silhouette Portrait2">Silhouette Portrait 2</item>
-	<item value="Silhouette Portrait3">Silhouette Portrait 3</item>
-	<item value="Silhouette Cameo">Silhouette Cameo</item>
-	<item value="Silhouette Cameo2">Silhouette Cameo 2</item>
-	<item value="Silhouette Cameo3">Silhouette Cameo 3</item>
-	<item value="Silhouette Cameo4">Silhouette Cameo 4</item>
-	<item value="Silhouette Cameo4 Pro">Silhouette Cameo 4 Pro</item>
-	<item value="Craft Robo CC200-20">Craft Robo CC200-20</item>
-	<item value="Craft Robo CC300-20">Craft Robo CC300-20</item>
-	<item value="Silhouette SD 1">Silhouette SD 1</item>
-	<item value="Silhouette SD 2">Silhouette SD 2</item>
+	<item value="Silhouette_Portrait">Silhouette Portrait</item>
+	<item value="Silhouette_Portrait2">Silhouette Portrait 2</item>
+	<item value="Silhouette_Portrait3">Silhouette Portrait 3</item>
+	<item value="Silhouette_Cameo">Silhouette Cameo</item>
+	<item value="Silhouette_Cameo2">Silhouette Cameo 2</item>
+	<item value="Silhouette_Cameo3">Silhouette Cameo 3</item>
+	<item value="Silhouette_Cameo4">Silhouette Cameo 4</item>
+	<item value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</item>
+	<item value="Craft_Robo_CC200-20">Craft Robo CC200-20</item>
+	<item value="Craft_Robo_CC300-20">Craft Robo CC300-20</item>
+	<item value="Silhouette_SD_1">Silhouette SD 1</item>
+	<item value="Silhouette_SD_2">Silhouette SD 2</item>
       </param>
       <label>Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
