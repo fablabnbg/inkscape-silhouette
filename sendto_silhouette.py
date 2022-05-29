@@ -2,115 +2,24 @@
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
-# (C) 2014, 2015 juewei@fabmail.org
-#
-# code snippets visited to learn the extension 'effect' interface:
-# - http://sourceforge.net/projects/inkcut/
-# - http://code.google.com/p/inkscape2tikz/
-# - http://wiki.inkscape.org/wiki/index.php/PythonEffectTutorial
-# - http://github.com/jnweiger/inkscape-gears-dev
-# - http://code.google.com/p/eggbotcode/
-# - http://www.bobcookdev.com/inkscape/better_dxf_output.zip
-#
-# Porting to OSX
-# - https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
-# - https://github.com/pmonta/gerber2graphtec/blob/master/README
-#
-# 2013-05-09 jw, V0.1 -- initial draught
-# 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
-# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(),
-#                        improved logging, flipped y-axis.
-# 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected.
-#                        Explicit multipass option added.
-#                        Emplying recursivelyTraverseSvg() from eggbotcode
-#                        TODO: coordinate system of page is not exact.
-# 2013-05-13 jw, v0.5 -- transporting docWidth/docHeight to dev.plot()
-# 2013-05-15 jw, v0.6 -- Replaced recursivelyTraverseSvg() and friends with the
-#                        versions from eggbot.py, those from eggbot_hatch.py
-#                        would only do closed paths. Makes sense for them, but
-#                        not for us.
-#                        Added no_device=True debugging aid to SilhouetteCameo()
-# 2013-05-17 jw, v0.7 -- Honor layer visibility by checking style="display:none"
-#                        penUP()/penDown() bugfix to avoid false connections between objects.
-#                        Added option reversetoggle, to cut the opposite direction.
-# 2013-05-19 jw, v0.8 -- Split GUI into two pages. Added dummy and mat-free checkboxes.
-#                        misc/corner_detect.py done, can now load a dump saved by dummy.
-#                        Udev rules and script added, so that we get a nice notify
-#                        guiding users towards inkscape, when connecting a device.
-# 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy
-#                        appears useful.
-# 2013-05-26 jw, v1.0 -- Some tuning done. fixed preset scaling, improved path recombination.
-# 2013-05-26 jw, v1.1 -- Strategy.MatFree.path_overshoot() added. With 0.2mm overshoot
-#                        the paper now comes apart almost by itself. great.
-#                        Buffer percent estimation added. We now have an estimate
-#                        how long the buffered data will need.
-# 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
-# 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
-#                        test_drive.py now draws arrows. All [0], [1] converted to new .x, .y syntax.
-#                        Split Geometry.py from Strategy.py; class Barrier implemented.
-# 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
-# 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
-#                        working code on windows and macosx too. Still linux only.
-# 2013-11-08 jw, v1.6 -- supporting mm in getLength().
-# 2013-12-16 jw, v1.7 -- https://github.com/jnweiger/inkscape-silhouette/issues/1
-#                        fixed. Silly copy/paste bug. Looks like I miss a testsuite.
-# 2014-01-23 jw, v1.8 -- improving portability by using os.devnull, os.path.join, tempfile.
-#                        Partial fixes for https://github.com/jnweiger/inkscape-silhouette/issues/2
-#                        Enumerating devices if none are found.
-# 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows.
-#                        Experimental retry added when write returns 0.
-#                        issues/2#issuecomment-33526659
-# 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
-# 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
-# 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
-# 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
-# 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
-# 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
-# 2014-10-25 jw, v1.12 -- better error messages.
-# 2014-10-31 jw, v1.13 -- fixed usb.core.write() without interface parameter. Set Graphtec.py/need_interface if needed.
-# 2015-06-06 jw, v1.14 -- fixed timout errors, refactored much code.
-#                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
-# 2016-01-15 jw, v1.15 -- ubuntu loads the wrong usb library.
-# 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
-# 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with
-#                         https://github.com/fablabnbg/inkscape-silhouette/issues/10
-# 2016-05-21 jw, v1.18 -- warn about python-usb < 1.0 and give instructions.
-#                         Limit pressure to 18. 19 or 20 make the machine
-#                         scroll forward backward for several minutes.
-#                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
-# 2016-12-18 jw, v1.19 -- support for dashed lines added. Thanks to mehtank
-#                         https://github.com/fablabnbg/inkscape-silhouette/pull/33
-#                         Added new cutting strategy "Minimized Traveling"
-#                         Added parameter for blade diameter
-# 2018-06-01 jw, v1.20 -- Make it compile again. Hmm.
-# 2019-07-25 jw, v1.21 -- merge from github.com/olegdeezus/inkscape-silhouette
-#                         merge from fablabnbg
-# 2019-08-03 jw, v1.22 -- added a copy of pyusb-1.0.2 as a fallback on any platform.
-# 2020-07-01 uw, v1.23 -- port to inkscape version 1.00
-# 2020-12-29 tb, v1.24 -- restore compatiblity with any inkscape version, add automated tests for win, osx, linux, lots of bugfixes
+# (C) 2014 - 2022  juewei@fabmail.org and contributors
 
 __version__ = "1.26"     # Keep in sync with sendto_silhouette.inx ca line 79
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, tempfile, math, operator, re
+import sys, os, time, math, operator, re
 
-
-# we sys.path.append() the directory where this
-# sendto_silhouette.py script lives. Attempt to help with
-# https://github.com/jnweiger/inkscape-silhouette/issues/3
+# we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith("win"):
-    sys.path.append("C:\\Program Files\\Inkscape\\share\\inkscape\\extensions")  # 1.0
-    sys.path.append("C:\\Program Files\\Inkscape\\share\\extensions")  # 0.92
+    sys.path.append(r"C:\Program Files\Inkscape\share\inkscape\extensions")
 
 elif sys_platform.startswith("darwin"):
-    sys.path.append("~/.config/inkscape/extensions")
     sys.path.append("/Applications/Inkscape.app/Contents/Resources/share/inkscape/extensions")
 
 else:   # linux
-    # if sys_platform.startswith("linux"):
     sys.path.append("/usr/share/inkscape/extensions")
 
 # We will use the inkex module with the predefined Effect base class.
@@ -124,34 +33,23 @@ if not sys.stdout:
     sys.stdout=os.fdopen(os.open(os.devnull, os.O_WRONLY|os.O_APPEND), 'w')
     dummy_stdout=True
 
-import inkex
-
 if dummy_stdout:
     sys.stdout.close()
     sys.stdout=None
 
-try:     # inkscape 1.0
-    from inkex.paths import Path, CubicSuperPath
-    from inkex.transforms import Transform
-    from inkex.bezier import beziersplitatt, maxdist
-    from lxml import etree
-except:  # inkscape 0.9x
-    import simplepath
-    from simplepath import formatPath as Path  # fake for inkscape 0.9x compatiblity: Path()
-    import cubicsuperpath
-    from simpletransform import parseTransform, composeTransform, applyTransformToPath, composeParents, invertTransform
-    from bezmisc import beziersplitatt
-    from cspsubdiv import maxdist
-    from inkex import etree
+import inkex
+from inkex.extensions import EffectExtension
+from inkex import addNS, Boolean
+from inkex.paths import Path, CubicSuperPath
+from inkex.transforms import Transform
+from inkex.bezier import beziersplitatt, maxdist
+from lxml.etree import Element
 
-import string   # for string.lstrip
-import gettext
+from gettext import gettext
 from optparse import SUPPRESS_HELP
+from tempfile import NamedTemporaryFile
 
-try:
-    inkex.localization.localize()   # inkscape 1.0
-except:
-    inkex.localize()    # inkscape 0.9x
+inkex.localization.localize()
 
 from silhouette.Graphtec import SilhouetteCameo, CAMEO_MATS
 from silhouette.Strategy import MatFree
@@ -261,13 +159,13 @@ class teeFile:
         self.f1.close()
         self.f2.close()
 
-class SendtoSilhouette(inkex.Effect):
+class SendtoSilhouette(EffectExtension):
     """
     Inkscape Extension to send to a Silhouette Cameo
     """
     def __init__(self):
         # Call the base class constructor.
-        inkex.Effect.__init__(self)
+        EffectExtension.__init__(self)
 
         self.cut = []
         self.warnings = {}
@@ -301,33 +199,16 @@ class SendtoSilhouette(inkex.Effect):
             self.tty = None
         self.log = self.tty
 
-        if not hasattr(self, "run"):
-            # fake for inkscape 0.9x compatiblity: affect()
-            self.run = self.affect
-
-        if not hasattr(self, "arg_parser"):
-            # fake for inkscape 0.9x compatiblity: OptionParser.add_option()
-            inkex.Boolean = "inkbool"
-
-            def add_option_wrapper(*arg, **args):
-                args["action"] = "store"
-                if hasattr(args, "type"):
-                    args["type"] = re.split("'", str(args["type"]))[1]
-                self.OptionParser.add_option(*arg, **args)
-
-            self.arg_parser = lambda: None
-            self.arg_parser.add_argument = add_option_wrapper
-
         self.arg_parser.add_argument("--active-tab", dest = "active_tab",
                 help=SUPPRESS_HELP)
         self.arg_parser.add_argument("-d", "--dashes",
-                dest = "dashes", type = inkex.Boolean, default = False,
+                dest = "dashes", type = Boolean, default = False,
                 help="convert paths with dashed strokes to separate subpaths for perforated cuts")
         self.arg_parser.add_argument("-a", "--autocrop",
-                dest = "autocrop", type = inkex.Boolean, default = False,
+                dest = "autocrop", type = Boolean, default = False,
                 help="trim away top and left margin (before adding offsets)")
         self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
-                dest = "bboxonly", type = inkex.Boolean, default = False,
+                dest = "bboxonly", type = Boolean, default = False,
                 help="draft the objects bounding box instead of the objects")
         self.arg_parser.add_argument("-c", "--bladediameter",
                 dest = "bladediameter", type = float, default = 0.9,
@@ -339,13 +220,13 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
         self.arg_parser.add_argument("--log_paths",
-                dest = "dump_paths", type = inkex.Boolean, default = False,
+                dest = "dump_paths", type = Boolean, default = False,
                 help="Include final cut paths in log")
         self.arg_parser.add_argument("--append_logs",
-                dest = "append_logs", type = inkex.Boolean, default = False,
+                dest = "append_logs", type = Boolean, default = False,
                 help="Append to log and dump files rather than overwriting")
         self.arg_parser.add_argument("--dry_run",
-                dest = "dry_run", type = inkex.Boolean, default = False,
+                dest = "dry_run", type = Boolean, default = False,
                 help="Do not send commands to device (queries allowed)")
         self.arg_parser.add_argument("-g", "--strategy",
                 dest = "strategy", default = "mintravel",
@@ -356,10 +237,10 @@ class SendtoSilhouette(inkex.Effect):
                 choices=("natural","desy","ascy","desx","ascx"),
                 help="Pre-orient paths: natural (as in svg), or [des(cending)|asc(ending)][y|x]")
         self.arg_parser.add_argument("--fuse_paths",
-                dest = "fuse_paths", type = inkex.Boolean, default = True,
+                dest = "fuse_paths", type = Boolean, default = True,
                 help="Merge any path with predecessor that ends at its start.")
         self.arg_parser.add_argument("-l", "--sw_clipping",
-                dest = "sw_clipping", type = inkex.Boolean, default = True,
+                dest = "sw_clipping", type = Boolean, default = True,
                 help="Enable software clipping")
         self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id",
                 dest = "media", default = "132",
@@ -377,7 +258,7 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "pressure", type = int, default = 10,
                 help="[1..18], or 0 for media default")
         self.arg_parser.add_argument("-P", "--sharpencorners",
-                dest = "sharpencorners", type = inkex.Boolean, default = False,
+                dest = "sharpencorners", type = Boolean, default = False,
                 help="Lift head at sharp corners")
         self.arg_parser.add_argument("--sharpencorners_start",
                 dest = "sharpencorners_start", type = float, default = 0.1,
@@ -386,7 +267,7 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "sharpencorners_end", type = float, default = 0.1,
                 help="Sharpen Corners - End Ext. [mm]")
         self.arg_parser.add_argument("-r", "--reversetoggle",
-                dest = "reversetoggle", type = inkex.Boolean, default = False,
+                dest = "reversetoggle", type = Boolean, default = False,
                 help="Cut each path the other direction. Affects every second pass when multipass.")
         self.arg_parser.add_argument("-s", "--speed",
                 dest = "speed", type = int, default = 10,
@@ -398,23 +279,23 @@ class SendtoSilhouette(inkex.Effect):
         self.arg_parser.add_argument("-T", "--toolholder",
                 choices=("1", "2"), dest = "toolholder", default = None, help="[1..2]")
         self.arg_parser.add_argument("--preview",
-                dest = "preview", type = inkex.Boolean, default = True,
+                dest = "preview", type = Boolean, default = True,
                 help="show cut pattern graphically before sending")
         self.arg_parser.add_argument("-V", "--version",
                 dest = "version", action = "store_true",
                 help="Just print version number ('"+self.version()+"') and exit.")
         self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
-                dest = "wait_done", type = inkex.Boolean, default = False,
+                dest = "wait_done", type = Boolean, default = False,
                 help="After sending wait til device reports ready")
         self.arg_parser.add_argument("-x", "--x-off", "--x_off",
                 type = float, dest = "x_off", default = 0.0, help="X-Offset [mm]")
         self.arg_parser.add_argument("-y", "--y-off", "--y_off",
                 type = float, dest = "y_off", default = 0.0, help="Y-Offset [mm]")
         self.arg_parser.add_argument("-R", "--regmark",
-                dest = "regmark", type = inkex.Boolean, default = False,
+                dest = "regmark", type = Boolean, default = False,
                 help="The document has registration marks.")
         self.arg_parser.add_argument("--regsearch",
-                dest = "regsearch", type = inkex.Boolean, default = False,
+                dest = "regsearch", type = Boolean, default = False,
                 help="Search for the registration marks.")
         self.arg_parser.add_argument("-X", "--reg-x", "--regwidth",
                 type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
@@ -437,7 +318,7 @@ class SendtoSilhouette(inkex.Effect):
                 dest = "cmdfile", default = None,
                 help="Name of file to save transcript of cutter commands.")
         self.arg_parser.add_argument("--inc_queries",
-                dest = "inc_queries", type = inkex.Boolean, default = False,
+                dest = "inc_queries", type = Boolean, default = False,
                 help="Include queries in cutter command transcript")
         self.arg_parser.add_argument("--force_hardware",
                 dest = "force_hardware", default = None,
@@ -461,11 +342,12 @@ class SendtoSilhouette(inkex.Effect):
 
 
     def report(self, message, level):
-        """ Display `message` to the appropriate output stream(s).
-Each of the following `level` values encompasses all of the later ones:
-    error - display to standard error
-    log   - record in logfile if there is one
-    tty   - write to tty and flush if there is one
+        """
+        Display `message` to the appropriate output stream(s).
+        Each of the following `level` values encompasses all of the later ones:
+            error - display to standard error
+            log   - record in logfile if there is one
+            tty   - write to tty and flush if there is one
         """
         if level == 'tty':
             if self.tty:
@@ -484,7 +366,7 @@ Each of the following `level` values encompasses all of the later ones:
         print(message, file=sys.stderr)
         if level != 'error':
             # oops accidentally used an invalid level
-            print("  ... WARNING: message issued at invalid level " + level,
+            print(f"  ... WARNING: message issued at invalid level {level}",
                   file=sys.stderr)
 
     def penUp(self):
@@ -519,16 +401,8 @@ Each of the following `level` values encompasses all of the later ones:
         by the matrix [matTransform].
         """
         # turn this path into a cubicsuperpath (list of beziers)...
-
         d = path.get("d")
-
-        try:  # inkscape 1.0+
-            p = CubicSuperPath(d).transform(Transform(matTransform))
-        except:  # inkscape 0.9x
-            if len(simplepath.parsePath(d)) == 0:
-                return
-            p = cubicsuperpath.parsePath(d)
-            applyTransformToPath(matTransform, p)
+        p = CubicSuperPath(d).transform(Transform(matTransform))
         # ...and apply the transformation to each point
 
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
@@ -579,7 +453,7 @@ Each of the following `level` values encompasses all of the later ones:
 
         TempNumString = "x"
         stringPos = 1
-        CurrentLayerName = string.lstrip(strLayerName)  # remove leading whitespace
+        CurrentLayerName = strLayerName.lstrip()  # remove leading whitespace
 
         # Look at layer name.  Sample first character, then first two, and
         # so on, until the string ends or the string no longer consists of
@@ -638,31 +512,26 @@ Each of the following `level` values encompasses all of the later ones:
                 transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
                 transform = Transform(self.docTransform) @ transform
                 transform = Transform(extra_transform) @ transform
-            except:
-                try:  # inkscape 1.0
-                    transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
-                    transform = Transform(self.docTransform) * transform
-                    transform = Transform(extra_transform) * transform
-                except:  # inkscape 0.9x
-                    transform = composeParents(node, IDENTITY_TRANSFORM)
-                    transform = composeTransform(self.docTransform, transform)
-                    transform = composeTransform(extra_transform, transform)
+            except:  # inkscape 1.0
+                transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
+                transform = Transform(self.docTransform) * transform
+                transform = Transform(extra_transform) * transform
 
-            if node.tag == inkex.addNS("g", "svg") or node.tag == "g":
+            if node.tag == addNS("g", "svg") or node.tag == "g":
 
                 self.penUp()
-                if (node.get(inkex.addNS("groupmode", "inkscape")) == "layer"):
+                if (node.get(addNS("groupmode", "inkscape")) == "layer"):
                     if (node.get("style", "") == "display:none"):
                         self.plotCurrentLayer = False
                     else:
                         self.plotCurrentLayer = True
 
                     if not self.allLayers:
-                        # inkex.errormsg("Plotting layer named: " + node.get(inkex.addNS("label", "inkscape")))
-                        self.DoWePlotLayer(node.get(inkex.addNS("label", "inkscape")))
+                        # inkex.errormsg("Plotting layer named: " + node.get(addNS("label", "inkscape")))
+                        self.DoWePlotLayer(node.get(addNS("label", "inkscape")))
                 self.recursivelyTraverseSvg(node, parent_visibility=v)
 
-            elif node.tag == inkex.addNS("use", "svg") or node.tag == "use":
+            elif node.tag == addNS("use", "svg") or node.tag == "use":
 
                 # A <use> element refers to another SVG element via an xlink:href="#blah"
                 # attribute.  We will handle the element by doing an XPath search through
@@ -677,7 +546,7 @@ Each of the following `level` values encompasses all of the later ones:
                 #     for processing the referenced element.  The referenced element is
                 #     hidden only if its visibility is "inherit" or "hidden".
 
-                refid = node.get(inkex.addNS("href", "xlink"))
+                refid = node.get(addNS("href", "xlink"))
                 if refid:
                     # [1:] to ignore leading "#" in reference
                     path = "//*[@id='%s']" % refid[1:]
@@ -691,13 +560,10 @@ Each of the following `level` values encompasses all of the later ones:
                             # The docTransform will get applied again inside the recursive call
                             refnode_transform @= -Transform(self.docTransform)
                         except:
-                            try:  # inkscape 1.0
-                                refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
-                                # The docTransform will get applied again inside the recursive call
-                                refnode_transform *= -Transform(self.docTransform)
-                            except:  # inkscape 0.9x
-                                refnode_transform = composeTransform(transform, parseTransform("translate(%f, %f)" % (x, y)))
-                                refnode_transform = composeTransform(refnode_transform, invertTransform(self.docTransform))
+                              # inkscape 1.0
+                            refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
+                            # The docTransform will get applied again inside the recursive call
+                            refnode_transform *= -Transform(self.docTransform)
                         v = node.get("visibility", v)
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
                     else:
@@ -705,7 +571,7 @@ Each of the following `level` values encompasses all of the later ones:
                 else:
                     pass
 
-            elif node.tag == inkex.addNS("path", "svg"):
+            elif node.tag == addNS("path", "svg"):
                 if self.options.dashes:
                     splitPath(inkex, node)
 
@@ -726,7 +592,7 @@ Each of the following `level` values encompasses all of the later ones:
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS("rect", "svg") or node.tag == "rect":
+            elif node.tag == addNS("rect", "svg") or node.tag == "rect":
                 # Manually transform
                 #
                 #    <rect x="X" y="Y" width="W" height="H"/>
@@ -750,7 +616,7 @@ Each of the following `level` values encompasses all of the later ones:
                     pass
                 else:
                     # Create a path with the outline of the rectangle
-                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath = Element(addNS("path", "svg"))
                     x = float(node.get("x"))
                     y = float(node.get("y"))
                     w = float(node.get("width"))
@@ -770,7 +636,7 @@ Each of the following `level` values encompasses all of the later ones:
                     newpath.set("d", str(Path(a)))
                     self.plotPath(newpath, transform)
 
-            elif node.tag == inkex.addNS("line", "svg") or node.tag == "line":
+            elif node.tag == addNS("line", "svg") or node.tag == "line":
                 # Convert
                 #
                 #   <line x1="X1" y1="Y1" x2="X2" y2="Y2/>
@@ -792,7 +658,7 @@ Each of the following `level` values encompasses all of the later ones:
                     pass
                 else:
                     # Create a path to contain the line
-                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath = Element(addNS("path", "svg"))
                     x1 = float(node.get("x1"))
                     y1 = float(node.get("y1"))
                     x2 = float(node.get("x2"))
@@ -812,7 +678,7 @@ Each of the following `level` values encompasses all of the later ones:
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS("polyline", "svg") or node.tag == "polyline":
+            elif node.tag == addNS("polyline", "svg") or node.tag == "polyline":
                 # Convert
                 #
                 #  <polyline points="x1, y1 x2, y2 x3, y3 [...]"/>
@@ -849,7 +715,7 @@ Each of the following `level` values encompasses all of the later ones:
                     d = "M " + pa[0]
                     for i in range(1, len(pa)):
                         d += " L " + pa[i]
-                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath = Element(addNS("path", "svg"))
                     newpath.set("d", d)
                     s = node.get("style")
                     if s:
@@ -862,7 +728,7 @@ Each of the following `level` values encompasses all of the later ones:
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS("polygon", "svg") or node.tag == "polygon":
+            elif node.tag == addNS("polygon", "svg") or node.tag == "polygon":
                 # Convert
                 #
                 #  <polygon points="x1, y1 x2, y2 x3, y3 [...]"/>
@@ -900,7 +766,7 @@ Each of the following `level` values encompasses all of the later ones:
                     for i in range(1, len(pa)):
                         d += " L " + pa[i]
                     d += " Z"
-                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath = Element(addNS("path", "svg"))
                     newpath.set("d", d)
                     s = node.get("style")
                     if s:
@@ -913,8 +779,8 @@ Each of the following `level` values encompasses all of the later ones:
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
 
-            elif node.tag == inkex.addNS("ellipse", "svg") or node.tag == "ellipse" or \
-                    node.tag == inkex.addNS("circle", "svg") or node.tag == "circle":
+            elif node.tag == addNS("ellipse", "svg") or node.tag == "ellipse" or \
+                    node.tag == addNS("circle", "svg") or node.tag == "circle":
                 # Convert circles and ellipses to a path with two 180 degree arcs.
                 # In general (an ellipse), we convert
                 #
@@ -931,7 +797,7 @@ Each of the following `level` values encompasses all of the later ones:
                 #
                 # Note: ellipses or circles with a radius attribute of value 0 are ignored
 
-                if node.tag == inkex.addNS("ellipse", "svg") or node.tag == "ellipse":
+                if node.tag == addNS("ellipse", "svg") or node.tag == "ellipse":
                     rx = float(node.get("rx", "0"))
                     ry = float(node.get("ry", "0"))
                 else:
@@ -961,7 +827,7 @@ Each of the following `level` values encompasses all of the later ones:
                         "0 1 0 %f, %f " % (x2, cy) + \
                         "A %f, %f " % (rx, ry) + \
                         "0 1 0 %f, %f" % (x1, cy)
-                    newpath = etree.Element(inkex.addNS("path", "svg"))
+                    newpath = Element(addNS("path", "svg"))
                     newpath.set("d", d)
                     s = node.get("style")
                     if s:
@@ -973,17 +839,17 @@ Each of the following `level` values encompasses all of the later ones:
                     if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
                         self.svgLastPath += 1
                         self.svgLastPathNC = self.nodeCount
-            elif node.tag == inkex.addNS("metadata", "svg") or node.tag == "metadata":
+            elif node.tag == addNS("metadata", "svg") or node.tag == "metadata":
                 pass
-            elif node.tag == inkex.addNS("defs", "svg") or node.tag == "defs":
+            elif node.tag == addNS("defs", "svg") or node.tag == "defs":
                 pass
-            elif node.tag == inkex.addNS("namedview", "sodipodi") or node.tag == "namedview":
+            elif node.tag == addNS("namedview", "sodipodi") or node.tag == "namedview":
                 pass
-            elif node.tag == inkex.addNS("title", "svg") or node.tag == "title":
+            elif node.tag == addNS("title", "svg") or node.tag == "title":
                 pass
-            elif node.tag == inkex.addNS("desc", "svg") or node.tag == "desc":
+            elif node.tag == addNS("desc", "svg") or node.tag == "desc":
                 pass
-            elif node.tag == inkex.addNS("text", "svg") or node.tag == "text":
+            elif node.tag == addNS("text", "svg") or node.tag == "text":
                 texts = []
                 plaintext = ""
                 if self.plotCurrentLayer:
@@ -993,43 +859,43 @@ Each of the following `level` values encompasses all of the later ones:
                 if len(texts):
                     plaintext = "', '".join(texts).encode("latin-1")
                     # encode_("latin-1") prevents 'ordinal not in range(128)' errors.
-                    self.report("Text ignored: '%s'" % (plaintext), 'log')
+                    self.report(f"Text ignored: '{plaintext}'", 'log')
                     plaintext = "\n".join(texts)+"\n"
 
                     if "text" not in self.warnings and self.plotCurrentLayer:
-                        inkex.errormsg(plaintext + gettext.gettext("Warning: unable to draw text; " +
+                        inkex.errormsg(plaintext + gettext("Warning: unable to draw text; " +
                                 "please convert it to a path first. Or consider using the " +
-                                "Hershey Text extension which can be installed in the "+
+                                "Hershey Text extension which can be installed in the " +
                                 "'Render' category of extensions."))
                         self.warnings["text"] = 1
                 pass
-            elif node.tag == inkex.addNS("image", "svg") or node.tag == "image":
+            elif node.tag == addNS("image", "svg") or node.tag == "image":
                 if "image" not in self.warnings:
-                    inkex.errormsg(gettext.gettext("Warning: unable to draw bitmap images; " +
+                    inkex.errormsg(gettext("Warning: unable to draw bitmap images; " +
                             "please convert them to line art first.  Consider using the 'Trace bitmap...' " +
                             "tool of the 'Path' menu.  Mac users please note that some X11 settings may " +
                             "cause cut-and-paste operations to paste in bitmap copies."))
                     self.warnings["image"] = 1
                 pass
-            elif node.tag == inkex.addNS("pattern", "svg") or node.tag == "pattern":
+            elif node.tag == addNS("pattern", "svg") or node.tag == "pattern":
                 pass
-            elif node.tag == inkex.addNS("radialGradient", "svg") or node.tag == "radialGradient":
+            elif node.tag == addNS("radialGradient", "svg") or node.tag == "radialGradient":
                 # Similar to pattern
                 pass
-            elif node.tag == inkex.addNS("linearGradient", "svg") or node.tag == "linearGradient":
+            elif node.tag == addNS("linearGradient", "svg") or node.tag == "linearGradient":
                 # Similar in pattern
                 pass
-            elif node.tag == inkex.addNS("style", "svg") or node.tag == "style":
+            elif node.tag == addNS("style", "svg") or node.tag == "style":
                 # This is a reference to an external style sheet and not the value
                 # of a style attribute to be inherited by child elements
                 pass
-            elif node.tag == inkex.addNS("cursor", "svg") or node.tag == "cursor":
+            elif node.tag == addNS("cursor", "svg") or node.tag == "cursor":
                 pass
-            elif node.tag == inkex.addNS("flowRoot", "svg") or node.tag == "flowRoot":
+            elif node.tag == addNS("flowRoot", "svg") or node.tag == "flowRoot":
                 # contains a <flowRegion><rect y="91" x="369" height="383" width="375" ...
                 # see examples/fablab_logo_stencil.svg
                 pass
-            elif node.tag == inkex.addNS("color-profile", "svg") or node.tag == "color-profile":
+            elif node.tag == addNS("color-profile", "svg") or node.tag == "color-profile":
                 # Gamma curves, color temp, etc. are not relevant to single color output
                 pass
             elif not isinstance(node.tag, str):
@@ -1042,10 +908,10 @@ Each of the following `level` values encompasses all of the later ones:
             else:
                 if str(node.tag) not in self.warnings:
                     t = str(node.tag).split("}")
-                    self.report(gettext.gettext(
-                        "Warning: unable to draw <" + str(t[-1])
-                        + "> object, please convert it to a path first."),
-                                'error')
+                    self.report(gettext(
+                        f"Warning: unable to draw <{str(t[-1])}> object,"
+                        f"please convert it to a path first."),
+                            'error')
                     self.warnings[str(node.tag)] = 1
                 pass
 
@@ -1056,12 +922,12 @@ Each of the following `level` values encompasses all of the later ones:
         Parse the attribute into a value and associated units.  Then, accept
         no units (""), units of pixels ("px"), and units of percentage ("%").
         """
-        str = self.document.getroot().get(name)
-        if str:
-            v, u = parseLengthWithUnits(str)
+        s = self.document.getroot().get(name)
+        if s:
+            v, u = parseLengthWithUnits(s)
             if not v:
                 # Couldn't parse the value
-                self.report("getLength: unknown unit in '" + str + "'",
+                self.report(f"getLength: unknown unit in '{s}'",
                             'error')
                 return None
             elif (u == "") or (u == "px"):
@@ -1079,7 +945,7 @@ Each of the following `level` values encompasses all of the later ones:
             elif u == "%":
                 return float(default) * v / 100.0
             else:
-                self.report("getLength: Unknown unit: '" + u + "'", 'error')
+                self.report(f"getLength: Unknown unit: '{u}'", 'error')
                 return None
         else:
             # No width specified; assume the default value
@@ -1094,9 +960,9 @@ Each of the following `level` values encompasses all of the later ones:
         """
 
         self.docHeight = self.getLength("height", N_PAGE_HEIGHT)
-        self.report("7 self.docHeight= " + str(self.docHeight), 'tty')
+        self.report(f"7 self.docHeight= {str(self.docHeight)}", 'tty')
         self.docWidth = self.getLength("width", N_PAGE_WIDTH)
-        self.report("8 self.docWidth= " + str(self.docWidth), 'tty')
+        self.report(f"8 self.docWidth= {str(self.docWidth)}", 'tty')
         return all((self.docHeight, self.docWidth))
 
 
@@ -1112,17 +978,14 @@ Each of the following `level` values encompasses all of the later ones:
                 if all((vinfo[2], vinfo[3])):
                     sx = self.docWidth / float(vinfo[2])
                     sy = self.docHeight / float(vinfo[3])
-                    try:  # Inkscape 1.0+
-                        self.docTransform = Transform("scale(%f, %f)" % (sx, sy))
-                    except:  # Inkscape 0.9x
-                        self.docTransform = parseTransform("scale(%f, %f)" % (sx, sy))
+                    self.docTransform = Transform("scale(%f, %f)" % (sx, sy))
 
 
     def is_closed_path(self, path):
         return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
 
 
-    def compose_parent_transforms(self, node, mat):  # Inkscape 1.0+ only
+    def compose_parent_transforms(self, node, mat):  # Inkscape >= 1.0
         # This is adapted from Inkscape's simpletransform.py's composeParents()
         # function.  That one can't handle nodes that are detached from a DOM.
 
@@ -1134,7 +997,7 @@ Each of the following `level` values encompasses all of the later ones:
                 mat = Transform(trans) * mat
 
         if node.getparent() is not None:
-            if node.getparent().tag == inkex.addNS("g", "svg"):
+            if node.getparent().tag == addNS("g", "svg"):
                 mat = self.compose_parent_transforms(node.getparent(), mat)
 
         return mat
@@ -1441,7 +1304,7 @@ if __name__ == "__main__":
 
     if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
         # write a tempfile that is removed on exit
-        tmpfile=tempfile.NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
+        tmpfile=NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
         sys.argv.append(tmpfile.name)

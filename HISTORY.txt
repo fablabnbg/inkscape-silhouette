@@ -1,0 +1,87 @@
+# code snippets visited to learn the extension 'effect' interface:
+# - http://sourceforge.net/projects/inkcut/
+# - http://code.google.com/p/inkscape2tikz/
+# - http://wiki.inkscape.org/wiki/index.php/PythonEffectTutorial
+# - http://github.com/jnweiger/inkscape-gears-dev
+# - http://code.google.com/p/eggbotcode/
+# - http://www.bobcookdev.com/inkscape/better_dxf_output.zip
+#
+# Porting to OSX
+# - https://github.com/pmonta/gerber2graphtec/blob/master/file2graphtec
+# - https://github.com/pmonta/gerber2graphtec/blob/master/README
+#
+# 2013-05-09 jw, V0.1 -- initial draught
+# 2013-05-10 jw, V0.2 -- can plot simple cases without transforms.
+# 2013-05-11 jw, V0.3 -- still using inkcut/plot.py -- fixed write(),
+#                        improved logging, flipped y-axis.
+# 2013-05-12 jw, v0.4 -- No unintended multipass when nothing is selected.
+#                        Explicit multipass option added.
+#                        Emplying recursivelyTraverseSvg() from eggbotcode
+#                        TODO: coordinate system of page is not exact.
+# 2013-05-13 jw, v0.5 -- transporting docWidth/docHeight to dev.plot()
+# 2013-05-15 jw, v0.6 -- Replaced recursivelyTraverseSvg() and friends with the
+#                        versions from eggbot.py, those from eggbot_hatch.py
+#                        would only do closed paths. Makes sense for them, but
+#                        not for us.
+#                        Added no_device=True debugging aid to SilhouetteCameo()
+# 2013-05-17 jw, v0.7 -- Honor layer visibility by checking style="display:none"
+#                        penUP()/penDown() bugfix to avoid false connections between objects.
+#                        Added option reversetoggle, to cut the opposite direction.
+# 2013-05-19 jw, v0.8 -- Split GUI into two pages. Added dummy and mat-free checkboxes.
+#                        misc/corner_detect.py done, can now load a dump saved by dummy.
+#                        Udev rules and script added, so that we get a nice notify
+#                        guiding users towards inkscape, when connecting a device.
+# 2013-05-25 jw, v0.9 -- mat_free option added. The slicing and sharp corner strategy
+#                        appears useful.
+# 2013-05-26 jw, v1.0 -- Some tuning done. fixed preset scaling, improved path recombination.
+# 2013-05-26 jw, v1.1 -- Strategy.MatFree.path_overshoot() added. With 0.2mm overshoot
+#                        the paper now comes apart almost by itself. great.
+#                        Buffer percent estimation added. We now have an estimate
+#                        how long the buffered data will need.
+# 2013-05-30 jw, v1.2 -- Option autocrop added. Speed improvement: only parse visible layers.
+# 2013-05-31 jw, v1.3 -- sharp_turn() now takes self.sharp_turn_fwd_ratio parameter.
+#                        test_drive.py now draws arrows. All [0], [1] converted to new .x, .y syntax.
+#                        Split Geometry.py from Strategy.py; class Barrier implemented.
+# 2013-10-24 jw, v1.4 -- Fixed an abort in Strategy. when pt has no seg.
+# 2013-11-02 jw, v1.5 -- Added protability code. This might eventually lead to
+#                        working code on windows and macosx too. Still linux only.
+# 2013-11-08 jw, v1.6 -- supporting mm in getLength().
+# 2013-12-16 jw, v1.7 -- https://github.com/jnweiger/inkscape-silhouette/issues/1
+#                        fixed. Silly copy/paste bug. Looks like I miss a testsuite.
+# 2014-01-23 jw, v1.8 -- improving portability by using os.devnull, os.path.join, tempfile.
+#                        Partial fixes for https://github.com/jnweiger/inkscape-silhouette/issues/2
+#                        Enumerating devices if none are found.
+# 2014-01-28 jw, v1.9 -- We cannot expect posix semantics from windows.
+#                        Experimental retry added when write returns 0.
+#                        issues/2#issuecomment-33526659
+# 2014-02-04 jw, v1.9a -- new default: matfree false, about page added.
+# 2014-03-29 jw, v1.9b -- added own dir to sys.path for issue#3.
+# 2014-04-06 jw, v1.9c -- attempted workaround for issue#4
+# 2014-07-18 jw, v1.9d -- better diagnostics. hints *and* (further down) a stack backtrace.
+# 2014-09-18 jw, v1.10 -- more diagnostics, fixed trim margins aka autocrop to still honor hardware margins.
+# 2014-10-11 jw, v1.11 -- no more complaints about empty <text/> elements. Ignoring <flowRoot>
+# 2014-10-25 jw, v1.12 -- better error messages.
+# 2014-10-31 jw, v1.13 -- fixed usb.core.write() without interface parameter. Set Graphtec.py/need_interface if needed.
+# 2015-06-06 jw, v1.14 -- fixed timout errors, refactored much code.
+#                         Added misc/silhouette_move.py misc/silhouette_cut.py, misc/endless_clock.py
+# 2016-01-15 jw, v1.15 -- ubuntu loads the wrong usb library.
+# 2016-05-15 jw, v1.16 -- merged regmarks code from https://github.com/fablabnbg/inkscape-silhouette/pull/23
+# 2016-05-17 jw, v1.17 -- fix avoid dev.reset in Graphtec.py, fix helps with
+#                         https://github.com/fablabnbg/inkscape-silhouette/issues/10
+# 2016-05-21 jw, v1.18 -- warn about python-usb < 1.0 and give instructions.
+#                         Limit pressure to 18. 19 or 20 make the machine
+#                         scroll forward backward for several minutes.
+#                         Support document unit inches. https://github.com/fablabnbg/inkscape-silhouette/issues/19
+# 2016-12-18 jw, v1.19 -- support for dashed lines added. Thanks to mehtank
+#                         https://github.com/fablabnbg/inkscape-silhouette/pull/33
+#                         Added new cutting strategy "Minimized Traveling"
+#                         Added parameter for blade diameter
+# 2018-06-01 jw, v1.20 -- Make it compile again. Hmm.
+# 2019-07-25 jw, v1.21 -- merge from github.com/olegdeezus/inkscape-silhouette
+#                         merge from fablabnbg
+# 2019-08-03 jw, v1.22 -- added a copy of pyusb-1.0.2 as a fallback on any platform.
+# 2020-07-01 uw, v1.23 -- port to inkscape version 1.00
+# 2020-12-29 tb, v1.24 -- restore compatiblity with any inkscape version, add automated tests for win, osx, linux, lots of bugfixes
+# 2021-06-08 tb, v1.25 -- add cameo 4 plus and cameo 4 pro, add preview feature, allow speed 30
+# 2022-05-29 tb, v1.26 -- support inkscape 1.2, add portrait 3, new mats, restore silhouette multi
+

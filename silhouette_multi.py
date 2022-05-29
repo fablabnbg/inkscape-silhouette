@@ -18,7 +18,8 @@ from wx.lib.agw import ultimatelistctrl as ulc
 from wx.lib.agw import genericmessagedialog as gmd
 from wx.lib.embeddedimage import PyEmbeddedImage
 from collections import defaultdict
-import inkex
+from inkex.extensions import EffectExtension
+from inkex import addNS, Boolean, Style, Color
 import simplestyle
 from functools import partial
 from itertools import groupby
@@ -696,54 +697,34 @@ class SilhouetteMultiFrame(wx.Frame):
         # end wxGlade
 
 
-class SilhouetteMulti(inkex.Effect):
+class SilhouetteMulti(EffectExtension):
     def __init__(self, *args, **kwargs):
-        inkex.Effect.__init__(self, *args, **kwargs)
+        EffectExtension.__init__(self, *args, **kwargs)
 
         self.saved_argv = list(sys.argv)
 
-        # Patch methods as in sendto_silhouette.py
-        # for inkscape 0.9x compatibility:
-        if not hasattr(self, "run"): self.run = self.affect
-        if not hasattr(self, "arg_parser"):
-            inkex.Boolean = "inkbool"
-            def add_option_wrapper(*arg, **args):
-                args["action"] = "store"
-                if hasattr(args, "type"):
-                    args["type"] = re.split("'", str(args["type"]))[1]
-                self.OptionParser.add_option(*arg, **args)
-
-            self.arg_parser = lambda: None
-            self.arg_parser.add_argument = add_option_wrapper
-        if not hasattr(self, "svg"):
-            self.svg = self # This way, self.svg.selected just turns into
-                            # self.selected
-
         self.arg_parser.add_argument(
-            "-d", "--dry_run", dest="dry_run", type=inkex.Boolean,
+            "-d", "--dry_run", dest="dry_run", type=Boolean,
             default=False,
             help="Display generated commands but do not run them")
         self.arg_parser.add_argument(
-            "-v", "--verbose", dest="verbose", type=inkex.Boolean,
+            "-v", "--verbose", dest="verbose", type=Boolean,
             default=False,
             help="Enable verbose logging")
         self.arg_parser.add_argument(
-            "-b", "--block", dest="block_inkscape", type=inkex.Boolean,
+            "-b", "--block", dest="block_inkscape", type=Boolean,
             default=False,
             help="Make inkscape wait until silhouette_multi is done")
 
     def get_style(self, element):
         element_style = element.get('style')
         if element_style is not None:
-            if hasattr(inkex, 'Style') and hasattr(inkex.Style, 'parse_str'):
-                return dict(inkex.Style.parse_str(element_style))     # >= 1.0
-            else:
-                return simplestyle.parseStyle(element_style)  # inkscape < 1.0
+            return dict(Style.parse_str(element_style))
         return {}
 
     def get_color(self, element):
-        if (element.tag == inkex.addNS( 'g', 'svg')
-            or element.tag == inkex.addNS( 'svg', 'svg' )):
+        if (element.tag == addNS('g', 'svg')
+            or element.tag == addNS('svg', 'svg')):
             # Make sure we don't report a color on a group or on the svg as a whole
             # (to avoid duplicate cutting)
             return None
@@ -754,10 +735,7 @@ class SilhouetteMulti(inkex.Effect):
             color = self.get_style(element).get('fill', 'colorless')
 
         if color != 'colorless':
-            if hasattr(inkex, 'Color'):
-                color = inkex.Color(color).to_rgb()   # inkscape >= 1.0
-            else:
-                color = simplestyle.parseColor(color)  # inkscape < 1.0
+            color = Color(color).to_rgb()
         return color
 
     def load_selected_objects(self):

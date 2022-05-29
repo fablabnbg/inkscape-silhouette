@@ -2,3 +2,4 @@ numpy
 pyusb
 lxml
 xmltodict
+cssselect   # required for inkscape >= 1.2
