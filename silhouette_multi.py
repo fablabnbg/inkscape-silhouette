@@ -42,54 +42,13 @@ def emit_to_log(msg, whether=True):
         print(msg, file=multilogfile)
         multilogfile.flush()
 
+
 def show_log_as_dialog(parent=None):
     logname = multilogfile.name
     multilogfile.close()
     logtext = Path(logname).read_text().strip()
     if logtext:
         info_dialog(parent, logtext, caption='Silhouette Multi Log')
-
-def presets_path():
-    try:
-        import appdirs
-        config_path = appdirs.user_config_dir('inkscape-silhouette')
-    except ImportError:
-        config_path = os.path.expanduser('~/.inkscape-silhouette')
-
-    if not os.path.exists(config_path):
-        os.makedirs(config_path)
-    return os.path.join(config_path, 'presets.cPickle')
-
-
-def load_presets():
-    try:
-        with open(presets_path(), 'rb') as presets:
-            presets = pickle.load(presets)
-            return presets
-    except:
-        return {}
-
-
-def save_presets(presets, write_log=False):
-    emit_to_log("saving presets: " + str(presets), write_log)
-    with open(presets_path(), 'wb') as presets_file:
-        pickle.dump(presets, presets_file)
-
-
-def load_preset(name):
-    return load_presets().get(name)
-
-
-def save_preset(name, data, write_log=False):
-    presets = load_presets()
-    presets[name] = data
-    save_presets(presets, write_log)
-
-
-def delete_preset(name):
-    presets = load_presets()
-    presets.pop(name, None)
-    save_presets(presets)
 
 
 def confirm_dialog(parent, question, caption = 'Silhouette Multiple Actions'):
@@ -395,11 +354,12 @@ class SilhouetteMultiFrame(wx.Frame):
         if not preset_name:
             return
 
-        if not overwrite and load_preset(preset_name):
+        if not overwrite and self.load_preset(preset_name):
             info_dialog(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
 
         self.save_color_settings()
-        save_preset(preset_name, self.get_preset_data(), self.options.verbose)
+        self.save_preset(
+            preset_name, self.get_preset_data(), self.options.verbose)
         self.update_preset_list()
 
         event.Skip()
@@ -416,14 +376,14 @@ class SilhouetteMultiFrame(wx.Frame):
         if not preset:
             return
 
-        delete_preset(preset_name)
+        self.remove_preset(preset_name)
         self.update_preset_list()
         self.preset_chooser.SetValue("")
 
         event.Skip()
 
     def check_and_load_preset(self, preset_name):
-        preset = load_preset(preset_name)
+        preset = self.load_preset(preset_name)
         if not preset:
             info_dialog(self, 'Preset "%s" not found.' % preset_name, caption='Preset')
 
@@ -438,12 +398,12 @@ class SilhouetteMultiFrame(wx.Frame):
             return
 
     def update_preset_list(self):
-        preset_names = load_presets().keys()
+        preset_names = self.read_presets().keys()
         preset_names = [preset for preset in preset_names if not preset.startswith("__")]
         self.preset_chooser.SetItems(preset_names)
 
     def _load_preset(self, preset_name, silent=False):
-        preset = load_preset(preset_name)
+        preset = self.read_preset(preset_name)
 
         emit_to_log("Loaded preset " + preset_name + ": "
                     + str(preset), not silent)
@@ -508,12 +468,51 @@ class SilhouetteMultiFrame(wx.Frame):
         self.save_color_settings()
 
         preset = self.get_preset_data()
-        save_preset(preset_name, preset)
+        self.save_preset(preset_name, preset)
 
     def get_preset_data(self):
         return { 'colors': self.colors,
                  'color_enabled': self.color_enabled,
                  'color_settings': self.color_settings }
+
+    def read_preset(self, name):
+        return self.read_presets().get(name)
+
+    def read_presets(self):
+        try:
+            with open(self.presets_path(), 'rb') as presets:
+                presets = pickle.load(presets)
+                return presets
+        except:
+            return {}
+
+    def save_presets(self, presets, write_log=False):
+        emit_to_log("saving presets: " + str(presets), write_log)
+        with open(self.presets_path(), 'wb') as presets_file:
+            pickle.dump(presets, presets_file)
+
+    def save_preset(self, name, data, write_log=False):
+        presets = self.read_presets()
+        presets[name] = data
+        self.save_presets(presets, write_log)
+
+    def remove_preset(self, name):
+        presets = self.read_presets()
+        presets.pop(name, None)
+        self.save_presets(presets)
+
+    def presets_path(self):
+        if self.options.pickle_path:
+            return self.options.pickle_path
+        try:
+            import appdirs
+            config_path = appdirs.user_config_dir('inkscape-silhouette')
+        except ImportError:
+            config_path = os.path.expanduser('~/.inkscape-silhouette')
+
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+        return os.path.join(config_path, 'presets.cPickle')
 
     def run(self, event):
         self.save_color_settings()
@@ -704,17 +703,25 @@ class SilhouetteMulti(EffectExtension):
         self.saved_argv = list(sys.argv)
 
         self.arg_parser.add_argument(
+            "-b", "--block", dest="block_inkscape", type=Boolean,
+            default=False,
+            help="Make inkscape wait until silhouette_multi is done")
+        self.arg_parser.add_argument(
             "-d", "--dry_run", dest="dry_run", type=Boolean,
             default=False,
             help="Display generated commands but do not run them")
         self.arg_parser.add_argument(
+            "-g", "--gui", dest="gui", type=Boolean,
+            default=True,
+            help="Should silhouette_multi use a gui to select its actions?")
+        self.arg_parser.add_argument(
+            "-p", "--pickle", dest="pickle_path", type=str,
+            default='',
+            help="Path of the pickle file with initial option settings")
+        self.arg_parser.add_argument(
             "-v", "--verbose", dest="verbose", type=Boolean,
             default=False,
             help="Enable verbose logging")
-        self.arg_parser.add_argument(
-            "-b", "--block", dest="block_inkscape", type=Boolean,
-            default=False,
-            help="Make inkscape wait until silhouette_multi is done")
 
     def get_style(self, element):
         element_style = element.get('style')
@@ -781,10 +788,10 @@ class SilhouetteMulti(EffectExtension):
                     + str(self.saved_argv), self.options.verbose)
         setattr(self.options, 'unblock_inkscape',
                 not self.options.block_inkscape)
-        app = wx.App()
         self.split_objects_by_color()
         emit_to_log("Color keys are " + str(self.objects_by_color.keys()),
                     self.options.verbose)
+        app = wx.App()
         self.frame = SilhouetteMultiFrame(
             colors=list(self.objects_by_color.keys()),
             run_callback=self.run_multi, options=self.options)
@@ -824,19 +831,17 @@ class SilhouetteMulti(EffectExtension):
         return commands
 
     def run_multi(self, actions):
-        self.save_copy()
-
+        if self.options.dry_run:
+            self.svg_copy_file_name = '<DUMMY_FILE>'
+        else:
+            self.save_copy()
         commands = self.format_commands(actions)
-
+        self.frame.wrapup()
         if self.options.dry_run:
             emit_to_log("\n\n".join(commands))
-
-        self.frame.wrapup()
-
-        if not self.options.dry_run:
+        else:
             self.run_commands_with_dialog(commands)
-
-        os.remove(self.svg_copy_file_name)
+            os.remove(self.svg_copy_file_name)
 
     def run_commands_with_dialog(self, commands):
         for i, command in enumerate(commands):
