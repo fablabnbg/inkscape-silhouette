@@ -135,7 +135,7 @@ class TestRun(unittest.TestCase):
 
     def test_09multi_nogui(self):
         try:
-            commands = subprocess.run([sys.executable, "silhouette_multi.py", "--block=true", "-d=true", "-g=false", "-p=examples/multi.cPickle", "examples/multi_color.svg"], check=True, capture_output=True).stderr.decode()
+            commands = subprocess.run([sys.executable, "silhouette_multi.py", "--block=true", "-d=true", "-g=false", "-p=examples/multi.cPickle", "examples/multi_color.svg"], check=True, capture_output=True).stderr.decode().replace("\r","")
             commandref = Path("./examples/multi.commands").read_text()
             if (commandref != commands):
                 diffs = difflib.context_diff(
