@@ -17,7 +17,6 @@ from wx.lib.scrolledpanel import ScrolledPanel
 from wx.lib.agw import ultimatelistctrl as ulc
 from wx.lib.agw import genericmessagedialog as gmd
 from wx.lib.embeddedimage import PyEmbeddedImage
-from collections import defaultdict
 from inkex.extensions import EffectExtension
 from inkex import addNS, Boolean, Style, Color
 import simplestyle
@@ -71,6 +70,129 @@ def info_dialog(parent, message, extended = '',
         dlg.SetExtendedMessage(extended)
     dlg.ShowModal()
     dlg.Destroy()
+
+class ColorSeparation:
+    """Keep sendto_silhouette settings on a per-color basis"""
+    def __init__(self, *args, **kwargs):
+        self.colors = kwargs.pop('colors', [])
+        self.options = kwargs.pop('options')
+        self.color_settings = {}
+        self.color_enabled = {}
+
+    def activate_preset(self, preset_name, silent=False):
+        preset = self.read_preset(preset_name)
+        emit_to_log("Loaded preset " + preset_name + ": "
+                    + str(preset), not silent)
+        if not preset:
+            return preset
+        self.extract_settings_from_preset(preset)
+        return preset
+
+    def extract_settings_from_preset(self, preset):
+        old_colors = self.colors
+        self.colors = []
+        extra_colors = []
+
+        for color in preset['colors']:
+            if color in old_colors:
+                old_colors.remove(color)
+                self.colors.append(color)
+                self.color_enabled[color] = preset['color_enabled'].get(
+                    color, True)
+                self.color_settings[color] = preset['color_settings'].get(
+                    color, {})
+            else:
+                extra_colors.append(color)
+
+        reassigned = 0
+        # If there are any leftover colors in this SVG that weren't in the
+        # preset, we have to add them back into the list.  Let's try to
+        # use the settings from one of the "unclaimed" colors in the preset.
+
+        for color in old_colors:
+            self.colors.append(color)
+
+            if extra_colors:
+                reassigned += 1
+                assigned_color = extra_colors.pop(0)
+                self.color_enabled[color] = preset['color_enabled'].get(
+                    assigned_color, True)
+                self.color_settings[color] = preset['color_settings'].get(
+                    assigned_color, {})
+            else:
+                self.color_enabled[color] = False
+
+        message = []
+
+        emit_to_log("Reassigned " + str(reassigned) + " colors.",
+                    self.options.verbose)
+        emit_to_log("Colors remaining: " + str(extra_colors),
+                    self.options.verbose)
+        emit_to_log("Final colors: " + str(self.colors),
+                    self.options.verbose)
+        emit_to_log("Color settings: " + str(self.color_settings),
+                    self.options.verbose)
+
+        if reassigned:
+            message.append("%d colors were reassigned." % reassigned)
+
+        if extra_colors:
+            message.append("%d colors from the preset were not used." % len(extra_colors))
+
+        if message and not silent:
+            info_dialog(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
+
+    def generate_actions(self, default_actions):
+        actions = []
+        for color in self.colors:
+            if self.color_enabled.get(color, True):
+                actions.append(
+                    (color, self.color_settings.get(color) or default_actions))
+        return actions
+
+    def get_preset_data(self):
+        return { 'colors': self.colors,
+                 'color_enabled': self.color_enabled,
+                 'color_settings': self.color_settings }
+
+    def read_preset(self, name):
+        return self.read_presets().get(name)
+
+    def read_presets(self):
+        try:
+            with open(self.presets_path(), 'rb') as presets:
+                presets = pickle.load(presets)
+                return presets
+        except:
+            return {}
+
+    def save_presets(self, presets, write_log=False):
+        emit_to_log("saving presets: " + str(presets), write_log)
+        with open(self.presets_path(), 'wb') as presets_file:
+            pickle.dump(presets, presets_file)
+
+    def save_preset(self, name, data, write_log=False):
+        presets = self.read_presets()
+        presets[name] = data
+        self.save_presets(presets, write_log)
+
+    def remove_preset(self, name):
+        presets = self.read_presets()
+        presets.pop(name, None)
+        self.save_presets(presets)
+
+    def presets_path(self):
+        if self.options.pickle_path:
+            return self.options.pickle_path
+        try:
+            import appdirs
+            config_path = appdirs.user_config_dir('inkscape-silhouette')
+        except ImportError:
+            config_path = os.path.expanduser('~/.inkscape-silhouette')
+
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+        return os.path.join(config_path, 'presets.cPickle')
 
 
 class ParamsNotebook(wx.Notebook):
@@ -294,16 +416,12 @@ class ParamsTab(ScrolledPanel):
 class SilhouetteMultiFrame(wx.Frame):
     def __init__(self, *args, **kwargs):
         # begin wxGlade: MyFrame.__init__
-        self.colors = kwargs.pop('colors', [])
+        self.colsep = kwargs.pop('color_separation')
         self.options = kwargs.pop('options')
         self.run_callback = kwargs.pop('run_callback')
-        wx.Frame.__init__(self, None, wx.ID_ANY,
-                          "Silhouette Multi-Action"
-                          )
+        wx.Frame.__init__(self, None, wx.ID_ANY, "Silhouette Multi-Action")
 
         self.selected = None
-        self.color_settings = {}
-        self.color_enabled = {}
         self.notebook = ParamsNotebook(self, wx.ID_ANY)
         self.up_button = wx.Button(self, wx.ID_UP)
         self.down_button = wx.Button(self, wx.ID_DOWN)
@@ -358,8 +476,8 @@ class SilhouetteMultiFrame(wx.Frame):
             info_dialog(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
 
         self.save_color_settings()
-        self.save_preset(
-            preset_name, self.get_preset_data(), self.options.verbose)
+        self.colsep.save_preset(
+            preset_name, self.colsep.get_preset_data(), self.options.verbose)
         self.update_preset_list()
 
         event.Skip()
@@ -376,7 +494,7 @@ class SilhouetteMultiFrame(wx.Frame):
         if not preset:
             return
 
-        self.remove_preset(preset_name)
+        self.colsep.remove_preset(preset_name)
         self.update_preset_list()
         self.preset_chooser.SetValue("")
 
@@ -398,131 +516,27 @@ class SilhouetteMultiFrame(wx.Frame):
             return
 
     def update_preset_list(self):
-        preset_names = self.read_presets().keys()
+        preset_names = self.colsep.read_presets().keys()
         preset_names = [preset for preset in preset_names if not preset.startswith("__")]
         self.preset_chooser.SetItems(preset_names)
 
     def _load_preset(self, preset_name, silent=False):
-        preset = self.read_preset(preset_name)
-
-        emit_to_log("Loaded preset " + preset_name + ": "
-                    + str(preset), not silent)
-
+        preset = self.colsep.activate_preset(preset_name, silent)
         if not preset:
             return
-
         if self.selected:
             self.actions.Select(self.selected, False)
-
-        old_colors = self.colors
-        self.colors = []
-        extra_colors = []
-
-        for color in preset['colors']:
-            if color in old_colors:
-                old_colors.remove(color)
-                self.colors.append(color)
-                self.color_enabled[color] = preset['color_enabled'].get(color, True)
-                self.color_settings[color] = preset['color_settings'].get(color, {})
-            else:
-                extra_colors.append(color)
-
-        reassigned = 0
-        # If there are any leftover colors in this SVG that weren't in the
-        # preset, we have to add them back into the list.  Let's try to
-        # use the settings from one of the "unclaimed" colors in the preset.
-
-        for color in old_colors:
-            self.colors.append(color)
-
-            if extra_colors:
-                reassigned += 1
-                assigned_color = extra_colors.pop(0)
-                self.color_enabled[color] = preset['color_enabled'].get(assigned_color, True)
-                self.color_settings[color] = preset['color_settings'].get(assigned_color, {})
-            else:
-                self.color_enabled[color] = False
-
-        message = []
-
-        emit_to_log("Reassigned " + str(reassigned) + " colors.",
-                    self.options.verbose)
-        emit_to_log("Colors remaining: " + str(extra_colors),
-                    self.options.verbose)
-        emit_to_log("Final colors: " + str(self.colors), self.options.verbose)
-        emit_to_log("Color settings: " + str(self.color_settings),
-                    self.options.verbose)
-
-        if reassigned:
-            message.append("%d colors were reassigned." % reassigned)
-
-        if extra_colors:
-            message.append("%d colors from the preset were not used." % len(extra_colors))
-
-        if message and not silent:
-            info_dialog(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
-
         self.refresh_actions()
 
     def _save_preset(self, preset_name):
         self.save_color_settings()
 
-        preset = self.get_preset_data()
-        self.save_preset(preset_name, preset)
-
-    def get_preset_data(self):
-        return { 'colors': self.colors,
-                 'color_enabled': self.color_enabled,
-                 'color_settings': self.color_settings }
-
-    def read_preset(self, name):
-        return self.read_presets().get(name)
-
-    def read_presets(self):
-        try:
-            with open(self.presets_path(), 'rb') as presets:
-                presets = pickle.load(presets)
-                return presets
-        except:
-            return {}
-
-    def save_presets(self, presets, write_log=False):
-        emit_to_log("saving presets: " + str(presets), write_log)
-        with open(self.presets_path(), 'wb') as presets_file:
-            pickle.dump(presets, presets_file)
-
-    def save_preset(self, name, data, write_log=False):
-        presets = self.read_presets()
-        presets[name] = data
-        self.save_presets(presets, write_log)
-
-    def remove_preset(self, name):
-        presets = self.read_presets()
-        presets.pop(name, None)
-        self.save_presets(presets)
-
-    def presets_path(self):
-        if self.options.pickle_path:
-            return self.options.pickle_path
-        try:
-            import appdirs
-            config_path = appdirs.user_config_dir('inkscape-silhouette')
-        except ImportError:
-            config_path = os.path.expanduser('~/.inkscape-silhouette')
-
-        if not os.path.exists(config_path):
-            os.makedirs(config_path)
-        return os.path.join(config_path, 'presets.cPickle')
+        preset = self.colsep.get_preset_data()
+        self.colsep.save_preset(preset_name, preset)
 
     def run(self, event):
         self.save_color_settings()
-
-        actions = []
-
-        for color in self.colors:
-            if self.color_enabled.get(color, True):
-                actions.append((color, self.color_settings.get(color) or self.notebook.get_defaults()))
-
+        actions = self.colsep.generate_actions(self.notebook.get_defaults)
         if actions:
             if not self.options.dry_run:
                 if not confirm_dialog(self, "About to perform %d actions, continue?" % len(actions)):
@@ -541,7 +555,8 @@ class SilhouetteMultiFrame(wx.Frame):
         this = self.selected
         prev = this - 1
 
-        self.colors[this], self.colors[prev] = self.colors[prev], self.colors[this]
+        self.colsep.colors[this], self.colsep.colors[prev] = (
+            self.colsep.colors[prev], self.colsep.colors[this])
         self.actions.Select(this, False)
         self.actions.Select(prev)
 
@@ -554,7 +569,8 @@ class SilhouetteMultiFrame(wx.Frame):
         this = self.selected
         next = this + 1
 
-        self.colors[this], self.colors[next] = self.colors[next], self.colors[this]
+        self.colsep.colors[this], self.colsep.colors[next] = (
+            self.colsep.colors[next], self.colsep.colors[this])
         self.actions.Select(this, False)
         self.actions.Select(next)
 
@@ -582,8 +598,8 @@ class SilhouetteMultiFrame(wx.Frame):
         self.notebook.Disable()
 
     def load_color_settings(self):
-        color = self.colors[self.selected]
-        settings = self.color_settings.get(color)
+        color = self.colsep.colors[self.selected]
+        settings = self.colsep.color_settings.get(color)
 
         if settings:
             self.notebook.set_values(settings)
@@ -596,16 +612,16 @@ class SilhouetteMultiFrame(wx.Frame):
         if self.selected is None:
             return
 
-        color = self.colors[self.selected]
+        color = self.colsep.colors[self.selected]
         settings = self.notebook.get_values()
-        self.color_settings[color] = settings
+        self.colsep.color_settings[color] = settings
 
         emit_to_log("settings: " + str(settings), self.options.verbose)
 
     def item_checked(self, event):
         item = event.m_itemIndex
         checked = self.actions.IsItemChecked(item, 2)
-        self.color_enabled[self.colors[item]] = checked
+        self.colsep.color_enabled[self.colsep.colors[item]] = checked
 
     def init_actions(self):
         self.actions = ulc.UltimateListCtrl(self, size=(300, 150), agwStyle=wx.LC_REPORT|ulc.ULC_HRULES|ulc.ULC_SINGLE_SEL)
@@ -622,7 +638,7 @@ class SilhouetteMultiFrame(wx.Frame):
 
         self.action_checkboxes = []
 
-        for i, color in enumerate(self.colors):
+        for i, color in enumerate(self.colsep.colors):
             self.actions.InsertStringItem(i, "%d." % (i + 1))
 
             item = self.actions.GetItem(i, 2)
@@ -633,7 +649,7 @@ class SilhouetteMultiFrame(wx.Frame):
         self.refresh_actions()
 
     def refresh_actions(self):
-        for i, color in enumerate(self.colors):
+        for i, color in enumerate(self.colsep.colors):
             item = self.actions.GetItem(i, 1)
             item.SetMask(ulc.ULC_MASK_BACKCOLOUR|ulc.ULC_MASK_TEXT)
             wxcol = wx.Colour(255,255,255)
@@ -646,7 +662,7 @@ class SilhouetteMultiFrame(wx.Frame):
             self.actions.SetItem(item)
 
             item = self.actions.GetItem(i, 2)
-            item.Check(self.color_enabled.get(color, True))
+            item.Check(self.colsep.color_enabled.get(color, True))
             item.SetMask(ulc.ULC_MASK_CHECK)
             self.actions.SetItem(item)
 
@@ -791,9 +807,12 @@ class SilhouetteMulti(EffectExtension):
         self.split_objects_by_color()
         emit_to_log("Color keys are " + str(self.objects_by_color.keys()),
                     self.options.verbose)
+        self.color_separation = ColorSeparation(
+            colors=list(self.objects_by_color.keys()),
+            options=self.options)
         app = wx.App()
         self.frame = SilhouetteMultiFrame(
-            colors=list(self.objects_by_color.keys()),
+            color_separation=self.color_separation,
             run_callback=self.run_multi, options=self.options)
         self.frame.Show()
         app.MainLoop()
