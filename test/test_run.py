@@ -3,7 +3,9 @@
 import unittest
 import subprocess
 import sys
+from pathlib import Path
 import os
+import difflib
 
 
 class TestRun(unittest.TestCase):
@@ -125,6 +127,21 @@ class TestRun(unittest.TestCase):
             cmd = filehandle.read()
             filehandle.close()
             self.assertEqual(cmdref, cmd)
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
+            print(e)
+            self.assertEqual(e.returncode, 0)
+            assert False
+
+    def test_09multi_nogui(self):
+        try:
+            commands = subprocess.run([sys.executable, "silhouette_multi.py", "--block=true", "-d=true", "-g=false", "-p=examples/multi.cPickle", "examples/multi_color.svg"], check=True, capture_output=True).stderr.decode()
+            commandref = Path("./examples/multi.commands").read_text()
+            if (commandref != commands):
+                diffs = difflib.context_diff(
+                    commandref.split(), commands.split())
+                sys.stdout.writelines(diffs)
+            self.assertEqual(commandref, commands)
         except subprocess.CalledProcessError as e:
             print(e.output.decode())
             print(e)

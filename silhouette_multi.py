@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
-
 import os
 import sys
+
+# we sys.path.append() the directory where this script lives.
+sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
+
+sys_platform = sys.platform.lower()
+if sys_platform.startswith("win"):
+    sys.path.append(r"C:\Program Files\Inkscape\share\inkscape\extensions")
+
+elif sys_platform.startswith("darwin"):
+    sys.path.append("/Applications/Inkscape.app/Contents/Resources/share/inkscape/extensions")
+
+else:   # linux
+    sys.path.append("/usr/share/inkscape/extensions")
+
 import time
 import subprocess
 from threading import Thread
@@ -193,7 +206,7 @@ class SilhouetteMulti(EffectExtension):
         commands = []
 
         for color, settings in actions:
-            command = sys.executable
+            command = '<PYTHON>' if self.options.dry_run else sys.executable
             command += " sendto_silhouette.py"
             command += " " + self.format_args(settings)
             command += " " + self.id_args(self.objects_by_color[color])
