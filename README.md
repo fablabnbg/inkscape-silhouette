@@ -100,11 +100,11 @@ and then either `make install-local` to install just for your user account, or `
 
 ### FreeBSD
 
-Note the recipe here specifies `py38-libusb1`. In case this is out of date, you need to choose
+Note the recipe here specifies `py39-libusb1`. In case this is out of date, you need to choose
 the usb package appropriate to the version of python that runs by default as `python3`.
 
 ```
-sudo pkg install inkscape py38-libusb1
+sudo pkg install inkscape py39-libusb1
 cd /tmp
 wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/main.zip"
 unzip main.zip
