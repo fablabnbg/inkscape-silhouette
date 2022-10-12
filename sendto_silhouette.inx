@@ -172,7 +172,7 @@ Always use the least amount of blade possible.
     <page name='about' _gui-text='About'>
       <label>inkscape-silhouette extension from https://github.com/fablabnbg/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</label>
       <!-- Keep in sync with sendto_silhouette.py line 94 __version__ = ... -->
-      <label name='about_version'>Version 1.26</label>
+      <label name='about_version'>Version 1.27</label>
     </page>
   </param>
 
