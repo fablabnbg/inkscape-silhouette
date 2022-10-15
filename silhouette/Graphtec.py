@@ -116,6 +116,7 @@ CAMEO_MATS = dict(
   no_mat=('0', False, False),
   cameo_12x12=('1', 12, 12),
   cameo_12x24=('2', 24, 12),
+  portrait_8x12=('3', 12, 8),
   cameo_plus_15x15=('8', 15, 15),
   cameo_pro_24x24=('9', 24, 24)
 )
@@ -857,7 +858,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         media : int, optional
             range is [100..300], "Print Paper Light Weight". Defaults to 132.
         speed : int, optional
-            range is [1..10] for Cameo3 and older, 
+            range is [1..10] for Cameo3 and older,
             range is [1..30] for Cameo4. Defaults to None, from paper (132 -> 10).
         pressure : int, optional
             range is [1..33], Notice: Cameo runs trackenhancing if you select a pressure of 19 or more. Defaults to None, from paper (132 -> 5).
