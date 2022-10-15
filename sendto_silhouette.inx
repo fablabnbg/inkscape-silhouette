@@ -11,6 +11,7 @@
       <param name="cuttingmat" type="enum" _gui-text="Cutting Mat:">
         <item value="cameo_12x12">Cameo 12x12</item>
         <item value="cameo_12x24">Cameo 12x24</item>
+        <item value="portrait_8x12">Portrait 8x12</item>
         <item value="cameo_plus_15x15">Cameo Plus 15x15</item>
         <item value="cameo_pro_24x24">Cameo Pro 24x24</item>
         <item value="no_mat">None</item>
