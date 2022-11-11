@@ -1034,6 +1034,17 @@ class SendtoSilhouette(EffectExtension):
             command_file = open(self.options.cmdfile, mode)
 
         try:
+            # log environment information
+            self.report(inkex.command.inkscape('--version').rstrip(), 'log')  # Inkscape version
+            self.report("Inkex: %s" % (inkex.__version__), 'log')
+            self.report("Python: %s" % (sys.executable), 'log')
+            self.report("Version: %s" % (sys.version), 'log')
+            self.report("Platform: %s" % (sys.platform), 'log')
+            self.report("Arguments: %s" % (" ".join(sys.argv)), 'log')
+        except Exception:
+            pass
+
+        try:
             dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
                                   cmdfile=command_file,
                                   inc_queries=self.options.inc_queries,
