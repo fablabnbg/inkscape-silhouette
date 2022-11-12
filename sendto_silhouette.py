@@ -1036,6 +1036,8 @@ class SendtoSilhouette(EffectExtension):
         try:
             # log environment information
             self.report(inkex.command.inkscape('--version').rstrip(), 'log')  # Inkscape version
+            self.report("Inkscape-Silhouette: %s" % (__version__), 'log')     # Plugin version
+            self.report("Path: %s" % (__file__), 'log')
             self.report("Inkex: %s" % (inkex.__version__), 'log')
             self.report("Python: %s" % (sys.executable), 'log')
             self.report("Version: %s" % (sys.version), 'log')
