@@ -30,6 +30,7 @@ from functools import partial
 from itertools import groupby
 
 from silhouette.ColorSeparation import ColorSeparation
+from silhouette.Dialog import Dialog
 
 multilogfile = None
 
@@ -38,36 +39,12 @@ def emit_to_log(msg, whether=True):
         print(msg, file=multilogfile)
         multilogfile.flush()
 
-
 def show_log_as_dialog(parent=None):
     logname = multilogfile.name
     multilogfile.close()
     logtext = Path(logname).read_text().strip()
     if logtext:
-        info_dialog(parent, logtext, caption='Silhouette Multi Log')
-
-
-def confirm_dialog(parent, question, caption = 'Silhouette Multiple Actions'):
-    dlg = wx.MessageDialog(parent, question, caption, wx.YES_NO | wx.ICON_QUESTION)
-    result = dlg.ShowModal() == wx.ID_YES
-    dlg.Destroy()
-    return result
-
-
-def info_dialog(parent, message, extended = '',
-                caption = 'Silhouette Multiple Actions',):
-    dlg = gmd.GenericMessageDialog(
-        parent, message, caption, wrap=1000,
-        agwStyle=wx.OK | wx.ICON_INFORMATION | gmd.GMD_USE_AQUABUTTONS)
-    # You might wonder about the choice of "aquabuttons" above. It's the
-    # only option that led to the buttons being visible on the system
-    # this was first tested on.
-    dlg.SetLayoutAdaptationMode(wx.DIALOG_ADAPTATION_MODE_ENABLED)
-    if extended:
-        dlg.SetExtendedMessage(extended)
-    dlg.ShowModal()
-    dlg.Destroy()
-
+        Dialog.info(parent, logtext, caption='Silhouette Multi Log')
 
 class SilhouetteMulti(EffectExtension):
     def __init__(self, *args, **kwargs):
@@ -239,7 +216,7 @@ class SilhouetteMulti(EffectExtension):
                 # we just have to go ahead and display it.
                 # But we will use the dialog's extended message to reduce
                 # visual clutter
-                info_dialog(None, "Action failed.",
+                Dialog.info(None, "Action failed.",
                             extended = f"Return code: {returncode}\nCommand: '{command}'")
 
                 sys.exit(1)
@@ -273,7 +250,7 @@ class SilhouetteMulti(EffectExtension):
 
                 dialog.Destroy()
                 wx.Yield()
-                info_dialog(None, "Action aborted.  It may take awhile for the machine to cancel its operation.")
+                Dialog.info(None, "Action aborted.  It may take awhile for the machine to cancel its operation.")
                 sys.exit(1)
 
         dialog.Destroy()

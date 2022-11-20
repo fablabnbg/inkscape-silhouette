@@ -9,6 +9,8 @@ from collections import OrderedDict
 
 from silhouette.ColorSeparation import ColorSeparation
 
+from silhouette.Dialog import Dialog
+
 small_up_arrow = PyEmbeddedImage(
     "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYA"
     "AAAf8/9hAAAABHNCSVQICAgIfAhkiAAAADxJ"
@@ -22,7 +24,6 @@ small_down_arrow = PyEmbeddedImage(
     "REFUOI1jZGRiZqAEMFGke9QABgYGBgYWdIH/"
     "//7+J6SJkYmZEacLkCUJacZqAD5DsInTLhDR"
     "bcPlKrwugGnCFy6Mo3mBAQChDgRlP4RC7wAAAABJRU5ErkJggg==")
-
 
 class ParamsNotebook(wx.Notebook):
     """Handle a notebook of tabs that contain params.
@@ -296,7 +297,7 @@ class MultiFrame(wx.Frame):
         if not preset_name:
             return
 
-        self._load_preset(preset_name)
+        return self._load_preset(preset_name)
 
     def add_preset(self, event, overwrite=False):
         preset_name = self.get_preset_name()
@@ -304,7 +305,7 @@ class MultiFrame(wx.Frame):
             return
 
         if not overwrite and self.load_preset(preset_name):
-            info_dialog(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
+            Dialog.info(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
 
         self.save_color_settings()
         self.colsep.save_preset(
@@ -334,7 +335,7 @@ class MultiFrame(wx.Frame):
     def check_and_load_preset(self, preset_name):
         preset = self.load_preset(preset_name)
         if not preset:
-            info_dialog(self, 'Preset "%s" not found.' % preset_name, caption='Preset')
+            Dialog.info(self, 'Preset "%s" not found.' % preset_name, caption='Preset')
 
         return preset
 
@@ -343,7 +344,7 @@ class MultiFrame(wx.Frame):
         if preset_name:
             return preset_name
         else:
-            info_dialog(self, "Please enter or select a preset name first.", caption='Preset')
+            Dialog.info(self, "Please enter or select a preset name first.", caption='Preset')
             return
 
     def update_preset_list(self):
@@ -359,6 +360,8 @@ class MultiFrame(wx.Frame):
             self.actions.Select(self.selected, False)
         self.refresh_actions()
 
+        return preset
+
     def _save_preset(self, preset_name):
         self.save_color_settings()
 
@@ -370,10 +373,10 @@ class MultiFrame(wx.Frame):
         actions = self.colsep.generate_actions(self.notebook.get_defaults)
         if actions:
             if not self.options.dry_run:
-                if not confirm_dialog(self, "About to perform %d actions, continue?" % len(actions)):
+                if not Dialog.confirm(self, "About to perform %d actions, continue?" % len(actions)):
                     return
         else:
-            info_dialog(self, "No colors were enabled, so no actions can be performed.")
+            Dialog.info(self, "No colors were enabled, so no actions can be performed.")
             return
 
         self._save_preset('__LAST__')
