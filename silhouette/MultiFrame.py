@@ -305,7 +305,7 @@ class MultiFrame(wx.Frame):
             return
 
         if not overwrite and self.load_preset(preset_name):
-            Dialog.info(self, 'Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
+            Dialog.info('Preset "%s" already exists.  Please use another name or press "Overwrite"' % preset_name, caption='Preset')
 
         self.save_color_settings()
         self.colsep.save_preset(
@@ -335,7 +335,7 @@ class MultiFrame(wx.Frame):
     def check_and_load_preset(self, preset_name):
         preset = self.load_preset(preset_name)
         if not preset:
-            Dialog.info(self, 'Preset "%s" not found.' % preset_name, caption='Preset')
+            Dialog.info('Preset "%s" not found.' % preset_name, caption='Preset')
 
         return preset
 
@@ -344,7 +344,7 @@ class MultiFrame(wx.Frame):
         if preset_name:
             return preset_name
         else:
-            Dialog.info(self, "Please enter or select a preset name first.", caption='Preset')
+            Dialog.info("Please enter or select a preset name first.", caption='Preset')
             return
 
     def update_preset_list(self):
@@ -373,10 +373,10 @@ class MultiFrame(wx.Frame):
         actions = self.colsep.generate_actions(self.notebook.get_defaults)
         if actions:
             if not self.options.dry_run:
-                if not Dialog.confirm(self, "About to perform %d actions, continue?" % len(actions)):
+                if not Dialog.confirm("About to perform %d actions, continue?" % len(actions)):
                     return
         else:
-            Dialog.info(self, "No colors were enabled, so no actions can be performed.")
+            Dialog.info("No colors were enabled, so no actions can be performed.")
             return
 
         self._save_preset('__LAST__')
