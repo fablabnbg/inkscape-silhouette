@@ -16,10 +16,10 @@ class ColorSeparation:
                     + str(preset), not silent)
         if not preset:
             return preset
-        self.extract_settings_from_preset(preset)
+        self.extract_settings_from_preset(preset, silent)
         return preset
 
-    def extract_settings_from_preset(self, preset):
+    def extract_settings_from_preset(self, preset, silent=False):
         old_colors = self.colors
         self.colors = []
         extra_colors = []
@@ -71,7 +71,7 @@ class ColorSeparation:
             message.append("%d colors from the preset were not used." % len(extra_colors))
 
         if message and not silent:
-            info_dialog(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
+            Dialog.info(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
 
     def generate_actions(self, default_actions):
         actions = []
