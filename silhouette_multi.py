@@ -30,7 +30,6 @@ from functools import partial
 from itertools import groupby
 
 from silhouette.ColorSeparation import ColorSeparation
-from silhouette.Dialog import Dialog
 
 multilogfile = None
 
@@ -148,6 +147,7 @@ class SilhouetteMulti(EffectExtension):
         if self.options.gui:
             import wx
             from silhouette.MultiFrame import MultiFrame
+            from silhouette.Dialog import Dialog
 
             app = wx.App()
             self.frame = MultiFrame(
