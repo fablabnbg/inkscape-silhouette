@@ -142,6 +142,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<item value="Silhouette_Cameo2">Silhouette Cameo 2</item>
 	<item value="Silhouette_Cameo3">Silhouette Cameo 3</item>
 	<item value="Silhouette_Cameo4">Silhouette Cameo 4</item>
+  <item value="Silhouette_Cameo4_Plus">Silhouette Cameo 4 Plus</item>
 	<item value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</item>
 	<item value="Craft_Robo_CC200-20">Craft Robo CC200-20</item>
 	<item value="Craft_Robo_CC300-20">Craft Robo CC300-20</item>
