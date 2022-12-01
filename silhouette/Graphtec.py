@@ -131,9 +131,7 @@ PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
 PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
 PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
-# The following seems like a good bet:
-# PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
-# but I don't have one to check and did not want to jump to conclusions.
+PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
 PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
@@ -141,7 +139,7 @@ PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
 
 PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
-  # PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,  # uncomment when verified
+  PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,
   PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
   PRODUCT_ID_SILHOUETTE_PORTRAIT3,
 ]
@@ -208,14 +206,12 @@ DEVICE = [
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
    'width_mm':  304.8, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True },
-#### Uncomment when confirmed:
-# { 'vendor_id': VENDOR_ID_GRAPHTEC,
-#   'product_id': VENDOR_ID_SILHOUETTE_CAMEO4PLUS,
-#   'name': 'Silhouette_Cameo4_Plus',
-#   'width_mm': 372, # A bit of a guess, not certain what actual cuttable is
-#   'length_mm': 3000,
-#   'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
-##############################
+{ 'vendor_id': VENDOR_ID_GRAPHTEC,
+  'product_id': PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,
+  'name': 'Silhouette_Cameo4_Plus',
+  'width_mm': 372, # A bit of a guess, not certain what actual cuttable is (not sure what it is or how to test it)
+  'length_mm': 3000,
+  'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC,
    'product_id': PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
    'name': 'Silhouette_Cameo4_Pro',
