@@ -153,6 +153,8 @@ To later undo:
 
 ## Usage
 
+### Inkscape
+
 1. Open your document with inkscape.
 2. Ensure the unit of document width and height is mm or inch, but not px. (File - Document settings - Page - Custom - Unit mm) Otherwise you may observe differences in dimensions at inkscape 0.91/0.92, because default dpi has changed from 90 to 96.
 3. Convert all objects and texts to paths (Path - Convert object to path)
@@ -168,6 +170,10 @@ To later undo:
 
   In Multi Action, you can select the color you want settings to apply to and then set all the same parameters, but with potentially different settings for each color. You can also change the order in which the colors are cut, and uncheck the box in the "Perform Action?" column to ignore a color altogether.
 8. To start the cut, in "Send to Silhouette, click the "Apply" button; in "Silhouette Multi" click the "Execute" button.
+
+### CLI
+
+Run `sendto_silhouette.py --help` for information on CLI usage.
 
 ## Templates
 * Templates showing the cutting mat on a background layer can be found in `examples/mat_templates`
