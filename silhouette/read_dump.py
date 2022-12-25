@@ -87,7 +87,7 @@ if __name__ == "__main__":
     elif maybeconfig.is_file():
         with open(maybeconfig, 'rt') as config:
             for line in config:
-                if 'com.github.jnweiger.inskscape-silhouette.logfile' in line:
+                if 'com.github.fablabnbg.inkscape-silhouette.sendto_silhouette.logfile' in line:
                     maybefilename = line.split('"')[1]
                     if Path(maybefilename).is_file():
                         filename = maybefilename
