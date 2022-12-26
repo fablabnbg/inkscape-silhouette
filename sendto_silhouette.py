@@ -1213,9 +1213,9 @@ class SendtoSilhouette(EffectExtension):
             self.report(cut, 'log')
 
         if self.options.preview:
-            if silhouette.read_dump.plotcuts(cut, buttons=True):
-                self.report("Cut canceled via preview button.", 'log')
-                return False
+            if silhouette.read_dump.show_plotcuts(cut, buttons=True) > 0:
+                self.report("Preview aborted.", 'log')
+                return
 
         if self.options.pressure == 0:
             self.options.pressure = None

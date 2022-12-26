@@ -22,23 +22,26 @@ def hsv_to_rgb(h, s, v):
     if i == 4: return (t, p, v)
     if i == 5: return (v, p, q)
 
-def plotcuts(cuts, buttons=False):
+def show_plotcuts(cuts, buttons=False):
     """
         Show a graphical representation of the cut paths in (the argument) cuts,
         and block until the display window has been closed.
 
-        Displays Cut/Cancel buttons if the buttons argument is true.
+        buttons: display Cut/Cancel buttons
 
-        Returns True if the cut should be canceled,
-        which means that buttons were shown and the user did not confirm the cut.
+        Returns > 0 on failure
+        return value:
+          1: cut canceled
+          2: matplotlib missing
+          3: cut path empty
     """
     if plt is None:
         print("Install matplotlib for python to allow graphical display of cuts",
               file=sys.stderr)
-        return False
+        return 2
     if cuts == []:
-        print("Empty path", file=sys.stderr)
-        return False
+        print("Empty cut path", file=sys.stderr)
+        return 3
     xy = sum(cuts, [])
     least = min(min(p[0],p[1]) for p in xy)
     greatest = max(max(p[0],p[1]) for p in xy)
@@ -56,9 +59,9 @@ def plotcuts(cuts, buttons=False):
     plt.axis([plt.axis()[0], plt.axis()[1], plt.axis()[3], plt.axis()[2]])
     plt.gca().set_aspect('equal')
     class Response:
-        canceled = buttons
+        returnvalue = 1 if buttons == True else 0
         def pushedcut(self, event):
-            self.canceled = False
+            self.returnvalue = 0
             plt.close('all')
         def pushedcancel(self, event):
             plt.close('all')
@@ -70,7 +73,7 @@ def plotcuts(cuts, buttons=False):
         bcancel.on_clicked(response.pushedcancel)
     plt.show()
 
-    return response.canceled
+    return response.returnvalue
 
 if __name__ == "__main__":
     # The below is not correct under Windows; please help to correct.
@@ -108,5 +111,5 @@ if __name__ == "__main__":
     if not cutpaths:
         sys.exit("Cannot find any cut paths in " + filename + ".\n  Make sure it is an inkscape_silhouette dump or log file with log_paths on.")
 
-    plotcuts(eval(cutpaths))
-
+    retval = show_plotcuts(eval(cutpaths))
+    sys.exit(retval)
