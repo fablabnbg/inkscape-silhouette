@@ -95,7 +95,7 @@ and then either `make install-local` to install just for your user account, or `
   * `brew install python3`
 * Install the extension:
   * `./install_osx.py`
-  * Add brew python for user extensions. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://wiki.inkscape.org/wiki/index.php/Extension_Interpreters#Selecting_a_specific_interpreter_version_.28via_preferences_file.29):
+  * Add brew python for user extensions. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://inkscape.gitlab.io/extensions/documentation/authors/interpreters.html):
     * `python-interpreter="/usr/local/bin/python3"` on X86 platform
     * `python-interpreter="/opt/homebrew/bin/python3"` on ARM platform (Apple Silicon)
 
@@ -274,6 +274,6 @@ For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y
 
 ## References
 
-* http://wiki.inkscape.org/wiki/index.php/Extensions
-* http://wiki.inkscape.org/wiki/index.php/INX_Parameters
-* http://wiki.inkscape.org/wiki/index.php/ExtensionsSystem
+* https://inkscape.gitlab.io/extensions/documentation/authors/
+* https://inkscape.gitlab.io/extensions/documentation/authors/inx-widgets.html
+* https://wiki.inkscape.org/wiki/ExtensionsSystem
