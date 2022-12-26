@@ -7,10 +7,7 @@ try:
     from matplotlib.widgets import Button
 except:
     plt = None
-try:
-    from pathlib import Path
-except:
-    from pathlib2 import Path # backport for Python2
+from pathlib import Path
 
 
 # From https://stackoverflow.com/questions/24852345/hsv-to-rgb-color-conversion
