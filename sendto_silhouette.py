@@ -856,18 +856,15 @@ class SendtoSilhouette(EffectExtension):
                     for tnode in node.iterfind(".//"):   # all subtree
                         if tnode is not None and tnode.text is not None:
                             texts.append(tnode.text)
-                if len(texts):
-                    plaintext = "', '".join(texts).encode("latin-1")
-                    # encode_("latin-1") prevents 'ordinal not in range(128)' errors.
-                    self.report(f"Text ignored: '{plaintext}'", 'log')
-                    plaintext = "\n".join(texts)+"\n"
-
-                    if "text" not in self.warnings and self.plotCurrentLayer:
-                        inkex.errormsg(plaintext + gettext("Warning: unable to draw text; " +
-                                "please convert it to a path first. Or consider using the " +
-                                "Hershey Text extension which can be installed in the " +
-                                "'Render' category of extensions."))
-                        self.warnings["text"] = 1
+                    if len(texts):
+                        if "text" not in self.warnings:
+                            inkex.errormsg(gettext("Warning: unable to draw text; " +
+                                    "please convert it to a path first. Or consider using the " +
+                                    "Hershey Text extension which can be installed in the " +
+                                    "'Render' category of extensions."))
+                            self.warnings["text"] = 1
+                        plaintext = "', '".join(texts)
+                        self.report(f"Text ignored: '{plaintext}'", 'error')
                 pass
             elif node.tag == addNS("image", "svg") or node.tag == "image":
                 if "image" not in self.warnings:
