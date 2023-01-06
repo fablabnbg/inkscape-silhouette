@@ -71,6 +71,8 @@ def show_plotcuts(cuts, buttons=False):
         bcancel = Button(plt.axes([0.81,0.9,0.1,0.075]), 'Cancel')
         bcut.on_clicked(response.pushedcut)
         bcancel.on_clicked(response.pushedcancel)
+        bcut.connect_event('key_press_event', lambda event: response.pushedcut if(event.key=='enter') else None)
+        bcancel.connect_event('key_press_event', lambda event: bcancel.connect_event if(event.key=='esc') else None)
     plt.show()
 
     return response.returnvalue
