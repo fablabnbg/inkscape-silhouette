@@ -51,6 +51,18 @@ then
 fi
 
 
+echo "****************************************************************"
+echo "FreeBSD Version: For Building you must have gmake installed"
+echo "Build FreeBSD Version (Y/n)?"
+read answer
+if [ "$answer" != "n" ]
+then
+  mkdir -p bsd/files
+  cp -a $name/* bsd/files
+  (cd bsd && sh ./dist.sh $name $VERSION)
+fi
+
+
 echo "Built packages are in distribute/out :"
 ls -la out
 echo "Cleaning up..."

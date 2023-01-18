@@ -5,6 +5,7 @@ DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
 ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
 VERS=$$(python3 ./sendto_silhouette.py --version)
+OSNAME != uname
 
 ## echo python3 ./sendto_silhouette.py
 # 'module' object has no attribute 'core'
@@ -34,19 +35,35 @@ install:
 	mkdir -p $(DEST)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DEST)
+
+ifeq ($(OSNAME), FreeBSD)
+	install -m 755 *silhouette*.py $(DEST)
+	install -m 644 *.inx $(DEST)
+	mkdir -p $(UDEV)/rules.d
+	install -m 644 silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
+	install -m 644 silhouette-icon.png $(DEST)
+	install -m 644 silhouette-udev-notify.sh $(DEST)
+else
 	install -m 755 -t $(DEST) *silhouette*.py
 	install -m 644 -t $(DEST) *.inx
 	mkdir -p $(UDEV)/rules.d
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
 	install -m 644 -t $(UDEV) silhouette-icon.png
 	install -m 644 -t $(UDEV) silhouette-udev-notify.sh
+endif
 
 install-local:
 	mkdir -p $(DESTLOCAL)
 	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DESTLOCAL)
-	install -m 755 -t $(DESTLOCAL) *silhouette*.py
+
+ifeq ($(OSNAME), FreeBSD)
+	install -m 755 *silhouette*.py $(DESTLOCAL)
+	install -m 644 *.inx $(DESTLOCAL)
+else
+    install -m 755 -t $(DESTLOCAL) *silhouette*.py
 	install -m 644 -t $(DESTLOCAL) *.inx
+endif
 
 tar_dist_classic: clean
 	name=$(DISTNAME)-$(VERS); echo "$$name"; echo; \

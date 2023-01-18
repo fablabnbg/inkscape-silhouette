@@ -110,7 +110,7 @@ cd /tmp
 wget -c "https://github.com/fablabnbg/inkscape-silhouette/archive/main.zip"
 unzip main.zip
 cd inkscape-silhouette-main
-sudo make install   # OR: make install-local  # latter installs only for this user
+sudo gmake # OR: gmake install-local  # latter installs only for this user
 ```
 
 ### Windows
