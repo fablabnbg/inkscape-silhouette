@@ -40,6 +40,7 @@ elif sys_platform.startswith('darwin'):
 else:   # if sys_platform.startswith('linux'):
   try:
     import usb.core  # where???
+    import usb.util
   except Exception as e:
       try:
           import libusb1 as usb
@@ -157,7 +158,7 @@ CMD_ESC = b'\x1b'
 CMD_EOT = b'\x04'
 # Enquiry - Returns device status
 CMD_ENQ = b'\x05'
-# Negative Acnoledge - Returns device tool setup
+# Negative Acknowledge - Returns device tool setup
 CMD_NAK = b'\x15'
 
 ### Query codes
@@ -331,7 +332,7 @@ class SilhouetteCameoTool:
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
-               dry_run=False, progress_cb=None, force_hardware=None):
+               dry_run=False, progress_cb=None, force_hardware=None, umockdev_mode = False):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
@@ -497,10 +498,19 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     self.enable_sw_clipping = True
     self.clip_fuzz = 0.05
     self.mock_response = None
+    # Within an umockdev run, the safe write command will likely timeout.
+    # Use umockdev_mode to skip this part of the reality.
+    if umockdev_mode:
+      self.safe_write = self.write
+    else:
+      self.safe_write = self._safe_write
 
   def __del__(self, *args):
     if self.commands:
       self.commands.close()
+    # TBD: Do we want to auto-close upon deletion?
+    self.close()
+      
 
   # Class data providing mock responses when there is no device:
   mock_responses = {
@@ -602,7 +612,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if o != len(data):
       raise ValueError('write all %d bytes failed: o=%d' % (len(data), o))
 
-  def safe_write(self, data):
+  def _safe_write(self, data):
     """
         Wrapper for write with special emphasis not overloading the cutter
         with long commands.
@@ -726,7 +736,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # not actually sending commands, so don't really care about being ready
       return state
     npolls = int(timeout/poll_interval)
+
     for i in range(1, npolls):
+      print("wait for ready", i, state)
       if (state == 'ready'): break
       if (state == 'None'):
         raise NotImplementedError("Waiting for ready but no device exists.")
@@ -739,6 +751,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       time.sleep(poll_interval)
       state = self.status()
     if verbose: print("",file=sys.stderr)
+    if state == 'moving':
+      raise ValueError("Timed out")
     return state
 
   def initialize(self):
@@ -748,7 +762,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       self.send_escape(CMD_EOT)
     except Exception as e:
-      raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
+      e.args += ("Write Exception: \n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" ,)
+      raise e
 
     # Initial palaver
     print("Device Version: '%s'" % self.get_version(), file=self.log)
@@ -845,6 +860,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
       right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
       self.set_boundary(0, 0, bottom, right)
+
+  def close(self):
+    "Free resources to allow reconnection"
+    if self.dev is not None:
+      usb.util.dispose_resources(self.dev)
+      self.dev = None
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
     """Setup the Silhouette Device
