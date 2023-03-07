@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+<inkscape-extension translationdomain="inkscape-silhouette" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
   <_name>Silhouette Multiple Actions</_name>
   <id>com.github.fablabnbg.inskscape-silhouette.silhouette_multi</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
