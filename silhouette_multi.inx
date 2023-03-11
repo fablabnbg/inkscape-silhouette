@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension translationdomain="inkscape-silhouette" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-  <_name>Silhouette Multiple Actions</_name>
+  <name>Silhouette Multiple Actions</name>
   <id>com.github.fablabnbg.inskscape-silhouette.silhouette_multi</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="extension">com.github.fablabnbg.inkscape-silhouette.sendto_silhouette</dependency>
   <dependency type="executable" location="inx">sendto_silhouette.py</dependency>
   <dependency type="executable" location="inx">silhouette_multi.py</dependency>
 
-  <label xml:space="preserve">
-Debugging/Logging Settings:
-In ordinary use you can leave these all unchecked.
-Cutting settings will show up once you click "Apply."
-  </label>
-  <param name="dry_run" type="bool" _gui-text="Only show commands, instead of running them">false</param>
-  <param name="block" type="bool" _gui-text="Wait for cutter to finish before returning to Inkscape">false</param>
-  <param name="verbose" type="bool" _gui-text="Enable verbose logging">false</param>
+  <label appearance="header">Debugging Settings</label>
+  <hbox indent="2">
+    <vbox>
+      <label>For normal use you may leave these options unchecked.</label>
+      <param name="dry_run" type="bool" gui-text="Dry run: only show commands">false</param>
+      <param name="block" type="bool" gui-text="Wait for cutter to finish before returning to Inkscape">false</param>
+      <param name="verbose" type="bool" gui-text="Verbose output">false</param>
+    </vbox>
+  </hbox>
+  <separator/>
+  <spacer size="expand"/>
+  <hbox>
+    <spacer size="expand"/>
+    <label>Cutting settings appear in the next step.</label>
+  </hbox>
 
-  <effect needs-live-preview="false" >
+  <effect needs-live-preview="false">
     <object-type>all</object-type>
     <effects-menu>
-      <submenu _name="Export"/>
+      <submenu name="Export"/>
     </effects-menu>
   </effect>
   

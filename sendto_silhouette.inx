@@ -1,110 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <inkscape-extension translationdomain="inkscape-silhouette" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-  <_name>Send to Silhouette</_name>
+  <name>Send to Silhouette</name>
   <id>com.github.fablabnbg.inkscape-silhouette.sendto_silhouette</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="inx">sendto_silhouette.py</dependency>
   <param name="active-tab" type="notebook">
-    <page name='silhouette' _gui-text='Silhouette'>
-      <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" _gui-text="X-Offset [mm]">0.0</param>
-      <param name="y_off" type="float" min="-999.0" max="999.0" precision="2" _gui-text="Y-Offset [mm]">0.0</param>
-      <param name="cuttingmat" type="enum" _gui-text="Cutting Mat:">
-        <item value="cameo_12x12">Cameo 12x12</item>
-        <item value="cameo_12x24">Cameo 12x24</item>
-        <item value="portrait_8x12">Portrait 8x12</item>
-        <item value="cameo_plus_15x15">Cameo Plus 15x15</item>
-        <item value="cameo_pro_24x24">Cameo Pro 24x24</item>
-        <item value="no_mat">None</item>
+    <page name='silhouette' gui-text='Silhouette'>
+      <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" gui-text="X-Offset [mm]">0.0</param>
+      <param name="y_off" type="float" min="-999.0" max="999.0" precision="2" gui-text="Y-Offset [mm]">0.0</param>
+      <param name="cuttingmat" type="optiongroup" appearance="combo" gui-text="Cutting Mat">
+        <option value="cameo_12x12">Cameo 12x12</option>
+        <option value="cameo_12x24">Cameo 12x24</option>
+        <option value="portrait_8x12">Portrait 8x12</option>
+        <option value="cameo_plus_15x15">Cameo Plus 15x15</option>
+        <option value="cameo_pro_24x24">Cameo Pro 24x24</option>
+        <option value="no_mat">None</option>
       </param>
-      <param name="toolholder" type="enum" _gui-text="Tool Holder:">
-        <item value="1">Red (left tool)</item>
-        <item value="2">Blue (right tool)</item>
+      <param name="toolholder" type="optiongroup" appearance="combo" gui-text="Tool Holder">
+        <option value="1">Red (left tool)</option>
+        <option value="2">Blue (right tool)</option>
       </param>
-      <param name="tool" type="enum" _gui-text="Tool:">
-        <item value="default">Media default</item>
-        <item value="pen">Pen</item>
-        <item value="cut">Cut</item>
-        <item value="autoblade">AutoBlade</item>
+      <param name="tool" type="optiongroup" appearance="combo" gui-text="Tool">
+        <option value="default">Media default</option>
+        <option value="pen">Pen</option>
+        <option value="cut">Cut</option>
+        <option value="autoblade">AutoBlade</option>
       </param>
       <label>'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</label>
       <!-- CAUTION: keep media list in sync with silhouette/Graphtec.py -->
-      <param name="media" type="enum" _gui-text="Media:">
-        <item value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</item>
-        <item value="100">[P=27,S=10] SCard without Craft Paper Backing</item>
-        <item value="101">[P=27,S=10] Card with Craft Paper Backing</item>
-        <item value="102">[P=10,S= 5,D=1] Vinyl Sticker</item>
-        <item value="106">[P=14,S=10] Film Labels</item>
-        <item value="111">[P=27,S=10] Thick Media</item>
-        <item value="112">[P= 2,S=10] Thin Media</item>
-        <item value="113">[P=18,S=10] Pen</item>
-        <item value="120">[P=30,S=10] Bond Paper 13-28 lbs (105g)</item>
-        <item value="121">[P=30,S=10] Bristol Paper 57-67 lbs (145g)</item>
-        <item value="122">[P=30,S=10] Cardstock 40-60 lbs (90g)</item>
-        <item value="123">[P=30,S=10] Cover 40-60 lbs (170g)</item>
-        <item value="124">[P= 1,S=10] Film, Double Matte Translucent</item>
-        <item value="125">[P= 1,S=10] Film, Vinyl With Adhesive Back</item>
-        <item value="126">[P= 1,S=10] Film, Window With Kling Adhesive</item>
-        <item value="127">[P=30,S=10] Index 90 lbs (165g)</item>
-        <item value="128">[P=20,S=10] Inkjet Photo Paper 28-44 lbs (70g)</item>
-        <item value="129">[P=27,S=10] Inkjet Photo Paper 45-75 lbs (110g)</item>
-        <item value="130">[P=30,S= 3] Magnetic Sheet</item>
-        <item value="131">[P=30,S=10] Offset 24-60 lbs (90g)</item>
-        <item value="132">[P= 5,S=10] Print Paper Light Weight</item>
-        <item value="133">[P=25,S=10] Print Paper Medium Weight</item>
-        <item value="134">[P=20,S=10] Sticker Sheet</item>
-        <item value="135">[P=20,S=10] Tag 100 lbs (275g)</item>
-        <item value="136">[P=30,S=10] Text Paper 24-70 lbs (105g)</item>
-        <item value="137">[P=30,S=10] Vellum Bristol 57-67 lbs (145g)</item>
-        <item value="138">[P=30,S=10] Writing Paper 24-70 lbs (105g)</item>
+      <param name="media" type="optiongroup" appearance="combo" gui-text="Media">
+        <option value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</option>
+        <option value="100">[P=27,S=10] SCard without Craft Paper Backing</option>
+        <option value="101">[P=27,S=10] Card with Craft Paper Backing</option>
+        <option value="102">[P=10,S= 5,D=1] Vinyl Sticker</option>
+        <option value="106">[P=14,S=10] Film Labels</option>
+        <option value="111">[P=27,S=10] Thick Media</option>
+        <option value="112">[P= 2,S=10] Thin Media</option>
+        <option value="113">[P=18,S=10] Pen</option>
+        <option value="120">[P=30,S=10] Bond Paper 13-28 lbs (105g)</option>
+        <option value="121">[P=30,S=10] Bristol Paper 57-67 lbs (145g)</option>
+        <option value="122">[P=30,S=10] Cardstock 40-60 lbs (90g)</option>
+        <option value="123">[P=30,S=10] Cover 40-60 lbs (170g)</option>
+        <option value="124">[P= 1,S=10] Film, Double Matte Translucent</option>
+        <option value="125">[P= 1,S=10] Film, Vinyl With Adhesive Back</option>
+        <option value="126">[P= 1,S=10] Film, Window With Kling Adhesive</option>
+        <option value="127">[P=30,S=10] Index 90 lbs (165g)</option>
+        <option value="128">[P=20,S=10] Inkjet Photo Paper 28-44 lbs (70g)</option>
+        <option value="129">[P=27,S=10] Inkjet Photo Paper 45-75 lbs (110g)</option>
+        <option value="130">[P=30,S= 3] Magnetic Sheet</option>
+        <option value="131">[P=30,S=10] Offset 24-60 lbs (90g)</option>
+        <option value="132">[P= 5,S=10] Print Paper Light Weight</option>
+        <option value="133">[P=25,S=10] Print Paper Medium Weight</option>
+        <option value="134">[P=20,S=10] Sticker Sheet</option>
+        <option value="135">[P=20,S=10] Tag 100 lbs (275g)</option>
+        <option value="136">[P=30,S=10] Text Paper 24-70 lbs (105g)</option>
+        <option value="137">[P=30,S=10] Vellum Bristol 57-67 lbs (145g)</option>
+        <option value="138">[P=30,S=10] Writing Paper 24-70 lbs (105g)</option>
       </param>
-      <param name="speed" type="int" min="0" max="30" _gui-text="Speed">0</param>
-      <param name="pressure" type="int" min="0" max="33" _gui-text="Pressure">0</param>
-      <param name="depth" type="int" min="-1" max="10" _gui-text="Blade Depth (for AutoBlade)">-1</param>
+      <param name="speed" type="int" min="0" max="30" gui-text="Speed">0</param>
+      <param name="pressure" type="int" min="0" max="33" gui-text="Pressure">0</param>
+      <param name="depth" type="int" min="-1" max="10" gui-text="Blade Depth (for AutoBlade)">-1</param>
       <label>Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</label>
-      <param name="preview" type="bool" _gui-text="Preview: show cut pattern before sending">true</param>
+      <param name="preview" type="bool" gui-text="Preview: show cut pattern before sending">true</param>
       <label>Note that for Preview to operate, the `matplotlib' package for Python must be installed.</label>
     </page>
-    <page name='opt' _gui-text='Options'>
-      <param name="dashes" type="bool" _gui-text="Convert to dashes">false</param> <label>Convert paths with dashed strokes to separate subpaths for perforated cuts.</label>
-      <param name="autocrop" type="bool" _gui-text="Trim margins">false</param> <label>Shift to the top lefthand corner, then do offsets.</label>
-      <param name="bbox-only" type="bool" _gui-text="Draft Bounding Box Only">false</param>
+    <page name='opt' gui-text='Options'>
+      <param name="dashes" type="bool" gui-text="Convert to dashes">false</param> <label>Convert paths with dashed strokes to separate subpaths for perforated cuts.</label>
+      <param name="autocrop" type="bool" gui-text="Trim margins">false</param> <label>Shift to the top lefthand corner, then do offsets.</label>
+      <param name="bbox-only" type="bool" gui-text="Draft Bounding Box Only">false</param>
       <label>To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</label>
-      <param name="multipass" type="int" min="1" max="8" _gui-text="Repeat each stroke">1</param>
-      <param name="reversetoggle" type="bool" _gui-text="Cut in opposite direction(s)">false</param>
-      <param name="endposition" type="enum" _gui-text="Position After Cutting:">
-        <item value="start">Start Position</item>
-        <item value="below">Below Cut-Out</item>
+      <param name="multipass" type="int" min="1" max="8" gui-text="Repeat each stroke">1</param>
+      <param name="reversetoggle" type="bool" gui-text="Cut in opposite direction(s)">false</param>
+      <param name="endposition" type="optiongroup" appearance="combo" gui-text="Position After Cutting">
+        <option value="start">Start Position</option>
+        <option value="below">Below Cut-Out</option>
       </param>
       <label>Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</label>
-      <param name="end_offset" type="float" min="-3000.0" max="3000.0" _gui-text="End Position Offset [mm]:">0.0</param>
+      <param name="end_offset" type="float" min="-3000.0" max="3000.0" gui-text="End Position Offset [mm]">0.0</param>
       <label>Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</label>
     </page>
 
-    <page name='reg' _gui-text='Regmarks'>
-      <param name="regmark" type="bool" _gui-text="The document has registration marks">false</param>
+    <page name='reg' gui-text='Regmarks'>
+      <param name="regmark" type="bool" gui-text="The document has registration marks">false</param>
       <label>The document contains printed registration marks</label>
-      <param name="regsearch" type="bool" _gui-text="Search for the registration marks automatically">false</param>
+      <param name="regsearch" type="bool" gui-text="Search for the registration marks automatically">false</param>
       <label>Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
-      <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]">180</param>
-      <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]">230</param>
-      <param name="regoriginx" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document left [mm]">15</param>
-      <param name="regoriginy" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document top [mm]">20</param>
+      <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark distance [mm]">180</param>
+      <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark distance [mm]">230</param>
+      <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">15</param>
+      <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">20</param>
       <label>Distance of the registration mark edges</label>
     </page>
 
-    <page name='advanced' _gui-text='Advanced'>
-      <param name="wait_done" type="bool" _gui-text="Wait til done, after all data is sent">false</param>
+    <page name='advanced' gui-text='Advanced'>
+      <param name="wait_done" type="bool" gui-text="Wait til done, after all data is sent">false</param>
       <label>Keep dialog open until device becomes idle again.</label>
-      <param name="sharpencorners" type="bool" _gui-text="Sharpen Corners">false</param> <label>Lift head at sharp corners</label>
-      <param name="sharpencorners_start" type="float" min="0.1" max="0.9" _gui-text="Sharpen Corners - Start Ext. [mm]">0.1</param>
-      <param name="sharpencorners_end" type="float" min="0.1" max="0.9" _gui-text="Sharpen Corners - End Ext. [mm]">0.1</param>
-      <param name="overcut" type="float" min="0.0" max="5.0" _gui-text="Overcut on closed paths [mm]">0.5</param>
-      <param name="strategy" type="enum" _gui-text="Cutting Strategy:">
-        <item value="zorder">Z-Order</item>
-        <item value="matfree">Without mat</item>
-        <item value="mintravel">Minimized Traveling</item>
-        <item value="mintravelfull">Minimized Traveling (fully optimized)</item>
-        <item value="mintravelfwd">Minimized Traveling (no reverse)</item>
+      <param name="sharpencorners" type="bool" gui-text="Sharpen Corners">false</param> <label>Lift head at sharp corners</label>
+      <param name="sharpencorners_start" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - Start Ext. [mm]">0.1</param>
+      <param name="sharpencorners_end" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - End Ext. [mm]">0.1</param>
+      <param name="overcut" type="float" min="0.0" max="5.0" gui-text="Overcut on closed paths [mm]">0.5</param>
+      <param name="strategy" type="optiongroup" appearance="combo" gui-text="Cutting Strategy">
+        <option value="zorder">Z-Order</option>
+        <option value="matfree">Without mat</option>
+        <option value="mintravel">Minimized Traveling</option>
+        <option value="mintravelfull">Minimized Traveling (fully optimized)</option>
+        <option value="mintravelfwd">Minimized Traveling (no reverse)</option>
       </param>
       <label xml:space="preserve">
 Z-Order: Leaf cut order as defined in input svg.
@@ -112,47 +112,47 @@ Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat i
 Minimal Traveling: Find the nearest startpoint to minimize travel movements
 Minimal Traveling (fully optimized): Additionally search startpoints in closed paths
 Minimal Traveling (no reverse): Like fully optimized but respect original orientations of paths</label>
-      <param name="orient_paths" type="enum" _gui-text="Pre-orient paths:">
-	<item value="natural">As in SVG</item>
-	<item value="desy">Descending Y (pull through tool)</item>
-	<item value="ascy">Ascending Y (push into tool)</item>
-	<item value="desx">Descending X (right to left)</item>
-	<item value="ascx">Ascending X (left to right)</item>
+      <param name="orient_paths" type="optiongroup" appearance="combo" gui-text="Pre-orient paths">
+	<option value="natural">As in SVG</option>
+	<option value="desy">Descending Y (pull through tool)</option>
+	<option value="ascy">Ascending Y (push into tool)</option>
+	<option value="desx">Descending X (right to left)</option>
+	<option value="ascx">Ascending X (left to right)</option>
       </param>
       <label>Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</label>
-      <param name="fuse_paths" type="bool" _gui-text="Fuse coincident paths">true</param>
+      <param name="fuse_paths" type="bool" gui-text="Fuse coincident paths">true</param>
       <label>Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</label>
-      <param name="sw_clipping" type="bool" _gui-text="Enable Software Clipping">true</param>
+      <param name="sw_clipping" type="bool" gui-text="Enable Software Clipping">true</param>
     </page>
 
-    <page name="logdump" _gui-text="Log and Dump">
-      <param name="logfile" type="string" _gui-text="Save log messages in file:"></param>
-      <param name="log_paths" type="bool" _gui-text="Include final cut paths in log (for debugging)">false</param>
-      <param name="cmdfile" type="string" _gui-text="Transcribe cutter commands to file:"></param>
-      <param name="inc_queries" type="bool" _gui-text="Include cutter queries in command transcript">false</param>
-      <param name="append_logs" type="bool" _gui-text="Append to log/dump files rather than overwriting">false</param>
-      <param name="dry_run" type="bool" _gui-text="Dry Run: do not send commands to device">false</param>
+    <page name="logdump" gui-text="Log and Dump">
+      <param name="logfile" type="string" gui-text="Save log messages in file"></param>
+      <param name="log_paths" type="bool" gui-text="Include final cut paths in log (for debugging)">false</param>
+      <param name="cmdfile" type="string" gui-text="Transcribe cutter commands to file"></param>
+      <param name="inc_queries" type="bool" gui-text="Include cutter queries in command transcript">false</param>
+      <param name="append_logs" type="bool" gui-text="Append to log/dump files rather than overwriting">false</param>
+      <param name="dry_run" type="bool" gui-text="Dry Run: do not send commands to device">false</param>
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
-      <param name="force_hardware" type="enum" _gui-text="Override cutter model to:">
-	<item value="DETECT">-- as detected --</item>
-	<item value="Silhouette_Portrait">Silhouette Portrait</item>
-	<item value="Silhouette_Portrait2">Silhouette Portrait 2</item>
-	<item value="Silhouette_Portrait3">Silhouette Portrait 3</item>
-	<item value="Silhouette_Cameo">Silhouette Cameo</item>
-	<item value="Silhouette_Cameo2">Silhouette Cameo 2</item>
-	<item value="Silhouette_Cameo3">Silhouette Cameo 3</item>
-	<item value="Silhouette_Cameo4">Silhouette Cameo 4</item>
-	<item value="Silhouette_Cameo4_Plus">Silhouette Cameo 4 Plus</item>
-	<item value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</item>
-	<item value="Craft_Robo_CC200-20">Craft Robo CC200-20</item>
-	<item value="Craft_Robo_CC300-20">Craft Robo CC300-20</item>
-	<item value="Silhouette_SD_1">Silhouette SD 1</item>
-	<item value="Silhouette_SD_2">Silhouette SD 2</item>
+      <param name="force_hardware" type="optiongroup" appearance="combo" gui-text="Override cutter model">
+	<option value="DETECT">-- as detected --</option>
+	<option value="Silhouette_Portrait">Silhouette Portrait</option>
+	<option value="Silhouette_Portrait2">Silhouette Portrait 2</option>
+	<option value="Silhouette_Portrait3">Silhouette Portrait 3</option>
+	<option value="Silhouette_Cameo">Silhouette Cameo</option>
+	<option value="Silhouette_Cameo2">Silhouette Cameo 2</option>
+	<option value="Silhouette_Cameo3">Silhouette Cameo 3</option>
+	<option value="Silhouette_Cameo4">Silhouette Cameo 4</option>
+	<option value="Silhouette_Cameo4_Plus">Silhouette Cameo 4 Plus</option>
+	<option value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</option>
+	<option value="Craft_Robo_CC200-20">Craft Robo CC200-20</option>
+	<option value="Craft_Robo_CC300-20">Craft Robo CC300-20</option>
+	<option value="Silhouette_SD_1">Silhouette SD 1</option>
+	<option value="Silhouette_SD_2">Silhouette SD 2</option>
       </param>
       <label>Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
 
-    <page name='blade' _gui-text='Blade Setting'>
+    <page name='blade' gui-text='Blade Setting'>
       <label xml:space="preserve">
 Always use the least amount of blade possible.
 
@@ -168,20 +168,22 @@ Always use the least amount of blade possible.
 
 6) Once this is done the blade can be put back in to the machine.
       </label>
-      <param name="bladediameter" type="float" min="0.0" max="2.3" _gui-text="Diameter of the used blade type [mm]">0.9</param>
+      <param name="bladediameter" type="float" min="0.0" max="2.3" gui-text="Diameter of the used blade type [mm]">0.9</param>
       <label>Correct value for the silhouette blade is 0.9mm</label>
     </page>
-    <page name='about' _gui-text='About'>
-      <label>inkscape-silhouette extension from https://github.com/fablabnbg/inkscape-silhouette by Jürgen Weigert [juergen@fabmail.org] and contributors</label>
-      <!-- Keep in sync with sendto_silhouette.py line 94 __version__ = ... -->
-      <label name='about_version'>Version 1.27</label>
+    <page name='about' gui-text='About'>
+      <label translatable="no">inkscape-silhouette extension</label>
+      <label translatable="no" appearance="url" indent="1">https://github.com/fablabnbg/inkscape-silhouette</label>
+      <label translatable="no">by Jürgen Weigert [juergen@fabmail.org] and contributors</label>
+      <!-- Keep in sync with sendto_silhouette.py line 7 __version__ = ... -->
+      <label name="about_version" translatable="no">Version 1.27</label>
     </page>
   </param>
 
   <effect needs-live-preview="false" >
     <object-type>all</object-type>
     <effects-menu>
-      <submenu _name="Export"/>
+      <submenu name="Export"/>
     </effects-menu>
   </effect>
 

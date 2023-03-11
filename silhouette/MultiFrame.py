@@ -62,7 +62,7 @@ class ParamsNotebook(wx.Notebook):
             pagename = pageattrs['name']
             # If it is a new page we have to initialize it:
             if not pagename in notebook:
-                pagetitle = pageattrs['_gui-text']
+                pagetitle = pageattrs['gui-text']
                 notebook[pagename] = dict(title=pagetitle, param=[])
             # Ultimately we want a dict to represent the item on the page,
             # but if there is a text body to the tag, it comes as a string:
@@ -191,7 +191,7 @@ class ParamsTab(ScrolledPanel):
         for row, param in enumerate(self.params):
             param_type = param['@type']
             param_name = param.get('@name','**unnamed**')
-            display_text = param.get('@_gui-text', '')
+            display_text = param.get('@gui-text', '')
             text_span = (1, 2)
             text_pos = (row, 0)
             text_flag = wx.EXPAND|wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL
@@ -216,8 +216,8 @@ class ParamsTab(ScrolledPanel):
                     self, wx.ID_ANY, min=int(param.get('@min', 0)),
                     max=int(param.get('@max', 2**32)),
                     value=param.get('#text', ''))
-            elif param_type == 'enum':
-                choices = OrderedDict((item['#text'], item['@value']) for item in param['item'])
+            elif param_type == 'optiongroup':
+                choices = OrderedDict((option['#text'], option['@value']) for option in param['option'])
                 self.choices_by_label[param_name] = choices
                 self.choices_by_value[param_name] = { v: k for k, v in choices.items() }
                 choice_list = list(choices.keys())
