@@ -226,6 +226,7 @@ class SilhouetteMulti(EffectExtension):
         # actual python script if the user cancels
         process = subprocess.Popen("exec " + command, shell=True)
 
+        import wx
         dialog = wx.ProgressDialog(style=wx.PD_APP_MODAL|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME,
                                    message="Performing action %d of %d..." % (step, total),
                                    title="Silhouette Multiple Actions")
