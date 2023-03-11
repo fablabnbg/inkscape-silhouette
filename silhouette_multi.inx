@@ -4,8 +4,8 @@
   <id>com.github.fablabnbg.inskscape-silhouette.silhouette_multi</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="extension">com.github.fablabnbg.inkscape-silhouette.sendto_silhouette</dependency>
-  <dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
-  <dependency type="executable" location="extensions">silhouette_multi.py</dependency>
+  <dependency type="executable" location="inx">sendto_silhouette.py</dependency>
+  <dependency type="executable" location="inx">silhouette_multi.py</dependency>
 
   <label xml:space="preserve">
 Debugging/Logging Settings:
@@ -24,6 +24,6 @@ Cutting settings will show up once you click "Apply."
   </effect>
   
   <script>
-      <command location="extensions" interpreter="python">silhouette_multi.py</command>
+      <command location="inx" interpreter="python">silhouette_multi.py</command>
   </script>
 </inkscape-extension>

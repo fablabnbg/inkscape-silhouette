@@ -3,7 +3,7 @@
   <_name>Send to Silhouette</_name>
   <id>com.github.fablabnbg.inkscape-silhouette.sendto_silhouette</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
-  <dependency type="executable" location="extensions">sendto_silhouette.py</dependency>
+  <dependency type="executable" location="inx">sendto_silhouette.py</dependency>
   <param name="active-tab" type="notebook">
     <page name='silhouette' _gui-text='Silhouette'>
       <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" _gui-text="X-Offset [mm]">0.0</param>
@@ -186,6 +186,6 @@ Always use the least amount of blade possible.
   </effect>
 
   <script>
-      <command location="extensions" interpreter="python">sendto_silhouette.py</command>
+      <command location="inx" interpreter="python">sendto_silhouette.py</command>
   </script>
 </inkscape-extension>
