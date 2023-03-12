@@ -26,7 +26,7 @@
         <option value="cut">Cut</option>
         <option value="autoblade">AutoBlade</option>
       </param>
-      <label>'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</label>
+      <label indent="2">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</label>
       <!-- CAUTION: keep media list in sync with silhouette/Graphtec.py -->
       <param name="media" type="optiongroup" appearance="combo" gui-text="Media">
         <option value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</option>
@@ -60,42 +60,42 @@
       <param name="speed" type="int" min="0" max="30" gui-text="Speed">0</param>
       <param name="pressure" type="int" min="0" max="33" gui-text="Pressure">0</param>
       <param name="depth" type="int" min="-1" max="10" gui-text="Blade Depth (for AutoBlade)">-1</param>
-      <label>Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</label>
+      <label indent="2">Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware.</label>
       <param name="preview" type="bool" gui-text="Preview: show cut pattern before sending">true</param>
-      <label>Note that for Preview to operate, the `matplotlib' package for Python must be installed.</label>
+      <label indent="2">Note that for Preview to operate, the `matplotlib' package for Python must be installed.</label>
     </page>
     <page name='opt' gui-text='Options'>
-      <param name="dashes" type="bool" gui-text="Convert to dashes">false</param> <label>Convert paths with dashed strokes to separate subpaths for perforated cuts.</label>
-      <param name="autocrop" type="bool" gui-text="Trim margins">false</param> <label>Shift to the top lefthand corner, then do offsets.</label>
+      <param name="dashes" type="bool" gui-text="Convert to dashes">false</param> <label indent="2">Convert paths with dashed strokes to separate subpaths for perforated cuts.</label>
+      <param name="autocrop" type="bool" gui-text="Trim margins">false</param> <label indent="2">Shift to the top lefthand corner, then do offsets.</label>
       <param name="bbox-only" type="bool" gui-text="Draft Bounding Box Only">false</param>
-      <label>To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</label>
+      <label indent="2">To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</label>
       <param name="multipass" type="int" min="1" max="8" gui-text="Repeat each stroke">1</param>
       <param name="reversetoggle" type="bool" gui-text="Cut in opposite direction(s)">false</param>
       <param name="endposition" type="optiongroup" appearance="combo" gui-text="Position After Cutting">
         <option value="start">Start Position</option>
         <option value="below">Below Cut-Out</option>
       </param>
-      <label>Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</label>
+      <label indent="2">Choose position of blade relative to the media after cutting. "Below Cut-Out" is ideal for using cross-cutter.</label>
       <param name="end_offset" type="float" min="-3000.0" max="3000.0" gui-text="End Position Offset [mm]">0.0</param>
-      <label>Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</label>
+      <label indent="2">Adjusts the final position selected above; currently only implemented for "Below Cut-Out". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns).</label>
     </page>
 
     <page name='reg' gui-text='Regmarks'>
       <param name="regmark" type="bool" gui-text="The document has registration marks">false</param>
-      <label>The document contains printed registration marks</label>
+      <label indent="2">The document contains printed registration marks</label>
       <param name="regsearch" type="bool" gui-text="Search for the registration marks automatically">false</param>
-      <label>Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
+      <label indent="2">Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
       <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark distance [mm]">180</param>
       <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark distance [mm]">230</param>
       <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">15</param>
       <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">20</param>
-      <label>Distance of the registration mark edges</label>
+      <label indent="2">Distance of the registration mark edges</label>
     </page>
 
     <page name='advanced' gui-text='Advanced'>
       <param name="wait_done" type="bool" gui-text="Wait til done, after all data is sent">false</param>
-      <label>Keep dialog open until device becomes idle again.</label>
-      <param name="sharpencorners" type="bool" gui-text="Sharpen Corners">false</param> <label>Lift head at sharp corners</label>
+      <label indent="2">Keep dialog open until device becomes idle again.</label>
+      <param name="sharpencorners" type="bool" gui-text="Sharpen Corners">false</param> <label indent="2">Lift head at sharp corners</label>
       <param name="sharpencorners_start" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - Start Ext. [mm]">0.1</param>
       <param name="sharpencorners_end" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - End Ext. [mm]">0.1</param>
       <param name="overcut" type="float" min="0.0" max="5.0" gui-text="Overcut on closed paths [mm]">0.5</param>
@@ -106,7 +106,7 @@
         <option value="mintravelfull">Minimized Traveling (fully optimized)</option>
         <option value="mintravelfwd">Minimized Traveling (no reverse)</option>
       </param>
-      <label xml:space="preserve">
+      <label indent="2" xml:space="preserve">
 Z-Order: Leaf cut order as defined in input svg.
 Without mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.
 Minimal Traveling: Find the nearest startpoint to minimize travel movements
@@ -119,9 +119,9 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<option value="desx">Descending X (right to left)</option>
 	<option value="ascx">Ascending X (left to right)</option>
       </param>
-      <label>Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</label>
+      <label indent="2">Note: Some strategies like "Without Mat" may reverse some path orientations, so final cut may not strictly obey orientation chosen above.</label>
       <param name="fuse_paths" type="bool" gui-text="Fuse coincident paths">true</param>
-      <label>Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</label>
+      <label indent="2">Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)</label>
       <param name="sw_clipping" type="bool" gui-text="Enable Software Clipping">true</param>
     </page>
 
@@ -149,7 +149,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<option translatable="no" value="Silhouette_SD_1">Silhouette SD 1</option>
 	<option translatable="no" value="Silhouette_SD_2">Silhouette SD 2</option>
       </param>
-      <label>Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
+      <label indent="2">Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
 
     <page name='blade' gui-text='Blade Setting'>
