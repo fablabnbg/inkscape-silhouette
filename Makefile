@@ -63,3 +63,13 @@ clean:
 	rm -f *.orig */*.orig
 	rm -rf distribute/$(DISTNAME)
 	rm -rf distribute/deb/files
+
+generate_pot:
+	mkdir -p po/its
+	curl -s -o po/its/inx.its https://gitlab.com/inkscape/inkscape/-/raw/master/po/its/inx.its
+	xgettext --its po/its/inx.its --no-wrap -o po/inkscape-silhouette.pot *.inx
+	xgettext --no-wrap -j -o po/inkscape-silhouette.pot *silhouette*.py
+
+update_po:
+	$(foreach po, $(wildcard po/*.po), \
+		msgmerge -q --update --no-wrap $(po) po/inkscape-silhouette.pot; )

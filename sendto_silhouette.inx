@@ -5,15 +5,15 @@
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="inx">sendto_silhouette.py</dependency>
   <param name="active-tab" type="notebook">
-    <page name='silhouette' gui-text='Silhouette'>
-      <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" gui-text="X-Offset [mm]">0.0</param>
-      <param name="y_off" type="float" min="-999.0" max="999.0" precision="2" gui-text="Y-Offset [mm]">0.0</param>
+    <page name='silhouette' translatable="no" gui-text='Silhouette'>
+      <param name="x_off" type="float" min="-999.0" max="999.0" precision="2" translatable="no" gui-text="X-Offset [mm]">0.0</param>
+      <param name="y_off" type="float" min="-999.0" max="999.0" precision="2" translatable="no" gui-text="Y-Offset [mm]">0.0</param>
       <param name="cuttingmat" type="optiongroup" appearance="combo" gui-text="Cutting Mat">
-        <option value="cameo_12x12">Cameo 12x12</option>
-        <option value="cameo_12x24">Cameo 12x24</option>
-        <option value="portrait_8x12">Portrait 8x12</option>
-        <option value="cameo_plus_15x15">Cameo Plus 15x15</option>
-        <option value="cameo_pro_24x24">Cameo Pro 24x24</option>
+        <option translatable="no" value="cameo_12x12">Cameo 12x12</option>
+        <option translatable="no" value="cameo_12x24">Cameo 12x24</option>
+        <option translatable="no" value="portrait_8x12">Portrait 8x12</option>
+        <option translatable="no" value="cameo_plus_15x15">Cameo Plus 15x15</option>
+        <option translatable="no" value="cameo_pro_24x24">Cameo Pro 24x24</option>
         <option value="no_mat">None</option>
       </param>
       <param name="toolholder" type="optiongroup" appearance="combo" gui-text="Tool Holder">
@@ -135,19 +135,19 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="optiongroup" appearance="combo" gui-text="Override cutter model">
 	<option value="DETECT">-- as detected --</option>
-	<option value="Silhouette_Portrait">Silhouette Portrait</option>
-	<option value="Silhouette_Portrait2">Silhouette Portrait 2</option>
-	<option value="Silhouette_Portrait3">Silhouette Portrait 3</option>
-	<option value="Silhouette_Cameo">Silhouette Cameo</option>
-	<option value="Silhouette_Cameo2">Silhouette Cameo 2</option>
-	<option value="Silhouette_Cameo3">Silhouette Cameo 3</option>
-	<option value="Silhouette_Cameo4">Silhouette Cameo 4</option>
-	<option value="Silhouette_Cameo4_Plus">Silhouette Cameo 4 Plus</option>
-	<option value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</option>
-	<option value="Craft_Robo_CC200-20">Craft Robo CC200-20</option>
-	<option value="Craft_Robo_CC300-20">Craft Robo CC300-20</option>
-	<option value="Silhouette_SD_1">Silhouette SD 1</option>
-	<option value="Silhouette_SD_2">Silhouette SD 2</option>
+	<option translatable="no" value="Silhouette_Portrait">Silhouette Portrait</option>
+	<option translatable="no" value="Silhouette_Portrait2">Silhouette Portrait 2</option>
+	<option translatable="no" value="Silhouette_Portrait3">Silhouette Portrait 3</option>
+	<option translatable="no" value="Silhouette_Cameo">Silhouette Cameo</option>
+	<option translatable="no" value="Silhouette_Cameo2">Silhouette Cameo 2</option>
+	<option translatable="no" value="Silhouette_Cameo3">Silhouette Cameo 3</option>
+	<option translatable="no" value="Silhouette_Cameo4">Silhouette Cameo 4</option>
+	<option translatable="no" value="Silhouette_Cameo4_Plus">Silhouette Cameo 4 Plus</option>
+	<option translatable="no" value="Silhouette_Cameo4_Pro">Silhouette Cameo 4 Pro</option>
+	<option translatable="no" value="Craft_Robo_CC200-20">Craft Robo CC200-20</option>
+	<option translatable="no" value="Craft_Robo_CC300-20">Craft Robo CC300-20</option>
+	<option translatable="no" value="Silhouette_SD_1">Silhouette SD 1</option>
+	<option translatable="no" value="Silhouette_SD_2">Silhouette SD 2</option>
       </param>
       <label>Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
