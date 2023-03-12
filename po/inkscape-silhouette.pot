@@ -420,15 +420,15 @@ msgid "Include final cut paths in log (for debugging)"
 msgstr ""
 
 #: sendto_silhouette.inx:131
-msgid "Transcribe cutter commands to file"
+msgid "Append to log/dump files rather than overwriting"
 msgstr ""
 
 #: sendto_silhouette.inx:132
-msgid "Include cutter queries in command transcript"
+msgid "Transcribe cutter commands to file"
 msgstr ""
 
 #: sendto_silhouette.inx:133
-msgid "Append to log/dump files rather than overwriting"
+msgid "Include cutter queries in command transcript"
 msgstr ""
 
 #: sendto_silhouette.inx:134
