@@ -152,6 +152,8 @@ class ParamsTab(ScrolledPanel):
                     values[name] = None
                 else:
                     values[name] = self.choices_by_label[name][input.GetString(choice)]
+            elif isinstance(input, wx.FilePickerCtrl):
+                values[name] = input.GetPath()
             else:
                 values[name] = input.GetValue()
         return values
@@ -173,6 +175,8 @@ class ParamsTab(ScrolledPanel):
                 else:
                     label = self.choices_by_value[name][value]
                     input.SetStringSelection(label)
+            elif isinstance(input, wx.FilePickerCtrl):
+                input.SetPath(value)
             else:
                 input.SetValue(value)
 
@@ -226,6 +230,14 @@ class ParamsTab(ScrolledPanel):
                 input.SetStringSelection(choice_list[0])
             elif param_type == 'string':
                 input = wx.TextCtrl(self)
+                iflag |= wx.EXPAND
+            elif param_type == 'path':
+                input = wx.FilePickerCtrl(self, wx.ID_ANY,
+                                          path=param.get('#text', ''),
+                                          wildcard = param.get('@filetypes') + " files (*." + param.get('@filetypes') + ")",
+                                          name=param_name,
+                                          style = wx.FLP_SAVE|wx.FLP_OVERWRITE_PROMPT|wx.FLP_USE_TEXTCTRL,
+                                          message=display_text)
                 iflag |= wx.EXPAND
 
             textbox = wx.StaticText(self, label=display_text)
