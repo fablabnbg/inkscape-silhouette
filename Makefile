@@ -3,7 +3,7 @@
 PREFIX?=/usr
 DISTNAME=inkscape-silhouette
 EXCL=--exclude \*.orig --exclude \*.pyc
-ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette
+ALL=README.md *.png *.sh *.rules *.py *.inx examples misc silhouette locale
 VERS=$$(python3 ./sendto_silhouette.py --version)
 
 ## echo python3 ./sendto_silhouette.py
@@ -21,40 +21,43 @@ VERS=$$(python3 ./sendto_silhouette.py --version)
 
 
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
+LOCALE=$(DESTDIR)$(PREFIX)/share/locale
 UDEV=$(DESTDIR)/lib/udev
 
 # User-specifc inkscape extensions folder for local install
 DESTLOCAL=$(HOME)/.config/inkscape/extensions
 
-dist:
+dist: mo
 	cd distribute; sh ./distribute.sh
 
 #install is used by dist.
-install:
+install: mo
 	mkdir -p $(DEST)
-	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
+	@# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DEST)
 	install -m 755 *silhouette*.py $(DEST)
 	install -m 644 *.inx $(DEST)
+	cp -r locale $(LOCALE)
 	mkdir -p $(UDEV)/rules.d
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
 	install -m 644 silhouette-icon.png $(UDEV)
 	install -m 644 silhouette-udev-notify.sh $(UDEV)
 
-install-local:
+install-local: mo
 	mkdir -p $(DESTLOCAL)
-	# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
+	@# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
 	cp -r silhouette $(DESTLOCAL)
 	install -m 755 *silhouette*.py $(DESTLOCAL)
 	install -m 644 *.inx $(DESTLOCAL)
+	cp -r locale $(DESTLOCAL)
 
-tar_dist_classic: clean
+tar_dist_classic: clean mo
 	name=$(DISTNAME)-$(VERS); echo "$$name"; echo; \
 	tar jcvf $$name.tar.bz2 $(EXCL) --transform="s,^,$$name/," $(ALL)
 	grep about_version ./sendto_silhouette.inx 
 	@echo version should be $(VERS)
 
-tar_dist:
+tar_dist: mo
 	python3 setup.py sdist --format=bztar
 	mv dist/*.tar* .
 	rm -rf dist
@@ -63,6 +66,7 @@ clean:
 	rm -f *.orig */*.orig
 	rm -rf distribute/$(DISTNAME)
 	rm -rf distribute/deb/files
+	rm -rf locale
 
 generate_pot:
 	mkdir -p po/its
@@ -73,3 +77,9 @@ generate_pot:
 update_po:
 	$(foreach po, $(wildcard po/*.po), \
 		msgmerge -q --update --no-wrap $(po) po/inkscape-silhouette.pot; )
+
+mo:
+	mkdir -p locale
+	$(foreach po, $(wildcard po/*.po), \
+		mkdir -p locale/$(basename $(notdir $(po)))/LC_MESSAGES; \
+		msgfmt -c -o locale/$(basename $(notdir $(po)))/LC_MESSAGES/inkscape-silhouette.mo $(po); )
