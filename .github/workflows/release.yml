@@ -24,9 +24,9 @@ jobs:
     - name: Branch name
       id: branch_name
       run: |
-        echo ::set-output name=TAG_VERSION::$( echo ${GITHUB_REF#refs/tags/} | sed -e 's/^v//' )
-        echo ::set-output name=SOURCE_VERSION::$( python ./sendto_silhouette.py --version )
-        echo ::set-output name=INX_VERSION::$( xpath -q -e '//*[@name="about_version"]/text()' sendto_silhouette.inx | sed -e 's/^version //i' )
+        echo TAG_VERSION=$( echo ${GITHUB_REF#refs/tags/} | sed -e 's/^v//' ) >> $GITHUB_OUTPUT
+        echo SOURCE_VERSION=$( python ./sendto_silhouette.py --version ) >> $GITHUB_OUTPUT
+        echo INX_VERSION=$( xpath -q -e '//*[@name="about_version"]/text()' sendto_silhouette.inx | sed -e 's/^version //i' ) >> $GITHUB_OUTPUT
     - name: Version Check
       env:
           TAG_VERSION: ${{ steps.branch_name.outputs.TAG_VERSION }}
