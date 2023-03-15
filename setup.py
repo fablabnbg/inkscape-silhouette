@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from os import path
-import glob
 import re
+#import glob
 
 from distutils.core import setup
 import sendto_silhouette  # for author(), version()
