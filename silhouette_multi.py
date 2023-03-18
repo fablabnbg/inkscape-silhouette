@@ -264,7 +264,7 @@ class SilhouetteMulti(EffectExtension):
 if __name__ == "__main__":
 
     unblock_inkscape = True
-    if any(('--block=true' in sys.argv, '--help' in sys.argv)):
+    if any(('--block=true' in sys.argv, '--help' in sys.argv, '-h' in sys.argv)):
         unblock_inkscape = False
 
     pid = 0
