@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     if pid != 0:
         # We forked and this is the "parent", so just return
-        sys.exit(0)
+        os._exit(0)
 
     # Here we are in the process that will do the actual work:
 
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     try:
         e = SilhouetteMulti()
         e.run()
-    except:
+    except Exception:
         traceback.print_exc(file=multilogfile)
         # SilhouetteMultiFrame.wrapup likely never called if there was
         # an exception, so:
