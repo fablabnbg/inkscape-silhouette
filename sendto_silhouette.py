@@ -282,8 +282,8 @@ class SendtoSilhouette(EffectExtension):
                 dest = "preview", type = Boolean, default = True,
                 help="show cut pattern graphically before sending")
         self.arg_parser.add_argument("-V", "--version",
-                dest = "version", action = "store_true",
-                help="Just print version number ('"+self.version()+"') and exit.")
+                dest = "version", action = "version", version=__version__,
+                help="print the version number and exit")
         self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
                 dest = "wait_done", type = Boolean, default = False,
                 help="After sending wait til device reports ready")
@@ -331,14 +331,6 @@ class SendtoSilhouette(EffectExtension):
     def __del__(self, *args):
         if self.log:
             self.log.close() # will always close tty if there is one
-
-
-    def version(self):
-        return __version__
-
-
-    def author(self):
-        return __author__
 
 
     def report(self, message, level):
@@ -1001,10 +993,6 @@ class SendtoSilhouette(EffectExtension):
 
 
     def effect(self):
-        if self.options.version:
-            print(__version__)
-            return
-
         def write_progress(done, total, msg):
             if "write_start_tstamp" not in self.__dict__:
                 self.write_start_tstamp = time.time()
@@ -1312,13 +1300,12 @@ class SendtoSilhouette(EffectExtension):
 if __name__ == "__main__":
     e = SendtoSilhouette()
 
-    if any((len(sys.argv) < 2, "--version" in sys.argv, "-V" in sys.argv)):
+    if (len(sys.argv) < 2):
         # write a tempfile that is removed on exit
         tmpfile=NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
         tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
         tmpfile.close()
-        sys.argv.append(tmpfile.name)
-        e.run(sys.argv[1:])
+        e.run([tmpfile.name])
         os.remove(tmpfile.name)
     else:
         start = time.time()
