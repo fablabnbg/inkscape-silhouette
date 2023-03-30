@@ -1,7 +1,4 @@
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
+from pathlib import Path
 
 import pytest
 
@@ -16,12 +13,8 @@ def data_dir():
 def test_loading_duplicated_path(data_dir):
     effect = SendtoSilhouette()
     svg_path = str(data_dir / 'plus_with_duplicate.svg')
-    if hasattr(effect, 'parse_arguments'):  # Inkscape 1.x
-        effect.parse_arguments([svg_path])
-        effect.load_raw()
-    else:  # Inkscape 0.9x
-        effect.getoptions([svg_path])
-        effect.parse(svg_path)
+    effect.parse_arguments([svg_path])
+    effect.load_raw()
 
     effect.recursivelyTraverseSvg(effect.document.getroot())
 
