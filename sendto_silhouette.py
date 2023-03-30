@@ -956,12 +956,8 @@ class SendtoSilhouette(EffectExtension):
         # Build a list of the vertices for the document's graphical elements
         if self.options.ids:
             # Traverse the selected objects
-            if hasattr(self, "svg"):  # inkscape 1.0
-                for id in self.options.ids:
-                    self.recursivelyTraverseSvg([self.svg.selected[id]])
-            else:                     # inkscape 0.9x
-                for id in self.options.ids:
-                    self.recursivelyTraverseSvg([self.selected[id]])
+            for id in self.options.ids:
+                self.recursivelyTraverseSvg([self.svg.selected[id]])
         else:
             # Traverse the entire document
             self.recursivelyTraverseSvg(self.document.getroot())
