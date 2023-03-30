@@ -87,7 +87,7 @@ class TestRun(unittest.TestCase):
 
     def test_06dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--log_paths=True", "--logfile=silhouette.log", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--log_paths=True", "--logfile=silhouette.log", "--output=silhouette.svg", "examples/sharp_turns.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
             filehandle = open("silhouette.log",'r')
             log = filehandle.read()
@@ -102,7 +102,7 @@ class TestRun(unittest.TestCase):
 
     def test_07dry_run(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--preview=False", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "examples/dashline.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dashes=True", "--preview=False", "--dry_run=True", "--log_paths=True", "--logfile=silhouette.log", "--output=silhouette.svg", "examples/dashline.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
             filehandle = open("silhouette.log",'r')
             log = filehandle.read()
