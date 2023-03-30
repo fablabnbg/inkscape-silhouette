@@ -58,9 +58,6 @@ import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
 
-N_PAGE_WIDTH = 3200.0
-N_PAGE_HEIGHT = 800.0
-
 IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 
 
@@ -70,47 +67,6 @@ def px2mm(px):
     The default inkscape unit, called 'px' is 96dpi
     """
     return px*25.4/96
-
-
-# Lifted with impunity from eggbot.py
-# Added all known inkscape units. https://github.com/fablabnbg/inkscape-silhouette/issues/19
-def parseLengthWithUnits(str):
-    """
-    Parse an SVG value which may or may not have units attached
-    This version is greatly simplified in that it only allows: no units,
-    units of px, mm, and %.  Everything else, it returns None for.
-    There is a more general routine to consider in scour.py if more
-    generality is ever needed.
-    """
-
-    u = "px"
-    s = str.strip()
-    if s[-2:] == "px":
-        s = s[:-2]
-    elif s[-2:] == "mm":
-        u = "mm"
-        s = s[:-2]
-    elif s[-2:] == "pt":
-        u = "pt"
-        s = s[:-2]
-    elif s[-2:] == "pc":
-        u = "pc"
-        s = s[:-2]
-    elif s[-2:] == "cm":
-        u = "cm"
-        s = s[:-2]
-    elif s[-2:] == "in":
-        u = "in"
-        s = s[:-2]
-    elif s[-1:] == "%":
-        u = "%"
-        s = s[:-1]
-    try:
-        v = float(s)
-    except:
-        return None, None
-
-    return v, u
 
 
 def subdivideCubicPath(sp, flat, i=1):
@@ -189,8 +145,6 @@ class SendtoSilhouette(EffectExtension):
         # For handling an SVG viewbox attribute, we will need to know the
         # values of the document's <svg> width and height attributes as well
         # as establishing a transform from the viewbox to the display.
-        self.docWidth = N_PAGE_WIDTH
-        self.docHeight = N_PAGE_HEIGHT
         self.docTransform = IDENTITY_TRANSFORM
 
         try:
@@ -905,69 +859,22 @@ class SendtoSilhouette(EffectExtension):
                 pass
 
 
-    def getLength(self, name, default):
-        """
-        Get the <svg> attribute with name "name" and default value "default"
-        Parse the attribute into a value and associated units.  Then, accept
-        no units (""), units of pixels ("px"), and units of percentage ("%").
-        """
-        s = self.document.getroot().get(name)
-        if s:
-            v, u = parseLengthWithUnits(s)
-            if not v:
-                # Couldn't parse the value
-                self.report(f"getLength: unknown unit in '{s}'",
-                            'error')
-                return None
-            elif (u == "") or (u == "px"):
-                return v
-            elif u == "mm":
-                return v*96./25.4       # inverse of px2mm
-            elif u == "in":
-                return v*96.
-            elif u == "cm":
-                return v*96./2.54       # inverse of 10*px2mm
-            elif u == "pt":
-                return v*96./72.
-            elif u == "pc":
-                return v*96./16.
-            elif u == "%":
-                return float(default) * v / 100.0
-            else:
-                self.report(f"getLength: Unknown unit: '{u}'", 'error')
-                return None
-        else:
-            # No width specified; assume the default value
-            return float(default)
-
-
-    def getDocProps(self):
-        """
-        Get the document's height and width attributes from the <svg> tag.
-        Use a default value in case the property is not present or is
-        expressed in units of percentages.
-        """
-
-        self.docHeight = self.getLength("height", N_PAGE_HEIGHT)
-        self.report(f"7 self.docHeight= {str(self.docHeight)}", 'tty')
-        self.docWidth = self.getLength("width", N_PAGE_WIDTH)
-        self.report(f"8 self.docWidth= {str(self.docWidth)}", 'tty')
-        return all((self.docHeight, self.docWidth))
-
-
     def handleViewBox(self):
         """
         Set up the document-wide transform in the event that the document has an SVG viewbox
         """
-
-        if self.getDocProps():
-            viewbox = self.document.getroot().get("viewBox")
-            if viewbox:
-                vinfo = viewbox.strip().replace(",", " ").split(" ")
-                if all((vinfo[2], vinfo[3])):
-                    sx = self.docWidth / float(vinfo[2])
-                    sy = self.docHeight / float(vinfo[3])
-                    self.docTransform = Transform("scale(%f, %f)" % (sx, sy))
+        try:  # inkscape 1.2
+            self.report(f"7 svg.viewport_height = {self.svg.viewport_height}", 'tty')
+            self.report(f"8 svg.viewport_width = {self.svg.viewport_width}", 'tty')
+            self.docTransform = Transform(scale=(self.svg.scale))
+        except:  # inkscape 1.0
+            self.report(f"7 svg.height = {self.svg.height}", 'tty')
+            self.report(f"8 svg.width = {self.svg.width}", 'tty')
+            viewbox = self.svg.get_viewbox()
+            if all((viewbox[2], viewbox[3])):
+                    sx = self.svg.width / viewbox[2]
+                    sy = self.svg.height / viewbox[3]
+                    self.docTransform = Transform(scale=(sx, sy))
 
 
     def is_closed_path(self, path):
@@ -1225,8 +1132,8 @@ class SendtoSilhouette(EffectExtension):
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
             bbox = dev.plot(pathlist=cut,
-                    mediawidth=px2mm(self.docWidth),
-                    mediaheight=px2mm(self.docHeight),
+                    mediawidth=px2mm(self.svg.width),
+                    mediaheight=px2mm(self.svg.height),
                     margintop=0,
                     marginleft=0,
                     bboxonly=None,         # only return the bbox, do not draw it.
@@ -1247,8 +1154,8 @@ class SendtoSilhouette(EffectExtension):
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
         bbox = dev.plot(pathlist=cut,
-            mediawidth=px2mm(self.docWidth),
-            mediaheight=px2mm(self.docHeight),
+            mediawidth=px2mm(self.svg.width),
+            mediaheight=px2mm(self.svg.height),
             offset=(self.options.x_off, self.options.y_off),
             bboxonly=self.options.bboxonly,
             endposition=self.options.endposition,
