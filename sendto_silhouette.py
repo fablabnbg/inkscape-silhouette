@@ -53,7 +53,7 @@ inkex.localization.localize()
 
 from silhouette.Graphtec import SilhouetteCameo, CAMEO_MATS
 from silhouette.Strategy import MatFree
-from silhouette.convert2dashes import splitPath
+from silhouette.convert2dashes import convert2dash
 import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
@@ -565,7 +565,7 @@ class SendtoSilhouette(EffectExtension):
 
             elif node.tag == addNS("path", "svg"):
                 if self.options.dashes:
-                    splitPath(inkex, node)
+                    convert2dash(node)
 
                 self.pathcount += 1
 
