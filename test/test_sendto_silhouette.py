@@ -15,6 +15,7 @@ def test_loading_duplicated_path(data_dir):
     svg_path = str(data_dir / 'plus_with_duplicate.svg')
     effect.parse_arguments([svg_path])
     effect.load_raw()
+    effect.clean_up()
 
     effect.recursivelyTraverseSvg(effect.document.getroot())
 
