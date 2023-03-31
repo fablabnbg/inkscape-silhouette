@@ -453,15 +453,16 @@ class SendtoSilhouette(EffectExtension):
             if v == "hidden" or v == "collapse":
                 continue
 
-            # calculate this object's transform
-            try:  # inkscape 1.2
-                transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
-                transform = Transform(self.docTransform) @ transform
-                transform = Transform(extra_transform) @ transform
-            except:  # inkscape 1.0
-                transform = self.compose_parent_transforms(node, IDENTITY_TRANSFORM)
-                transform = Transform(self.docTransform) * transform
-                transform = Transform(extra_transform) * transform
+            if hasattr(node, "composed_transform"):
+                # calculate this object's transform
+                try:  # inkscape 1.2
+                    transform = node.composed_transform()
+                    transform = Transform(self.docTransform) @ transform
+                    transform = Transform(extra_transform) @ transform
+                except:  # inkscape 1.0
+                    transform = node.composed_transform()
+                    transform = Transform(self.docTransform) * transform
+                    transform = Transform(extra_transform) * transform
 
             if node.tag == addNS("g", "svg") or node.tag == "g":
 
@@ -512,10 +513,6 @@ class SendtoSilhouette(EffectExtension):
                             refnode_transform *= -Transform(self.docTransform)
                         v = node.get("visibility", v)
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
-                    else:
-                        pass
-                else:
-                    pass
 
             elif node.tag == addNS("path", "svg"):
                 if self.options.dashes:
@@ -877,26 +874,9 @@ class SendtoSilhouette(EffectExtension):
                     self.docTransform = Transform(scale=(sx, sy))
 
 
-    def is_closed_path(self, path):
+    @staticmethod
+    def is_closed_path(path) -> bool:
         return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
-
-
-    def compose_parent_transforms(self, node, mat):  # Inkscape >= 1.0
-        # This is adapted from Inkscape's simpletransform.py's composeParents()
-        # function.  That one can't handle nodes that are detached from a DOM.
-
-        trans = node.get("transform")
-        if trans:
-            try:  # inkscape 1.2
-                mat = Transform(trans) @ mat
-            except:  # inkscape 1.0
-                mat = Transform(trans) * mat
-
-        if node.getparent() is not None:
-            if node.getparent().tag == addNS("g", "svg"):
-                mat = self.compose_parent_transforms(node.getparent(), mat)
-
-        return mat
 
 
     def effect(self):
