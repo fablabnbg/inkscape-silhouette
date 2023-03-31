@@ -129,8 +129,6 @@ class SendtoSilhouette(EffectExtension):
         self.pathcount = 0
         self.resumeMode = False
         self.bStopped = False
-        self.plotCurrentLayer = True
-        self.allLayers = True               # True: all except hidden layers. False: only selected layers.
         self.step_scaling_factor = 1        # see also px2mm()
         self.ptFirst = None
         self.fPrevX = None
@@ -363,13 +361,12 @@ class SendtoSilhouette(EffectExtension):
                 if self.bStopped:
                     return
 
-                if self.plotCurrentLayer:
-                    if nIndex == 0:
-                        self.penUp()
-                        self.virtualPenIsUp = True
-                    elif nIndex == 1:
-                        self.penDown()
-                        self.virtualPenIsUp = False
+                if nIndex == 0:
+                    self.penUp()
+                    self.virtualPenIsUp = True
+                elif nIndex == 1:
+                    self.penDown()
+                    self.virtualPenIsUp = False
 
                 nIndex += 1
 
@@ -380,46 +377,9 @@ class SendtoSilhouette(EffectExtension):
                 if self.ptFirst is None:
                     self.ptFirst = (self.fX, self.fY)
 
-                if self.plotCurrentLayer:
-                    self.plotLineAndTime()
-                    self.fPrevX = self.fX
-                    self.fPrevY = self.fY
-
-
-    def DoWePlotLayer(self, strLayerName):
-        """
-        We are only plotting *some* layers. Check to see
-        whether or not we're going to plot this one.
-
-        First: scan first 4 chars of node id for first non-numeric character,
-        and scan the part before that (if any) into a number
-
-        Then, see if the number matches the layer.
-        """
-
-        TempNumString = "x"
-        stringPos = 1
-        CurrentLayerName = strLayerName.lstrip()  # remove leading whitespace
-
-        # Look at layer name.  Sample first character, then first two, and
-        # so on, until the string ends or the string no longer consists of
-        # digit characters only.
-
-        MaxLength = len(CurrentLayerName)
-        if MaxLength > 0:
-            while stringPos <= MaxLength:
-                if str.isdigit(CurrentLayerName[:stringPos]):
-                    TempNumString = CurrentLayerName[:stringPos]  # Store longest numeric string so far
-                    stringPos = stringPos + 1
-                else:
-                    break
-
-        self.plotCurrentLayer = False    # Temporarily assume that we aren't plotting the layer
-        if (str.isdigit(TempNumString)):
-            if (self.svgLayer == int(float(TempNumString))):
-                self.plotCurrentLayer = True    # We get to plot the layer!
-                self.LayersPlotted += 1
-        # Note: this function is only called if we are NOT plotting all layers.
+                self.plotLineAndTime()
+                self.fPrevX = self.fX
+                self.fPrevY = self.fY
 
 
     def recursivelyTraverseSvg(self, aNodeList,
@@ -435,9 +395,6 @@ class SendtoSilhouette(EffectExtension):
         handled include text.  Unhandled elements should be converted to
         paths in Inkscape.
         """
-        if not self.plotCurrentLayer:
-            return        # saves us a lot of time ...
-
         for node in aNodeList:
             # Ignore invisible nodes
             v = None
@@ -465,17 +422,6 @@ class SendtoSilhouette(EffectExtension):
                     transform = Transform(extra_transform) * transform
 
             if node.tag == addNS("g", "svg") or node.tag == "g":
-
-                self.penUp()
-                if (node.get(addNS("groupmode", "inkscape")) == "layer"):
-                    if (node.get("style", "") == "display:none"):
-                        self.plotCurrentLayer = False
-                    else:
-                        self.plotCurrentLayer = True
-
-                    if not self.allLayers:
-                        # inkex.errormsg("Plotting layer named: " + node.get(addNS("label", "inkscape")))
-                        self.DoWePlotLayer(node.get(addNS("label", "inkscape")))
                 self.recursivelyTraverseSvg(node, parent_visibility=v)
 
             elif node.tag == addNS("use", "svg") or node.tag == "use":
@@ -795,20 +741,18 @@ class SendtoSilhouette(EffectExtension):
             elif node.tag == addNS("text", "svg") or node.tag == "text":
                 texts = []
                 plaintext = ""
-                if self.plotCurrentLayer:
-                    for tnode in node.iterfind(".//"):   # all subtree
-                        if tnode is not None and tnode.text is not None:
-                            texts.append(tnode.text)
-                    if len(texts):
-                        if "text" not in self.warnings:
-                            inkex.errormsg(gettext("Warning: unable to draw text; " +
-                                    "please convert it to a path first. Or consider using the " +
-                                    "Hershey Text extension which can be installed in the " +
-                                    "'Render' category of extensions."))
-                            self.warnings["text"] = 1
-                        plaintext = "', '".join(texts)
-                        self.report(f"Text ignored: '{plaintext}'", 'error')
-                pass
+                for tnode in node.iterfind(".//"):   # all subtree
+                    if tnode is not None and tnode.text is not None:
+                        texts.append(tnode.text)
+                if len(texts):
+                    if "text" not in self.warnings:
+                        inkex.errormsg(gettext("Warning: unable to draw text; " +
+                                "please convert it to a path first. Or consider using the " +
+                                "Hershey Text extension which can be installed in the " +
+                                "'Render' category of extensions."))
+                        self.warnings["text"] = 1
+                    plaintext = "', '".join(texts)
+                    self.report(f"Text ignored: '{plaintext}'", 'error')
             elif node.tag == addNS("image", "svg") or node.tag == "image":
                 if "image" not in self.warnings:
                     inkex.errormsg(gettext("Warning: unable to draw bitmap images; " +
@@ -816,7 +760,6 @@ class SendtoSilhouette(EffectExtension):
                             "tool of the 'Path' menu.  Mac users please note that some X11 settings may " +
                             "cause cut-and-paste operations to paste in bitmap copies."))
                     self.warnings["image"] = 1
-                pass
             elif node.tag == addNS("pattern", "svg") or node.tag == "pattern":
                 pass
             elif node.tag == addNS("radialGradient", "svg") or node.tag == "radialGradient":
