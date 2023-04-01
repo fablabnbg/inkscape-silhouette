@@ -7,7 +7,7 @@
 __version__ = "1.27"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, math, operator, re
+import sys, os, time, math, operator
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -1008,19 +1008,10 @@ class SendtoSilhouette(EffectExtension):
             cut.append(multipath)
 
         if self.options.dump_paths:
-            docname=None
-            svg = self.document.getroot()
-            # Namespace horrors: Id's expand to full urls, before we can search them.
-            # 'sodipodi:docname' -> '{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname'
-            for tag in svg.attrib.keys():
-                if re.search(r"}docname$", tag):
-                    docname=svg.get(tag)
-
-            self.report("Logging " + str(len(cut)) + " cut paths containing "
-                        + str(pointcount) + " points:", 'log')
-            self.report("# driver version: '%s'" % __version__, 'log')
-            if docname:
-                    self.report("# docname: '%s'" % docname, 'log')
+            self.report(f"Logging {len(cut)} cut paths containing "
+                        f"{pointcount} points:", 'log')
+            self.report(f"# driver version: {__version__}", 'log')
+            self.report(f"# docname: {self.svg.get('sodipodi:docname', '')}", 'log')
             self.report(cut, 'log')
 
         if self.options.preview:
