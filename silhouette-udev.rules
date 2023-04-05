@@ -1,4 +1,5 @@
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="112f", MODE="666", ENV{silhouette_cameo3}="yes", GOTO="end"
+ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="112b", MODE="666", ENV{silhouette_cameo2}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1121", MODE="666", ENV{silhouette_cameo}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1123", MODE="666", ENV{silhouette_portrait}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1132", MODE="666", ENV{silhouette_portrait2}="yes"
