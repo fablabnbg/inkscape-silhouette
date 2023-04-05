@@ -1,2 +1,4 @@
 *.pyc
 *.mo
+/distribute/deb/files/
+/distribute/out/
