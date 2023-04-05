@@ -23,6 +23,7 @@ cp ../LICENSE* $name/
 cp -a ../silhouette $name/
 cp ../*silhouette*.py ../*.inx $name/
 cp -a ../locale $name/
+cp -a ../templates $name/
 
 
 echo "****************************************************************"
