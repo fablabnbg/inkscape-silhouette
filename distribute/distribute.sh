@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -ex
+
 test -e /usr/bin/xpath || sudo apt-get install libxml-xpath-perl
 test -e /usr/bin/checkinstall || sudo apt-get install checkinstall
 #
