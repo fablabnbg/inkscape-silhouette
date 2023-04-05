@@ -28,6 +28,7 @@ INKSCAPE_TEMPLATES=$(DESTDIR)$(PREFIX)/share/inkscape/templates
 # User-specifc inkscape extensions folder for local install
 DESTLOCAL=$(HOME)/.config/inkscape/extensions
 
+.PHONY: dist install install-local tar_dist_classic tar_dist clean generate_pot update_po mo
 dist: mo
 	cd distribute; sh ./distribute.sh
 
