@@ -23,6 +23,7 @@ VERS=$$(python3 ./sendto_silhouette.py --version)
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
 LOCALE=$(DESTDIR)$(PREFIX)/share/locale
 UDEV=$(DESTDIR)/lib/udev
+INKSCAPE_TEMPLATES=$(DESTDIR)$(PREFIX)/share/inkscape/templates
 
 # User-specifc inkscape extensions folder for local install
 DESTLOCAL=$(HOME)/.config/inkscape/extensions
@@ -42,6 +43,8 @@ install: mo
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
 	install -m 644 silhouette-icon.png $(UDEV)
 	install -m 644 silhouette-udev-notify.sh $(UDEV)
+	mkdir -p $(INKSCAPE_TEMPLATES)
+	install -m 644 templates/*.svg $(INKSCAPE_TEMPLATES)
 
 install-local: mo
 	mkdir -p $(DESTLOCAL)
