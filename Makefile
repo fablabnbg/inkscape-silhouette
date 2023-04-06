@@ -27,6 +27,7 @@ INKSCAPE_TEMPLATES=$(DESTDIR)$(PREFIX)/share/inkscape/templates
 
 # User-specifc inkscape extensions folder for local install
 DESTLOCAL=$(HOME)/.config/inkscape/extensions
+USER_INKSCAPE_TEMPLATES=$(HOME)/.config/inkscape/templates
 
 .PHONY: dist install install-local tar_dist_classic tar_dist clean generate_pot update_po mo
 dist: mo
@@ -54,6 +55,8 @@ install-local: mo
 	install -m 755 *silhouette*.py $(DESTLOCAL)
 	install -m 644 *.inx $(DESTLOCAL)
 	cp -r locale $(DESTLOCAL)
+	mkdir -p $(USER_INKSCAPE_TEMPLATES)
+	install -m 644 templates/*.svg $(USER_INKSCAPE_TEMPLATES)
 
 tar_dist_classic: clean mo
 	name=$(DISTNAME)-$(VERS); echo "$$name"; echo; \
