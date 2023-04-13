@@ -46,6 +46,7 @@ def show_plotcuts(cuts, buttons=False):
     least = min(min(p[0],p[1]) for p in xy)
     greatest = max(max(p[0],p[1]) for p in xy)
     scale = greatest - least
+    plt.figure("Sendto Silhouette - Preview")
     plt.plot(*zip(*sum(cuts, [])), color="lightsteelblue")
     plt.plot(xy[0][0],xy[0][1],'go')
     plt.plot(xy[-1][0],xy[-1][1],'ro')
