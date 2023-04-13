@@ -39,11 +39,10 @@ if dummy_stdout:
 
 import inkex
 from inkex.extensions import EffectExtension
-from inkex import addNS, Boolean
+from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
 from inkex.paths import Path, CubicSuperPath
 from inkex.transforms import Transform
 from inkex.bezier import beziersplitatt, maxdist
-from lxml.etree import Element
 
 from gettext import gettext
 from optparse import SUPPRESS_HELP
@@ -57,8 +56,6 @@ from silhouette.convert2dashes import convert2dash
 import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
-
-IDENTITY_TRANSFORM = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
 
 
 def px2mm(px):
@@ -123,27 +120,16 @@ class SendtoSilhouette(EffectExtension):
         # Call the base class constructor.
         EffectExtension.__init__(self)
 
-        self.cut = []
         self.warnings = {}
-        self.handle = 255
         self.pathcount = 0
-        self.resumeMode = False
-        self.bStopped = False
         self.step_scaling_factor = 1        # see also px2mm()
         self.ptFirst = None
         self.fPrevX = None
         self.fPrevY = None
         self.fX = None
         self.fY = None
-        self.svgLastPath = 0
-        self.nodeCount = 0
-
         self.paths = []
-        self.transforms = {}
-        # For handling an SVG viewbox attribute, we will need to know the
-        # values of the document's <svg> width and height attributes as well
-        # as establishing a transform from the viewbox to the display.
-        self.docTransform = IDENTITY_TRANSFORM
+        self.docTransform = Transform()
 
         try:
             self.tty = open("/dev/tty", "w")
@@ -329,9 +315,6 @@ class SendtoSilhouette(EffectExtension):
         Send commands out the com port as a line segment (dx, dy) and a time (ms) the segment
         should take to implement
         """
-
-        if self.bStopped:
-            return
         if (self.fPrevX is None):
             return
         # assuming that penDown() was called before.
@@ -358,9 +341,6 @@ class SendtoSilhouette(EffectExtension):
 
             for csp in sp:
 
-                if self.bStopped:
-                    return
-
                 if nIndex == 0:
                     self.penUp()
                     self.virtualPenIsUp = True
@@ -384,7 +364,7 @@ class SendtoSilhouette(EffectExtension):
 
     def recursivelyTraverseSvg(self, aNodeList,
                 parent_visibility="visible",
-                extra_transform=IDENTITY_TRANSFORM):
+                extra_transform=Transform()):
         """
         Recursively traverse the svg file to plot out all of the
         paths.  The function keeps track of the composite transformation
@@ -421,10 +401,10 @@ class SendtoSilhouette(EffectExtension):
                     transform = Transform(self.docTransform) * transform
                     transform = Transform(extra_transform) * transform
 
-            if node.tag == addNS("g", "svg") or node.tag == "g":
+            if isinstance(node, Group):
                 self.recursivelyTraverseSvg(node, parent_visibility=v)
 
-            elif node.tag == addNS("use", "svg") or node.tag == "use":
+            elif isinstance(node, Use):
 
                 # A <use> element refers to another SVG element via an xlink:href="#blah"
                 # attribute.  We will handle the element by doing an XPath search through
@@ -439,7 +419,7 @@ class SendtoSilhouette(EffectExtension):
                 #     for processing the referenced element.  The referenced element is
                 #     hidden only if its visibility is "inherit" or "hidden".
 
-                refid = node.get(addNS("href", "xlink"))
+                refid = node.get("xlink:href")
                 if refid:
                     # [1:] to ignore leading "#" in reference
                     path = "//*[@id='%s']" % refid[1:]
@@ -460,28 +440,14 @@ class SendtoSilhouette(EffectExtension):
                         v = node.get("visibility", v)
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
 
-            elif node.tag == addNS("path", "svg"):
+            elif isinstance(node, PathElement):
                 if self.options.dashes:
                     convert2dash(node)
 
                 self.pathcount += 1
+                self.plotPath(node, transform)
 
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
-                #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
-                #    then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
-                    pass
-                else:
-                    self.plotPath(node, transform)
-                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-
-            elif node.tag == addNS("rect", "svg") or node.tag == "rect":
+            elif isinstance(node, Rectangle):
                 # Manually transform
                 #
                 #    <rect x="X" y="Y" width="W" height="H"/>
@@ -494,38 +460,28 @@ class SendtoSilhouette(EffectExtension):
                 # fourth side implicitly
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
-                #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
-                #    then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
-                    pass
-                else:
-                    # Create a path with the outline of the rectangle
-                    newpath = Element(addNS("path", "svg"))
-                    x = float(node.get("x"))
-                    y = float(node.get("y"))
-                    w = float(node.get("width"))
-                    h = float(node.get("height"))
-                    s = node.get("style")
-                    if s:
-                        newpath.set("style", s)
-                    t = node.get("transform")
-                    if t:
-                        newpath.set("transform", t)
-                    a = []
-                    a.append(["M", [x, y]])
-                    a.append(["l", [w, 0]])
-                    a.append(["l", [0, h]])
-                    a.append(["l", [-w, 0]])
-                    a.append(["Z", []])
-                    newpath.set("d", str(Path(a)))
-                    self.plotPath(newpath, transform)
+                # Create a path with the outline of the rectangle
+                newpath = PathElement()
+                x = float(node.get("x", "0"))
+                y = float(node.get("y", "0"))
+                w = float(node.get("width"))
+                h = float(node.get("height"))
+                s = node.get("style")
+                if s:
+                    newpath.set("style", s)
+                t = node.get("transform")
+                if t:
+                    newpath.set("transform", t)
+                a = []
+                a.append(["M", [x, y]])
+                a.append(["l", [w, 0]])
+                a.append(["l", [0, h]])
+                a.append(["l", [-w, 0]])
+                a.append(["Z", []])
+                newpath.set("d", str(Path(a)))
+                self.plotPath(newpath, transform)
 
-            elif node.tag == addNS("line", "svg") or node.tag == "line":
+            elif isinstance(node, Line):
                 # Convert
                 #
                 #   <line x1="X1" y1="Y1" x2="X2" y2="Y2/>
@@ -535,39 +491,25 @@ class SendtoSilhouette(EffectExtension):
                 #   <path d="MX1, Y1 LX2, Y2"/>
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath,
-                #    then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath,
-                #    then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
+                # Create a path to contain the line
+                newpath = PathElement()
+                x1 = float(node.get("x1"))
+                y1 = float(node.get("y1"))
+                x2 = float(node.get("x2"))
+                y2 = float(node.get("y2"))
+                s = node.get("style")
+                if s:
+                    newpath.set("style", s)
+                t = node.get("transform")
+                if t:
+                    newpath.set("transform", t)
+                a = []
+                a.append(["M", [x1, y1]])
+                a.append(["L", [x2, y2]])
+                newpath.set("d", str(Path(a)))
+                self.plotPath(newpath, transform)
 
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
-                    pass
-                else:
-                    # Create a path to contain the line
-                    newpath = Element(addNS("path", "svg"))
-                    x1 = float(node.get("x1"))
-                    y1 = float(node.get("y1"))
-                    x2 = float(node.get("x2"))
-                    y2 = float(node.get("y2"))
-                    s = node.get("style")
-                    if s:
-                        newpath.set("style", s)
-                    t = node.get("transform")
-                    if t:
-                        newpath.set("transform", t)
-                    a = []
-                    a.append(["M", [x1, y1]])
-                    a.append(["L", [x2, y2]])
-                    newpath.set("d", str(Path(a)))
-                    self.plotPath(newpath, transform)
-                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-
-            elif node.tag == addNS("polyline", "svg") or node.tag == "polyline":
+            elif isinstance(node, Polyline):
                 # Convert
                 #
                 #  <polyline points="x1, y1 x2, y2 x3, y3 [...]"/>
@@ -583,41 +525,27 @@ class SendtoSilhouette(EffectExtension):
                     pass
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
-
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
+                pa = pl.split()
+                if not len(pa):
                     pass
+                # Issue 29: pre 2.5.? versions of Python do not have
+                #    "statement-1 if expression-1 else statement-2"
+                # which came out of PEP 308, Conditional Expressions
+                # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
+                d = "M " + pa[0]
+                for i in range(1, len(pa)):
+                    d += " L " + pa[i]
+                newpath = PathElement()
+                newpath.set("d", d)
+                s = node.get("style")
+                if s:
+                    newpath.set("style", s)
+                t = node.get("transform")
+                if t:
+                    newpath.set("transform", t)
+                self.plotPath(newpath, transform)
 
-                else:
-                    pa = pl.split()
-                    if not len(pa):
-                        pass
-                    # Issue 29: pre 2.5.? versions of Python do not have
-                    #    "statement-1 if expression-1 else statement-2"
-                    # which came out of PEP 308, Conditional Expressions
-                    # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
-                    d = "M " + pa[0]
-                    for i in range(1, len(pa)):
-                        d += " L " + pa[i]
-                    newpath = Element(addNS("path", "svg"))
-                    newpath.set("d", d)
-                    s = node.get("style")
-                    if s:
-                        newpath.set("style", s)
-                    t = node.get("transform")
-                    if t:
-                        newpath.set("transform", t)
-                    self.plotPath(newpath, transform)
-                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-
-            elif node.tag == addNS("polygon", "svg") or node.tag == "polygon":
+            elif isinstance(node, Polygon):
                 # Convert
                 #
                 #  <polygon points="x1, y1 x2, y2 x3, y3 [...]"/>
@@ -633,43 +561,28 @@ class SendtoSilhouette(EffectExtension):
                     pass
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
-
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
+                pa = pl.split()
+                if not len(pa):
                     pass
+                # Issue 29: pre 2.5.? versions of Python do not have
+                #    "statement-1 if expression-1 else statement-2"
+                # which came out of PEP 308, Conditional Expressions
+                # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
+                d = "M " + pa[0]
+                for i in range(1, len(pa)):
+                    d += " L " + pa[i]
+                d += " Z"
+                newpath = PathElement()
+                newpath.set("d", d)
+                s = node.get("style")
+                if s:
+                    newpath.set("style", s)
+                t = node.get("transform")
+                if t:
+                    newpath.set("transform", t)
+                self.plotPath(newpath, transform)
 
-                else:
-                    pa = pl.split()
-                    if not len(pa):
-                        pass
-                    # Issue 29: pre 2.5.? versions of Python do not have
-                    #    "statement-1 if expression-1 else statement-2"
-                    # which came out of PEP 308, Conditional Expressions
-                    # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
-                    d = "M " + pa[0]
-                    for i in range(1, len(pa)):
-                        d += " L " + pa[i]
-                    d += " Z"
-                    newpath = Element(addNS("path", "svg"))
-                    newpath.set("d", d)
-                    s = node.get("style")
-                    if s:
-                        newpath.set("style", s)
-                    t = node.get("transform")
-                    if t:
-                        newpath.set("transform", t)
-                    self.plotPath(newpath, transform)
-                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-
-            elif node.tag == addNS("ellipse", "svg") or node.tag == "ellipse" or \
-                    node.tag == addNS("circle", "svg") or node.tag == "circle":
+            elif isinstance(node, (Circle, Ellipse)):
                 # Convert circles and ellipses to a path with two 180 degree arcs.
                 # In general (an ellipse), we convert
                 #
@@ -686,7 +599,7 @@ class SendtoSilhouette(EffectExtension):
                 #
                 # Note: ellipses or circles with a radius attribute of value 0 are ignored
 
-                if node.tag == addNS("ellipse", "svg") or node.tag == "ellipse":
+                if isinstance(node, Ellipse):
                     rx = float(node.get("rx", "0"))
                     ry = float(node.get("ry", "0"))
                 else:
@@ -696,49 +609,26 @@ class SendtoSilhouette(EffectExtension):
                     pass
 
                 self.pathcount += 1
-                # if we're in resume mode AND self.pathcount < self.svgLastPath, then skip over this path.
-                # if we're in resume mode and self.pathcount = self.svgLastPath, then start here, and set
-                # self.nodeCount equal to self.svgLastPathNC
+                cx = float(node.get("cx", "0"))
+                cy = float(node.get("cy", "0"))
+                x1 = cx - rx
+                x2 = cx + rx
+                d = "M %f, %f " % (x1, cy) + \
+                    "A %f, %f " % (rx, ry) + \
+                    "0 1 0 %f, %f " % (x2, cy) + \
+                    "A %f, %f " % (rx, ry) + \
+                    "0 1 0 %f, %f" % (x1, cy)
+                newpath = PathElement()
+                newpath.set("d", d)
+                s = node.get("style")
+                if s:
+                    newpath.set("style", s)
+                t = node.get("transform")
+                if t:
+                    newpath.set("transform", t)
+                self.plotPath(newpath, transform)
 
-                if self.resumeMode and (self.pathcount == self.svgLastPath):
-                    self.nodeCount = self.svgLastPathNC
-
-                if self.resumeMode and (self.pathcount < self.svgLastPath):
-                    pass
-
-                else:
-                    cx = float(node.get("cx", "0"))
-                    cy = float(node.get("cy", "0"))
-                    x1 = cx - rx
-                    x2 = cx + rx
-                    d = "M %f, %f " % (x1, cy) + \
-                        "A %f, %f " % (rx, ry) + \
-                        "0 1 0 %f, %f " % (x2, cy) + \
-                        "A %f, %f " % (rx, ry) + \
-                        "0 1 0 %f, %f" % (x1, cy)
-                    newpath = Element(addNS("path", "svg"))
-                    newpath.set("d", d)
-                    s = node.get("style")
-                    if s:
-                        newpath.set("style", s)
-                    t = node.get("transform")
-                    if t:
-                        newpath.set("transform", t)
-                    self.plotPath(newpath, transform)
-                    if (not self.bStopped):       # an "index" for resuming plots quickly-- record last complete path
-                        self.svgLastPath += 1
-                        self.svgLastPathNC = self.nodeCount
-            elif node.tag == addNS("metadata", "svg") or node.tag == "metadata":
-                pass
-            elif node.tag == addNS("defs", "svg") or node.tag == "defs":
-                pass
-            elif node.tag == addNS("namedview", "sodipodi") or node.tag == "namedview":
-                pass
-            elif node.tag == addNS("title", "svg") or node.tag == "title":
-                pass
-            elif node.tag == addNS("desc", "svg") or node.tag == "desc":
-                pass
-            elif node.tag == addNS("text", "svg") or node.tag == "text":
+            elif isinstance(node, TextElement):
                 texts = []
                 plaintext = ""
                 for tnode in node.iterfind(".//"):   # all subtree
@@ -753,33 +643,17 @@ class SendtoSilhouette(EffectExtension):
                         self.warnings["text"] = 1
                     plaintext = "', '".join(texts)
                     self.report(f"Text ignored: '{plaintext}'", 'error')
-            elif node.tag == addNS("image", "svg") or node.tag == "image":
+
+            elif isinstance(node, Image):
                 if "image" not in self.warnings:
                     inkex.errormsg(gettext("Warning: unable to draw bitmap images; " +
                             "please convert them to line art first.  Consider using the 'Trace bitmap...' " +
                             "tool of the 'Path' menu.  Mac users please note that some X11 settings may " +
                             "cause cut-and-paste operations to paste in bitmap copies."))
                     self.warnings["image"] = 1
-            elif node.tag == addNS("pattern", "svg") or node.tag == "pattern":
-                pass
-            elif node.tag == addNS("radialGradient", "svg") or node.tag == "radialGradient":
-                # Similar to pattern
-                pass
-            elif node.tag == addNS("linearGradient", "svg") or node.tag == "linearGradient":
-                # Similar in pattern
-                pass
-            elif node.tag == addNS("style", "svg") or node.tag == "style":
-                # This is a reference to an external style sheet and not the value
-                # of a style attribute to be inherited by child elements
-                pass
-            elif node.tag == addNS("cursor", "svg") or node.tag == "cursor":
-                pass
-            elif node.tag == addNS("flowRoot", "svg") or node.tag == "flowRoot":
-                # contains a <flowRegion><rect y="91" x="369" height="383" width="375" ...
-                # see examples/fablab_logo_stencil.svg
-                pass
-            elif node.tag == addNS("color-profile", "svg") or node.tag == "color-profile":
-                # Gamma curves, color temp, etc. are not relevant to single color output
+
+            elif isinstance(node, BaseElement):
+                # This is another known subclass of `BaseElement`
                 pass
             elif not isinstance(node.tag, str):
                 # This is likely an XML processing instruction such as an XML
@@ -796,7 +670,6 @@ class SendtoSilhouette(EffectExtension):
                         f"please convert it to a path first."),
                             'error')
                     self.warnings[str(node.tag)] = 1
-                pass
 
 
     def handleViewBox(self):
