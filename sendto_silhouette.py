@@ -377,18 +377,19 @@ class SendtoSilhouette(EffectExtension):
         """
         for node in aNodeList:
             # Ignore invisible nodes
-            v = None
-            style = node.get("style")
-            if style is not None:
-                kvs = {k.strip(): v.strip() for k, v in [x.split(":", 1) for x in style.split(";")]}
-                if "display" in kvs and kvs["display"] == "none":
-                    v = "hidden"
-            if v is None:
-                v = node.get("visibility", parent_visibility)
-            if v == "inherit":
-                v = parent_visibility
-            if v == "hidden" or v == "collapse":
-                continue
+            if isinstance(node, BaseElement):
+                # try:
+                #     # Inkex 1.2: `cascaded_style()` considers CSS (has bad performance!!)
+                #     get = node.cascaded_style().get
+                # except:
+                get = lambda attr, default: node.style.get(attr, node.get(attr, default))
+                if get("display", "inline") == "none":
+                    continue
+                if not float(get("opacity", 1.0)):
+                    continue
+                v = get("visibility", parent_visibility)
+                if v == "inherit":
+                    v = parent_visibility
 
             if hasattr(node, "composed_transform"):
                 # calculate this object's transform
@@ -441,6 +442,8 @@ class SendtoSilhouette(EffectExtension):
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
 
             elif isinstance(node, (PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon)):
+                if v == "hidden" or v == "collapse":
+                    continue
                 node = node.to_path_element()
                 if self.options.dashes:
                     convert2dash(node)
