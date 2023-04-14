@@ -39,8 +39,8 @@ if dummy_stdout:
 
 import inkex
 from inkex.extensions import EffectExtension
-from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
-from inkex.paths import Path, CubicSuperPath
+from inkex import Boolean, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
+from inkex.paths import CubicSuperPath
 from inkex.transforms import Transform
 from inkex.bezier import beziersplitatt, maxdist
 
@@ -440,193 +440,13 @@ class SendtoSilhouette(EffectExtension):
                         v = node.get("visibility", v)
                         self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
 
-            elif isinstance(node, PathElement):
+            elif isinstance(node, (PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon)):
+                node = node.to_path_element()
                 if self.options.dashes:
                     convert2dash(node)
 
                 self.pathcount += 1
                 self.plotPath(node, transform)
-
-            elif isinstance(node, Rectangle):
-                # Manually transform
-                #
-                #    <rect x="X" y="Y" width="W" height="H"/>
-                #
-                # into
-                #
-                #    <path d="MX, Y lW, 0 l0, H l-W, 0 z"/>
-                #
-                # I.e., explicitly draw three sides of the rectangle and the
-                # fourth side implicitly
-
-                self.pathcount += 1
-                # Create a path with the outline of the rectangle
-                newpath = PathElement()
-                x = float(node.get("x", "0"))
-                y = float(node.get("y", "0"))
-                w = float(node.get("width"))
-                h = float(node.get("height"))
-                s = node.get("style")
-                if s:
-                    newpath.set("style", s)
-                t = node.get("transform")
-                if t:
-                    newpath.set("transform", t)
-                a = []
-                a.append(["M", [x, y]])
-                a.append(["l", [w, 0]])
-                a.append(["l", [0, h]])
-                a.append(["l", [-w, 0]])
-                a.append(["Z", []])
-                newpath.set("d", str(Path(a)))
-                self.plotPath(newpath, transform)
-
-            elif isinstance(node, Line):
-                # Convert
-                #
-                #   <line x1="X1" y1="Y1" x2="X2" y2="Y2/>
-                #
-                # to
-                #
-                #   <path d="MX1, Y1 LX2, Y2"/>
-
-                self.pathcount += 1
-                # Create a path to contain the line
-                newpath = PathElement()
-                x1 = float(node.get("x1"))
-                y1 = float(node.get("y1"))
-                x2 = float(node.get("x2"))
-                y2 = float(node.get("y2"))
-                s = node.get("style")
-                if s:
-                    newpath.set("style", s)
-                t = node.get("transform")
-                if t:
-                    newpath.set("transform", t)
-                a = []
-                a.append(["M", [x1, y1]])
-                a.append(["L", [x2, y2]])
-                newpath.set("d", str(Path(a)))
-                self.plotPath(newpath, transform)
-
-            elif isinstance(node, Polyline):
-                # Convert
-                #
-                #  <polyline points="x1, y1 x2, y2 x3, y3 [...]"/>
-                #
-                # to
-                #
-                #   <path d="Mx1, y1 Lx2, y2 Lx3, y3 [...]"/>
-                #
-                # Note: we ignore polylines with no points
-
-                pl = node.get("points", "").strip()
-                if pl == "":
-                    pass
-
-                self.pathcount += 1
-                pa = pl.split()
-                if not len(pa):
-                    pass
-                # Issue 29: pre 2.5.? versions of Python do not have
-                #    "statement-1 if expression-1 else statement-2"
-                # which came out of PEP 308, Conditional Expressions
-                # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
-                d = "M " + pa[0]
-                for i in range(1, len(pa)):
-                    d += " L " + pa[i]
-                newpath = PathElement()
-                newpath.set("d", d)
-                s = node.get("style")
-                if s:
-                    newpath.set("style", s)
-                t = node.get("transform")
-                if t:
-                    newpath.set("transform", t)
-                self.plotPath(newpath, transform)
-
-            elif isinstance(node, Polygon):
-                # Convert
-                #
-                #  <polygon points="x1, y1 x2, y2 x3, y3 [...]"/>
-                #
-                # to
-                #
-                #   <path d="Mx1, y1 Lx2, y2 Lx3, y3 [...] Z"/>
-                #
-                # Note: we ignore polygons with no points
-
-                pl = node.get("points", "").strip()
-                if pl == "":
-                    pass
-
-                self.pathcount += 1
-                pa = pl.split()
-                if not len(pa):
-                    pass
-                # Issue 29: pre 2.5.? versions of Python do not have
-                #    "statement-1 if expression-1 else statement-2"
-                # which came out of PEP 308, Conditional Expressions
-                # d = "".join(["M " + pa[i] if i == 0 else " L " + pa[i] for i in range(0, len(pa))])
-                d = "M " + pa[0]
-                for i in range(1, len(pa)):
-                    d += " L " + pa[i]
-                d += " Z"
-                newpath = PathElement()
-                newpath.set("d", d)
-                s = node.get("style")
-                if s:
-                    newpath.set("style", s)
-                t = node.get("transform")
-                if t:
-                    newpath.set("transform", t)
-                self.plotPath(newpath, transform)
-
-            elif isinstance(node, (Circle, Ellipse)):
-                # Convert circles and ellipses to a path with two 180 degree arcs.
-                # In general (an ellipse), we convert
-                #
-                #   <ellipse rx="RX" ry="RY" cx="X" cy="Y"/>
-                #
-                # to
-                #
-                #   <path d="MX1, CY A RX, RY 0 1 0 X2, CY A RX, RY 0 1 0 X1, CY"/>
-                #
-                # where
-                #
-                #   X1 = CX - RX
-                #   X2 = CX + RX
-                #
-                # Note: ellipses or circles with a radius attribute of value 0 are ignored
-
-                if isinstance(node, Ellipse):
-                    rx = float(node.get("rx", "0"))
-                    ry = float(node.get("ry", "0"))
-                else:
-                    rx = float(node.get("r", "0"))
-                    ry = rx
-                if rx == 0 or ry == 0:
-                    pass
-
-                self.pathcount += 1
-                cx = float(node.get("cx", "0"))
-                cy = float(node.get("cy", "0"))
-                x1 = cx - rx
-                x2 = cx + rx
-                d = "M %f, %f " % (x1, cy) + \
-                    "A %f, %f " % (rx, ry) + \
-                    "0 1 0 %f, %f " % (x2, cy) + \
-                    "A %f, %f " % (rx, ry) + \
-                    "0 1 0 %f, %f" % (x1, cy)
-                newpath = PathElement()
-                newpath.set("d", d)
-                s = node.get("style")
-                if s:
-                    newpath.set("style", s)
-                t = node.get("transform")
-                if t:
-                    newpath.set("transform", t)
-                self.plotPath(newpath, transform)
 
             elif isinstance(node, TextElement):
                 texts = []
