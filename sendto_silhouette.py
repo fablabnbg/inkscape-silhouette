@@ -39,8 +39,7 @@ if dummy_stdout:
 
 import inkex
 from inkex.extensions import EffectExtension
-from inkex import Boolean, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
-from inkex.paths import CubicSuperPath
+from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
 from inkex.transforms import Transform
 from inkex.bezier import beziersplitatt, maxdist
 
@@ -321,16 +320,14 @@ class SendtoSilhouette(EffectExtension):
         self.paths[-1].append((self.fX, self.fY))
 
 
-    def plotPath(self, path, matTransform):
+    def plotPath(self, path: Path):
         # lifted from eggbot.py, gratefully bowing to the author
         """
         Plot the path while applying the transformation defined
         by the matrix [matTransform].
         """
-        # turn this path into a cubicsuperpath (list of beziers)...
-        d = path.get("d")
-        p = CubicSuperPath(d).transform(Transform(matTransform))
-        # ...and apply the transformation to each point
+        # convert into a cubicsuperpath (list of beziers)...
+        p = path.to_superpath()
 
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
         # where the start-point is the last point in the previous segment.
@@ -449,7 +446,7 @@ class SendtoSilhouette(EffectExtension):
                     convert2dash(node)
 
                 self.pathcount += 1
-                self.plotPath(node, transform)
+                self.plotPath(node.path.transform(transform))
 
             elif isinstance(node, TextElement):
                 texts = []
