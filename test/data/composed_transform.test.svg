@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="40mm"
+   height="40mm"
+   viewBox="0 0 20 20"
+   id="svg1"
+   sodipodi:docname="composed_transform.test.svg"
+   version="1.1"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+     <use
+       id="u1"
+       xlink:href="#u2"
+       transform="translate(0,100)" />
+     <use
+     	id="u2"
+	xlink:href="#rect1"
+	transform="scale(10)" />
+  </defs>
+  <g
+     id="g0"
+     transform="scale(0.10)">
+    <g
+       id="g1"
+       transform="translate(100,0)">
+      <g
+         id="g2"
+         transform="scale(10)">
+        <rect
+           id="rect1"
+           width="10"
+           height="10" />
+      </g>
+    </g>
+  </g>
+  <use
+    id="u0"
+    xlink:href="#u1"
+    transform="scale(0.10)" />
+</svg>

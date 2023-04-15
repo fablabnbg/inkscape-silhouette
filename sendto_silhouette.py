@@ -361,7 +361,7 @@ class SendtoSilhouette(EffectExtension):
 
     def recursivelyTraverseSvg(self, aNodeList,
                 parent_visibility="visible",
-                extra_transform=Transform()):
+                parent_transform: Transform=Transform()):
         """
         Recursively traverse the svg file to plot out all of the
         paths.  The function keeps track of the composite transformation
@@ -388,59 +388,48 @@ class SendtoSilhouette(EffectExtension):
                 if v == "inherit":
                     v = parent_visibility
 
-            if hasattr(node, "composed_transform"):
-                # calculate this object's transform
-                try:  # inkscape 1.2
-                    transform = node.composed_transform()
-                    transform = Transform(self.docTransform) @ transform
-                    transform = Transform(extra_transform) @ transform
-                except:  # inkscape 1.0
-                    transform = node.composed_transform()
-                    transform = Transform(self.docTransform) * transform
-                    transform = Transform(extra_transform) * transform
-
             if isinstance(node, Group):
-                self.recursivelyTraverseSvg(node, parent_visibility=v)
+                # NOTE: <<< transforms operate from right (detail) to left (whole)
+                try:  # inkscape 1.2
+                    transform = parent_transform @ node.transform
+                except:  # inkscape 1.0
+                    transform = parent_transform * node.transform
+
+                self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=transform)
 
             elif isinstance(node, Use):
-
-                # A <use> element refers to another SVG element via an xlink:href="#blah"
-                # attribute.  We will handle the element by doing an XPath search through
-                # the document, looking for the element with the matching id="blah"
-                # attribute.  We then recursively process that element after applying
+                # A <use> element refers to another SVG element via an href="#blah"
+                # attribute. We then recursively process that element after applying
                 # any necessary (x, y) translation.
                 #
                 # Notes:
-                #  1. We ignore the height and width attributes as they do not apply to
-                #     path-like elements, and
-                #  2. Even if the use element has visibility="hidden", SVG still calls
+                #  .. Even if the use element has visibility="hidden", SVG still calls
                 #     for processing the referenced element.  The referenced element is
                 #     hidden only if its visibility is "inherit" or "hidden".
+                refnode = node.href
+                if refnode is not None:
+                    x = float(node.get("x", 0.0))
+                    y = float(node.get("y", 0.0))
 
-                refid = node.get("xlink:href")
-                if refid:
-                    # [1:] to ignore leading "#" in reference
-                    path = "//*[@id='%s']" % refid[1:]
-                    refnode = node.xpath(path)
-                    if refnode:
-                        x = float(node.get("x", "0"))
-                        y = float(node.get("y", "0"))
-                        # Note: the transform has already been applied
-                        try:  # inkscape 1.2
-                            refnode_transform = transform @ Transform("translate(%f, %f)" % (x, y))
-                            # The docTransform will get applied again inside the recursive call
-                            refnode_transform @= -Transform(self.docTransform)
-                        except:
-                              # inkscape 1.0
-                            refnode_transform = transform * Transform("translate(%f, %f)" % (x, y))
-                            # The docTransform will get applied again inside the recursive call
-                            refnode_transform *= -Transform(self.docTransform)
-                        v = node.get("visibility", v)
-                        self.recursivelyTraverseSvg(refnode, parent_visibility=v, extra_transform=refnode_transform)
+                    # NOTE: <<< transforms operate from right (detail) to left (whole)
+                    try:  # inkscape 1.2
+                        transform = parent_transform @ node.transform @ Transform(translate=(x, y))
+                    except:  # inkscape 1.0
+                        transform = parent_transform * node.transform * Transform(translate=(x, y))
+
+                    self.recursivelyTraverseSvg([refnode], parent_visibility=v, parent_transform=transform)
 
             elif isinstance(node, (PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon)):
                 if v == "hidden" or v == "collapse":
                     continue
+                # convert element to path
+                # calculate this object's transform
+                # NOTE: <<< transforms operate from right (detail) to left (whole)
+                try:  # inkscape 1.2
+                    transform = self.docTransform @ parent_transform @ node.transform
+                except:  # inkscape 1.0
+                    transform = self.docTransform * parent_transform * node.transform
+
                 node = node.to_path_element()
                 if self.options.dashes:
                     convert2dash(node)
