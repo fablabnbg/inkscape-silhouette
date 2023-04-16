@@ -41,7 +41,7 @@ import inkex
 from inkex.extensions import EffectExtension
 from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
 from inkex.transforms import Transform
-from inkex.bezier import beziersplitatt, maxdist
+from inkex.bezier import subdiv
 
 from gettext import gettext
 from optparse import SUPPRESS_HELP
@@ -64,39 +64,6 @@ def px2mm(px):
     """
     return px*25.4/96
 
-
-def subdivideCubicPath(sp, flat, i=1):
-    """
-    Break up a bezier curve into smaller curves, each of which
-    is approximately a straight line within a given tolerance
-    (the "smoothness" defined by [flat]).
-
-    This is a modified version of cspsubdiv.cspsubdiv() rewritten
-    to avoid recurrence.
-    """
-
-    while True:
-        while True:
-            if i >= len(sp):
-                return
-
-            p0 = sp[i - 1][1]
-            p1 = sp[i - 1][2]
-            p2 = sp[i][0]
-            p3 = sp[i][1]
-
-            b = (p0, p1, p2, p3)
-
-            if maxdist(b) > flat:
-                break
-
-            i += 1
-
-        one, two = beziersplitatt(b, 0.5)
-        sp[i - 1][2] = one[1]
-        sp[i][0] = two[2]
-        p = [one[2], one[3], two[1]]
-        sp[i:1] = [p]
 
 class teeFile:
     def __init__(self, f1, f2):
@@ -333,7 +300,7 @@ class SendtoSilhouette(EffectExtension):
         # where the start-point is the last point in the previous segment.
         for sp in p:
 
-            subdivideCubicPath(sp, self.options.smoothness)
+            subdiv(sp, self.options.smoothness)
             nIndex = 0
 
             for csp in sp:
