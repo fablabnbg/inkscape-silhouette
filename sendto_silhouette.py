@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coding=utf-8
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
@@ -88,12 +89,9 @@ class SendtoSilhouette(EffectExtension):
 
         self.warnings = {}
         self.pathcount = 0
-        self.step_scaling_factor = 1        # see also px2mm()
         self.ptFirst = None
-        self.fPrevX = None
-        self.fPrevY = None
-        self.fX = None
-        self.fY = None
+        self.fPrev = None
+        self.f = None
         self.paths = []
         self.docTransform = Transform()
 
@@ -266,14 +264,12 @@ class SendtoSilhouette(EffectExtension):
                   file=sys.stderr)
 
     def penUp(self):
-        self.fPrevX = None              # flag that we are up
-        self.fPrevY = None
+        self.fPrev = None  # flag that we are up
 
 
     def penDown(self):
-        self.paths.append([(self.fX, self.fY)])
-        self.fPrevX = self.fX       # flag that we are down
-        self.fPrevY = self.fY
+        self.paths.append([self.f])
+        self.fPrev = self.f  # flag that we are down
 
 
     def plotLineAndTime(self):
@@ -281,10 +277,10 @@ class SendtoSilhouette(EffectExtension):
         Send commands out the com port as a line segment (dx, dy) and a time (ms) the segment
         should take to implement
         """
-        if (self.fPrevX is None):
+        if (self.fPrev is None):
             return
         # assuming that penDown() was called before.
-        self.paths[-1].append((self.fX, self.fY))
+        self.paths[-1].append(tuple(self.f))
 
 
     def plotPath(self, path: Path):
@@ -307,23 +303,19 @@ class SendtoSilhouette(EffectExtension):
 
                 if nIndex == 0:
                     self.penUp()
-                    self.virtualPenIsUp = True
                 elif nIndex == 1:
                     self.penDown()
-                    self.virtualPenIsUp = False
 
                 nIndex += 1
 
-                self.fX = float(csp[1][0]) / self.step_scaling_factor
-                self.fY = float(csp[1][1]) / self.step_scaling_factor
+                self.f = tuple(csp[1])
 
                 # store home
                 if self.ptFirst is None:
-                    self.ptFirst = (self.fX, self.fY)
+                    self.ptFirst = self.f
 
                 self.plotLineAndTime()
-                self.fPrevX = self.fX
-                self.fPrevY = self.fY
+                self.fPrev = self.f
 
 
     def recursivelyTraverseSvg(self, aNodeList,
