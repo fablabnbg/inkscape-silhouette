@@ -101,138 +101,140 @@ class SendtoSilhouette(EffectExtension):
             self.tty = None
         self.log = self.tty
 
-        self.arg_parser.add_argument("--active-tab", dest = "active_tab",
+
+    def __del__(self, *args):
+        if self.log:
+            self.log.close() # will always close tty if there is one
+
+
+    def add_arguments(self, pars):
+        pars.add_argument("--active-tab", dest = "active_tab",
                 help=SUPPRESS_HELP)
-        self.arg_parser.add_argument("-d", "--dashes",
+        pars.add_argument("-d", "--dashes",
                 dest = "dashes", type = Boolean, default = False,
                 help="convert paths with dashed strokes to separate subpaths for perforated cuts")
-        self.arg_parser.add_argument("-a", "--autocrop",
+        pars.add_argument("-a", "--autocrop",
                 dest = "autocrop", type = Boolean, default = False,
                 help="trim away top and left margin (before adding offsets)")
-        self.arg_parser.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
+        pars.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
                 dest = "bboxonly", type = Boolean, default = False,
                 help="draft the objects bounding box instead of the objects")
-        self.arg_parser.add_argument("-c", "--bladediameter",
+        pars.add_argument("-c", "--bladediameter",
                 dest = "bladediameter", type = float, default = 0.9,
                 help="[0..2.3] diameter of the used blade [mm], default = 0.9")
-        self.arg_parser.add_argument("-C", "--cuttingmat",
+        pars.add_argument("-C", "--cuttingmat",
                 choices=list(CAMEO_MATS.keys()), dest = "cuttingmat",
                 default = "cameo_12x12", help="Use cutting mat")
-        self.arg_parser.add_argument("-D", "--depth",
+        pars.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
-        self.arg_parser.add_argument("--log_paths",
+        pars.add_argument("--log_paths",
                 dest = "dump_paths", type = Boolean, default = False,
                 help="Include final cut paths in log")
-        self.arg_parser.add_argument("--append_logs",
+        pars.add_argument("--append_logs",
                 dest = "append_logs", type = Boolean, default = False,
                 help="Append to log and dump files rather than overwriting")
-        self.arg_parser.add_argument("--dry_run",
+        pars.add_argument("--dry_run",
                 dest = "dry_run", type = Boolean, default = False,
                 help="Do not send commands to device (queries allowed)")
-        self.arg_parser.add_argument("-g", "--strategy",
+        pars.add_argument("-g", "--strategy",
                 dest = "strategy", default = "mintravel",
                 choices=("mintravel", "mintravelfull", "mintravelfwd", "matfree", "zorder"),
                 help="Cutting Strategy: mintravel, mintravelfull, mintravelfwd, matfree or zorder")
-        self.arg_parser.add_argument("--orient_paths",
+        pars.add_argument("--orient_paths",
                 dest = "orient_paths", default = "natural",
                 choices=("natural","desy","ascy","desx","ascx"),
                 help="Pre-orient paths: natural (as in svg), or [des(cending)|asc(ending)][y|x]")
-        self.arg_parser.add_argument("--fuse_paths",
+        pars.add_argument("--fuse_paths",
                 dest = "fuse_paths", type = Boolean, default = True,
                 help="Merge any path with predecessor that ends at its start.")
-        self.arg_parser.add_argument("-l", "--sw_clipping",
+        pars.add_argument("-l", "--sw_clipping",
                 dest = "sw_clipping", type = Boolean, default = True,
                 help="Enable software clipping")
-        self.arg_parser.add_argument("-m", "--media", "--media-id", "--media_id",
+        pars.add_argument("-m", "--media", "--media-id", "--media_id",
                 dest = "media", default = "132",
                 choices=("100", "101", "102", "106", "111", "112", "113",
                 "120", "121", "122", "123", "124", "125", "126", "127", "128", "129", "130",
                 "131", "132", "133", "134", "135", "136", "137", "138", "300"),
                 help="113 = pen, 132 = printer paper, 300 = custom")
-        self.arg_parser.add_argument("-o", "--overcut",
+        pars.add_argument("-o", "--overcut",
                 dest = "overcut", type = float, default = 0.5,
                 help="overcut on circular paths. [mm]")
-        self.arg_parser.add_argument("-M", "--multipass",
+        pars.add_argument("-M", "--multipass",
                 dest = "multipass", type = int, default = "1",
                 help="[1..8], cut/draw each path object multiple times.")
-        self.arg_parser.add_argument("-p", "--pressure",
+        pars.add_argument("-p", "--pressure",
                 dest = "pressure", type = int, default = 10,
                 help="[1..18], or 0 for media default")
-        self.arg_parser.add_argument("-P", "--sharpencorners",
+        pars.add_argument("-P", "--sharpencorners",
                 dest = "sharpencorners", type = Boolean, default = False,
                 help="Lift head at sharp corners")
-        self.arg_parser.add_argument("--sharpencorners_start",
+        pars.add_argument("--sharpencorners_start",
                 dest = "sharpencorners_start", type = float, default = 0.1,
                 help="Sharpen Corners - Start Ext. [mm]")
-        self.arg_parser.add_argument("--sharpencorners_end",
+        pars.add_argument("--sharpencorners_end",
                 dest = "sharpencorners_end", type = float, default = 0.1,
                 help="Sharpen Corners - End Ext. [mm]")
-        self.arg_parser.add_argument("-r", "--reversetoggle",
+        pars.add_argument("-r", "--reversetoggle",
                 dest = "reversetoggle", type = Boolean, default = False,
                 help="Cut each path the other direction. Affects every second pass when multipass.")
-        self.arg_parser.add_argument("-s", "--speed",
+        pars.add_argument("-s", "--speed",
                 dest = "speed", type = int, default = 10,
                 help="[1..10], or 0 for media default")
-        self.arg_parser.add_argument("-S", "--smoothness", type = float,
+        pars.add_argument("-S", "--smoothness", type = float,
                 dest="smoothness", default=.2, help="Smoothness of curves")
-        self.arg_parser.add_argument("-t", "--tool",
+        pars.add_argument("-t", "--tool",
                 choices=("autoblade", "cut", "pen", "default"), dest = "tool", default = None, help="Optimize for pen or knive")
-        self.arg_parser.add_argument("-T", "--toolholder",
+        pars.add_argument("-T", "--toolholder",
                 choices=("1", "2"), dest = "toolholder", default = None, help="[1..2]")
-        self.arg_parser.add_argument("--preview",
+        pars.add_argument("--preview",
                 dest = "preview", type = Boolean, default = True,
                 help="show cut pattern graphically before sending")
-        self.arg_parser.add_argument("-V", "--version",
+        pars.add_argument("-V", "--version",
                 dest = "version", action = "version", version=__version__,
                 help="print the version number and exit")
-        self.arg_parser.add_argument("-w", "--wait", "--wait-done", "--wait_done",
+        pars.add_argument("-w", "--wait", "--wait-done", "--wait_done",
                 dest = "wait_done", type = Boolean, default = False,
                 help="After sending wait til device reports ready")
-        self.arg_parser.add_argument("-x", "--x-off", "--x_off",
+        pars.add_argument("-x", "--x-off", "--x_off",
                 type = float, dest = "x_off", default = 0.0, help="X-Offset [mm]")
-        self.arg_parser.add_argument("-y", "--y-off", "--y_off",
+        pars.add_argument("-y", "--y-off", "--y_off",
                 type = float, dest = "y_off", default = 0.0, help="Y-Offset [mm]")
-        self.arg_parser.add_argument("-R", "--regmark",
+        pars.add_argument("-R", "--regmark",
                 dest = "regmark", type = Boolean, default = False,
                 help="The document has registration marks.")
-        self.arg_parser.add_argument("--regsearch",
+        pars.add_argument("--regsearch",
                 dest = "regsearch", type = Boolean, default = False,
                 help="Search for the registration marks.")
-        self.arg_parser.add_argument("-X", "--reg-x", "--regwidth",
+        pars.add_argument("-X", "--reg-x", "--regwidth",
                 type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
-        self.arg_parser.add_argument("-Y", "--reg-y", "--reglength",
+        pars.add_argument("-Y", "--reg-y", "--reglength",
                 type = float, dest = "reglength", default = 230.0, help="Y mark distance [mm]")
-        self.arg_parser.add_argument("--rego-x",  "--regoriginx",
+        pars.add_argument("--rego-x",  "--regoriginx",
                 type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
-        self.arg_parser.add_argument("--rego-y", "--regoriginy",
+        pars.add_argument("--rego-y", "--regoriginy",
                 type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
-        self.arg_parser.add_argument("-e", "--endposition", "--end-postition",
+        pars.add_argument("-e", "--endposition", "--end-postition",
                 "--end_position", choices=("start", "below"),
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
-        self.arg_parser.add_argument("--end_offset", type = float,
+        pars.add_argument("--end_offset", type = float,
                 dest = "end_offset", default = 0.0,
                 help="Adjustment to the position after cutting")
-        self.arg_parser.add_argument("--logfile",
+        pars.add_argument("--logfile",
                 dest = "logfile", default = None,
                 help="Name of file in which to save log messages.")
-        self.arg_parser.add_argument("--cmdfile",
+        pars.add_argument("--cmdfile",
                 dest = "cmdfile", default = None,
                 help="Name of file to save transcript of cutter commands.")
-        self.arg_parser.add_argument("--inc_queries",
+        pars.add_argument("--inc_queries",
                 dest = "inc_queries", type = Boolean, default = False,
                 help="Include queries in cutter command transcript")
-        self.arg_parser.add_argument("--force_hardware",
+        pars.add_argument("--force_hardware",
                 dest = "force_hardware", default = None,
                 help = "Override hardware model of cutting device.")
         # Can't set up the log here because arguments have not yet been parsed;
         # defer that to the top of the effect() method, which is where all
         # of the real activity happens.
-
-
-    def __del__(self, *args):
-        if self.log:
-            self.log.close() # will always close tty if there is one
 
 
     def report(self, message, level):
