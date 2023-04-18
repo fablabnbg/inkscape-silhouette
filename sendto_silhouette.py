@@ -48,8 +48,6 @@ from gettext import gettext
 from optparse import SUPPRESS_HELP
 from tempfile import NamedTemporaryFile
 
-inkex.localization.localize()
-
 from silhouette.Graphtec import SilhouetteCameo, CAMEO_MATS
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import convert2dash
@@ -494,15 +492,17 @@ class SendtoSilhouette(EffectExtension):
         try:
             # log environment information
             self.report(inkex.command.inkscape('--version').rstrip(), 'log')  # Inkscape version
+        finally:
             self.report("Inkscape-Silhouette: %s" % (__version__), 'log')     # Plugin version
             self.report("Path: %s" % (__file__), 'log')
+        try: # inkex < 1.2 has no version definition
             self.report("Inkex: %s" % (inkex.__version__), 'log')
+        finally:
             self.report("Python: %s" % (sys.executable), 'log')
             self.report("Version: %s" % (sys.version), 'log')
             self.report("Platform: %s" % (sys.platform), 'log')
             self.report("Arguments: %s" % (" ".join(sys.argv)), 'log')
-        except Exception:
-            pass
+
 
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
