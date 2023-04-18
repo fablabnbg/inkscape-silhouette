@@ -87,9 +87,6 @@ class SendtoSilhouette(EffectExtension):
 
         self.warnings = {}
         self.pathcount = 0
-        self.ptFirst = None
-        self.fPrev = None
-        self.f = None
         self.paths = []
         self.docTransform = Transform()
 
@@ -263,25 +260,6 @@ class SendtoSilhouette(EffectExtension):
             print(f"  ... WARNING: message issued at invalid level {level}",
                   file=sys.stderr)
 
-    def penUp(self):
-        self.fPrev = None  # flag that we are up
-
-
-    def penDown(self):
-        self.paths.append([self.f])
-        self.fPrev = self.f  # flag that we are down
-
-
-    def plotLineAndTime(self):
-        """
-        Send commands out the com port as a line segment (dx, dy) and a time (ms) the segment
-        should take to implement
-        """
-        if (self.fPrev is None):
-            return
-        # assuming that penDown() was called before.
-        self.paths[-1].append(tuple(self.f))
-
 
     def plotPath(self, path: Path):
         # lifted from eggbot.py, gratefully bowing to the author
@@ -295,27 +273,11 @@ class SendtoSilhouette(EffectExtension):
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
         # where the start-point is the last point in the previous segment.
         for sp in p:
-
+            # subdivide beziers to smooth curved parts
             subdiv(sp, self.options.smoothness)
-            nIndex = 0
-
-            for csp in sp:
-
-                if nIndex == 0:
-                    self.penUp()
-                elif nIndex == 1:
-                    self.penDown()
-
-                nIndex += 1
-
-                self.f = tuple(csp[1])
-
-                # store home
-                if self.ptFirst is None:
-                    self.ptFirst = self.f
-
-                self.plotLineAndTime()
-                self.fPrev = self.f
+            # extract path
+            if len(sp) > 1:
+                self.paths.append([tuple(csp[1]) for csp in sp])
 
 
     def recursivelyTraverseSvg(self, aNodeList,
@@ -489,15 +451,15 @@ class SendtoSilhouette(EffectExtension):
             mode = "ab" if self.options.append_logs else "wb"
             command_file = open(self.options.cmdfile, mode)
 
-        try:
+        try: # inkex < 1.2 has no version definition and no command
             # log environment information
             self.report(inkex.command.inkscape('--version').rstrip(), 'log')  # Inkscape version
+            self.report("Inkex: %s" % (inkex.__version__), 'log')
+        except:
+            pass
         finally:
             self.report("Inkscape-Silhouette: %s" % (__version__), 'log')     # Plugin version
             self.report("Path: %s" % (__file__), 'log')
-        try: # inkex < 1.2 has no version definition
-            self.report("Inkex: %s" % (inkex.__version__), 'log')
-        finally:
             self.report("Python: %s" % (sys.executable), 'log')
             self.report("Version: %s" % (sys.version), 'log')
             self.report("Platform: %s" % (sys.platform), 'log')
