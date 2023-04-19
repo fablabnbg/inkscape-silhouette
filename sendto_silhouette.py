@@ -81,6 +81,10 @@ class SendtoSilhouette(EffectExtension):
     """
     Inkscape Extension to send to a Silhouette Cameo
     """
+
+    # pretend no changes to skip `save()` in `InkscapeExtension.save_raw()`
+    has_changed = lambda *x: False
+
     def __init__(self):
         # Call the base class constructor.
         EffectExtension.__init__(self)
