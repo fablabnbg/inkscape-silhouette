@@ -94,13 +94,47 @@ class TransformTest(SendtoSilhouetteTest):
         self.e.clean_up()
 
         self.e.handleViewBox()
-        self.e.recursivelyTraverseSvg(self.e.document.getroot())
+        self.e.recursivelyTraverseSvg(self.e.svg)
 
         self.assertDeepAlmostEqual(
             self.e.paths,
             [
                 # First rect
                 [(20, 0), (40, 0), (40, 20), (20, 20), (20, 0)],
+                # Second rect, the clone
+                [(0, 20), (20, 20), (20, 40), (0, 40), (0, 20)],
+                # Second rect, another clone
+                [(10, 10), (30, 10), (30, 30), (10, 30), (10, 10)],
+            ],
+        )
+
+    def test_loading_composed_transform_select_rect(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.handleViewBox()
+        self.e.recursivelyTraverseSvg([self.e.svg.getElementById("rect1")])
+
+        self.assertDeepAlmostEqual(
+            self.e.paths,
+            [
+                # First rect
+                [(20, 0), (40, 0), (40, 20), (20, 20), (20, 0)],
+            ],
+        )
+
+    def test_loading_composed_transform_select_use2(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.handleViewBox()
+        self.e.recursivelyTraverseSvg([self.e.svg.getElementById("u0")])
+
+        self.assertDeepAlmostEqual(
+            self.e.paths,
+            [
                 # Second rect, the clone
                 [(0, 20), (20, 20), (20, 40), (0, 40), (0, 20)],
             ],

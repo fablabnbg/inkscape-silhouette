@@ -34,6 +34,8 @@
         <rect
            id="rect1"
            width="10"
+	   x="0"
+	   y="0"
            height="10" />
       </g>
     </g>
@@ -41,5 +43,13 @@
   <use
     id="u0"
     xlink:href="#u1"
+    transform="scale(0.10)" />
+  <use
+    id="use9"
+    x="-50"
+    y="50"
+    fill="red"
+    opacity="0.5"
+    xlink:href="#g1"
     transform="scale(0.10)" />
 </svg>

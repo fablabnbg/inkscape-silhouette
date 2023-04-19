@@ -282,7 +282,7 @@ class SendtoSilhouette(EffectExtension):
 
     def recursivelyTraverseSvg(self, aNodeList,
                 parent_visibility="visible",
-                parent_transform: Transform=Transform()):
+                parent_transform: Transform=None):
         """
         Recursively traverse the svg file to plot out all of the
         paths.  The function keeps track of the composite transformation
@@ -309,48 +309,53 @@ class SendtoSilhouette(EffectExtension):
                 if v == "inherit":
                     v = parent_visibility
 
-            if isinstance(node, Group):
-                # NOTE: <<< transforms operate from right (detail) to left (whole)
-                try:  # inkscape 1.2
-                    transform = parent_transform @ node.transform
-                except:  # inkscape 1.0
-                    transform = parent_transform * node.transform
-
-                self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=transform)
-
-            elif isinstance(node, Use):
-                # A <use> element refers to another SVG element via an href="#blah"
-                # attribute. We then recursively process that element after applying
-                # any necessary (x, y) translation.
-                #
-                # Notes:
-                #  .. Even if the use element has visibility="hidden", SVG still calls
-                #     for processing the referenced element.  The referenced element is
-                #     hidden only if its visibility is "inherit" or "hidden".
-                refnode = node.href
-                if refnode is not None:
-                    x = float(node.get("x", 0.0))
-                    y = float(node.get("y", 0.0))
-
+            # NOTE: inkex 1.1 has composed_transform only on ShapeElement
+            if isinstance(node, ShapeElement):
+                if parent_transform==None:
+                    # init my_transform // needed for selection by `--id` param
+                    my_transform = node.composed_transform()
+                else:
                     # NOTE: <<< transforms operate from right (detail) to left (whole)
                     try:  # inkscape 1.2
-                        transform = parent_transform @ node.transform @ Transform(translate=(x, y))
-                    except:  # inkscape 1.0
-                        transform = parent_transform * node.transform * Transform(translate=(x, y))
+                        my_transform = parent_transform @ node.transform
+                    except Exception:  # inkscape 1.0
+                        my_transform = parent_transform * node.transform
 
-                    self.recursivelyTraverseSvg([refnode], parent_visibility=v, parent_transform=transform)
+            if isinstance(node, Group):
+                self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=my_transform)
+
+            elif isinstance(node, Use):
+                # A <use> element refers to another element via href="#blah" attribute.
+                # We then recursively process the referenced element.
+                #
+                # Notes:
+                # . Even if the <use> element has visibility="hidden", SVG still calls
+                #   for processing the referenced element.  The referenced element is
+                #   hidden only if its visibility is "inherit" or "hidden".
+                refnode = node.href
+                if refnode is not None:
+                    # apply any necessary (x, y) translation
+                    x = float(node.get("x", 0.0))
+                    y = float(node.get("y", 0.0))
+                    # NOTE: <<< transforms operate from right (detail) to left (whole)
+                    try:  # inkscape 1.2
+                        my_transform = my_transform @ Transform(translate=(x, y))
+                    except Exception:  # inkscape 1.0
+                        my_transform = my_transform * Transform(translate=(x, y))
+
+                    self.recursivelyTraverseSvg([refnode], parent_visibility=v, parent_transform=my_transform)
 
             elif isinstance(node, (PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon)):
                 if v == "hidden" or v == "collapse":
                     continue
-                # convert element to path
                 # calculate this object's transform
                 # NOTE: <<< transforms operate from right (detail) to left (whole)
                 try:  # inkscape 1.2
-                    transform = self.docTransform @ parent_transform @ node.transform
-                except:  # inkscape 1.0
-                    transform = self.docTransform * parent_transform * node.transform
+                    transform = self.docTransform @ my_transform
+                except Exception:  # inkscape 1.0
+                    transform = self.docTransform * my_transform
 
+                # convert element to path
                 node = node.to_path_element()
                 if self.options.dashes:
                     convert2dash(node)
