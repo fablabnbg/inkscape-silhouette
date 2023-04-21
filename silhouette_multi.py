@@ -25,7 +25,6 @@ import traceback
 from io import StringIO
 from inkex.extensions import EffectExtension
 from inkex import addNS, Boolean, Style, Color
-import simplestyle
 from functools import partial
 from itertools import groupby
 
