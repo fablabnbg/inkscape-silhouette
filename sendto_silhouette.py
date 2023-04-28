@@ -160,7 +160,7 @@ class SendtoSilhouette(EffectExtension):
                 dest = "overcut", type = float, default = 0.5,
                 help="overcut on circular paths. [mm]")
         pars.add_argument("-M", "--multipass",
-                dest = "multipass", type = int, default = "1",
+                dest = "multipass", type = int, default = 1,
                 help="[1..8], cut/draw each path object multiple times.")
         pars.add_argument("-p", "--pressure",
                 dest = "pressure", type = int, default = 10,
@@ -361,6 +361,8 @@ class SendtoSilhouette(EffectExtension):
 
                 # convert element to path
                 node = node.to_path_element()
+
+                # apply dashed style
                 if self.options.dashes:
                     convert2dash(node)
 
@@ -625,7 +627,7 @@ class SendtoSilhouette(EffectExtension):
             self.report(f"Logging {len(cut)} cut paths containing "
                         f"{pointcount} points:", 'log')
             self.report(f"# driver version: {__version__}", 'log')
-            self.report(f"# docname: {self.svg.get('sodipodi:docname', '')}", 'log')
+            self.report(f"# docname: {self.svg.name}", 'log')
             self.report(cut, 'log')
 
         if self.options.preview:
