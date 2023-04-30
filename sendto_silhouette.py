@@ -3,7 +3,7 @@
 #
 # Inkscape extension for driving a silhouette cameo
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
-# (C) 2014 - 2022  juewei@fabmail.org and contributors
+# (C) 2014 - 2023  juewei@fabmail.org and contributors
 
 __version__ = "1.27"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
@@ -266,10 +266,8 @@ class SendtoSilhouette(EffectExtension):
 
 
     def plotPath(self, path: Path):
-        # lifted from eggbot.py, gratefully bowing to the author
         """
-        Plot the path while applying the transformation defined
-        by the matrix [matTransform].
+        Plot the path after smoothing curves to straights
         """
         # convert into a cubicsuperpath (list of beziers)...
         p = path.to_superpath()
@@ -277,7 +275,7 @@ class SendtoSilhouette(EffectExtension):
         # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
         # where the start-point is the last point in the previous segment.
         for sp in p:
-            # subdivide beziers to smooth curved parts
+            # subdivide beziers into smooth curved parts
             subdiv(sp, self.options.smoothness)
             # extract path
             if len(sp) > 1:
@@ -413,7 +411,7 @@ class SendtoSilhouette(EffectExtension):
                     self.warnings[str(node.tag)] = 1
 
 
-    def handleViewBox(self):
+    def initDocScale(self):
         """
         Set up the document-wide transform in the event that the document has an SVG viewbox
         """
@@ -433,35 +431,12 @@ class SendtoSilhouette(EffectExtension):
 
     @staticmethod
     def is_closed_path(path) -> bool:
+        """Is this path closed?"""
         return dist_sq(XY_a(path[0]), XY_a(path[-1])) < 0.01
 
 
-    def effect(self):
-        def write_progress(done, total, msg):
-            if "write_start_tstamp" not in self.__dict__:
-                self.write_start_tstamp = time.time()
-                self.device_buffer_perc = 0.0
-            perc = 100.*done/total
-            if time.time() - self.write_start_tstamp < 1.0:
-                self.device_buffer_perc = perc
-            buf = ""
-            if self.device_buffer_perc > 1.0:
-                buf = " (+%d%%)" % (self.device_buffer_perc+.5)
-            self.report("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5,
-                                         buf, msg),
-                        'tty')
-
-        if self.options.logfile:
-            mode = "a" if self.options.append_logs else "w"
-            self.log = open(self.options.logfile, mode)
-            if self.tty:
-                self.log = teeFile(self.tty, self.log)
-
-        command_file = None
-        if self.options.cmdfile:
-            mode = "ab" if self.options.append_logs else "wb"
-            command_file = open(self.options.cmdfile, mode)
-
+    def logEnvironment(self):
+        """Log the specific environment conditions"""
         try: # inkex < 1.2 has no version definition and no command
             # log environment information
             self.report(inkex.command.inkscape('--version').rstrip(), 'log')  # Inkscape version
@@ -477,125 +452,82 @@ class SendtoSilhouette(EffectExtension):
             self.report("Arguments: %s" % (" ".join(sys.argv)), 'log')
 
 
-        try:
-            dev = SilhouetteCameo(log=self.log, progress_cb=write_progress,
-                                  cmdfile=command_file,
-                                  inc_queries=self.options.inc_queries,
-                                  dry_run=self.options.dry_run,
-                                  force_hardware=self.options.force_hardware)
-        except Exception as e:
-            self.report(e, 'error')
-            return
-        state = dev.status()    # hint at loading paper, if not ready.
-        self.report("status=%s" % (state), 'log')
-        self.report("device version: '%s'" % dev.get_version(), 'log')
+    def writeProgress(self, done, total, msg):
+        """Show the current progress"""
+        if "write_start_tstamp" not in self.__dict__:
+            self.write_start_tstamp = time.time()
+            self.device_buffer_perc = 0.0
+        perc = 100.*done/total
+        if time.time() - self.write_start_tstamp < 1.0:
+            self.device_buffer_perc = perc
+        buf = ""
+        if self.device_buffer_perc > 1.0:
+            buf = " (+%d%%)" % (self.device_buffer_perc+.5)
+        self.report("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5,
+                                        buf, msg),
+                    'tty')
 
-        # Viewbox handling
-        self.handleViewBox()
-        # Build a list of the vertices for the document's graphical elements
-        if self.options.ids:
-            # Traverse the selected objects
-            for id in self.options.ids:
-                self.recursivelyTraverseSvg([self.svg.selected[id]])
-        else:
-            # Traverse the entire document
-            self.recursivelyTraverseSvg(self.document.getroot())
 
-        if self.options.toolholder is not None:
-            self.options.toolholder = int(self.options.toolholder)
-        self.pen=None
-        self.autoblade=False
-        if self.options.tool == "pen":
-            self.pen=True
-        if self.options.tool == "cut":
-            self.pen=False
-        if self.options.tool == "autoblade":
-            self.pen=False
-            self.autoblade=True
-
-        if self.options.orient_paths != "natural":
-            index = dict(x=0,y=1)[self.options.orient_paths[-1]]
-            ordered = dict(des=operator.gt, asc=operator.lt)[self.options.orient_paths[0:3]]
-            oldpaths = self.paths
-            self.paths = []
-            oldpaths.reverse() # Since popping from old and appending to new will
-                               # itself reverse
-            while oldpaths:
-                curpath = oldpaths.pop()
-                if ordered(curpath[0][index], curpath[-1][index]):
-                    curpath.reverse()
-                newpath = [curpath.pop()]
-                while curpath:
-                    if ordered(newpath[-1][index],curpath[-1][index]):
-                        newpath.append(curpath.pop())
-                    else:
-                        if len(newpath) == 1:
-                            # Have to make some progress:
-                            newpath = [curpath[-1], newpath[0]]
-                            # Don't leave behind an orphan
-                            if len(curpath) == 1:
-                                curpath = []
-                        else:
-                            # Have to put end of newpath back onto curpath to
-                            # keep the segment between it and rest of curpath:
-                            curpath.append(newpath[-1])
-                        break # stop collecting an ordered segment of curpath
-                if curpath: # Some of curpath is left because it was out of order
-                    oldpaths.append(curpath)
-                self.paths.append(newpath)
-
-        # scale all points to unit mm
-        for path in self.paths:
-            for i, pt in enumerate(path):
-                path[i] = (px2mm(pt[0]), px2mm(pt[1]))
-
-        if self.options.strategy == "matfree":
-            mf = MatFree("default", scale=1.0, pen=self.pen)
-            mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
-            self.paths = mf.apply(self.paths)
-        elif self.options.strategy == "mintravel":
-            self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
-        elif self.options.strategy == "mintravelfull":
-            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True)
-        elif self.options.strategy == "mintravelfwd":
-            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True, reversible=False)
-        # in case of zorder do no reorder
-
-        if self.paths and self.options.fuse_paths:
-            rest_paths = self.paths[1:]
-            self.paths = [self.paths[0]]
-            for path in rest_paths:
-                if path[0] == self.paths[-1][-1]:
-                    self.paths[-1].extend(path[1:])
+    @staticmethod
+    def preorientPaths(paths, index, ordered) -> list:
+        """Reorder paths along X or Y axis, ascending or descending"""
+        # print("DEBUG: reordering...", file=sys.stderr)  # TODO: DEBUG
+        oldpaths = paths
+        paths = []
+        oldpaths.reverse() # Since popping from old and appending to new will
+                            # itself reverse
+        while oldpaths:
+            curpath = oldpaths.pop()
+            if ordered(curpath[0][index], curpath[-1][index]):
+                curpath.reverse()
+            newpath = [curpath.pop()]
+            while curpath:
+                if ordered(newpath[-1][index],curpath[-1][index]):
+                    newpath.append(curpath.pop())
                 else:
-                    self.paths.append(path)
+                    if len(newpath) == 1:
+                        # Have to make some progress:
+                        newpath = [curpath[-1], newpath[0]]
+                        # Don't leave behind an orphan
+                        if len(curpath) == 1:
+                            curpath = []
+                    else:
+                        # Have to put end of newpath back onto curpath to
+                        # keep the segment between it and rest of curpath:
+                        curpath.append(newpath[-1])
+                    break # stop collecting an ordered segment of curpath
+            if curpath: # Some of curpath is left because it was out of order
+                oldpaths.append(curpath)
+            paths.append(newpath)
+        return paths
 
+
+    def multipassOvercut(self, paths, multipass, reversetoggle, overcut):
+        """Handle multipass & overcut"""
         cut = []
-        pointcount = 0
-        for mm_path in self.paths:
-            pointcount += len(mm_path)
+        for path in paths:
 
             multipath = []
-            multipath.extend(mm_path)
+            multipath.extend(path)
 
-            for i in range(1, self.options.multipass):
+            for i in range(1, multipass):
                 # if reverse continue path without lifting, instead turn with rotating knife
-                if (self.options.reversetoggle):
-                    mm_path = list(reversed(mm_path))
-                    multipath.extend(mm_path[1:])
+                if (reversetoggle):
+                    path = list(reversed(path))
+                    multipath.extend(path[1:])
                 # if closed path (end = start) continue path without lifting
-                elif self.is_closed_path(mm_path):
-                    multipath.extend(mm_path[1:])
+                elif self.is_closed_path(path):
+                    multipath.extend(path[1:])
                 # else start a new path
                 else:
-                    cut.append(mm_path)
+                    cut.append(path)
 
             # on a closed path some overlapping doesn't harm, limited to a maximum of one additional round
-            overcut = self.options.overcut
-            if (overcut > 0) and self.is_closed_path(mm_path):
+            overcut = overcut
+            if (overcut > 0) and self.is_closed_path(path):
                 precut = overcut
-                pfrom = mm_path[-1]
-                for pprev in reversed(mm_path[:-1]):
+                pfrom = path[-1]
+                for pprev in reversed(path[:-1]):
                     dx = pprev[0] - pfrom[0]
                     dy = pprev[1] - pfrom[1]
                     dist = math.sqrt(dx*dx + dy*dy)
@@ -607,8 +539,8 @@ class SendtoSilhouette(EffectExtension):
                         pprev = (pfrom[0]+dx*(precut/dist), pfrom[1]+dy*(precut/dist))
                         multipath.insert(0, pprev)
                         break
-                pfrom = mm_path[0]
-                for pnext in mm_path[1:]:
+                pfrom = path[0]
+                for pnext in path[1:]:
                     dx = pnext[0] - pfrom[0]
                     dy = pnext[1] - pfrom[1]
                     dist = math.sqrt(dx*dx + dy*dy)
@@ -622,8 +554,87 @@ class SendtoSilhouette(EffectExtension):
                             break
 
             cut.append(multipath)
+        return cut
+
+
+    def effect(self):
+        if self.options.logfile:
+            mode = "a" if self.options.append_logs else "w"
+            self.log = open(self.options.logfile, mode)
+            if self.tty:
+                self.log = teeFile(self.tty, self.log)
+
+        command_file = None
+        if self.options.cmdfile:
+            mode = "ab" if self.options.append_logs else "wb"
+            command_file = open(self.options.cmdfile, mode)
+
+        self.logEnvironment()
+
+        # Init docTransform
+        self.initDocScale()
+
+        # Build a list of paths for the document's graphical elements
+        if self.options.ids:
+            # Traverse the selected objects
+            for id in self.options.ids:
+                self.recursivelyTraverseSvg([self.svg.selected[id]])
+        else:
+            # Traverse the entire document
+            self.recursivelyTraverseSvg(self.document.getroot())
+
+        # Scale all paths to unit mm
+        for path in self.paths:
+            for i, pt in enumerate(path):
+                path[i] = (px2mm(pt[0]), px2mm(pt[1]))
+
+        if self.options.toolholder is not None:
+            self.options.toolholder = int(self.options.toolholder)
+        self.pen=None
+        self.autoblade=False
+        if self.options.tool == "pen":
+            self.pen=True
+        if self.options.tool == "cut":
+            self.pen=False
+        if self.options.tool == "autoblade":
+            self.pen=False
+            self.autoblade=True
+
+        # Reorder paths (except in case of Z-order)
+        if self.options.orient_paths != "natural":
+            index = dict(x=0,y=1)[self.options.orient_paths[-1]]
+            ordered = dict(des=operator.gt, asc=operator.lt)[self.options.orient_paths[0:3]]
+            self.paths = self.preorientPaths(self.paths, index, ordered)
+
+        # Optimize paths
+        if self.options.strategy == "matfree":
+            mf = MatFree("default", scale=1.0, pen=self.pen)
+            mf.verbose = 0    # inkscape crashes whenever something appears in stdout.
+            self.paths = mf.apply(self.paths)
+        elif self.options.strategy == "mintravel":
+            self.paths = silhouette.StrategyMinTraveling.sort(self.paths)
+        elif self.options.strategy == "mintravelfull":
+            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True)
+        elif self.options.strategy == "mintravelfwd":
+            self.paths = silhouette.StrategyMinTraveling.sort(self.paths, entrycircular=True, reversible=False)
+
+        # Fuse paths
+        if self.paths and self.options.fuse_paths:
+            rest_paths = self.paths[1:]
+            self.paths = [self.paths[0]]
+            for path in rest_paths:
+                if path[0] == self.paths[-1][-1]:
+                    self.paths[-1].extend(path[1:])
+                else:
+                    self.paths.append(path)
+
+        # Handle multipass & overcut
+        cut = self.multipassOvercut(self.paths, self.options.multipass, self.options.reversetoggle, self.options.overcut)
 
         if self.options.dump_paths:
+            pointcount = 0
+            for path in self.paths:
+                pointcount += len(path)
             self.report(f"Logging {len(cut)} cut paths containing "
                         f"{pointcount} points:", 'log')
             self.report(f"# driver version: {__version__}", 'log')
@@ -641,6 +652,20 @@ class SendtoSilhouette(EffectExtension):
             self.options.speed = None
         if self.options.depth == -1:
             self.options.depth = None
+
+        try:
+            dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
+                                  cmdfile=command_file,
+                                  inc_queries=self.options.inc_queries,
+                                  dry_run=self.options.dry_run,
+                                  force_hardware=self.options.force_hardware)
+        except Exception as e:
+            self.report(e, 'error')
+            return
+        state = dev.status()  # hint at loading paper, if not ready.
+        self.report("status=%s" % (state), 'log')
+        self.report("device version: '%s'" % dev.get_version(), 'log')
+
         dev.setup(media=int(self.options.media, 10),
                 pen=self.pen,
                 toolholder=self.options.toolholder,
@@ -695,7 +720,7 @@ class SendtoSilhouette(EffectExtension):
         if len(bbox["bbox"].keys()) == 0:
             self.report("empty page?", 'error')
         else:
-            write_progress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
+            self.writeProgress(1, 1, "bbox: (%.1f, %.1f)-(%.1f, %.1f)mm, %d points" % (
                         bbox["bbox"]["llx"]*bbox["unit"],
                         bbox["bbox"]["ury"]*bbox["unit"],
                         bbox["bbox"]["urx"]*bbox["unit"],
@@ -722,11 +747,11 @@ class SendtoSilhouette(EffectExtension):
                 self.device_buffer_perc -= wait_sec * percent_per_sec
                 if self.device_buffer_perc < 0.0:
                     self.device_buffer_perc = 0.0
-                write_progress(1, 1, dots)
+                self.writeProgress(1, 1, dots)
                 dots += "."
                 state = dev.status()
             self.device_buffer_perc = 0.0
-            write_progress(1, 1, dots)
+            self.writeProgress(1, 1, dots)
         self.report("\nstatus=%s" % (state), 'log')
 
 

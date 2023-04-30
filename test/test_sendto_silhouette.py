@@ -69,7 +69,7 @@ class PlusTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg(self.e.document.getroot())
 
         self.assertDeepAlmostEqual(
@@ -93,7 +93,7 @@ class TransformTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg(self.e.svg)
 
         self.assertDeepAlmostEqual(
@@ -113,7 +113,7 @@ class TransformTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg([self.e.svg.getElementById("rect1")])
 
         self.assertDeepAlmostEqual(
@@ -129,7 +129,7 @@ class TransformTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg([self.e.svg.getElementById("u0")])
 
         self.assertDeepAlmostEqual(
@@ -141,7 +141,7 @@ class TransformTest(SendtoSilhouetteTest):
         )
 
 
-@mark.xfail(__version__[0:3] < "1.2", reason="earlier versions generate other curves")
+#@mark.xfail(__version__[0:3] < "1.2", reason="earlier versions generate other curves")
 class CurvesTest(SendtoSilhouetteTest):
     source_file = "curved_dashes.test.svg"
 
@@ -150,7 +150,7 @@ class CurvesTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg(self.e.document.getroot())
 
         self.assertDeepAlmostEqual(
@@ -168,7 +168,7 @@ class DashesTest(SendtoSilhouetteTest):
         self.e.load_raw()
         self.e.clean_up()
 
-        self.e.handleViewBox()
+        self.e.initDocScale()
         self.e.recursivelyTraverseSvg(self.e.document.getroot())
 
         self.assertDeepAlmostEqual(
