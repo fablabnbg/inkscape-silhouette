@@ -50,23 +50,24 @@ class SilhouetteMulti(EffectExtension):
 
         self.saved_argv = list(sys.argv)
 
-        self.arg_parser.add_argument(
+    def add_arguments(self, pars):
+        pars.add_argument(
             "-b", "--block", dest="block_inkscape", type=Boolean,
             default=False,
             help="Make inkscape wait until silhouette_multi is done")
-        self.arg_parser.add_argument(
+        pars.add_argument(
             "-d", "--dry_run", dest="dry_run", type=Boolean,
             default=False,
             help="Display generated commands but do not run them")
-        self.arg_parser.add_argument(
+        pars.add_argument(
             "-g", "--gui", dest="gui", type=Boolean,
             default=True,
             help="Should silhouette_multi use a gui to select its actions?")
-        self.arg_parser.add_argument(
+        pars.add_argument(
             "-p", "--pickle", dest="pickle_path", type=str,
             default='',
             help="Path of the pickle file with initial option settings")
-        self.arg_parser.add_argument(
+        pars.add_argument(
             "-v", "--verbose", dest="verbose", type=Boolean,
             default=False,
             help="Enable verbose logging")
