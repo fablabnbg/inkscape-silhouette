@@ -93,6 +93,7 @@ class SendtoSilhouette(EffectExtension):
         self.pathcount = 0
         self.paths = []
         self.docTransform = Transform()
+        self.cmdfile = None
 
         try:
             self.tty = open("/dev/tty", "w")
@@ -103,7 +104,9 @@ class SendtoSilhouette(EffectExtension):
 
     def __del__(self, *args):
         if self.log:
-            self.log.close() # will always close tty if there is one
+            self.log.close()  # will always close tty if there is one
+        if self.cmdfile:
+            self.cmdfile.close()  # will always try to close cmdfile
 
 
     def add_arguments(self, pars):
@@ -564,10 +567,9 @@ class SendtoSilhouette(EffectExtension):
             if self.tty:
                 self.log = teeFile(self.tty, self.log)
 
-        command_file = None
         if self.options.cmdfile:
             mode = "ab" if self.options.append_logs else "wb"
-            command_file = open(self.options.cmdfile, mode)
+            self.cmdfile = open(self.options.cmdfile, mode)
 
         self.logEnvironment()
 
@@ -655,7 +657,7 @@ class SendtoSilhouette(EffectExtension):
 
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
-                                  cmdfile=command_file,
+                                  cmdfile=self.cmdfile,
                                   inc_queries=self.options.inc_queries,
                                   dry_run=self.options.dry_run,
                                   force_hardware=self.options.force_hardware)
