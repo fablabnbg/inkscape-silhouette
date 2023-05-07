@@ -358,7 +358,14 @@ class SendtoSilhouette(EffectExtension):
                 try:  # inkscape 1.2
                     transform = self.docTransform @ my_transform
                 except Exception:  # inkscape 1.0
-                    transform = self.docTransform * my_transform
+                    transform = self.docTransform * Transform(scale=(self.svg.uutounit("1", "px"))) * my_transform  ## TODO: scale to uu and more clean up
+                    # if inkex 11 and wrong scale applied - revert it
+                    if isinstance(node, (Rectangle, Circle, Ellipse)):
+                        try:  # inkex 11 [hasattr uutounit(arg1)]
+                            fix_inkex11_transform = self.svg.uutounit("1")
+                            transform *= -Transform(scale=(fix_inkex11_transform))
+                        except Exception:
+                            pass
 
                 # convert element to path
                 node = node.to_path_element()

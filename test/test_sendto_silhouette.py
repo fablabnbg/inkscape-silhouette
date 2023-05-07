@@ -85,6 +85,150 @@ class PlusTest(SendtoSilhouetteTest):
         )
 
 
+class PathAndCircleTest(SendtoSilhouetteTest):
+    source_file = "lines_and_circle.test.svg"
+
+    def test_pathpathd(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertEqual(
+            str(self.e.svg.getElementById('path1').path),
+            'M 107.95 88.9 V 190.5',
+        )
+
+    # def test_rectpathd(self):
+    #     self.e.parse_arguments([self.data_file(self.source_file)])
+    #     self.e.load_raw()
+    #     self.e.clean_up()
+    # 
+    #     self.e.initDocScale()
+    #     self.e.recursivelyTraverseSvg(self.e.svg)
+    # 
+    #     self.assertEqual(
+    #         str(self.e.svg.getElementById('rect1').path),
+    #         'M 57.15 88.9 h 101.6 v 101.6 h -101.6 z',
+    #     )
+    # 
+    def test_circlepathd(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertEqual(
+            str(self.e.svg.getElementById('circle1').path),
+            'M 107.95 88.9 a 50.8 50.8 0 1 0 50.8 50.8 a 50.8 50.8 0 0 0 -50.8 -50.8 z',
+        )
+
+    # def test_linepathd(self):
+    #     self.e.parse_arguments([self.data_file(self.source_file)])
+    #     self.e.load_raw()
+    #     self.e.clean_up()
+    # 
+    #     self.e.initDocScale()
+    #     self.e.recursivelyTraverseSvg(self.e.svg)
+    # 
+    #     self.assertEqual(
+    #         str(self.e.svg.getElementById('line1').path),
+    #         'M 107.95 139.7 L 57.15 88.9',
+    #     )
+
+    def test_pathpath(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertDeepAlmostEqual(
+            self.e.svg.getElementById('path1').path.to_superpath()[0][0][0],
+            [107.95, 88.9],
+        )
+
+    def test_rectpath(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertDeepAlmostEqual(
+            self.e.svg.getElementById('rect1').path.to_superpath()[0][0][0],
+            [57.15, 88.9],
+        )
+
+    def test_circlepath(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertDeepAlmostEqual(
+            self.e.svg.getElementById('circle1').path.to_superpath()[0][0][0],
+            [107.95, 88.9],
+        )
+
+    def test_circlepath(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertDeepAlmostEqual(
+            self.e.svg.getElementById('line1').path.to_superpath()[0][0][0],
+            [107.95, 139.7],
+        )
+
+    def test_doctransform(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertAlmostEqual(
+            self.e.docTransform.matrix[0][0],
+            3.7795275590551185,
+        )
+
+    def test_scale_path_and_circle(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+
+        self.e.initDocScale()
+        self.e.recursivelyTraverseSvg(self.e.svg)
+
+        self.assertDeepAlmostEqual(
+            self.e.paths,
+            [
+                # Circle
+                [(408, 336), (393.53693771543624, 336.5428694332878), (379.3009129874762, 338.150175864468),(365.33974656526004, 340.789966490516),(351.70125919792775, 344.4302885084072),(338.43327163461925, 349.039189115117),(325.5836046244745, 354.5847155076207),(313.2000789166335, 361.03491488289364),(301.3305152602363, 368.35783443791127),(290.0227344044229, 376.5215213696489),(279.32455709833323, 385.49402287508184),(269.2838040911073, 395.2433861511855),(259.94829613188506, 405.73765839493535),(251.3658539698065, 416.94488680330664),(243.58429835401165, 428.83311857327465),(236.6514500336405, 441.37040090181495),(230.61512975783296, 454.5247809859027),(225.58190139850657, 468.0946553461038),(221.61896810661773, 481.8621167585371),(218.71510954986474, 495.7707568035077),(216.859105395946, 509.7641670613206),(216.0397353125598, 523.7859391122809),(216.24577896740442, 537.7796645366936),(217.46601602817833, 551.6889349148637),(219.68922616257976, 565.4573418270966),(222.90418903830707, 579.0284768536969),(227.0996843230586, 592.3459315749699),(232.2644916845327, 605.3532975712208),(238.38739079042762, 617.9941664227542),(245.4571613084418, 630.2121297098755),(253.4625829062735, 641.9507790128898),(262.39243525162107, 653.1537059121019),(272.23549801218286, 663.7645019878171),(282.84629408789806, 673.607564748379),(294.0492209871102, 682.5374170937266),(305.7878702901244, 690.5428386915582),(318.00583357724577, 697.6126092095725),(330.64670242877924, 703.7355083154674),(343.65406842502995, 708.9003156769415),(356.971523146303, 713.0958109616931),(370.5426581729034, 716.3107738374204),(384.3110650851361, 718.5339839718217),(398.2203354633063, 719.7542210325955),(412.21406088771903, 719.9602646874403),(426.2358329386793, 719.140894604054),(440.22924319649223, 717.2848904501352),(454.1378832414629, 714.3810318933823),(467.9053446538962, 710.4180986014935),(481.4752190140973, 705.384870242167),(494.6295990981851, 699.3485499663594),(507.16688142672535, 692.4157016459883),(519.0551131966934, 684.6341460301934),(530.2623416050646, 676.0517038681148),(540.7566138488145, 666.7161959088926),(550.5059771249182, 656.6754429016667),(559.4784786303511, 645.9772655955771),(567.6421655620887, 634.6694847397637),(574.9650851171064, 622.7999210833666),(581.4152844923792, 610.4163953755256),(586.9608108848829, 597.5667283653809),(591.5697114915927, 584.2987408020723),(595.210033509484, 570.66025343474),(597.849824135532, 556.6990870125239),(599.4571305667123, 542.4630622845639),(600.0, 528),(599.7640335452223, 518.4792700525261),(599.0604799250673, 509.0231590330845),(597.895857755802, 499.647404273475),(596.2766856536933, 490.3677431054975),(594.2094822350085, 481.1999128609517),(591.7007661160145, 472.1596508716375),(588.7570559129783, 463.2626944693546),(585.384870242167, 454.5247809859028),(581.5907277198476, 445.96164775308193),(577.3811469622872, 437.5890321026917),(572.7626465857527, 429.42267136653186),(567.7417452065114, 421.47830287640244),(562.3249614408302, 413.771663964103),(556.518813904976, 406.31849196143344),(550.329821215216, 399.1345242001935),(543.7645019878171, 392.2354980121829),(536.8654757998065, 385.67017878478407),(529.6815080385666, 379.48118609502404),(522.228336035897, 373.6750385591698),(514.5216971235975, 368.2582547934885),(506.577328633468, 363.2373534142471),(498.4109678973083, 358.6188530377127),(490.03835224691807, 354.4092722801523),(481.4752190140972, 350.61512975783296),(472.7373055306454, 347.24294408702167),(463.8403491283625, 344.2992338839855),(454.8000871390483, 341.7905177649915),(445.6322568945026, 339.72331434630667),(436.3525957265251, 338.1041422441981),(426.97684096691563, 336.9395200749327),(417.520729947474, 336.23596645477767),(408.0, 336.0),(408, 336)],
+                # First line
+                [(408, 336), (408, 720)],
+                # Second line
+                [(216, 528.0), (600, 528.0)],
+                # Rectangle
+                [(216, 336), (600, 336), (600, 720), (216, 720), (216, 336)],
+                # Line
+                [(408, 528.0), (216, 336)],
+            ],
+        )
+
 class TransformTest(SendtoSilhouetteTest):
     source_file = "composed_transform.test.svg"
 
