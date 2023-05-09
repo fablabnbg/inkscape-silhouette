@@ -40,8 +40,9 @@ if dummy_stdout:
 
 import inkex
 from inkex.extensions import EffectExtension
-from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement
+from inkex import Boolean, Path, ShapeElement, PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon, Group, Use, TextElement, Image, BaseElement, SvgDocumentElement
 from inkex.transforms import Transform
+from inkex.units import convert_unit
 from inkex.bezier import subdiv
 
 from gettext import gettext
@@ -54,6 +55,18 @@ from silhouette.convert2dashes import convert2dash
 import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
+
+if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
+    # backport https://gitlab.com/inkscape/extensions/-/issues/367
+    BaseElement.uutounit = lambda self, v, *kwargs: float(v)
+    # backport https://gitlab.com/inkscape/extensions/-/merge_requests/433
+    Line.get_path = lambda self: 'M{0[x1]},{0[y1]} L{0[x2]},{0[y2]}'.format(self.attrib)
+    # backport @ matmul operator
+    Transform.__matmul__ = Transform.__mul__
+    # backport svg._base_scale()
+    SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
+    SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
+    SvgDocumentElement._base_scale = lambda self, unit="px": 1.0 if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or 1.0
 
 
 def px2mm(px):
@@ -321,10 +334,7 @@ class SendtoSilhouette(EffectExtension):
                     my_transform = node.composed_transform()
                 else:
                     # NOTE: <<< transforms operate from right (detail) to left (whole)
-                    try:  # inkscape 1.2
-                        my_transform = parent_transform @ node.transform
-                    except Exception:  # inkscape 1.0
-                        my_transform = parent_transform * node.transform
+                    my_transform = parent_transform @ node.transform
 
             if isinstance(node, Group):
                 self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=my_transform)
@@ -343,10 +353,7 @@ class SendtoSilhouette(EffectExtension):
                     x = float(node.get("x", 0.0))
                     y = float(node.get("y", 0.0))
                     # NOTE: <<< transforms operate from right (detail) to left (whole)
-                    try:  # inkscape 1.2
-                        my_transform = my_transform @ Transform(translate=(x, y))
-                    except Exception:  # inkscape 1.0
-                        my_transform = my_transform * Transform(translate=(x, y))
+                    my_transform = my_transform @ Transform(translate=(x, y))
 
                     self.recursivelyTraverseSvg([refnode], parent_visibility=v, parent_transform=my_transform)
 
@@ -355,17 +362,7 @@ class SendtoSilhouette(EffectExtension):
                     continue
                 # calculate this object's transform
                 # NOTE: <<< transforms operate from right (detail) to left (whole)
-                try:  # inkscape 1.2
-                    transform = self.docTransform @ my_transform
-                except Exception:  # inkscape 1.0
-                    transform = self.docTransform * Transform(scale=(self.svg.uutounit("1", "px"))) * my_transform  ## TODO: scale to uu and more clean up
-                    # if inkex 11 and wrong scale applied - revert it
-                    if isinstance(node, (Rectangle, Circle, Ellipse)):
-                        try:  # inkex 11 [hasattr uutounit(arg1)]
-                            fix_inkex11_transform = self.svg.uutounit("1")
-                            transform *= -Transform(scale=(fix_inkex11_transform))
-                        except Exception:
-                            pass
+                transform = self.docTransform @ my_transform
 
                 # convert element to path
                 node = node.to_path_element()
@@ -425,18 +422,9 @@ class SendtoSilhouette(EffectExtension):
         """
         Set up the document-wide transform in the event that the document has an SVG viewbox
         """
-        try:  # inkscape 1.2
-            self.report(f"7 svg.viewport_height = {self.svg.viewport_height}", 'tty')
-            self.report(f"8 svg.viewport_width = {self.svg.viewport_width}", 'tty')
-            self.docTransform = Transform(scale=(self.svg.scale))
-        except:  # inkscape 1.0
-            self.report(f"7 svg.height = {self.svg.height}", 'tty')
-            self.report(f"8 svg.width = {self.svg.width}", 'tty')
-            viewbox = self.svg.get_viewbox()
-            if all((viewbox[2], viewbox[3])):
-                    sx = self.svg.width / viewbox[2]
-                    sy = self.svg.height / viewbox[3]
-                    self.docTransform = Transform(scale=(sx, sy))
+        self.report(f"7 svg.viewport_height = {self.svg.viewport_height}", 'tty')
+        self.report(f"8 svg.viewport_width = {self.svg.viewport_width}", 'tty')
+        self.docTransform = Transform(scale=(self.svg._base_scale()))
 
 
     @staticmethod
@@ -481,7 +469,6 @@ class SendtoSilhouette(EffectExtension):
     @staticmethod
     def preorientPaths(paths, index, ordered) -> list:
         """Reorder paths along X or Y axis, ascending or descending"""
-        # print("DEBUG: reordering...", file=sys.stderr)  # TODO: DEBUG
         oldpaths = paths
         paths = []
         oldpaths.reverse() # Since popping from old and appending to new will
