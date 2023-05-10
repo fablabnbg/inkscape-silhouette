@@ -66,15 +66,7 @@ if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
     # backport svg._base_scale()
     SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
     SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
-    SvgDocumentElement._base_scale = lambda self, unit="px": 1.0 if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or 1.0
-
-
-def px2mm(px):
-    """
-    Convert inkscape pixels to mm.
-    The default inkscape unit, called 'px' is 96dpi
-    """
-    return px*25.4/96
+    SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
 
 
 class teeFile:
@@ -197,7 +189,7 @@ class SendtoSilhouette(EffectExtension):
                 dest = "speed", type = int, default = 10,
                 help="[1..10], or 0 for media default")
         pars.add_argument("-S", "--smoothness", type = float,
-                dest="smoothness", default=.2, help="Smoothness of curves")
+                dest="smoothness", default=.05, help="Smoothness of curves")
         pars.add_argument("-t", "--tool",
                 choices=("autoblade", "cut", "pen", "default"), dest = "tool", default = None, help="Optimize for pen or knive")
         pars.add_argument("-T", "--toolholder",
@@ -424,7 +416,7 @@ class SendtoSilhouette(EffectExtension):
         """
         self.report(f"7 svg.viewport_height = {self.svg.viewport_height}", 'tty')
         self.report(f"8 svg.viewport_width = {self.svg.viewport_width}", 'tty')
-        self.docTransform = Transform(scale=(self.svg._base_scale()))
+        self.docTransform = Transform(scale=(self.svg._base_scale("mm")))
 
 
     @staticmethod
@@ -579,11 +571,6 @@ class SendtoSilhouette(EffectExtension):
             # Traverse the entire document
             self.recursivelyTraverseSvg(self.document.getroot())
 
-        # Scale all paths to unit mm
-        for path in self.paths:
-            for i, pt in enumerate(path):
-                path[i] = (px2mm(pt[0]), px2mm(pt[1]))
-
         if self.options.toolholder is not None:
             self.options.toolholder = int(self.options.toolholder)
         self.pen=None
@@ -679,8 +666,8 @@ class SendtoSilhouette(EffectExtension):
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
             bbox = dev.plot(pathlist=cut,
-                    mediawidth=px2mm(self.svg.width),
-                    mediaheight=px2mm(self.svg.height),
+                    mediawidth=convert_unit(self.svg.viewport_width, "mm"),
+                    mediaheight=convert_unit(self.svg.viewport_height, "mm"),
                     margintop=0,
                     marginleft=0,
                     bboxonly=None,         # only return the bbox, do not draw it.
@@ -701,8 +688,8 @@ class SendtoSilhouette(EffectExtension):
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
         bbox = dev.plot(pathlist=cut,
-            mediawidth=px2mm(self.svg.width),
-            mediaheight=px2mm(self.svg.height),
+            mediawidth=convert_unit(self.svg.viewport_width, "mm"),
+            mediaheight=convert_unit(self.svg.viewport_height, "mm"),
             offset=(self.options.x_off, self.options.y_off),
             bboxonly=self.options.bboxonly,
             endposition=self.options.endposition,
