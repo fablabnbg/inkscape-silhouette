@@ -406,8 +406,14 @@ class MatFree:
     # CAUTION: is this really helpful?:
     ## it prevents points from a slice to go into process_simple_barrier()'s segment list,
     ## but it also hides information....
-    if not a_seg_todo: s.points[iA] = None
-    if not b_seg_todo: s.points[iB] = None
+    if not a_seg_todo:
+      s.points[iA] = None
+      k = str(A.x)+','+str(A.y)
+      del(s.points_dict[k])
+    if not b_seg_todo:
+      s.points[iB] = None
+      k = str(B.x)+','+str(B.y)
+      del(s.points_dict[k])
 
 
 
