@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="12in"
+   height="12in"
+   viewBox="0 0 304.8 304.79999"
+   version="1.1"
+   id="svg6163"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="crash_repro.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview6165"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="in"
+     showgrid="false"
+     inkscape:zoom="0.56441565"
+     inkscape:cx="395.98477"
+     inkscape:cy="698.06711"
+     inkscape:window-width="1920"
+     inkscape:window-height="1144"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs6160" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       aria-label="Lorem ipsum etc etc"
+       id="text6299"
+       style="font-size:25.4px;line-height:1.25;font-family:'Varsity Regular';-inkscape-font-specification:'Varsity Regular, ';stroke-width:0.264583">
+      <path
+         d="m 189.38881,140.39591 v 0.22325 q 0,1.71152 0.37207,2.6665 0.38447,0.94258 1.16582,1.43867 0.79375,0.4961 2.07119,0.4961 0.66972,0 1.5875,-0.11163 0.91777,-0.11162 1.51308,-0.24804 v 0.69453 q -0.59531,0.38447 -1.6247,0.66973 -1.017,0.28525 -2.0836,0.28525 -2.71611,0 -3.98115,-1.46348 -1.25264,-1.46347 -1.25264,-4.70049 0,-3.05097 1.27744,-4.55166 1.27745,-1.50068 3.64629,-1.50068 4.47725,0 4.47725,5.08496 v 1.01699 z m 2.6913,-5.10976 q -1.28984,0 -1.98437,1.0418 -0.68213,1.04179 -0.68213,3.07578 h 4.98574 q 0,-2.22002 -0.57051,-3.1626 -0.5705,-0.95498 -1.74873,-0.95498 z"
+         style="font-family:'Liberation Serif';-inkscape-font-specification:'Liberation Serif'"
+         id="path6321" />
+      <path
+         d="m 225.3432,140.39591 v 0.22325 q 0,1.71152 0.37207,2.6665 0.38447,0.94258 1.16582,1.43867 0.79375,0.4961 2.07119,0.4961 0.66973,0 1.5875,-0.11163 0.91777,-0.11162 1.51308,-0.24804 v 0.69453 q -0.59531,0.38447 -1.6247,0.66973 -1.01699,0.28525 -2.0836,0.28525 -2.71611,0 -3.98115,-1.46348 -1.25264,-1.46347 -1.25264,-4.70049 0,-3.05097 1.27745,-4.55166 1.27744,-1.50068 3.64629,-1.50068 4.47724,0 4.47724,5.08496 v 1.01699 z m 2.69131,-5.10976 q -1.28985,0 -1.98438,1.0418 -0.68213,1.04179 -0.68213,3.07578 h 4.98574 q 0,-2.22002 -0.5705,-3.1626 -0.57051,-0.95498 -1.74873,-0.95498 z"
+         style="font-family:'Liberation Serif';-inkscape-font-specification:'Liberation Serif'"
+         id="path6327" />
+    </g>
+  </g>
+</svg>
