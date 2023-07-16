@@ -51,6 +51,11 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
       run: |
         sudo apt-get -y install inkscape-trunk umockdev
+    - name: 🐧 install Inkex standalone & umockdev
+      if: ${{ matrix.os == 'ubuntu-latest' && startsWith(matrix.inkscape-version, 'inkex') }}
+      run: |
+        sudo apt-get -y install umockdev
+        pip install ${{ matrix.inkscape-version }}
     - name: 🍏 install Inkscape
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
@@ -64,11 +69,6 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.2' }}
       run: |
         choco install -y inkscape
-    - name: install Inkex
-      if: ${{ startsWith(matrix.inkscape-version, 'inkex') }}
-      run: |
-        sudo apt-get -y install umockdev
-        pip install ${{ matrix.inkscape-version }}
     - name: inkscape version
       run: |
         inkscape --version || echo "inkscape not found"
