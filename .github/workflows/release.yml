@@ -17,6 +17,7 @@ jobs:
         sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.2 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
         sudo apt-get update
         sudo apt-get -y install inkscape
+        sudo apt-get -y install gettext  # translation with msgfmt
         sudo apt-get -y install checkinstall libxml-xpath-perl  # xpath
         inkscape --version
         python -m pip install --upgrade pip
