@@ -43,6 +43,10 @@ sudo apt-get install python3-usb
 sudo apt-get install python3-pip
 python3 -m pip install -U pip
 python3 -m pip install -U matplotlib
+
+# Install requirements for Silhouette Multiple Actions
+sudo apt install python3-wxgtk4.0
+python3 -m pip install -U xmltodict
 ```
 
 Install inkscape-silhouette
@@ -68,6 +72,10 @@ sudo apt install python3-usb
 sudo apt-get install python3-pip
 python3 -m pip install -U pip
 python3 -m pip install -U matplotlib
+
+# Install requirements for Silhouette Multiple Actions
+sudo apt install python3-wxgtk4.0
+python3 -m pip install -U xmltodict
 ```
 
 Install inkscape-silhouette
