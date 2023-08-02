@@ -32,11 +32,18 @@ This extension should work with the following devices:
 
 WARNING: SNAP packages may cause issues.
 
-Install Inkscape
-* `sudo apt install inkscape`
+```bash
+# Install Inkscape
+sudo apt install inkscape
 
-Install requirements
-* `sudo apt install python3-usb`
+# Install requirements for usb support
+sudo apt-get install python3-usb
+
+# Install requirements for displaying cut preview
+sudo apt-get install python3-pip
+python3 -m pip install -U pip
+python3 -m pip install -U matplotlib
+```
 
 Install inkscape-silhouette
 * https://github.com/fablabnbg/inkscape-silhouette/releases
@@ -46,15 +53,22 @@ Install inkscape-silhouette
 
 WARNING: SNAP packages may cause issues.
 
-Add Inkscape 1.0+ repo
-* `sudo add-apt-repository ppa:inkscape.dev/stable`
-* `sudo apt-get update`
+```bash
+# Add Inkscape 1.0+ repo
+sudo add-apt-repository ppa:inkscape.dev/stable
+sudo apt-get update
 
-Install Inkscape
-* `sudo apt install inkscape`
+# Install Inkscape
+sudo apt install inkscape
 
-Install requirements
-* `sudo apt install python3-usb`
+# Install requirements for usb support
+sudo apt install python3-usb
+
+# Install requirements for displaying cut preview
+sudo apt-get install python3-pip
+python3 -m pip install -U pip
+python3 -m pip install -U matplotlib
+```
 
 Install inkscape-silhouette
 * https://github.com/fablabnbg/inkscape-silhouette/releases
