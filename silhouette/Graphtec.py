@@ -83,6 +83,7 @@ except NameError:
 MEDIA = [
 # CAUTION: keep in sync with sendto_silhouette.inx
 # media, pressure, speed, depth, cap-color, name
+  ( 300, None,   None,None,  "custom", "Custom"),
   ( 100,   27,     10,   1,  "yellow", "Card without Craft Paper Backing"),
   ( 101,   27,     10,   1,  "yellow", "Card with Craft Paper Backing"),
   ( 102,   10,      5,   1,  "blue",   "Vinyl Sticker"),
@@ -109,7 +110,6 @@ MEDIA = [
   ( 136,   30,     10,   1,  "blue",   "Text Paper 24-70 lbs (105g)"),
   ( 137,   30,     10,   1,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
   ( 138,   30,     10,   1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
-  ( 300, None,   None,None,  "custom", "Custom"),
 ]
 
 CAMEO_MATS = dict(

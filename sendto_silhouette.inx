@@ -29,33 +29,33 @@
       <label indent="2">'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners.</label>
       <!-- CAUTION: keep media list in sync with silhouette/Graphtec.py -->
       <param name="media" type="optiongroup" appearance="combo" gui-text="Media">
-        <option value="300">[P>0 S>0] Custom: use non-zero Pressure and Speed below</option>
-        <option value="100">[P=27,S=10] SCard without Craft Paper Backing</option>
-        <option value="101">[P=27,S=10] Card with Craft Paper Backing</option>
+        <option value="300">[P>0 S>0 D>=0] Custom: use non-zero Pressure and Speed below</option>
+        <option value="100">[P=27,S=10,D=1] SCard without Craft Paper Backing</option>
+        <option value="101">[P=27,S=10,D=1] Card with Craft Paper Backing</option>
         <option value="102">[P=10,S= 5,D=1] Vinyl Sticker</option>
-        <option value="106">[P=14,S=10] Film Labels</option>
-        <option value="111">[P=27,S=10] Thick Media</option>
-        <option value="112">[P= 2,S=10] Thin Media</option>
-        <option value="113">[P=18,S=10] Pen</option>
-        <option value="120">[P=30,S=10] Bond Paper 13-28 lbs (105g)</option>
-        <option value="121">[P=30,S=10] Bristol Paper 57-67 lbs (145g)</option>
-        <option value="122">[P=30,S=10] Cardstock 40-60 lbs (90g)</option>
-        <option value="123">[P=30,S=10] Cover 40-60 lbs (170g)</option>
-        <option value="124">[P= 1,S=10] Film, Double Matte Translucent</option>
-        <option value="125">[P= 1,S=10] Film, Vinyl With Adhesive Back</option>
-        <option value="126">[P= 1,S=10] Film, Window With Kling Adhesive</option>
-        <option value="127">[P=30,S=10] Index 90 lbs (165g)</option>
-        <option value="128">[P=20,S=10] Inkjet Photo Paper 28-44 lbs (70g)</option>
-        <option value="129">[P=27,S=10] Inkjet Photo Paper 45-75 lbs (110g)</option>
-        <option value="130">[P=30,S= 3] Magnetic Sheet</option>
-        <option value="131">[P=30,S=10] Offset 24-60 lbs (90g)</option>
-        <option value="132">[P= 5,S=10] Print Paper Light Weight</option>
-        <option value="133">[P=25,S=10] Print Paper Medium Weight</option>
-        <option value="134">[P=20,S=10] Sticker Sheet</option>
-        <option value="135">[P=20,S=10] Tag 100 lbs (275g)</option>
-        <option value="136">[P=30,S=10] Text Paper 24-70 lbs (105g)</option>
-        <option value="137">[P=30,S=10] Vellum Bristol 57-67 lbs (145g)</option>
-        <option value="138">[P=30,S=10] Writing Paper 24-70 lbs (105g)</option>
+        <option value="106">[P=14,S=10,D=1] Film Labels</option>
+        <option value="111">[P=27,S=10,D=1] Thick Media</option>
+        <option value="112">[P= 2,S=10,D=1] Thin Media</option>
+        <option value="113">[P=18,S=10,D=0] Pen</option>
+        <option value="120">[P=30,S=10,D=1] Bond Paper 13-28 lbs (105g)</option>
+        <option value="121">[P=30,S=10,D=1] Bristol Paper 57-67 lbs (145g)</option>
+        <option value="122">[P=30,S=10,D=1] Cardstock 40-60 lbs (90g)</option>
+        <option value="123">[P=30,S=10,D=1] Cover 40-60 lbs (170g)</option>
+        <option value="124">[P= 1,S=10,D=1] Film, Double Matte Translucent</option>
+        <option value="125">[P= 1,S=10,D=1] Film, Vinyl With Adhesive Back</option>
+        <option value="126">[P= 1,S=10,D=1] Film, Window With Kling Adhesive</option>
+        <option value="127">[P=30,S=10,D=1] Index 90 lbs (165g)</option>
+        <option value="128">[P=20,S=10,D=1] Inkjet Photo Paper 28-44 lbs (70g)</option>
+        <option value="129">[P=27,S=10,D=1] Inkjet Photo Paper 45-75 lbs (110g)</option>
+        <option value="130">[P=30,S= 3,D=1] Magnetic Sheet</option>
+        <option value="131">[P=30,S=10,D=1] Offset 24-60 lbs (90g)</option>
+        <option value="132">[P= 5,S=10,D=1] Print Paper Light Weight</option>
+        <option value="133">[P=25,S=10,D=1] Print Paper Medium Weight</option>
+        <option value="134">[P=20,S=10,D=1] Sticker Sheet</option>
+        <option value="135">[P=20,S=10,D=1] Tag 100 lbs (275g)</option>
+        <option value="136">[P=30,S=10,D=1] Text Paper 24-70 lbs (105g)</option>
+        <option value="137">[P=30,S=10,D=1] Vellum Bristol 57-67 lbs (145g)</option>
+        <option value="138">[P=30,S=10,D=1] Writing Paper 24-70 lbs (105g)</option>
       </param>
       <param name="speed" type="int" min="0" max="30" gui-text="Speed">0</param>
       <param name="pressure" type="int" min="0" max="33" gui-text="Pressure">0</param>

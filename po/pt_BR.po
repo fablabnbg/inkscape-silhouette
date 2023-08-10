@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: 1.27\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-03-12 12:18+0100\n"
-"PO-Revision-Date: 2023-10-23 14:08-0300\n"
+"PO-Revision-Date: 2024-03-13 13:59+0100\n"
 "Last-Translator: Germano Fonseca <celger@bol.com.br>\n"
 "Language-Team: Brazilian Portuguese <celger@bol.com.br>\n"
 "Language: pt_BR\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #: sendto_silhouette.inx:3
 msgid "Send to Silhouette"
@@ -76,124 +76,114 @@ msgid "Media"
 msgstr "Mídia"
 
 #: sendto_silhouette.inx:32
-msgid "[P>0 S>0] Custom: use non-zero Pressure and Speed below"
+msgid "[P>0 S>0 D>=0] Custom: use non-zero Pressure and Speed below"
 msgstr ""
-"[P>0 S>0] Personalizado: abaixo, use Pressão e Velocidade diferente de zero"
+"[P>0 S>0 D>=0] Personalizado: abaixo, use Pressão e Velocidade diferente de "
+"zero"
 
 #: sendto_silhouette.inx:33
-#, fuzzy
-msgid "[P=27,S=10] SCard without Craft Paper Backing"
-msgstr "[P=27,S=10] Scard sem Papel Kraft atrás"
+msgid "[P=27,S=10,D=1] SCard without Craft Paper Backing"
+msgstr "[P=27,S=10,D=1] Scard sem Papel Kraft atrás"
 
 #: sendto_silhouette.inx:34
-#, fuzzy
-msgid "[P=27,S=10] Card with Craft Paper Backing"
-msgstr "[P=27,S=10] Card with Craft Paper Backing"
+msgid "[P=27,S=10,D=1] Card with Craft Paper Backing"
+msgstr "[P=27,S=10,D=1] Card with Craft Paper Backing"
 
 #: sendto_silhouette.inx:35
 msgid "[P=10,S= 5,D=1] Vinyl Sticker"
 msgstr "[P=10,S= 5,D=1] Vinil Adesivo"
 
 #: sendto_silhouette.inx:36
-#, fuzzy
-msgid "[P=14,S=10] Film Labels"
-msgstr "[P=14,S=10] Film Labels"
+msgid "[P=14,S=10,D=1] Film Labels"
+msgstr "[P=14,S=10,D=1] Film Labels"
 
 #: sendto_silhouette.inx:37
-msgid "[P=27,S=10] Thick Media"
-msgstr "[P=27,S=10] Mídia Espessa"
+msgid "[P=27,S=10,D=1] Thick Media"
+msgstr "[P=27,S=10,D=1] Mídia Espessa"
 
 #: sendto_silhouette.inx:38
-msgid "[P= 2,S=10] Thin Media"
-msgstr "[P= 2,S=10] Mídia Fina"
+msgid "[P= 2,S=10,D=1] Thin Media"
+msgstr "[P= 2,S=10,D=1] Mídia Fina"
 
 #: sendto_silhouette.inx:39
-msgid "[P=18,S=10] Pen"
-msgstr "[P=18,S=10] Caneta"
+msgid "[P=18,S=10,D=0] Pen"
+msgstr "[P=18,S=10,D=0] Caneta"
 
 #: sendto_silhouette.inx:40
-msgid "[P=30,S=10] Bond Paper 13-28 lbs (105g)"
-msgstr "[P=30,S=10] Papel Adesivo 105g (13-28 lbs)"
+msgid "[P=30,S=10,D=1] Bond Paper 13-28 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Papel Adesivo 105g (13-28 lbs)"
 
 #: sendto_silhouette.inx:41
-#, fuzzy
-msgid "[P=30,S=10] Bristol Paper 57-67 lbs (145g)"
-msgstr "[P=30,S=10] Bristol Paper 57-67 lbs (145g)"
+msgid "[P=30,S=10,D=1] Bristol Paper 57-67 lbs (145g)"
+msgstr "[P=30,S=10,D=1] Bristol Paper 57-67 lbs (145g)"
 
 #: sendto_silhouette.inx:42
-msgid "[P=30,S=10] Cardstock 40-60 lbs (90g)"
-msgstr "[P=30,S=10] Papel cartão 90g (40-60 lbs)"
+msgid "[P=30,S=10,D=1] Cardstock 40-60 lbs (90g)"
+msgstr "[P=30,S=10,D=1] Papel cartão 90g (40-60 lbs)"
 
 #: sendto_silhouette.inx:43
-msgid "[P=30,S=10] Cover 40-60 lbs (170g)"
-msgstr "[P=30,S=10] Capa 170g (40-60 lbs)"
+msgid "[P=30,S=10,D=1] Cover 40-60 lbs (170g)"
+msgstr "[P=30,S=10,D=1] Capa 170g (40-60 lbs)"
 
 #: sendto_silhouette.inx:44
-#, fuzzy
-msgid "[P= 1,S=10] Film, Double Matte Translucent"
-msgstr "[P= 1,S=10] Film, Double Matte Translucent"
+msgid "[P= 1,S=10,D=1] Film, Double Matte Translucent"
+msgstr "[P= 1,S=10,D=1] Film, Double Matte Translucent"
 
 #: sendto_silhouette.inx:45
-msgid "[P= 1,S=10] Film, Vinyl With Adhesive Back"
-msgstr "[P= 1,S=10] Filme, Vinil Adesivo"
+msgid "[P= 1,S=10,D=1] Film, Vinyl With Adhesive Back"
+msgstr "[P= 1,S=10,D=1] Filme, Vinil Adesivo"
 
 #: sendto_silhouette.inx:46
-#, fuzzy
-msgid "[P= 1,S=10] Film, Window With Kling Adhesive"
-msgstr "[P= 1,S=10] Film, Window With Kling Adhesive"
+msgid "[P= 1,S=10,D=1] Film, Window With Kling Adhesive"
+msgstr "[P= 1,S=10,D=1] Film, Window With Kling Adhesive"
 
 #: sendto_silhouette.inx:47
-#, fuzzy
-msgid "[P=30,S=10] Index 90 lbs (165g)"
-msgstr "[P=30,S=10] Index 90 lbs (165g)"
+msgid "[P=30,S=10,D=1] Index 90 lbs (165g)"
+msgstr "[P=30,S=10,D=1] Index 90 lbs (165g)"
 
 #: sendto_silhouette.inx:48
-msgid "[P=20,S=10] Inkjet Photo Paper 28-44 lbs (70g)"
-msgstr "[P=20,S=10] Papel Fotográfico para Jato de Tinta 70g (28-44 lbs)"
+msgid "[P=20,S=10,D=1] Inkjet Photo Paper 28-44 lbs (70g)"
+msgstr "[P=20,S=10,D=1] Papel Fotográfico para Jato de Tinta 70g (28-44 lbs)"
 
 #: sendto_silhouette.inx:49
-msgid "[P=27,S=10] Inkjet Photo Paper 45-75 lbs (110g)"
-msgstr "[P=27,S=10] Papel Fotográfico para Jato de Tinta 110g (45-75 lbs)"
+msgid "[P=27,S=10,D=1] Inkjet Photo Paper 45-75 lbs (110g)"
+msgstr "[P=27,S=10,D=1] Papel Fotográfico para Jato de Tinta 110g (45-75 lbs)"
 
 #: sendto_silhouette.inx:50
-msgid "[P=30,S= 3] Magnetic Sheet"
-msgstr "[P=30,S= 3] Folha Magnética"
+msgid "[P=30,S= 3,D=1] Magnetic Sheet"
+msgstr "[P=30,S= 3,D=1] Folha Magnética"
 
 #: sendto_silhouette.inx:51
-msgid "[P=30,S=10] Offset 24-60 lbs (90g)"
-msgstr "[P=30,S=10] Papel Offset 90g (24-60 lbs)"
+msgid "[P=30,S=10,D=1] Offset 24-60 lbs (90g)"
+msgstr "[P=30,S=10,D=1] Papel Offset 90g (24-60 lbs)"
 
 #: sendto_silhouette.inx:52
-msgid "[P= 5,S=10] Print Paper Light Weight"
-msgstr "[P= 5,S=10] Papel impresso de Peso Baixo"
+msgid "[P= 5,S=10,D=1] Print Paper Light Weight"
+msgstr "[P= 5,S=10,D=1] Papel impresso de Peso Baixo"
 
 #: sendto_silhouette.inx:53
-msgid "[P=25,S=10] Print Paper Medium Weight"
-msgstr "[P=25,S=10] Papel Impresso de Peso Médio"
+msgid "[P=25,S=10,D=1] Print Paper Medium Weight"
+msgstr "[P=25,S=10,D=1] Papel Impresso de Peso Médio"
 
 #: sendto_silhouette.inx:54
-msgid "[P=20,S=10] Sticker Sheet"
-msgstr "[P=20,S=10] Folha Adesiva"
+msgid "[P=20,S=10,D=1] Sticker Sheet"
+msgstr "[P=20,S=10,D=1] Folha Adesiva"
 
 #: sendto_silhouette.inx:55
-#, fuzzy
-msgid "[P=20,S=10] Tag 100 lbs (275g)"
-msgstr "[P=20,S=10] Tag 100 lbs (275g)"
+msgid "[P=20,S=10,D=1] Tag 100 lbs (275g)"
+msgstr "[P=20,S=10,D=1] Tag 100 lbs (275g)"
 
 #: sendto_silhouette.inx:56
-#, fuzzy
-msgid "[P=30,S=10] Text Paper 24-70 lbs (105g)"
-msgstr "[P=30,S=10] Text Paper 24-70 lbs (105g)"
+msgid "[P=30,S=10,D=1] Text Paper 24-70 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Text Paper 24-70 lbs (105g)"
 
 #: sendto_silhouette.inx:57
-#, fuzzy
-msgid "[P=30,S=10] Vellum Bristol 57-67 lbs (145g)"
-msgstr "[P=30,S=10] Vellum Bristol 57-67 lbs (145g)"
+msgid "[P=30,S=10,D=1] Vellum Bristol 57-67 lbs (145g)"
+msgstr "[P=30,S=10,D=1] Vellum Bristol 57-67 lbs (145g)"
 
 #: sendto_silhouette.inx:58
-#, fuzzy
-msgid "[P=30,S=10] Writing Paper 24-70 lbs (105g)"
-msgstr "[P=30,S=10] Writing Paper 24-70 lbs (105g)"
+msgid "[P=30,S=10,D=1] Writing Paper 24-70 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Writing Paper 24-70 lbs (105g)"
 
 #: sendto_silhouette.inx:60
 msgid "Speed"
