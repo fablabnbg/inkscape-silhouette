@@ -19,10 +19,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.10']
-        inkscape-version: ['1.2']
+        inkscape-version: ['1.3']
         continue-on-error: [false]
         include:
           - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
+          - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.2', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.11', inkscape-version: 'TRUNK', continue-on-error: true }
           - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
     continue-on-error: ${{ matrix.continue-on-error }}
@@ -33,10 +34,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: 🐧 add Inkscape 1.2 repo
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == '1.2' }}
+    - name: 🐧 add Inkscape STABLE repo
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version != 'TRUNK' }}
       run: |
-        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape 1.2 from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape STABLE from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
         sudo apt-get update
     - name: 🐧 add Inkscape TRUNK repo
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
@@ -65,8 +66,12 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.1' }}
       run: |
         choco install -y inkscape --version ${{ matrix.inkscape-version }}
-    - name: 🗖 install Inkscape
+    - name: 🗖 install Inkscape 1.2
       if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.2' }}
+      run: |
+        choco install -y inkscape --version ${{ matrix.inkscape-version }}
+    - name: 🗖 install Inkscape
+      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.3' }}
       run: |
         choco install -y inkscape
     - name: inkscape version
