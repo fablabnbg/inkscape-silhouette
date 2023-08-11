@@ -3,3 +3,4 @@ pyusb
 lxml
 xmltodict
 cssselect   # required for inkscape >= 1.2
+tinycss2    # required for inkscape >= 1.4
