@@ -30,24 +30,25 @@ This extension should work with the following devices:
 
 ### Ubuntu
 
-WARNING: SNAP packages may cause issues, hence we will be using .deb file shown later in this readme section.
+WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 
 <details>
-<summary>Click here if you have Ubuntu 18.04 or 20.04</summary>
-
-If you got Ubuntu 20.10 or newer which would features Inkscape 1.0+ natively in the package manager you will not need to run this commands to add these command.
-
-But if you got an older version before Ubuntu 20.10, then you would need to get the latest inkscape version directly from the inkscape team. To do so, please run this command to add their keychain to Ubuntu's APT package management system.
+<summary>Click to get bash commands</summary>
 
 ```bash
+# Add inkscape dev team's PPA key to APT.
+# This project require minimum of inkscape V1.0+
+# But we want to always keep to latest inkscape version
 sudo add-apt-repository ppa:inkscape.dev/stable
-```
-</details>
 
-```bash
 # Install Inkscape
 sudo apt-get update
 sudo apt install inkscape
+
+# Install Inkscape with newer version directly from inkscape dev team
+# even if newer than what Ubuntu's package management team is willing
+# to certify at the moment
+sudo apt-get --with-new-pkgs upgrade inkscape
 
 # Install requirements for usb support
 sudo apt-get install python3-usb
@@ -60,16 +61,15 @@ sudo apt-get install python3-pip
 python3 -m pip install -U pip
 python3 -m pip install -r requirements.txt
 ```
+</details>
+
+#### Install inkscape-silhouette
 
 From here, you should have all the required python packages and inkscape version.
 So now we shall install inkscape-silhouette, so scroll down the latest releases and head to the Assets section of releases and click on the *.deb file. You can then use `sudo apt-get install ./*.deb` where `*.deb` is the name of your newly downloaded file.
 
 * https://github.com/fablabnbg/inkscape-silhouette/releases
 
-<details>
-<summary>Dev Notes On Missing Dependencies in above instructions</summary>
-Dependencies may change every now and then. (i.e. Inscape 1.4 will require tinycss2) To avoid duplication of effort, try using `pip install -r requirements.txt` to update required. This also helps keeping instructions more platform agnostic (except for GTK and matplotlib which are better managed by the distro)
-</details>
 
 ### Other Debian based Linux
 
