@@ -8,7 +8,7 @@
 __version__ = "1.28"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, math, operator
+import sys, os, time, math, operator, platform
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -162,6 +162,9 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
+        pars.add_argument("--create_log",
+                dest = "create_log", type = Boolean, default = False,
+                help="Include log")
         pars.add_argument("--log_paths",
                 dest = "dump_paths", type = Boolean, default = False,
                 help="Include final cut paths in log")
@@ -616,11 +619,23 @@ class SendtoSilhouette(EffectExtension):
             cut.append(multipath)
         return cut
 
+    def get_default_logfile_path(self):
+        if platform.system() == "Windows":
+            if os.environ.get("TMP"):
+                return os.path.join("TMP", "inkscape-silhouette.log")
+            else:
+                return os.path.expanduser(os.path.join("~", "Documents", "inkscape-silhouette.log"))
+        elif platform.system() == "Darwin" or platform.system() == "Linux":
+            return os.path.join("/tmp", "inkscape-silhouette.log")
+        else:
+            # Handle other platforms if needed
+            return os.path.expanduser(os.path.join("~", "inkscape-silhouette.log"))
 
     def effect(self):
-        if self.options.logfile:
+        if self.options.create_log:
+            log_path = self.options.logfile if self.options.logfile else self.get_default_logfile_path()
             mode = "a" if self.options.append_logs else "w"
-            self.log = open(self.options.logfile, mode)
+            self.log = open(log_path, mode)
             if self.tty:
                 self.log = teeFile(self.tty, self.log)
 
