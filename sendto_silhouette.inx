@@ -129,7 +129,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
     </page>
 
     <page name="logdump" gui-text="Log and Dump">
-      <param name="logfile" type="path" mode="file_new" filetypes="log" gui-text="Save log messages in file"></param>
+      <param name="logfile" type="path" mode="file_new" filetypes="log" gui-text="Save log messages in file">/tmp/inkscape-silhouette.log</param>
       <param name="log_paths" type="bool" indent="2" gui-text="Include final cut paths in log (for debugging)">false</param>
       <param name="append_logs" type="bool" indent="2" gui-text="Append to log/dump files rather than overwriting">false</param>
       <param name="cmdfile" type="path" mode="file_new" filetypes="cut" gui-text="Transcribe cutter commands to file"></param>
