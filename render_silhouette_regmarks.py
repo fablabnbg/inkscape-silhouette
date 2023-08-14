@@ -41,7 +41,8 @@ class InsertRegmark(inkex.Effect):
 				type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
 		self.arg_parser.add_argument("--rego-y", "--regoriginy", 
 				type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
-	
+		self.arg_parser.add_argument("--verbose", dest = "verbose", type = inkex.Boolean, default = False, help="enable log messages")
+
 	#SVG rect element generation routine
 	def drawRect(self, size, pos, name):
 		x, y = pos
@@ -74,16 +75,22 @@ class InsertRegmark(inkex.Effect):
 	def effect(self):
 		REG_SQUARE_MM = 5
 		REG_LINE_MM = 20
+		REG_KEEPOUT_MM = 2
 
 		svg = self.document.getroot()
 
-		regwidth = self.options.regwidth if self.options.regwidth else int(svg.get("width").rstrip("mm")) - self.options.regoriginx*2
-		reglength = self.options.reglength if self.options.reglength else int(svg.get("height").rstrip("mm")) - self.options.regoriginy*2
+		reg_origin_X = self.options.regoriginx
+		reg_origin_Y = self.options.regoriginy
+		reg_width = self.options.regwidth if self.options.regwidth else int(svg.get("width").rstrip("mm")) - reg_origin_X*2
+		reg_length = self.options.reglength if self.options.reglength else int(svg.get("height").rstrip("mm")) - reg_origin_Y*2
 
-		#inkex.errormsg(gettext("[INFO]: width ")+str(svg.get("width").rstrip("mm")))
-		#inkex.errormsg(gettext("[INFO]: height ")+str(svg.get("height").rstrip("mm")))
-		#inkex.errormsg(gettext("[INFO]: gap width ")+str(regwidth))
-		#inkex.errormsg(gettext("[INFO]: gap height ")+str(reglength))
+		if self.options.verbose == True:
+			inkex.errormsg(gettext("[INFO]: page width ")+str(svg.get("width").rstrip("mm")))
+			inkex.errormsg(gettext("[INFO]: page height ")+str(svg.get("height").rstrip("mm")))
+			inkex.errormsg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
+			inkex.errormsg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
+			inkex.errormsg(gettext("[INFO]: regmark edge spacing X ")+str(reg_width))
+			inkex.errormsg(gettext("[INFO]: regmark edge spacing Y ")+str(reg_length))
 
 		# Create a new layer.
 		layer = etree.SubElement(svg, 'g')
@@ -91,7 +98,7 @@ class InsertRegmark(inkex.Effect):
 		layer.set(inkex.addNS('groupmode', 'inkscape'), 'layer')
 	
 		# Create square in top left corner
-		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (self.options.regoriginx,self.options.regoriginy), 'TopLeft'))
+		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
 		# Create group for top right corner
 		topRight = etree.Element('{%s}g' % SVG_URI)
@@ -99,9 +106,9 @@ class InsertRegmark(inkex.Effect):
 		topRight.set('style', 'fill: black;')
 		
 		# Create horizontal and vertical lines in group
-		top_right_reg_origin_x = self.options.regoriginx+regwidth
-		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,self.options.regoriginy), (top_right_reg_origin_x,self.options.regoriginy), 'Horizontal'))
-		topRight.append(self.drawLine((top_right_reg_origin_x,self.options.regoriginy), (top_right_reg_origin_x,self.options.regoriginy + REG_LINE_MM), 'Vertical'))
+		top_right_reg_origin_x = reg_origin_X+reg_width
+		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
+		topRight.append(self.drawLine((top_right_reg_origin_x,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y + REG_LINE_MM), 'Vertical'))
 		layer.append(topRight)
 		
 		# Create group for top right corner
@@ -110,11 +117,49 @@ class InsertRegmark(inkex.Effect):
 		bottomLeft.set('style', 'fill: black;')
 		
 		# Create horizontal and vertical lines in group
-		top_right_reg_origin_y = self.options.regoriginy+reglength
-		bottomLeft.append(self.drawLine((self.options.regoriginx,top_right_reg_origin_y), (self.options.regoriginx+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
-		bottomLeft.append(self.drawLine((self.options.regoriginx,top_right_reg_origin_y), (self.options.regoriginx,top_right_reg_origin_y - REG_LINE_MM), 'Vertical'))
+		top_right_reg_origin_y = reg_origin_Y+reg_length
+		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
+		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X,top_right_reg_origin_y - REG_LINE_MM), 'Vertical'))
 		layer.append(bottomLeft)
 		
+		# Keepout Marker #
+
+		# Create group for top left corner keepout
+		topLeftKeepout = etree.Element('{%s}g' % SVG_URI)
+		topLeftKeepout.set('id', 'TopLeftKeepout')
+		topLeftKeepout.set('style', 'fill: black;')
+
+		# Create horizontal and vertical lines in group
+		top_left_keepout_origin_x = reg_origin_X+REG_LINE_MM
+		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
+		topLeftKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x-REG_KEEPOUT_MM,top_left_keepout_origin_y),'Horizontal'))
+		topLeftKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x,top_left_keepout_origin_y-REG_KEEPOUT_MM), 'Vertical'))
+		layer.append(topLeftKeepout)
+
+		# Create group for top right corner keepout
+		topRightKeepout = etree.Element('{%s}g' % SVG_URI)
+		topRightKeepout.set('id', 'TopRightKeepout')
+		topRightKeepout.set('style', 'fill: black;')
+
+		# Create horizontal and vertical lines in group
+		top_left_keepout_origin_x = reg_origin_X+reg_width-REG_LINE_MM
+		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
+		topRightKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x+REG_KEEPOUT_MM,top_left_keepout_origin_y),'Horizontal'))
+		topRightKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x,top_left_keepout_origin_y-REG_KEEPOUT_MM), 'Vertical'))
+		layer.append(topRightKeepout)
+
+		# Create group for bottom right corner keepout
+		bottomRightKeepout = etree.Element('{%s}g' % SVG_URI)
+		bottomRightKeepout.set('id', 'BottomRightKeepout')
+		bottomRightKeepout.set('style', 'fill: black;')
+
+		# Create horizontal and vertical lines in group
+		bottom_right_keepout_origin_x = reg_origin_X+REG_LINE_MM
+		bottom_right_keepout_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
+		bottomRightKeepout.append(self.drawLine((bottom_right_keepout_origin_x,bottom_right_keepout_origin_y), (bottom_right_keepout_origin_x-REG_KEEPOUT_MM,bottom_right_keepout_origin_y),'Horizontal'))
+		bottomRightKeepout.append(self.drawLine((bottom_right_keepout_origin_x,bottom_right_keepout_origin_y), (bottom_right_keepout_origin_x,bottom_right_keepout_origin_y+REG_KEEPOUT_MM), 'Vertical'))
+		layer.append(bottomRightKeepout)
+
 		#Lock layer
 		layer.set(inkex.addNS('insensitive', 'sodipodi'), 'true') 
 		
