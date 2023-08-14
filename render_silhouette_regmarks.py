@@ -30,7 +30,7 @@ class InsertRegmark(inkex.Effect):
 		inkex.Effect.__init__(self)
 		
 		# Layer name static, since self.document.getroot() not available on initialization
-		self.layername = 'silhouette-regmark'
+		self.layername = 'Regmarks'
 		
 		# Parse arguments
 		self.arg_parser.add_argument("-X", "--reg-x", "--regwidth", 
