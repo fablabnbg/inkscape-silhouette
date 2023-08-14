@@ -204,12 +204,21 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 ## Using of registration marks
 
 The plotter will search the registration marks at the given positions.
-If it founds the marks, they will serve as accurate reference and define the origin.
+If it locates the marks, they will serve as accurate reference and define the origin.
 Therefore it is necessary to set the correct offset values of the mark.
 As a result the cut will go precisely along the graphics.
 
+### Applying registration marks
 
-To plot with registration marks do the following:
+You have the option of using the provided template at `examples/registration-marks-cameo-silhouette-a4-maxi.svg` for Silhouette Cameo using A4 paper format.
+
+On the other hand for more custom setups you can use this instead.
+
+1. Go to Extensions -> Render -> Silhouette Regmarks -> Classic...
+2. Edit position and size of registration marks to your liking
+3. Apply
+
+### Plot with registration marks steps
 
 1. Open the document which fit to your setup, e.g. `examples/registration-marks-cameo-silhouette-a4-maxi.svg` for Silhouette Cameo using A4 paper format.
 2. Insert your cutting paths and graphics on the apropriate layers.
