@@ -65,7 +65,10 @@ class InsertRegmark(inkex.Effect):
 		line.set('x2', str(x2))
 		line.set('y2', str(y2))
 		line.set('id', name)
-		line.set('style', 'stroke: black; stroke-width: 0.5;')
+		# https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
+		# > The registration mark thickness is actually very important. For some reason, 0.3 mm marks work perfectly. 
+		# > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
+		line.set('style', 'stroke: black; stroke-width: 0.3;')
 		return line
 	
 	def effect(self):
