@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <_name>Classic</_name>
+  <id>org.inkscape.render.silhouette-regmarks</id>
+  <!--<dependency type="executable" location="extensions">inkex.py</dependency>-->
+  <dependency type="executable" location="extensions">render_silhouette_regmarks.py</dependency>
+  <param name="regoriginx" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document left [mm]">10</param>
+  <param name="regoriginy" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document top [mm]">10</param>
+  <param indent="2" name="regdistance_help" type="description">Spacing of the registration mark edges</param>
+  <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]"></param>
+  <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]"></param>
+  <param indent="2" name="regdistance_help" type="description">Distance between registration mark edges</param>
+  <label indent="2">Note: If width and length spacing is empty, then it is calculated from current document size.</label>
+  <effect>
+    <object-type>all</object-type>
+    <effects-menu>
+     <submenu _name="Render">
+        <submenu _name="Silhouette Regmarks" />
+      </submenu>
+    </effects-menu>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">render_silhouette_regmarks.py</command>
+  </script>
+</inkscape-extension>
