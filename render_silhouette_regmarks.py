@@ -45,8 +45,8 @@ class InsertRegmark(inkex.Effect):
 
 	#SVG rect element generation routine
 	def drawRect(self, size, pos, name):
-		x, y = pos
-		w, h = size
+		x, y = [pos * self.svg.unittouu('1mm') for pos in pos  ]
+		w, h = [pos * self.svg.unittouu('1mm') for pos in size ]
 		rect = etree.Element('{%s}rect' % SVG_URI)
 		rect.set('x', str(x))
 		rect.set('y', str(y))
@@ -58,8 +58,8 @@ class InsertRegmark(inkex.Effect):
 		
 	#SVG line element generation routine
 	def drawLine(self, posStart, posEnd, name):
-		x1, y1 = posStart
-		x2, y2, = posEnd
+		x1, y1, = [pos * self.svg.unittouu('1mm') for pos in posStart]
+		x2, y2, = [pos * self.svg.unittouu('1mm') for pos in posEnd  ]
 		line = etree.Element('{%s}line' % SVG_URI)
 		line.set('x1', str(x1))
 		line.set('y1', str(y1))
@@ -69,7 +69,8 @@ class InsertRegmark(inkex.Effect):
 		# https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
 		# > The registration mark thickness is actually very important. For some reason, 0.3 mm marks work perfectly. 
 		# > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
-		line.set('style', 'stroke: black; stroke-width: 0.3;')
+		REG_MARK_LINE_WIDTH_MM = 0.3
+		line.set('style', 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM* self.svg.unittouu('1mm'))+';')
 		return line
 	
 	def effect(self):
