@@ -89,8 +89,8 @@ class InsertRegmark(inkex.Effect):
 			inkex.errormsg(gettext("[INFO]: page height ")+str(svg.get("height").rstrip("mm")))
 			inkex.errormsg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
 			inkex.errormsg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
-			inkex.errormsg(gettext("[INFO]: regmark edge spacing X ")+str(reg_width))
-			inkex.errormsg(gettext("[INFO]: regmark edge spacing Y ")+str(reg_length))
+			inkex.errormsg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
+			inkex.errormsg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
 		# Create a new layer.
 		layer = etree.SubElement(svg, 'g')
