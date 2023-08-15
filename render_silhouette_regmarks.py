@@ -29,17 +29,14 @@ class InsertRegmark(inkex.Effect):
 		
 		# Layer name static, since self.document.getroot() not available on initialization
 		self.layername = 'Regmarks'
-		
+
+	def add_arguments(self, pars):
 		# Parse arguments
-		self.arg_parser.add_argument("-X", "--reg-x", "--regwidth", 
-				type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
-		self.arg_parser.add_argument("-Y", "--reg-y", "--reglength", 
-				type = float, dest = "reglength", default = 230.0, help="Y mark distance [mm]")
-		self.arg_parser.add_argument("--rego-x",  "--regoriginx", 
-				type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
-		self.arg_parser.add_argument("--rego-y", "--regoriginy", 
-				type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
-		self.arg_parser.add_argument("--verbose", dest = "verbose", type = inkex.Boolean, default = False, help="enable log messages")
+		pars.add_argument("-X", "--reg-x", "--regwidth",  type = float, dest = "regwidth",   default = 180.0, help="X mark distance [mm]")
+		pars.add_argument("-Y", "--reg-y", "--reglength", type = float, dest = "reglength",  default = 230.0, help="Y mark distance [mm]")
+		pars.add_argument("--rego-x",  "--regoriginx",    type = float, dest = "regoriginx", default = 15.0,  help="X mark origin from left [mm]")
+		pars.add_argument("--rego-y", "--regoriginy",     type = float, dest = "regoriginy", default = 20.0,  help="X mark origin from top [mm]")
+		pars.add_argument("--verbose", dest = "verbose",  type = inkex.Boolean, default = False, help="enable log messages")
 
 	#SVG rect element generation routine
 	def drawRect(self, size, pos, name):
