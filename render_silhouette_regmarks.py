@@ -23,8 +23,6 @@ import inkex
 from lxml import etree
 from gettext import gettext
 
-SVG_URI = u'http://www.w3.org/2000/svg'
-
 class InsertRegmark(inkex.Effect):
 	def __init__(self):
 		inkex.Effect.__init__(self)
@@ -102,7 +100,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
 		# Create group for top right corner
-		topRight = etree.Element('{%s}g' % SVG_URI)
+		topRight = inkex.Group()
 		topRight.set('id', 'TopRight')
 		topRight.set('style', 'fill: black;')
 		
@@ -113,7 +111,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRight)
 		
 		# Create group for top right corner
-		bottomLeft = etree.Element('{%s}g' % SVG_URI)
+		bottomLeft = inkex.Group()
 		bottomLeft.set('id', 'BottomLeft')
 		bottomLeft.set('style', 'fill: black;')
 		
@@ -126,7 +124,7 @@ class InsertRegmark(inkex.Effect):
 		# Keepout Marker #
 
 		# Create group for top left corner keepout
-		topLeftKeepout = etree.Element('{%s}g' % SVG_URI)
+		topLeftKeepout = inkex.Group()
 		topLeftKeepout.set('id', 'TopLeftKeepout')
 		topLeftKeepout.set('style', 'fill: black;')
 
@@ -138,7 +136,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topLeftKeepout)
 
 		# Create group for top right corner keepout
-		topRightKeepout = etree.Element('{%s}g' % SVG_URI)
+		topRightKeepout = inkex.Group()
 		topRightKeepout.set('id', 'TopRightKeepout')
 		topRightKeepout.set('style', 'fill: black;')
 
@@ -150,7 +148,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRightKeepout)
 
 		# Create group for bottom right corner keepout
-		bottomRightKeepout = etree.Element('{%s}g' % SVG_URI)
+		bottomRightKeepout = inkex.Group()
 		bottomRightKeepout.set('id', 'BottomRightKeepout')
 		bottomRightKeepout.set('style', 'fill: black;')
 
