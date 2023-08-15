@@ -159,8 +159,8 @@ class InsertRegmark(inkex.Effect):
 		bottomRightKeepout.append(self.drawLine((bottom_right_keepout_origin_x,bottom_right_keepout_origin_y), (bottom_right_keepout_origin_x,bottom_right_keepout_origin_y+REG_KEEPOUT_MM), 'Vertical'))
 		layer.append(bottomRightKeepout)
 
-		#Lock layer
-		layer.set(inkex.addNS('insensitive', 'sodipodi'), 'true') 
+		# Lock layer
+		layer.set_sensitive(False)
 		
 if __name__ == '__main__':
 	InsertRegmark().run()
