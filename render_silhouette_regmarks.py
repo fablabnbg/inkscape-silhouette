@@ -84,12 +84,12 @@ class InsertRegmark(inkex.Effect):
 		reg_length = self.options.reglength if self.options.reglength else int(svg.get("height").rstrip("mm")) - reg_origin_Y*2
 
 		if self.options.verbose == True:
-			inkex.errormsg(gettext("[INFO]: page width ")+str(svg.get("width").rstrip("mm")))
-			inkex.errormsg(gettext("[INFO]: page height ")+str(svg.get("height").rstrip("mm")))
-			inkex.errormsg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
-			inkex.errormsg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
-			inkex.errormsg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
-			inkex.errormsg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
+			inkex.utils.debug(gettext("[INFO]: page width ")+str(svg.get("width").rstrip("mm")))
+			inkex.utils.debug(gettext("[INFO]: page height ")+str(svg.get("height").rstrip("mm")))
+			inkex.utils.debug(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
+			inkex.utils.debug(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
+			inkex.utils.debug(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
+			inkex.utils.debug(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
 		# Create a new layer.
 		layer = etree.SubElement(svg, 'g')
