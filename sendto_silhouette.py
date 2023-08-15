@@ -306,17 +306,6 @@ class SendtoSilhouette(EffectExtension):
         for node in aNodeList:
             # Ignore invisible nodes
             if isinstance(node, BaseElement):
-                # Check if layer name is referring to registration mark or print layer
-                LAYER_LABEL_ATTR_KEY = '{http://www.inkscape.org/namespaces/inkscape}label'
-                if LAYER_LABEL_ATTR_KEY in node.attrib:
-                    layer_label_name = node.attrib[LAYER_LABEL_ATTR_KEY]
-                    if "regmark" in layer_label_name.lower():
-                        self.report(f"layer '{str(layer_label_name)}' is a registration mark layer - skipped", 'log')
-                        continue
-                    if "print" in layer_label_name.lower():
-                        self.report(f"layer '{str(layer_label_name)}' is a print layer - skipped", 'log')
-                        continue
-
                 # try:
                 #     # Inkex 1.2: `cascaded_style()` considers CSS (has bad performance!!)
                 #     get = node.cascaded_style().get
@@ -340,6 +329,15 @@ class SendtoSilhouette(EffectExtension):
                     my_transform = parent_transform @ node.transform
 
             if isinstance(node, Group):
+                # Check if layer name is referring to registration mark or print layer
+                LAYER_LABEL_ATTR_KEY = '{http://www.inkscape.org/namespaces/inkscape}label'
+                if node.label:
+                    if "regmark" in node.label.lower():
+                        self.report(f"layer '{str(node.label)}' is a registration mark layer - skipped", 'log')
+                        continue
+                    if "print" in node.label.lower():
+                        self.report(f"layer '{str(node.label)}' is a print layer - skipped", 'log')
+                        continue
                 self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=my_transform)
 
             elif isinstance(node, Use):
