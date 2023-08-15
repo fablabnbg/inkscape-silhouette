@@ -47,7 +47,7 @@ class InsertRegmark(inkex.Effect):
 	def drawRect(self, size, pos, name):
 		x, y = [pos * self.svg.unittouu('1mm') for pos in pos  ]
 		w, h = [pos * self.svg.unittouu('1mm') for pos in size ]
-		rect = etree.Element('{%s}rect' % SVG_URI)
+		rect = inkex.Rectangle()
 		rect.set('x', str(x))
 		rect.set('y', str(y))
 		rect.set('id', name)
@@ -60,7 +60,7 @@ class InsertRegmark(inkex.Effect):
 	def drawLine(self, posStart, posEnd, name):
 		x1, y1, = [pos * self.svg.unittouu('1mm') for pos in posStart]
 		x2, y2, = [pos * self.svg.unittouu('1mm') for pos in posEnd  ]
-		line = etree.Element('{%s}line' % SVG_URI)
+		line = inkex.Line()
 		line.set('x1', str(x1))
 		line.set('y1', str(y1))
 		line.set('x2', str(x2))
