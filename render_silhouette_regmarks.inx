@@ -1,26 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
-  <_name>Classic</_name>
-  <id>org.inkscape.render.silhouette-regmarks</id>
-  <!--<dependency type="executable" location="extensions">inkex.py</dependency>-->
-  <dependency type="executable" location="extensions">render_silhouette_regmarks.py</dependency>
-  <param name="regoriginx" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document left [mm]">10</param>
-  <param name="regoriginy" type="float" min="10.0" max="10000" _gui-text="Position of regmark from document top [mm]">10</param>
-  <param indent="2" name="regdistance_help" type="description">Spacing of the registration mark edges</param>
-  <param name="regwidth" type="float" min="0.0" max="10000" _gui-text="X mark distance [mm]"></param>
-  <param name="reglength" type="float" min="0.0" max="10000" _gui-text="Y mark distance [mm]"></param>
-  <param indent="2" name="regdistance_help" type="description">Distance between registration mark edges</param>
+<inkscape-extension translationdomain="inkscape-silhouette" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>Silhouette Regmarks</name>
+  <id>com.github.fablabnbg.inkscape-silhouette.silhouette-regmarks</id>
+  <dependency type="executable" location="inx">render_silhouette_regmarks.py</dependency>
+  <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">10</param>
+  <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">10</param>
+  <param indent="2">Spacing of the registration mark edges</param>
+  <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark distance [mm]"></param>
+  <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark distance [mm]"></param>
+  <param indent="2">Distance between registration mark edges</param>
   <label indent="2">Note: If width and length spacing is empty, then it is calculated from current document size.</label>
   <param name="verbose" type="bool" gui-text="display verbose log messages">false</param>
   <effect>
     <object-type>all</object-type>
     <effects-menu>
-     <submenu _name="Render">
-        <submenu _name="Silhouette Regmarks" />
-      </submenu>
+     <submenu name="Render"/>
     </effects-menu>
   </effect>
   <script>
-    <command reldir="extensions" interpreter="python">render_silhouette_regmarks.py</command>
+    <command location="inx" interpreter="python">render_silhouette_regmarks.py</command>
   </script>
 </inkscape-extension>
