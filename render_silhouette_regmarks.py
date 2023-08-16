@@ -37,6 +37,8 @@ class InsertRegmark(inkex.Effect):
 		# > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
 		self.REG_MARK_LINE_WIDTH_MM = 0.3
 
+		self.mm_to_user_unit = self.svg.unittouu('1mm')
+
 	def add_arguments(self, pars):
 		# Parse arguments
 		pars.add_argument("-X", "--reg-x", "--regwidth",  type = float, dest = "regwidth",   default = 180.0, help="X mark distance [mm]")
@@ -47,15 +49,15 @@ class InsertRegmark(inkex.Effect):
 
 	#SVG rect element generation routine
 	def drawRect(self, size, pos, name):
-		x, y = [pos * self.svg.unittouu('1mm') for pos in pos  ]
-		w, h = [pos * self.svg.unittouu('1mm') for pos in size ]
+		x, y = [pos * self.mm_to_user_unit for pos in pos  ]
+		w, h = [pos * self.mm_to_user_unit for pos in size ]
 		return inkex.Rectangle.new(x, y, w, h, id=name, style='fill: black;')
 		
 	#SVG line element generation routine
 	def drawLine(self, posStart, posEnd, name):
-		x1, y1, = [pos * self.svg.unittouu('1mm') for pos in posStart]
-		x2, y2, = [pos * self.svg.unittouu('1mm') for pos in posEnd  ]
-		line_style = 'stroke: black; stroke-width: '+str(self.REG_MARK_LINE_WIDTH_MM * self.svg.unittouu('1mm'))+';'
+		x1, y1, = [pos * self.mm_to_user_unit for pos in posStart]
+		x2, y2, = [pos * self.mm_to_user_unit for pos in posEnd  ]
+		line_style = 'stroke: black; stroke-width: '+str(self.REG_MARK_LINE_WIDTH_MM * self.mm_to_user_unit)+';'
 		return inkex.Line.new((x1, y1), (x2, y2), id=name, style=line_style)
 	
 	def effect(self):
