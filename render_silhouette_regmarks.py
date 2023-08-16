@@ -42,9 +42,7 @@ class InsertRegmark(inkex.Effect):
 	def drawRect(self, size, pos, name):
 		x, y = [pos * self.svg.unittouu('1mm') for pos in pos  ]
 		w, h = [pos * self.svg.unittouu('1mm') for pos in size ]
-		rect = inkex.Rectangle.new(x, y, w, h, id=name)
-		rect.set('style', 'fill: black;')
-		return rect
+		return inkex.Rectangle.new(x, y, w, h, id=name, style='fill: black;')
 		
 	#SVG line element generation routine
 	def drawLine(self, posStart, posEnd, name):
