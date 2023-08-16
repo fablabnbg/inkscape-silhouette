@@ -42,12 +42,7 @@ class InsertRegmark(inkex.Effect):
 	def drawRect(self, size, pos, name):
 		x, y = [pos * self.svg.unittouu('1mm') for pos in pos  ]
 		w, h = [pos * self.svg.unittouu('1mm') for pos in size ]
-		rect = inkex.Rectangle()
-		rect.set('x', str(x))
-		rect.set('y', str(y))
-		rect.set('id', name)
-		rect.set('width', str(w))
-		rect.set('height', str(h))
+		rect = inkex.Rectangle.new(x, y, w, h, id=name)
 		rect.set('style', 'fill: black;')
 		return rect
 		
@@ -55,17 +50,12 @@ class InsertRegmark(inkex.Effect):
 	def drawLine(self, posStart, posEnd, name):
 		x1, y1, = [pos * self.svg.unittouu('1mm') for pos in posStart]
 		x2, y2, = [pos * self.svg.unittouu('1mm') for pos in posEnd  ]
-		line = inkex.Line()
-		line.set('x1', str(x1))
-		line.set('y1', str(y1))
-		line.set('x2', str(x2))
-		line.set('y2', str(y2))
-		line.set('id', name)
+		line = inkex.Line.new((x1, y1), (x2, y2), id=name)
 		# https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
 		# > The registration mark thickness is actually very important. For some reason, 0.3 mm marks work perfectly. 
 		# > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
 		REG_MARK_LINE_WIDTH_MM = 0.3
-		line.set('style', 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM* self.svg.unittouu('1mm'))+';')
+		line.set('style', 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM * self.svg.unittouu('1mm'))+';')
 		return line
 	
 	def effect(self):
@@ -73,34 +63,27 @@ class InsertRegmark(inkex.Effect):
 		REG_LINE_MM = 20
 		REG_KEEPOUT_MM = 2
 
-		svg = self.document.getroot()
-
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		reg_width = self.options.regwidth if self.options.regwidth else int(svg.get("width").rstrip("mm")) - reg_origin_X*2
-		reg_length = self.options.reglength if self.options.reglength else int(svg.get("height").rstrip("mm")) - reg_origin_Y*2
+		reg_width = self.options.regwidth if self.options.regwidth else int(self.svg.get("width").rstrip("mm")) - reg_origin_X*2
+		reg_length = self.options.reglength if self.options.reglength else int(self.svg.get("height").rstrip("mm")) - reg_origin_Y*2
 
 		if self.options.verbose == True:
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page width ")+str(svg.get("width").rstrip("mm")))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page height ")+str(svg.get("height").rstrip("mm")))
+			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page width ")+str(self.svg.get("width").rstrip("mm")))
+			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page height ")+str(self.svg.get("height").rstrip("mm")))
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
-		# Create a new layer.
-		layer = etree.SubElement(svg, 'g')
-		layer.set(inkex.addNS('label', 'inkscape'), self.layername)
-		layer.set(inkex.addNS('groupmode', 'inkscape'), 'layer')
+		# Create a new layer
+		layer = self.svg.add(inkex.Layer.new(self.layername))
 	
 		# Create square in top left corner
 		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
 		# Create group for top right corner
-		topRight = inkex.Group()
-		topRight.set('id', 'TopRight')
-		topRight.set('style', 'fill: black;')
-		
+		topRight = inkex.Group(id = 'TopRight', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_x = reg_origin_X+reg_width
 		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
@@ -108,10 +91,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRight)
 		
 		# Create group for top right corner
-		bottomLeft = inkex.Group()
-		bottomLeft.set('id', 'BottomLeft')
-		bottomLeft.set('style', 'fill: black;')
-		
+		bottomLeft = inkex.Group(id = 'BottomLeft', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_y = reg_origin_Y+reg_length
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
@@ -121,10 +101,7 @@ class InsertRegmark(inkex.Effect):
 		# Keepout Marker #
 
 		# Create group for top left corner keepout
-		topLeftKeepout = inkex.Group()
-		topLeftKeepout.set('id', 'TopLeftKeepout')
-		topLeftKeepout.set('style', 'fill: black;')
-
+		topLeftKeepout = inkex.Group(id = 'TopLeftKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -133,10 +110,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topLeftKeepout)
 
 		# Create group for top right corner keepout
-		topRightKeepout = inkex.Group()
-		topRightKeepout.set('id', 'TopRightKeepout')
-		topRightKeepout.set('style', 'fill: black;')
-
+		topRightKeepout = inkex.Group(id = 'TopRightKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+reg_width-REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -145,10 +119,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRightKeepout)
 
 		# Create group for bottom right corner keepout
-		bottomRightKeepout = inkex.Group()
-		bottomRightKeepout.set('id', 'BottomRightKeepout')
-		bottomRightKeepout.set('style', 'fill: black;')
-
+		bottomRightKeepout = inkex.Group(id = 'BottomRightKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		bottom_right_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		bottom_right_keepout_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
