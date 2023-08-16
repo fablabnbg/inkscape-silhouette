@@ -20,7 +20,6 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
-from lxml import etree
 from gettext import gettext
 
 class InsertRegmark(inkex.Effect):
