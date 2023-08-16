@@ -330,13 +330,12 @@ class SendtoSilhouette(EffectExtension):
 
             if isinstance(node, Group):
                 # Check if layer name is referring to registration mark or print layer
-                LAYER_LABEL_ATTR_KEY = '{http://www.inkscape.org/namespaces/inkscape}label'
                 if node.label:
                     if "regmark" in node.label.lower():
-                        self.report(f"layer '{str(node.label)}' is a registration mark layer - skipped", 'log')
+                        self.report(f"layer '{node.label}' is a registration mark layer - skipped", 'log')
                         continue
                     if "print" in node.label.lower():
-                        self.report(f"layer '{str(node.label)}' is a print layer - skipped", 'log')
+                        self.report(f"layer '{node.label}' is a print layer - skipped", 'log')
                         continue
                 self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=my_transform)
 
