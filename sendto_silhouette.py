@@ -329,6 +329,14 @@ class SendtoSilhouette(EffectExtension):
                     my_transform = parent_transform @ node.transform
 
             if isinstance(node, Group):
+                # Check if layer name is referring to registration mark or print layer
+                if node.label:
+                    if "regmark" in node.label.lower():
+                        self.report(f"layer '{node.label}' is a registration mark layer - skipped", 'log')
+                        continue
+                    if "print" in node.label.lower():
+                        self.report(f"layer '{node.label}' is a print layer - skipped", 'log')
+                        continue
                 self.recursivelyTraverseSvg(node, parent_visibility=v, parent_transform=my_transform)
 
             elif isinstance(node, Use):
