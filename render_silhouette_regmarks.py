@@ -82,7 +82,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
 		# Create group for top right corner
-		topRight = Group(id = 'TopRight', style = 'fill: black;')
+		topRight = Group(id = 'TopRight')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_x = reg_origin_X+reg_width
 		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
@@ -90,7 +90,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRight)
 		
 		# Create group for top right corner
-		bottomLeft = Group(id = 'BottomLeft', style = 'fill: black;')
+		bottomLeft = Group(id = 'BottomLeft')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_y = reg_origin_Y+reg_length
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
@@ -100,7 +100,7 @@ class InsertRegmark(inkex.Effect):
 		# Keepout Marker #
 
 		# Create group for top left corner keepout
-		topLeftKeepout = Group(id = 'TopLeftKeepout', style = 'fill: black;')
+		topLeftKeepout = Group(id = 'TopLeftKeepout')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -109,7 +109,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topLeftKeepout)
 
 		# Create group for top right corner keepout
-		topRightKeepout = Group(id = 'TopRightKeepout', style = 'fill: black;')
+		topRightKeepout = Group(id = 'TopRightKeepout')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+reg_width-REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -118,7 +118,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRightKeepout)
 
 		# Create group for bottom right corner keepout
-		bottomRightKeepout = Group(id = 'BottomRightKeepout', style = 'fill: black;')
+		bottomRightKeepout = Group(id = 'BottomRightKeepout')
 		# Create horizontal and vertical lines in group
 		bottom_right_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		bottom_right_keepout_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
