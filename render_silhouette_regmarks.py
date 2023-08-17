@@ -98,6 +98,8 @@ class InsertRegmark(inkex.Effect):
 		layer.append(bottomLeft)
 		
 		# Keepout Marker #
+		# Not directly part of Silhouette registration marker
+		# Instead it's a visual indicator to the user to avoid putting any design within this area
 
 		# Create group for top left corner keepout
 		topLeftKeepout = Group(id = 'TopLeftKeepout')
