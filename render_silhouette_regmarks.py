@@ -20,6 +20,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
+from inkex import Boolean, Rectangle, Line
 from gettext import gettext
 
 LAYERNAME = 'Regmarks'
@@ -35,7 +36,6 @@ REG_MARK_LINE_WIDTH_MM = 0.3
 class InsertRegmark(inkex.Effect):
 	def __init__(self):
 		inkex.Effect.__init__(self)
-		self.mm_to_user_unit = self.svg.unittouu('1mm')
 
 	def add_arguments(self, pars):
 		# Parse arguments
@@ -43,20 +43,22 @@ class InsertRegmark(inkex.Effect):
 		pars.add_argument("-Y", "--reg-y", "--reglength", type = float, dest = "reglength",  default = 230.0, help="Y mark distance [mm]")
 		pars.add_argument("--rego-x",  "--regoriginx",    type = float, dest = "regoriginx", default = 15.0,  help="X mark origin from left [mm]")
 		pars.add_argument("--rego-y", "--regoriginy",     type = float, dest = "regoriginy", default = 20.0,  help="X mark origin from top [mm]")
-		pars.add_argument("--verbose", dest = "verbose",  type = inkex.Boolean, default = False, help="enable log messages")
+		pars.add_argument("--verbose", dest = "verbose",  type = Boolean, default = False, help="enable log messages")
 
 	#SVG rect element generation routine
 	def drawRect(self, size, pos, name):
-		x, y = [pos * self.mm_to_user_unit for pos in pos  ]
-		w, h = [pos * self.mm_to_user_unit for pos in size ]
-		return inkex.Rectangle.new(x, y, w, h, id=name, style='fill: black;')
+		mm_to_user_unit = self.svg.unittouu('1mm')
+		x, y = [pos * mm_to_user_unit for pos in pos  ]
+		w, h = [pos * mm_to_user_unit for pos in size ]
+		return Rectangle.new(x, y, w, h, id=name, style='fill: black;')
 		
 	#SVG line element generation routine
 	def drawLine(self, posStart, posEnd, name):
-		x1, y1, = [pos * self.mm_to_user_unit for pos in posStart]
-		x2, y2, = [pos * self.mm_to_user_unit for pos in posEnd  ]
-		line_style = 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM * self.mm_to_user_unit)+';'
-		return inkex.Line.new((x1, y1), (x2, y2), id=name, style=line_style)
+		mm_to_user_unit = self.svg.unittouu('1mm')
+		x1, y1, = [pos * mm_to_user_unit for pos in posStart]
+		x2, y2, = [pos * mm_to_user_unit for pos in posEnd  ]
+		line_style = 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM * mm_to_user_unit)+';'
+		return Line.new((x1, y1), (x2, y2), id=name, style=line_style)
 	
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
