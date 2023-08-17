@@ -21,6 +21,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 
 import inkex
 from inkex import Boolean, Rectangle, Line
+from inkex import Layer, Group
 from gettext import gettext
 
 LAYERNAME = 'Regmarks'
@@ -75,13 +76,13 @@ class InsertRegmark(inkex.Effect):
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
 		# Create a new layer
-		layer = self.svg.add(inkex.Layer.new(LAYERNAME))
+		layer = self.svg.add(Layer.new(LAYERNAME))
 	
 		# Create square in top left corner
 		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
 		# Create group for top right corner
-		topRight = inkex.Group(id = 'TopRight', style = 'fill: black;')
+		topRight = Group(id = 'TopRight', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_x = reg_origin_X+reg_width
 		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
@@ -89,7 +90,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRight)
 		
 		# Create group for top right corner
-		bottomLeft = inkex.Group(id = 'BottomLeft', style = 'fill: black;')
+		bottomLeft = Group(id = 'BottomLeft', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_right_reg_origin_y = reg_origin_Y+reg_length
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
@@ -99,7 +100,7 @@ class InsertRegmark(inkex.Effect):
 		# Keepout Marker #
 
 		# Create group for top left corner keepout
-		topLeftKeepout = inkex.Group(id = 'TopLeftKeepout', style = 'fill: black;')
+		topLeftKeepout = Group(id = 'TopLeftKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -108,7 +109,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topLeftKeepout)
 
 		# Create group for top right corner keepout
-		topRightKeepout = inkex.Group(id = 'TopRightKeepout', style = 'fill: black;')
+		topRightKeepout = Group(id = 'TopRightKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		top_left_keepout_origin_x = reg_origin_X+reg_width-REG_LINE_MM
 		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
@@ -117,7 +118,7 @@ class InsertRegmark(inkex.Effect):
 		layer.append(topRightKeepout)
 
 		# Create group for bottom right corner keepout
-		bottomRightKeepout = inkex.Group(id = 'BottomRightKeepout', style = 'fill: black;')
+		bottomRightKeepout = Group(id = 'BottomRightKeepout', style = 'fill: black;')
 		# Create horizontal and vertical lines in group
 		bottom_right_keepout_origin_x = reg_origin_X+REG_LINE_MM
 		bottom_right_keepout_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
