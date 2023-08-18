@@ -20,7 +20,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
-from inkex import EffectExtension, Boolean, Rectangle, Line, PathElement, Layer, Group, TextElement
+from inkex import EffectExtension, Boolean, Rectangle, Line, PathElement, Layer, Group, TextElement, Polygon
 from gettext import gettext
 
 REGMARK_LAYERNAME = 'Regmarks'
@@ -45,23 +45,8 @@ class InsertRegmark(EffectExtension):
 		pars.add_argument("--rego-y", "--regoriginy",     type = float, dest = "regoriginy", default = 20.0,  help="X mark origin from top [mm]")
 		pars.add_argument("--verbose", dest = "verbose",  type = Boolean, default = False, help="enable log messages")
 
-	#SVG rect element generation routine
-	def drawRect(self, size, pos, name):
-		mm_to_user_unit = self.svg.unittouu('1mm')
-		x, y = [pos * mm_to_user_unit for pos in pos  ]
-		w, h = [pos * mm_to_user_unit for pos in size ]
-		return Rectangle.new(x, y, w, h, id=name, style='fill: black;')
-		
-	#SVG line element generation routine
-	def drawLine(self, posStart, posEnd, name):
-		mm_to_user_unit = self.svg.unittouu('1mm')
-		x1, y1, = [pos * mm_to_user_unit for pos in posStart]
-		x2, y2, = [pos * mm_to_user_unit for pos in posEnd  ]
-		line_style = 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM * mm_to_user_unit)+';'
-		return Line.new((x1, y1), (x2, y2), id=name, style=line_style)
-	
 	#SVG SVGd from (x,y) dimentional points
-	def points_to_svgd(self, p):
+	def points_to_svgd(self, p, capped=False):
 		mm_to_user_unit = self.svg.unittouu('1mm')
 		p = [(x * mm_to_user_unit, y *mm_to_user_unit) for x, y in p]
 		f = p[0]
@@ -69,7 +54,8 @@ class InsertRegmark(EffectExtension):
 		svgd = "M{:.5f},{:.5f}".format(f[0], f[1])
 		for x in p:
 			svgd += " L{:.5f},{:.5f}".format(x[0], x[1])
-		svgd += "z"
+		if capped:
+			svgd += "z"
 		return svgd
 
 	def effect(self):
@@ -88,30 +74,23 @@ class InsertRegmark(EffectExtension):
 
 
 		# Register Mark #
+		mm_to_user_unit = self.svg.unittouu('1mm')
 
 		# Create a new register mark layer
 		regmark_layer = self.svg.add(Layer.new(REGMARK_LAYERNAME))
-	
+
 		# Create square in top left corner
-		regmark_layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
-		
-		# Create horizontal and vertical lines in group for top right corner
-		topRight = Group(id = 'TopRight')
-		top_right_reg_origin_x = reg_origin_X+reg_width
-		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
-		topRight.append(self.drawLine((top_right_reg_origin_x,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y + REG_LINE_MM), 'Vertical'))
-		regmark_layer.append(topRight)
-		
-		# Create horizontal and vertical lines in group for bottom left corner
-		bottomLeft = Group(id = 'BottomLeft')
-		top_right_reg_origin_y = reg_origin_Y+reg_length
-		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
-		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X,top_right_reg_origin_y - REG_LINE_MM), 'Vertical'))
-		regmark_layer.append(bottomLeft)
+		regmark_layer.append(Rectangle.new(left=reg_origin_X*mm_to_user_unit, top=reg_origin_Y*mm_to_user_unit, width=REG_SQUARE_MM*mm_to_user_unit, height=REG_SQUARE_MM*mm_to_user_unit, id='TopLeft', style='fill: black;'))
 
-		# Lock Layer
-		regmark_layer.set_sensitive(False)
+		# Create horizontal and vertical lines in group for top left corner
+		top_left_reg_origin_x = reg_origin_X+reg_width
+		top_left_path = [(top_left_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_left_reg_origin_x,reg_origin_Y), (top_left_reg_origin_x,reg_origin_Y + REG_LINE_MM)]
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(top_left_path), id="TopRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
 
+		# Create horizontal and vertical lines in group for bottom right corner
+		bottom_right_reg_origin_y = reg_origin_Y+reg_length
+		bottom_right_path = [(reg_origin_X+REG_LINE_MM,bottom_right_reg_origin_y), (reg_origin_X,bottom_right_reg_origin_y), (reg_origin_X,bottom_right_reg_origin_y - REG_LINE_MM)]
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(bottom_right_path), id="BottomRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
 
 		# Safe Area Marker #
 		# This draws the safe drawing area
@@ -133,9 +112,7 @@ class InsertRegmark(EffectExtension):
 			(bottom_right_safearea_origin_x,bottom_right_safearea_origin_y),
 			(bottom_right_safearea_origin_x-REG_SAFE_AREA_MM,bottom_right_safearea_origin_y),
 		]
-		safearea_polygon = PathElement(id="SafeArea", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1')
-		safearea_polygon.set_path(self.points_to_svgd(safe_area_points))
-		regmark_layer.append(safearea_polygon)
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points), id="SafeArea", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1'))
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
