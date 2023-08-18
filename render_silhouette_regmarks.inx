@@ -6,8 +6,8 @@
   <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">10</param>
   <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">10</param>
   <param indent="2">Spacing of the registration mark edges</param>
-  <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark distance [mm]"></param>
-  <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark distance [mm]"></param>
+  <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark to mark distance [mm]"></param>
+  <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark to mark distance [mm]"></param>
   <param indent="2">Distance between registration mark edges</param>
   <label indent="2">Note: If width and length spacing is empty, then it is calculated from current document size.</label>
   <param name="verbose" type="bool" gui-text="display verbose log messages">false</param>

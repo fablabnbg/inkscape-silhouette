@@ -22,7 +22,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 import inkex
 from inkex.extensions import EffectExtension
 from inkex import Boolean, Rectangle, Line, PathElement
-from inkex import Layer, Group
+from inkex import Layer, Group, TextElement
 from gettext import gettext
 
 REGMARK_LAYERNAME = 'Regmarks'
@@ -36,16 +36,6 @@ REG_SAFE_AREA_MM = 20
 # > The registration mark thickness is actually very important. For some reason, 0.3 mm marks work perfectly. 
 # > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
 REG_MARK_LINE_WIDTH_MM = 0.3
-
-#SVG SVGd from (x,y) dimentional points
-def points_to_svgd(p):
-	f = p[0]
-	p = p[1:]
-	svgd = "M{:.5f},{:.5f}".format(f[0], f[1])
-	for x in p:
-		svgd += " L{:.5f},{:.5f}".format(x[0], x[1])
-	svgd += "z"
-	return svgd
 
 class InsertRegmark(EffectExtension):
 	def __init__(self):
@@ -74,6 +64,17 @@ class InsertRegmark(EffectExtension):
 		line_style = 'stroke: black; stroke-width: '+str(REG_MARK_LINE_WIDTH_MM * mm_to_user_unit)+';'
 		return Line.new((x1, y1), (x2, y2), id=name, style=line_style)
 	
+	#SVG SVGd from (x,y) dimentional points
+	def points_to_svgd(self, p):
+		mm_to_user_unit = self.svg.unittouu('1mm')
+		f = p[0]
+		p = p[1:]
+		svgd = "M{:.5f},{:.5f}".format(f[0]*mm_to_user_unit, f[1]*mm_to_user_unit)
+		for x in p:
+			svgd += " L{:.5f},{:.5f}".format(x[0]*mm_to_user_unit, x[1]*mm_to_user_unit)
+		svgd += "z"
+		return svgd
+
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
@@ -122,7 +123,6 @@ class InsertRegmark(EffectExtension):
 
 		# This draws the safe drawing area
 		safearea = Group(id = 'SafeArea')
-		mm_to_user_unit = self.svg.unittouu('1mm')
 		top_left_safearea_origin_x = reg_origin_X+REG_LINE_MM
 		top_left_safearea_origin_y = reg_origin_Y+REG_LINE_MM
 		top_right_safearea_origin_x = reg_origin_X+reg_width-REG_LINE_MM
@@ -142,8 +142,19 @@ class InsertRegmark(EffectExtension):
 			(bottom_right_safearea_origin_x-REG_SAFE_AREA_MM,bottom_right_safearea_origin_y),
 		]
 		safearea = PathElement(id="safe area", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1')
-		safearea.set_path(points_to_svgd(points))
+		safearea.set_path(self.points_to_svgd(points))
 		safe_area.append(safearea)
+
+		# Add some settings reminders to the print layer as a reminder
+		safe_area_note = ""
+		safe_area_note += f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
+		safe_area_note += f"mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
+		safeare_notes_text_element = TextElement()
+		safeare_notes_text_element.text = safe_area_note
+		safeare_notes_text_element.set('x', (top_left_safearea_origin_x+10) * self.svg.unittouu('1mm'))
+		safeare_notes_text_element.set('y', (bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))*self.svg.unittouu('1mm'))
+		safeare_notes_text_element.set('font-size', '8')
+		safe_area.append(safeare_notes_text_element)
 
 		# Lock Layer
 		safe_area.set_sensitive(False)
