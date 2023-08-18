@@ -20,23 +20,35 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
-from inkex import Boolean, Rectangle, Line
+from inkex import Boolean, Rectangle, Line, PathElement
 from inkex import Layer, Group
 from gettext import gettext
 
-LAYERNAME = 'Regmarks'
+REGMARK_LAYERNAME = 'Regmarks'
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
-REG_KEEPOUT_MM = 2
+
+SAFEAREA_LAYERNAME = 'Print-SafeArea'
+REG_SAFE_AREA_MM = 20
 
 # https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
 # > The registration mark thickness is actually very important. For some reason, 0.3 mm marks work perfectly. 
 # > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
 REG_MARK_LINE_WIDTH_MM = 0.3
 
-class InsertRegmark(inkex.Effect):
+#SVG SVGd from (x,y) dimentional points
+def points_to_svgd(p):
+	f = p[0]
+	p = p[1:]
+	svgd = "M{:.5f},{:.5f}".format(f[0], f[1])
+	for x in p:
+		svgd += " L{:.5f},{:.5f}".format(x[0], x[1])
+	svgd += "z"
+	return svgd
+
+class InsertRegmark(inkex.EffectExtension):
 	def __init__(self):
-		inkex.Effect.__init__(self)
+		inkex.EffectExtension.__init__(self)
 
 	def add_arguments(self, pars):
 		# Parse arguments
@@ -75,61 +87,65 @@ class InsertRegmark(inkex.Effect):
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
 			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
-		# Create a new layer
-		layer = self.svg.add(Layer.new(LAYERNAME))
+
+		# Register Mark #
+
+		# Create a new register mark layer
+		regmark_layer = self.svg.add(Layer.new(REGMARK_LAYERNAME))
 	
 		# Create square in top left corner
-		layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
+		regmark_layer.append(self.drawRect((REG_SQUARE_MM,REG_SQUARE_MM), (reg_origin_X,reg_origin_Y), 'TopLeft'))
 		
-		# Create group for top right corner
+		# Create horizontal and vertical lines in group for top right corner
 		topRight = Group(id = 'TopRight')
-		# Create horizontal and vertical lines in group
 		top_right_reg_origin_x = reg_origin_X+reg_width
 		topRight.append(self.drawLine((top_right_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y), 'Horizontal'))
 		topRight.append(self.drawLine((top_right_reg_origin_x,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y + REG_LINE_MM), 'Vertical'))
-		layer.append(topRight)
+		regmark_layer.append(topRight)
 		
-		# Create group for top right corner
+		# Create horizontal and vertical lines in group for top right corner
 		bottomLeft = Group(id = 'BottomLeft')
-		# Create horizontal and vertical lines in group
 		top_right_reg_origin_y = reg_origin_Y+reg_length
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X,top_right_reg_origin_y - REG_LINE_MM), 'Vertical'))
-		layer.append(bottomLeft)
-		
-		# Keepout Marker #
-		# Not directly part of Silhouette registration marker
-		# Instead it's a visual indicator to the user to avoid putting any design within this area
+		regmark_layer.append(bottomLeft)
 
-		# Create group for top left corner keepout
-		topLeftKeepout = Group(id = 'TopLeftKeepout')
-		# Create horizontal and vertical lines in group
-		top_left_keepout_origin_x = reg_origin_X+REG_LINE_MM
-		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
-		topLeftKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x-REG_KEEPOUT_MM,top_left_keepout_origin_y),'Horizontal'))
-		topLeftKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x,top_left_keepout_origin_y-REG_KEEPOUT_MM), 'Vertical'))
-		layer.append(topLeftKeepout)
+		# Lock Layer
+		regmark_layer.set_sensitive(False)
 
-		# Create group for top right corner keepout
-		topRightKeepout = Group(id = 'TopRightKeepout')
-		# Create horizontal and vertical lines in group
-		top_left_keepout_origin_x = reg_origin_X+reg_width-REG_LINE_MM
-		top_left_keepout_origin_y = reg_origin_Y+REG_LINE_MM
-		topRightKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x+REG_KEEPOUT_MM,top_left_keepout_origin_y),'Horizontal'))
-		topRightKeepout.append(self.drawLine((top_left_keepout_origin_x,top_left_keepout_origin_y), (top_left_keepout_origin_x,top_left_keepout_origin_y-REG_KEEPOUT_MM), 'Vertical'))
-		layer.append(topRightKeepout)
 
-		# Create group for bottom right corner keepout
-		bottomRightKeepout = Group(id = 'BottomRightKeepout')
-		# Create horizontal and vertical lines in group
-		bottom_right_keepout_origin_x = reg_origin_X+REG_LINE_MM
-		bottom_right_keepout_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
-		bottomRightKeepout.append(self.drawLine((bottom_right_keepout_origin_x,bottom_right_keepout_origin_y), (bottom_right_keepout_origin_x-REG_KEEPOUT_MM,bottom_right_keepout_origin_y),'Horizontal'))
-		bottomRightKeepout.append(self.drawLine((bottom_right_keepout_origin_x,bottom_right_keepout_origin_y), (bottom_right_keepout_origin_x,bottom_right_keepout_origin_y+REG_KEEPOUT_MM), 'Vertical'))
-		layer.append(bottomRightKeepout)
+		# Safe Area Marker #
 
-		# Lock layer
-		layer.set_sensitive(False)
+		# Create a new register mark layer
+		safe_area = self.svg.add(Layer.new(SAFEAREA_LAYERNAME))
+
+		# This draws the safe drawing area
+		safearea = Group(id = 'SafeArea')
+		mm_to_user_unit = self.svg.unittouu('1mm')
+		top_left_safearea_origin_x = reg_origin_X+REG_LINE_MM
+		top_left_safearea_origin_y = reg_origin_Y+REG_LINE_MM
+		top_right_safearea_origin_x = reg_origin_X+reg_width-REG_LINE_MM
+		top_right_safearea_origin_y = reg_origin_Y+REG_LINE_MM
+		bottom_right_safearea_origin_x = reg_origin_X+REG_LINE_MM
+		bottom_right_safearea_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
+		points = [
+			(top_left_safearea_origin_x-REG_SAFE_AREA_MM,top_left_safearea_origin_y),
+			(top_left_safearea_origin_x,top_left_safearea_origin_y),
+			(top_left_safearea_origin_x,top_left_safearea_origin_y-REG_SAFE_AREA_MM),
+			(top_right_safearea_origin_x,top_right_safearea_origin_y-REG_SAFE_AREA_MM),
+			(top_right_safearea_origin_x,top_right_safearea_origin_y),
+			(top_right_safearea_origin_x+REG_SAFE_AREA_MM,top_right_safearea_origin_y),
+			(top_right_safearea_origin_x+REG_SAFE_AREA_MM,bottom_right_safearea_origin_y+REG_SAFE_AREA_MM),
+			(bottom_right_safearea_origin_x,bottom_right_safearea_origin_y+REG_SAFE_AREA_MM),
+			(bottom_right_safearea_origin_x,bottom_right_safearea_origin_y),
+			(bottom_right_safearea_origin_x-REG_SAFE_AREA_MM,bottom_right_safearea_origin_y),
+		]
+		safearea = PathElement(id="safe area", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1')
+		safearea.set_path(points_to_svgd(points))
+		safe_area.append(safearea)
+
+		# Lock Layer
+		safe_area.set_sensitive(False)
 		
 if __name__ == '__main__':
 	InsertRegmark().run()
