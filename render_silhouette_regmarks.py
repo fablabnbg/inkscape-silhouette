@@ -20,9 +20,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
-from inkex.extensions import EffectExtension
-from inkex import Boolean, Rectangle, Line, PathElement
-from inkex import Layer, Group, TextElement
+from inkex import EffectExtension, Boolean, Rectangle, Line, PathElement, Layer, Group, TextElement
 from gettext import gettext
 
 REGMARK_LAYERNAME = 'Regmarks'
@@ -81,12 +79,12 @@ class InsertRegmark(EffectExtension):
 		reg_length = self.options.reglength if self.options.reglength else int(self.svg.get("height").rstrip("mm")) - reg_origin_Y*2
 
 		if self.options.verbose == True:
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page width ")+str(self.svg.get("width").rstrip("mm")))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: page height ")+str(self.svg.get("height").rstrip("mm")))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
-			inkex.base.InkscapeExtension.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
+			self.msg(gettext("[INFO]: page width ")+str(self.svg.get("width").rstrip("mm")))
+			self.msg(gettext("[INFO]: page height ")+str(self.svg.get("height").rstrip("mm")))
+			self.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
+			self.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
+			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
+			self.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
 
 		# Register Mark #
