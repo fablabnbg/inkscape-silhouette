@@ -83,13 +83,13 @@ class InsertRegmark(EffectExtension):
 		regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id='TopLeft', style='fill: black;'))
 
 		# Create horizontal and vertical lines in group for top left corner
-		top_left_reg_origin_x = reg_origin_X+reg_width
-		top_left_path = [(top_left_reg_origin_x-REG_LINE_MM,reg_origin_Y), (top_left_reg_origin_x,reg_origin_Y), (top_left_reg_origin_x,reg_origin_Y + REG_LINE_MM)]
+		top_left_x = reg_origin_X+reg_width
+		top_left_path = [(top_left_x-REG_LINE_MM,reg_origin_Y), (top_left_x,reg_origin_Y), (top_left_x,reg_origin_Y + REG_LINE_MM)]
 		regmark_layer.append(PathElement.new(path=self.points_to_svgd(top_left_path), id="TopRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
 
 		# Create horizontal and vertical lines in group for bottom right corner
-		bottom_right_reg_origin_y = reg_origin_Y+reg_length
-		bottom_right_path = [(reg_origin_X+REG_LINE_MM,bottom_right_reg_origin_y), (reg_origin_X,bottom_right_reg_origin_y), (reg_origin_X,bottom_right_reg_origin_y - REG_LINE_MM)]
+		bottom_right_y = reg_origin_Y+reg_length
+		bottom_right_path = [(reg_origin_X+REG_LINE_MM,bottom_right_y), (reg_origin_X,bottom_right_y), (reg_origin_X,bottom_right_y - REG_LINE_MM)]
 		regmark_layer.append(PathElement.new(path=self.points_to_svgd(bottom_right_path), id="BottomRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
 
 		# Safe Area Marker #
