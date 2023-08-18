@@ -28,7 +28,7 @@ REGMARK_LAYERNAME = 'Regmarks'
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
 
-SAFEAREA_LAYERNAME = 'Print-SafeArea'
+SAFEAREA_LAYERNAME = 'Print - SafeArea'
 REG_SAFE_AREA_MM = 20
 
 # https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
