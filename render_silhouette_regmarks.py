@@ -72,7 +72,6 @@ class InsertRegmark(EffectExtension):
 			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
 			self.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
-
 		# Register Mark #
 		mm_to_user_unit = self.svg.unittouu('1mm')
 
@@ -115,14 +114,8 @@ class InsertRegmark(EffectExtension):
 		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points), id="SafeArea", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1'))
 
 		# Add some settings reminders to the print layer as a reminder
-		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
-		safe_area_note += f"mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		safeare_notes_text_element = TextElement(id = 'RegMarkNotes')
-		safeare_notes_text_element.text = safe_area_note
-		safeare_notes_text_element.set('x', (top_left_safearea_origin_x+3) * self.svg.unittouu('1mm'))
-		safeare_notes_text_element.set('y', (bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))*self.svg.unittouu('1mm'))
-		safeare_notes_text_element.set('font-size', 2.5 * self.svg.unittouu('1mm'))
-		regmark_layer.append(safeare_notes_text_element)
+		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
+		regmark_layer.append(TextElement(safe_area_note, x=f"{(top_left_safearea_origin_x+3)*mm_to_user_unit}", y=f"{(bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))*mm_to_user_unit}", id = 'RegMarkNotes', style=f"font-size:{2.5*self.svg.unittouu('1mm')}px"))
 
 		# Lock Layer
 		regmark_layer.set_sensitive(False)
