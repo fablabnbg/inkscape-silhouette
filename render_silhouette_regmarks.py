@@ -28,8 +28,6 @@ from gettext import gettext
 REGMARK_LAYERNAME = 'Regmarks'
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
-
-SAFEAREA_LAYERNAME = 'SafeArea'
 REG_SAFE_AREA_MM = 20
 
 # https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
@@ -67,11 +65,12 @@ class InsertRegmark(EffectExtension):
 	#SVG SVGd from (x,y) dimentional points
 	def points_to_svgd(self, p):
 		mm_to_user_unit = self.svg.unittouu('1mm')
+		p = [(x * mm_to_user_unit, y *mm_to_user_unit) for x, y in p]
 		f = p[0]
 		p = p[1:]
-		svgd = "M{:.5f},{:.5f}".format(f[0]*mm_to_user_unit, f[1]*mm_to_user_unit)
+		svgd = "M{:.5f},{:.5f}".format(f[0], f[1])
 		for x in p:
-			svgd += " L{:.5f},{:.5f}".format(x[0]*mm_to_user_unit, x[1]*mm_to_user_unit)
+			svgd += " L{:.5f},{:.5f}".format(x[0], x[1])
 		svgd += "z"
 		return svgd
 
