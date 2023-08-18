@@ -29,7 +29,7 @@ REGMARK_LAYERNAME = 'Regmarks'
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
 
-SAFEAREA_LAYERNAME = 'Print - SafeArea'
+SAFEAREA_LAYERNAME = 'SafeArea'
 REG_SAFE_AREA_MM = 20
 
 # https://www.reddit.com/r/silhouettecutters/comments/wcdnzy/the_key_to_print_and_cut_success_an_extensive/
@@ -117,19 +117,14 @@ class InsertRegmark(EffectExtension):
 
 
 		# Safe Area Marker #
-
-		# Create a new register mark layer
-		safe_area = self.svg.add(Layer.new(SAFEAREA_LAYERNAME))
-
 		# This draws the safe drawing area
-		safearea = Group(id = 'SafeArea')
 		top_left_safearea_origin_x = reg_origin_X+REG_LINE_MM
 		top_left_safearea_origin_y = reg_origin_Y+REG_LINE_MM
 		top_right_safearea_origin_x = reg_origin_X+reg_width-REG_LINE_MM
 		top_right_safearea_origin_y = reg_origin_Y+REG_LINE_MM
 		bottom_right_safearea_origin_x = reg_origin_X+REG_LINE_MM
 		bottom_right_safearea_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
-		points = [
+		safe_area_points = [
 			(top_left_safearea_origin_x-REG_SAFE_AREA_MM,top_left_safearea_origin_y),
 			(top_left_safearea_origin_x,top_left_safearea_origin_y),
 			(top_left_safearea_origin_x,top_left_safearea_origin_y-REG_SAFE_AREA_MM),
@@ -141,22 +136,22 @@ class InsertRegmark(EffectExtension):
 			(bottom_right_safearea_origin_x,bottom_right_safearea_origin_y),
 			(bottom_right_safearea_origin_x-REG_SAFE_AREA_MM,bottom_right_safearea_origin_y),
 		]
-		safearea = PathElement(id="safe area", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1')
-		safearea.set_path(self.points_to_svgd(points))
-		safe_area.append(safearea)
+		safearea_polygon = PathElement(id="SafeArea", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1')
+		safearea_polygon.set_path(self.points_to_svgd(safe_area_points))
+		regmark_layer.append(safearea_polygon)
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
 		safe_area_note += f"mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		safeare_notes_text_element = TextElement()
+		safeare_notes_text_element = TextElement(id = 'RegMarkNotes')
 		safeare_notes_text_element.text = safe_area_note
 		safeare_notes_text_element.set('x', (top_left_safearea_origin_x+3) * self.svg.unittouu('1mm'))
 		safeare_notes_text_element.set('y', (bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))*self.svg.unittouu('1mm'))
-		safeare_notes_text_element.set('font-size', 3 * self.svg.unittouu('1mm'))
-		safe_area.append(safeare_notes_text_element)
+		safeare_notes_text_element.set('font-size', 2.5 * self.svg.unittouu('1mm'))
+		regmark_layer.append(safeare_notes_text_element)
 
 		# Lock Layer
-		safe_area.set_sensitive(False)
+		regmark_layer.set_sensitive(False)
 		
 if __name__ == '__main__':
 	InsertRegmark().run()
