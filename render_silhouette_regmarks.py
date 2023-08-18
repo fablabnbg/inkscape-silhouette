@@ -80,17 +80,17 @@ class InsertRegmark(EffectExtension):
 		regmark_layer.transform = Transform(f"scale({mm_to_user_unit}, {mm_to_user_unit})")
 
 		# Create square in top left corner
-		regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id='TopLeft', style='fill: black;'))
+		regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id='TopLeft', style='fill:black;'))
 
 		# Create horizontal and vertical lines in group for top left corner
 		top_left_x = reg_origin_X+reg_width
 		top_left_path = [(top_left_x-REG_LINE_MM,reg_origin_Y), (top_left_x,reg_origin_Y), (top_left_x,reg_origin_Y + REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path=self.points_to_svgd(top_left_path), id="TopRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(top_left_path), id="TopRight", style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM}"))
 
 		# Create horizontal and vertical lines in group for bottom right corner
 		bottom_right_y = reg_origin_Y+reg_length
 		bottom_right_path = [(reg_origin_X+REG_LINE_MM,bottom_right_y), (reg_origin_X,bottom_right_y), (reg_origin_X,bottom_right_y - REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path=self.points_to_svgd(bottom_right_path), id="BottomRight", style=f"fill:none; stroke: black; stroke-width: {REG_MARK_LINE_WIDTH_MM}"))
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(bottom_right_path), id="BottomRight", style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM}"))
 
 		# Safe Area Marker #
 		# This draws the safe drawing area
@@ -112,7 +112,7 @@ class InsertRegmark(EffectExtension):
 			(bottom_right_safearea_origin_x,bottom_right_safearea_origin_y),
 			(bottom_right_safearea_origin_x-REG_SAFE_AREA_MM,bottom_right_safearea_origin_y),
 		]
-		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points), id="SafeArea", style='display:inline;fill:#ffffff;stroke:none;stroke-dasharray:1, 1'))
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points), id="SafeArea", style='fill:white;stroke:none'))
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
