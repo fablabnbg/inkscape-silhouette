@@ -105,7 +105,7 @@ class InsertRegmark(EffectExtension):
 		topRight.append(self.drawLine((top_right_reg_origin_x,reg_origin_Y), (top_right_reg_origin_x,reg_origin_Y + REG_LINE_MM), 'Vertical'))
 		regmark_layer.append(topRight)
 		
-		# Create horizontal and vertical lines in group for top right corner
+		# Create horizontal and vertical lines in group for bottom left corner
 		bottomLeft = Group(id = 'BottomLeft')
 		top_right_reg_origin_y = reg_origin_Y+reg_length
 		bottomLeft.append(self.drawLine((reg_origin_X,top_right_reg_origin_y), (reg_origin_X+REG_LINE_MM,top_right_reg_origin_y), 'Horizontal'))
