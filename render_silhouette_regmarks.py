@@ -20,6 +20,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
+from inkex.extensions import EffectExtension
 from inkex import Boolean, Rectangle, Line, PathElement
 from inkex import Layer, Group
 from gettext import gettext
@@ -46,9 +47,9 @@ def points_to_svgd(p):
 	svgd += "z"
 	return svgd
 
-class InsertRegmark(inkex.EffectExtension):
+class InsertRegmark(EffectExtension):
 	def __init__(self):
-		inkex.EffectExtension.__init__(self)
+		EffectExtension.__init__(self)
 
 	def add_arguments(self, pars):
 		# Parse arguments
