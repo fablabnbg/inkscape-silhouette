@@ -33,6 +33,8 @@ REG_SAFE_AREA_MM = 20
 # > The thicker you get, the less accurate registration will be. ~~~ galaxyman47
 REG_MARK_LINE_WIDTH_MM = 0.3
 
+REG_MARK_INFO_FONT_SIZE_PT = 2.5
+
 class InsertRegmark(EffectExtension):
 	def __init__(self):
 		EffectExtension.__init__(self)
@@ -114,7 +116,7 @@ class InsertRegmark(EffectExtension):
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		regmark_layer.append(TextElement(safe_area_note, x=f"{(top_left_safearea_origin_x+3)}", y=f"{(bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = 'RegMarkNotes', style=f"font-size:{2.5}px"))
+		regmark_layer.append(TextElement(safe_area_note, x=f"{(top_left_safearea_origin_x+3)}", y=f"{(bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = 'RegMarkNotes', style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PT}px"))
 
 		# Lock Layer
 		regmark_layer.set_sensitive(False)
