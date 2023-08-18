@@ -146,14 +146,13 @@ class InsertRegmark(EffectExtension):
 		safe_area.append(safearea)
 
 		# Add some settings reminders to the print layer as a reminder
-		safe_area_note = ""
-		safe_area_note += f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
+		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; "
 		safe_area_note += f"mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
 		safeare_notes_text_element = TextElement()
 		safeare_notes_text_element.text = safe_area_note
-		safeare_notes_text_element.set('x', (top_left_safearea_origin_x+10) * self.svg.unittouu('1mm'))
+		safeare_notes_text_element.set('x', (top_left_safearea_origin_x+3) * self.svg.unittouu('1mm'))
 		safeare_notes_text_element.set('y', (bottom_right_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))*self.svg.unittouu('1mm'))
-		safeare_notes_text_element.set('font-size', '8')
+		safeare_notes_text_element.set('font-size', 3 * self.svg.unittouu('1mm'))
 		safe_area.append(safeare_notes_text_element)
 
 		# Lock Layer
