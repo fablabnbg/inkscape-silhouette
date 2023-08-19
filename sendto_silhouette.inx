@@ -85,11 +85,13 @@
       <label indent="2">The document contains printed registration marks</label>
       <param name="regsearch" type="bool" gui-text="Search for the registration marks automatically">false</param>
       <label indent="2">Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
-      <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark distance [mm]">180</param>
-      <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark distance [mm]">230</param>
-      <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">15</param>
-      <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">20</param>
+      <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">10</param>
+      <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">10</param>
       <label indent="2">Distance of the registration mark edges</label>
+      <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark to mark distance [mm]">0</param>
+      <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark to mark distance [mm]">0</param>
+      <label indent="2">Distance between registration mark edges</label>
+      <label indent="2">Note: If width and length spacing is empty, then it is calculated from current document size.</label>
     </page>
 
     <page name='advanced' gui-text='Advanced'>

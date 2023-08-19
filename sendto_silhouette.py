@@ -555,6 +555,11 @@ class SendtoSilhouette(EffectExtension):
 
 
     def effect(self):
+        reg_origin_X = self.options.regoriginx
+        reg_origin_Y = self.options.regoriginy
+        reg_width = self.options.regwidth if self.options.regwidth else int(self.svg.get("width").rstrip("mm")) - reg_origin_X*2
+        reg_length = self.options.reglength if self.options.reglength else int(self.svg.get("height").rstrip("mm")) - reg_origin_Y*2
+
         if self.options.logfile:
             mode = "a" if self.options.append_logs else "w"
             self.log = open(self.options.logfile, mode)
@@ -682,10 +687,10 @@ class SendtoSilhouette(EffectExtension):
                     endposition="start",
                     regmark=self.options.regmark,
                     regsearch=self.options.regsearch,
-                    regwidth=self.options.regwidth,
-                    reglength=self.options.reglength,
-                    regoriginx=self.options.regoriginx,
-                    regoriginy=self.options.regoriginy)
+                    regwidth=reg_width,
+                    reglength=reg_length,
+                    regoriginx=reg_origin_X,
+                    regoriginy=reg_origin_Y)
 
             if len(bbox["bbox"].keys()):
                     self.report(
@@ -704,10 +709,10 @@ class SendtoSilhouette(EffectExtension):
             end_paper_offset=self.options.end_offset,
             regmark=self.options.regmark,
             regsearch=self.options.regsearch,
-            regwidth=self.options.regwidth,
-            reglength=self.options.reglength,
-            regoriginx=self.options.regoriginx,
-            regoriginy=self.options.regoriginy)
+            regwidth=reg_width,
+            reglength=reg_length,
+            regoriginx=reg_origin_X,
+            regoriginy=reg_origin_Y)
         if len(bbox["bbox"].keys()) == 0:
             self.report("empty page?", 'error')
         else:
