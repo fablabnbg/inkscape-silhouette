@@ -119,7 +119,7 @@ class InsertRegmark(EffectExtension):
 			(bottom_left_safearea_origin_x,bottom_left_safearea_origin_y),
 			(bottom_left_safearea_origin_x-REG_SAFE_AREA_MM,bottom_left_safearea_origin_y),
 		]
-		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points), id=REGMARK_SAFE_AREA_ID, style='fill:white;stroke:none'))
+		regmark_layer.append(PathElement.new(path=self.points_to_svgd(safe_area_points, capped=True), id=REGMARK_SAFE_AREA_ID, style='fill:white;stroke:none'))
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
