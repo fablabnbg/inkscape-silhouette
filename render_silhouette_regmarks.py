@@ -29,6 +29,7 @@ REGMARK_TOP_LEFT_ID = 'regmark-tl'
 REGMARK_TOP_RIGHT_ID = 'regmark-tr'
 REGMARK_BOTTOM_LEFT_ID = 'regmark-bl'
 REGMARK_SAFE_AREA_ID = 'regmark-safe-area'
+REGMARK_NOTES_ID = 'regmark-notes'
 
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
@@ -122,7 +123,7 @@ class InsertRegmark(EffectExtension):
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		regmark_layer.append(TextElement(safe_area_note, x=f"{(bottom_left_safearea_origin_x+3)}", y=f"{(bottom_left_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = 'RegMarkNotes', style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PT}px"))
+		regmark_layer.append(TextElement(safe_area_note, x=f"{(bottom_left_safearea_origin_x+3)}", y=f"{(bottom_left_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = REGMARK_NOTES_ID, style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PT}px"))
 
 		# Lock Layer
 		regmark_layer.set_sensitive(False)
