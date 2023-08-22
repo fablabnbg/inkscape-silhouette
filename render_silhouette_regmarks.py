@@ -56,12 +56,12 @@ class InsertRegmark(EffectExtension):
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		reg_width = self.options.regwidth if self.options.regwidth else int(self.svg.get("width").rstrip("mm")) - reg_origin_X*2
-		reg_length = self.options.reglength if self.options.reglength else int(self.svg.get("height").rstrip("mm")) - reg_origin_Y*2
+		reg_width = self.options.regwidth if self.options.regwidth else self.svg.to_dimensional(self.svg.get("width"), "mm") - reg_origin_X*2
+		reg_length = self.options.reglength if self.options.reglength else self.svg.to_dimensional(self.svg.get("height"), "mm") - reg_origin_Y*2
 
 		if self.options.verbose == True:
-			self.msg(gettext("[INFO]: page width ")+str(self.svg.get("width").rstrip("mm")))
-			self.msg(gettext("[INFO]: page height ")+str(self.svg.get("height").rstrip("mm")))
+			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.get("width"), "mm")))
+			self.msg(gettext("[INFO]: page height ")+str(self.svg.to_dimensional(self.svg.get("height"), "mm")))
 			self.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
 			self.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
 			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
