@@ -69,7 +69,7 @@ class InsertRegmark(EffectExtension):
 		mm_to_user_unit = self.svg.unittouu('1mm')
 
 		# Create a new register mark layer
-		regmark_layer = self.svg.add(Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID))
+		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
 		regmark_layer.transform = Transform(f"scale({mm_to_user_unit}, {mm_to_user_unit})")
 
 		# Create square in top left corner
@@ -113,6 +113,9 @@ class InsertRegmark(EffectExtension):
 
 		# Lock Layer
 		regmark_layer.set_sensitive(False)
+
+		# Insert regmark layer to the bottom of the svg layer stack to avoid covering any existing artwork
+		self.svg.insert(0, regmark_layer)
 
 if __name__ == '__main__':
 	InsertRegmark().run()
