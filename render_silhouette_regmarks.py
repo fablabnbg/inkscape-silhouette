@@ -72,7 +72,7 @@ class InsertRegmark(EffectExtension):
 
 		# Create a new register mark layer
 		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
-		regmark_layer.transform = Transform(f"scale({mm_to_user_unit}, {mm_to_user_unit})")
+		regmark_layer.transform = Transform(scale=mm_to_user_unit)
 
 		# Create square in top left corner
 		regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=REGMARK_TOP_LEFT_ID, style='fill:black;'))
