@@ -20,7 +20,7 @@ Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
 import inkex
-from inkex import EffectExtension, Boolean, Rectangle, Line, PathElement, Layer, Group, TextElement, Polygon, Transform
+from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
 from gettext import gettext
 
 REGMARK_LAYERNAME = 'Regmarks'
