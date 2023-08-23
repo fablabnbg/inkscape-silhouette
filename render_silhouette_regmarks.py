@@ -69,7 +69,7 @@ class InsertRegmark(EffectExtension):
 
 		# Check if existing regmark layer exist and delete it
 		old_regmark_layer = self.svg.getElementById(REGMARK_LAYER_ID)
-		if old_regmark_layer:
+		if old_regmark_layer is not None:
 			old_regmark_layer.delete()
 
 		# Register Mark #
