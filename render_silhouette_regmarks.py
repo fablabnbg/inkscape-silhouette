@@ -56,12 +56,12 @@ class InsertRegmark(EffectExtension):
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		reg_width = self.options.regwidth if self.options.regwidth else self.svg.to_dimensional(self.svg.get("width"), "mm") - reg_origin_X*2
-		reg_length = self.options.reglength if self.options.reglength else self.svg.to_dimensional(self.svg.get("height"), "mm") - reg_origin_Y*2
+		reg_width = self.options.regwidth if self.options.regwidth else self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
+		reg_length = self.options.reglength if self.options.reglength else self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
 
 		if self.options.verbose == True:
-			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.get("width"), "mm")))
-			self.msg(gettext("[INFO]: page height ")+str(self.svg.to_dimensional(self.svg.get("height"), "mm")))
+			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.viewport_width, "mm")))
+			self.msg(gettext("[INFO]: page height ")+str(self.svg.to_dimensional(self.svg.viewport_height, "mm")))
 			self.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
 			self.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
 			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
@@ -69,11 +69,11 @@ class InsertRegmark(EffectExtension):
 
 		# Check if existing regmark layer exist and delete it
 		old_regmark_layer = self.svg.getElementById(REGMARK_LAYER_ID)
-		if old_regmark_layer is not None:
+		if old_regmark_layer:
 			old_regmark_layer.delete()
 
 		# Register Mark #
-		mm_to_user_unit = self.svg.unittouu('1mm')
+		mm_to_user_unit = self.svg.viewport_to_unit('1mm')
 
 		# Create a new register mark layer
 		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
@@ -85,38 +85,36 @@ class InsertRegmark(EffectExtension):
 		# Create horizontal and vertical lines in group for top right corner
 		top_right_x = reg_origin_X+reg_width
 		top_right_path = [(top_right_x-REG_LINE_MM,reg_origin_Y), (top_right_x,reg_origin_Y), (top_right_x,reg_origin_Y + REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path="M"+str(top_right_path), id=REGMARK_TOP_RIGHT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM}"))
+		regmark_layer.append(PathElement.new(path="M"+str(top_right_path), id=REGMARK_TOP_RIGHT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM};"))
 
 		# Create horizontal and vertical lines in group for bottom left corner
 		bottom_left_y = reg_origin_Y+reg_length
 		bottom_left_path = [(reg_origin_X+REG_LINE_MM,bottom_left_y), (reg_origin_X,bottom_left_y), (reg_origin_X,bottom_left_y - REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path="M"+str(bottom_left_path), id=REGMARK_BOTTOM_LEFT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM}"))
+		regmark_layer.append(PathElement.new(path="M"+str(bottom_left_path), id=REGMARK_BOTTOM_LEFT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM};"))
 
 		# Safe Area Marker #
 		# This draws the safe drawing area
-		top_left_safearea_origin_x = reg_origin_X+REG_LINE_MM
-		top_left_safearea_origin_y = reg_origin_Y+REG_LINE_MM
-		top_right_safearea_origin_x = reg_origin_X+reg_width-REG_LINE_MM
-		top_right_safearea_origin_y = reg_origin_Y+REG_LINE_MM
-		bottom_left_safearea_origin_x = reg_origin_X+REG_LINE_MM
-		bottom_left_safearea_origin_y = reg_origin_Y+reg_length-REG_LINE_MM
+		safearea_left_x = reg_origin_X+REG_LINE_MM
+		safearea_top_y = reg_origin_Y+REG_LINE_MM
+		safearea_right_x = reg_origin_X+reg_width-REG_LINE_MM
+		safearea_bottom_y = reg_origin_Y+reg_length-REG_LINE_MM
 		safe_area_points = [
-			(top_left_safearea_origin_x-REG_SAFE_AREA_MM,top_left_safearea_origin_y),
-			(top_left_safearea_origin_x,top_left_safearea_origin_y),
-			(top_left_safearea_origin_x,top_left_safearea_origin_y-REG_SAFE_AREA_MM),
-			(top_right_safearea_origin_x,top_right_safearea_origin_y-REG_SAFE_AREA_MM),
-			(top_right_safearea_origin_x,top_right_safearea_origin_y),
-			(top_right_safearea_origin_x+REG_SAFE_AREA_MM,top_right_safearea_origin_y),
-			(top_right_safearea_origin_x+REG_SAFE_AREA_MM,bottom_left_safearea_origin_y+REG_SAFE_AREA_MM),
-			(bottom_left_safearea_origin_x,bottom_left_safearea_origin_y+REG_SAFE_AREA_MM),
-			(bottom_left_safearea_origin_x,bottom_left_safearea_origin_y),
-			(bottom_left_safearea_origin_x-REG_SAFE_AREA_MM,bottom_left_safearea_origin_y),
+			(safearea_left_x-REG_SAFE_AREA_MM,safearea_top_y),
+			(safearea_left_x,safearea_top_y),
+			(safearea_left_x,safearea_top_y-REG_SAFE_AREA_MM),
+			(safearea_right_x,safearea_top_y-REG_SAFE_AREA_MM),
+			(safearea_right_x,safearea_top_y),
+			(safearea_right_x+REG_SAFE_AREA_MM,safearea_top_y),
+			(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y+REG_SAFE_AREA_MM),
+			(safearea_left_x,safearea_bottom_y+REG_SAFE_AREA_MM),
+			(safearea_left_x,safearea_bottom_y),
+			(safearea_left_x-REG_SAFE_AREA_MM,safearea_bottom_y),
 		]
-		regmark_layer.append(PathElement.new(path="M"+str(safe_area_points)+"Z", id=REGMARK_SAFE_AREA_ID, style='fill:white;stroke:none'))
+		regmark_layer.append(PathElement.new(path="M"+str(safe_area_points)+"Z", id=REGMARK_SAFE_AREA_ID, style='fill:white;stroke:none;'))
 
 		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		regmark_layer.append(TextElement(safe_area_note, x=f"{(bottom_left_safearea_origin_x+3)}", y=f"{(bottom_left_safearea_origin_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = REGMARK_NOTES_ID, style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px"))
+		regmark_layer.append(TextElement(safe_area_note, x=f"{(safearea_left_x+3)}", y=f"{(safearea_bottom_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = REGMARK_NOTES_ID, style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px;"))
 
 		# Lock Layer
 		regmark_layer.set_sensitive(False)
@@ -125,7 +123,7 @@ class InsertRegmark(EffectExtension):
 		self.svg.insert(0, regmark_layer)
 
 		# Set Page Setting to enable checkerboard (This is required so that safe area is easier to see)
-		self.svg.namedview.set(inkex.addNS('pagecheckerboard', 'inkscape'), str(ENABLE_CHECKERBOARD).lower())
+		self.svg.namedview.set('inkscape:pagecheckerboard', str(ENABLE_CHECKERBOARD).lower())
 
 if __name__ == '__main__':
 	InsertRegmark().run()
