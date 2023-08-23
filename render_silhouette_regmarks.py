@@ -68,7 +68,7 @@ class InsertRegmark(EffectExtension):
 			self.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
 		# Check if existing regmark layer exist and delete it
-		old_regmark_layer = self.svg.getElementById("regmark")
+		old_regmark_layer = self.svg.getElementById(REGMARK_LAYER_ID)
 		if old_regmark_layer is not None:
 			old_regmark_layer.delete()
 
