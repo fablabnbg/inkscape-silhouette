@@ -47,8 +47,8 @@ ENABLE_CHECKERBOARD = True
 class InsertRegmark(EffectExtension):
 	def add_arguments(self, pars):
 		# Parse arguments
-		pars.add_argument("-X", "--reg-x", "--regwidth",  type = float, dest = "regwidth",   default = 0.0, help="X mark distance [mm]")
-		pars.add_argument("-Y", "--reg-y", "--reglength", type = float, dest = "reglength",  default = 0.0, help="Y mark distance [mm]")
+		pars.add_argument("-X", "--reg-x", "--regwidth",  type = float, dest = "regwidth",   default = 0.0, help="X mark to mark distance [mm]")
+		pars.add_argument("-Y", "--reg-y", "--reglength", type = float, dest = "reglength",  default = 0.0, help="Y mark to mark distance [mm]")
 		pars.add_argument("--rego-x",  "--regoriginx",    type = float, dest = "regoriginx", default = 10.0,  help="X mark origin from left [mm]")
 		pars.add_argument("--rego-y", "--regoriginy",     type = float, dest = "regoriginy", default = 10.0,  help="X mark origin from top [mm]")
 		pars.add_argument("--verbose", dest = "verbose",  type = Boolean, default = False, help="enable log messages")
