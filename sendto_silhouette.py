@@ -214,13 +214,13 @@ class SendtoSilhouette(EffectExtension):
                 dest = "regsearch", type = Boolean, default = False,
                 help="Search for the registration marks.")
         pars.add_argument("-X", "--reg-x", "--regwidth",
-                type = float, dest = "regwidth", default = 180.0, help="X mark distance [mm]")
+                type = float, dest = "regwidth", default = 0.0, help="X mark to mark distance [mm]")
         pars.add_argument("-Y", "--reg-y", "--reglength",
-                type = float, dest = "reglength", default = 230.0, help="Y mark distance [mm]")
+                type = float, dest = "reglength", default = 0.0, help="Y mark to mark distance [mm]")
         pars.add_argument("--rego-x",  "--regoriginx",
-                type = float, dest = "regoriginx", default = 15.0, help="X mark origin from left [mm]")
+                type = float, dest = "regoriginx", default = 10.0, help="X mark origin from left [mm]")
         pars.add_argument("--rego-y", "--regoriginy",
-                type = float, dest = "regoriginy", default = 20.0, help="X mark origin from top [mm]")
+                type = float, dest = "regoriginy", default = 10.0, help="X mark origin from top [mm]")
         pars.add_argument("-e", "--endposition", "--end-postition",
                 "--end_position", choices=("start", "below"),
                 dest = "endposition", default = "below", help="Position of head after cutting: start or below")
