@@ -19,12 +19,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.10']
-        inkscape-version: ['1.3']
+        inkscape-version: ['STABLE']
         continue-on-error: [false]
         include:
-          - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
           - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.2', continue-on-error: false }
+          - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.11', inkscape-version: 'TRUNK', continue-on-error: true }
+          - { os: 'ubuntu-latest', python-version: '3.11', inkscape-version: 'inkex', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
     continue-on-error: ${{ matrix.continue-on-error }}
 
@@ -34,23 +35,17 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: 🐧 add Inkscape STABLE repo
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version != 'TRUNK' }}
-      run: |
-        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape STABLE from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
-        sudo apt-get update
-    - name: 🐧 add Inkscape TRUNK repo
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
-      run: |
-        sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape DEV from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
-        sudo apt-get update
     - name: 🐧 install Inkscape & umockdev
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version != 'TRUNK' && ! startsWith(matrix.inkscape-version, 'inkex') }}
       run: |
+        sudo add-apt-repository ppa:inkscape.dev/stable -y  # inkscape STABLE from https://launchpad.net/~inkscape.dev/+archive/ubuntu/stable
+        sudo apt-get update
         sudo apt-get -y install inkscape umockdev
     - name: 🐧 install Inkscape TRUNK & umockdev
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
       run: |
+        sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape DEV from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
+        sudo apt-get update
         sudo apt-get -y install inkscape-trunk umockdev
     - name: 🐧 install Inkex standalone & umockdev
       if: ${{ matrix.os == 'ubuntu-latest' && startsWith(matrix.inkscape-version, 'inkex') }}
@@ -62,16 +57,12 @@ jobs:
       run: |
         brew install --cask inkscape
         pip install libusb1
-    - name: 🗖 install Inkscape 1.1
-      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.1' }}
-      run: |
-        choco install -y inkscape --version ${{ matrix.inkscape-version }}
-    - name: 🗖 install Inkscape 1.2
-      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.2' }}
+    - name: 🗖 install Inkscape (fixed)
+      if: ${{ matrix.os == 'windows-latest' && startsWith(matrix.inkscape-version, '1.') }}
       run: |
         choco install -y inkscape --version ${{ matrix.inkscape-version }}
     - name: 🗖 install Inkscape
-      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == '1.3' }}
+      if: ${{ matrix.os == 'windows-latest' && matrix.inkscape-version == 'STABLE' }}
       run: |
         choco install -y inkscape
     - name: inkscape version
