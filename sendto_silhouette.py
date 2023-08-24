@@ -56,6 +56,11 @@ import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
 
+def to_dimensional(value, to_unit="px"):
+	"""TODO: When minimum inkscape version support is at least v1.2
+				then replace to_dimensional() with self.svg.to_dimensional()"""
+	return convert_unit(value, to_unit)
+
 if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
     # backport https://gitlab.com/inkscape/extensions/-/issues/367
     BaseElement.uutounit = lambda self, v, *kwargs: float(v)
@@ -64,9 +69,9 @@ if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
     # backport @ matmul operator
     Transform.__matmul__ = Transform.__mul__
     # backport svg._base_scale()
-    SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
-    SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
-    SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
+    SvgDocumentElement.viewport_width = property(lambda self: to_dimensional(self.get("width"), "px") or self.get_viewbox()[2])
+    SvgDocumentElement.viewport_height = property(lambda self: to_dimensional(self.get("height"), "px") or self.get_viewbox()[3])
+    SvgDocumentElement._base_scale = lambda self, unit="px": (to_dimensional(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([to_dimensional(self.viewport_width, unit) / self.get_viewbox()[2], to_dimensional(self.viewport_height, unit) / self.get_viewbox()[3]]) or to_dimensional(1, unit) or 1.0
 
 
 class teeFile:
@@ -674,8 +679,8 @@ class SendtoSilhouette(EffectExtension):
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
             bbox = dev.plot(pathlist=cut,
-                    mediawidth=convert_unit(self.svg.viewport_width, "mm"),
-                    mediaheight=convert_unit(self.svg.viewport_height, "mm"),
+                    mediawidth=to_dimensional(self.svg.viewport_width, "mm"),
+                    mediaheight=to_dimensional(self.svg.viewport_height, "mm"),
                     margintop=0,
                     marginleft=0,
                     bboxonly=None,         # only return the bbox, do not draw it.
@@ -696,8 +701,8 @@ class SendtoSilhouette(EffectExtension):
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
         bbox = dev.plot(pathlist=cut,
-            mediawidth=convert_unit(self.svg.viewport_width, "mm"),
-            mediaheight=convert_unit(self.svg.viewport_height, "mm"),
+            mediawidth=to_dimensional(self.svg.viewport_width, "mm"),
+            mediaheight=to_dimensional(self.svg.viewport_height, "mm"),
             offset=(self.options.x_off, self.options.y_off),
             bboxonly=self.options.bboxonly,
             endposition=self.options.endposition,
