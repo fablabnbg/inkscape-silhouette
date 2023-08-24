@@ -19,10 +19,7 @@
 Base module for rendering regmarks for Silhouette CAMEO products in Inkscape.
 """
 
-import sys, os, inkex
-from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
-from gettext import gettext
-
+import sys, os
 # Enables stand alone mode and helps for tests #
 # We append the directory where this script lives and inkscape extension folder to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -33,6 +30,10 @@ elif sys_platform.startswith("darwin"):
     sys.path.append("/Applications/Inkscape.app/Contents/Resources/share/inkscape/extensions")
 else:   # linux
     sys.path.append("/usr/share/inkscape/extensions")
+
+import inkex
+from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
+from gettext import gettext
 
 REGMARK_LAYERNAME = 'Regmarks'
 REGMARK_LAYER_ID = 'regmark'
