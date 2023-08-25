@@ -43,21 +43,19 @@ class RegmarkTest(InsertRegmarkTest):
         )
 
         """Ensure x distance"""
-        transform = self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).composed_transform()
         self.assertEqual(
             self.e.svg.unit_to_viewport(
-                    (self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform).x.maximum
-                    - self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform).x.minimum),
+                    (self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).x.maximum
+                    - self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).x.minimum),
                 "mm"),
             400
         )
 
         """Ensure y distance"""
-        transform = self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).composed_transform()
         self.assertEqual(
             self.e.svg.unit_to_viewport(
-                    (self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform).y.maximum
-                    - self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform).y.minimum),
+                    (self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).y.maximum
+                    - self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).y.minimum),
                 "mm"),
             300
         )
