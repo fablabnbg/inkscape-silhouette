@@ -4,6 +4,12 @@
 from render_silhouette_regmarks import InsertRegmark
 from inkex import BoundingBox
 from inkex.tester import TestCase
+from pytest import mark
+
+try:
+    from inkex import __version__ as __inkex_version__
+except:
+    __inkex_version__ = "1.1.0_or_smaller_needs_this_hotfix"
 
 REGMARK_LAYERNAME = 'Regmarks'
 REGMARK_LAYER_ID = 'regmark'
@@ -21,6 +27,7 @@ class InsertRegmarkTest(TestCase):
     def setUp(self):
         self.e = self.effect_class()
 
+@mark.xfail(__inkex_version__[0:3] < "1.2", reason="inkex < 1.2 is not supported")
 
 class RegmarkTest(InsertRegmarkTest):
     source_file = "plus_with_duplicate.svg"
