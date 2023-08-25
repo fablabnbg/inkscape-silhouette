@@ -35,15 +35,9 @@ import inkex
 from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform, BaseElement
 from gettext import gettext
 
-# Temorary Monkey Patches to support functions that exist only after v1.2
+# Temporary Monkey Patches to support functions that exist only after v1.2
 # TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
 if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
-	# backport https://gitlab.com/inkscape/extensions/-/issues/367
-	BaseElement.uutounit = lambda self, v, *kwargs: float(v)
-	# backport https://gitlab.com/inkscape/extensions/-/merge_requests/433
-	Line.get_path = lambda self: 'M{0[x1]},{0[y1]} L{0[x2]},{0[y2]}'.format(self.attrib)
-	# backport @ matmul operator
-	Transform.__matmul__ = Transform.__mul__
 	# backport svg._base_scale()
 	SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
 	SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
