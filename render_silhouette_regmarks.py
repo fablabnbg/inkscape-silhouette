@@ -34,6 +34,7 @@ else:   # linux
 import inkex
 from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform, BaseElement, SvgDocumentElement
 from gettext import gettext
+from inkex.units import convert_unit
 
 # Temporary Monkey Backport Patches to support functions that exist only after v1.2
 # TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
@@ -42,7 +43,8 @@ if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
 	SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
 	SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
 	SvgDocumentElement.to_dimensional = staticmethod(lambda self, value, to_unit="px": convert_unit(value, to_unit))
-	SvgDocumentElement.viewport_to_unit = staticmethod(lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) / self.root.equivalent_transform_scale, unit))
+	SvgDocumentElement.to_dimensionless = staticmethod(lambda self, value: convert_unit(value, "px"))
+	SvgDocumentElement.viewport_to_unit = staticmethod(lambda self, value, unit="px": SvgDocumentElement.to_dimensional(SvgDocumentElement.to_dimensionless(value) / self.root.equivalent_transform_scale, unit))
 
 REGMARK_LAYERNAME = 'Regmarks'
 REGMARK_LAYER_ID = 'regmark'
