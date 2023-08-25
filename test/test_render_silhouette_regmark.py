@@ -5,6 +5,13 @@ from render_silhouette_regmarks import InsertRegmark
 from inkex import BoundingBox
 from inkex.tester import TestCase
 
+REGMARK_LAYERNAME = 'Regmarks'
+REGMARK_LAYER_ID = 'regmark'
+REGMARK_TOP_LEFT_ID = 'regmark-tl'
+REGMARK_TOP_RIGHT_ID = 'regmark-tr'
+REGMARK_BOTTOM_LEFT_ID = 'regmark-bl'
+REGMARK_SAFE_AREA_ID = 'regmark-safe-area'
+REGMARK_NOTES_ID = 'regmark-notes'
 
 class InsertRegmarkTest(TestCase):
     """Tests for Inkscape Extensions"""
@@ -25,32 +32,32 @@ class RegmarkTest(InsertRegmarkTest):
 
         """Ensure top-left regmark"""
         self.assertEqual(
-            self.e.svg.getElementById('regmark-tl').tostring(),
+            self.e.svg.getElementById(REGMARK_TOP_LEFT_ID).tostring(),
             b'<rect x="10.0" y="10.0" width="5" height="5" style="fill:black"/>'
         )
 
         """Ensure top-right regmark"""
         self.assertEqual(
-            self.e.svg.getElementById('regmark-tr').bounding_box(),
+            self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(),
             BoundingBox((390.0, 410.0),(10.0, 30.0))
         )
 
         """Ensure x distance"""
-        transform = self.e.svg.getElementById('regmark-tr').composed_transform()
+        transform = self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).composed_transform()
         self.assertEqual(
             self.e.svg.unit_to_viewport(
-                    (self.e.svg.getElementById('regmark-tr').bounding_box(transform).x.maximum
-                    - self.e.svg.getElementById('regmark-bl').bounding_box(transform).x.minimum),
+                    (self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform).x.maximum
+                    - self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform).x.minimum),
                 "mm"),
             400
         )
 
         """Ensure y distance"""
-        transform = self.e.svg.getElementById('regmark-tr').composed_transform()
+        transform = self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).composed_transform()
         self.assertEqual(
             self.e.svg.unit_to_viewport(
-                    (self.e.svg.getElementById('regmark-bl').bounding_box(transform).y.maximum
-                    - self.e.svg.getElementById('regmark-tr').bounding_box(transform).y.minimum),
+                    (self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform).y.maximum
+                    - self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform).y.minimum),
                 "mm"),
             300
         )
