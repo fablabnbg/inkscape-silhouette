@@ -35,6 +35,21 @@ import inkex
 from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
 from gettext import gettext
 
+# Temorary Monkey Patches to support functions that exist only after v1.2
+# TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
+if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
+	# backport https://gitlab.com/inkscape/extensions/-/issues/367
+	BaseElement.uutounit = lambda self, v, *kwargs: float(v)
+	# backport https://gitlab.com/inkscape/extensions/-/merge_requests/433
+	Line.get_path = lambda self: 'M{0[x1]},{0[y1]} L{0[x2]},{0[y2]}'.format(self.attrib)
+	# backport @ matmul operator
+	Transform.__matmul__ = Transform.__mul__
+	# backport svg._base_scale()
+	SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
+	SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
+	SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
+	SvgDocumentElement.to_dimensional = staticmethod(lambda self, value, to_unit="px": convert_unit(value, to_unit))
+
 REGMARK_LAYERNAME = 'Regmarks'
 REGMARK_LAYER_ID = 'regmark'
 REGMARK_TOP_LEFT_ID = 'regmark-tl'
