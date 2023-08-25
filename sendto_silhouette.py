@@ -565,8 +565,8 @@ class SendtoSilhouette(EffectExtension):
     def effect(self):
         reg_origin_X = self.options.regoriginx
         reg_origin_Y = self.options.regoriginy
-        reg_width = self.options.regwidth if self.options.regwidth else self.svg.to_dimensional(self.svg.get("width"), "mm") - reg_origin_X*2
-        reg_length = self.options.reglength if self.options.reglength else self.svg.to_dimensional(self.svg.get("height"), "mm") - reg_origin_Y*2
+        reg_width = self.options.regwidth or self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
+        reg_length = self.options.reglength or self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
 
         if self.options.logfile:
             mode = "a" if self.options.append_logs else "w"
