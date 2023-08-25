@@ -56,18 +56,26 @@ import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
 
+# Temporary Monkey Backport Patches to support functions that exist only after v1.2
+# TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
 if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
+    from inkex import BaseElement, SvgDocumentElement, paths
+    import re
     # backport https://gitlab.com/inkscape/extensions/-/issues/367
     BaseElement.uutounit = lambda self, v, *kwargs: float(v)
     # backport https://gitlab.com/inkscape/extensions/-/merge_requests/433
     Line.get_path = lambda self: 'M{0[x1]},{0[y1]} L{0[x2]},{0[y2]}'.format(self.attrib)
     # backport @ matmul operator
     Transform.__matmul__ = Transform.__mul__
-    # backport svg._base_scale()
     SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
     SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
     SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
-
+    BaseElement.to_dimensional = staticmethod(lambda value, to_unit="px": convert_unit(value, to_unit))
+    BaseElement.to_dimensionless = staticmethod(lambda value: convert_unit(value, "px"))
+    BaseElement.viewport_to_unit = lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) / self.root._base_scale(), unit)
+    BaseElement.unit_to_viewport = lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) * self.root._base_scale(), unit)
+    BaseElement.set_sensitive = lambda self, sensitive="true": self.set("sodipodi:insensitive", ["true", None][sensitive])
+    paths.strargs = lambda string, kind=float: [kind(val) for val in re.compile(r"(?:[+-]?(?:(?:(?:[0-9]+)?\.(?:[0-9]+)|(?:[0-9]+)\.)(?:[eE][+-]?(?:[0-9]+))?|(?:[0-9]+)(?:[eE][+-]?(?:[0-9]+)))|[+-]?(?:[0-9]+))").findall(string)]
 
 class teeFile:
     def __init__(self, f1, f2):
