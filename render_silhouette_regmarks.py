@@ -32,20 +32,24 @@ else:   # linux
     sys.path.append("/usr/share/inkscape/extensions")
 
 import inkex
-from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform, BaseElement, SvgDocumentElement
+from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
 from gettext import gettext
 from inkex.units import convert_unit
 
 # Temporary Monkey Backport Patches to support functions that exist only after v1.2
 # TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
 if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
+	from inkex import BaseElement, SvgDocumentElement, paths
+	import re
 	SvgDocumentElement.viewport_width = property(lambda self: convert_unit(self.get("width"), "px") or self.get_viewbox()[2])
 	SvgDocumentElement.viewport_height = property(lambda self: convert_unit(self.get("height"), "px") or self.get_viewbox()[3])
 	SvgDocumentElement._base_scale = lambda self, unit="px": (convert_unit(1, unit) or 1.0) if not all(self.get_viewbox()[2:]) else max([convert_unit(self.viewport_width, unit) / self.get_viewbox()[2], convert_unit(self.viewport_height, unit) / self.get_viewbox()[3]]) or convert_unit(1, unit) or 1.0
-	SvgDocumentElement.to_dimensional = staticmethod(lambda self, value, to_unit="px": convert_unit(value, to_unit))
-	SvgDocumentElement.to_dimensionless = staticmethod(lambda self, value: convert_unit(value, "px"))
-	SvgDocumentElement.equivalent_transform_scale = property(lambda self: max([self.to_dimensional(self.viewport_width, unit) / self.viewbox_width, self.to_dimensional(self.viewport_height, unit) / self.viewbox_height]) or 1.0)
-	SvgDocumentElement.viewport_to_unit = staticmethod(lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) / self.root.equivalent_transform_scale, unit))
+	BaseElement.to_dimensional = staticmethod(lambda value, to_unit="px": convert_unit(value, to_unit))
+	BaseElement.to_dimensionless = staticmethod(lambda value: convert_unit(value, "px"))
+	BaseElement.viewport_to_unit = lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) / self.root._base_scale(), unit)
+	BaseElement.unit_to_viewport = lambda self, value, unit="px": self.to_dimensional(self.to_dimensionless(value) * self.root._base_scale(), unit)
+	BaseElement.set_sensitive = lambda self, sensitive="true": self.set("sodipodi:insensitive", ["true", None][sensitive])
+	paths.strargs = lambda string, kind=float: [kind(val) for val in re.compile(r"(?:[+-]?(?:(?:(?:[0-9]+)?\.(?:[0-9]+)|(?:[0-9]+)\.)(?:[eE][+-]?(?:[0-9]+))?|(?:[0-9]+)(?:[eE][+-]?(?:[0-9]+)))|[+-]?(?:[0-9]+))").findall(string)]
 
 REGMARK_LAYERNAME = 'Regmarks'
 REGMARK_LAYER_ID = 'regmark'

@@ -27,7 +27,7 @@ class InsertRegmarkTest(TestCase):
     def setUp(self):
         self.e = self.effect_class()
 
-@mark.xfail(__inkex_version__[0:3] < "1.2", reason="inkex < 1.2 is not supported")
+#@mark.xfail(__inkex_version__[0:3] < "1.2", reason="inkex < 1.2 is not supported")
 
 class RegmarkTest(InsertRegmarkTest):
     source_file = "plus_with_duplicate.svg"
