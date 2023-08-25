@@ -32,7 +32,7 @@ else:   # linux
     sys.path.append("/usr/share/inkscape/extensions")
 
 import inkex
-from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform
+from inkex import EffectExtension, Boolean, Rectangle, PathElement, Layer, Group, TextElement, Transform, BaseElement
 from gettext import gettext
 
 # Temorary Monkey Patches to support functions that exist only after v1.2
@@ -83,8 +83,8 @@ class InsertRegmark(EffectExtension):
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		reg_width = self.options.regwidth if self.options.regwidth else self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
-		reg_length = self.options.reglength if self.options.reglength else self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
+		reg_width = self.options.regwidth or self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
+		reg_length = self.options.reglength or self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
 
 		if self.options.verbose == True:
 			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.viewport_width, "mm")))
