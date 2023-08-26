@@ -454,11 +454,11 @@ class SendtoSilhouette(EffectExtension):
         that can be created by a seperate registration mark renderer in this extention.
         From there the registration mark setting can be derived from it's offset.
         """
-        if self.svg.getElementById(REGMARK_TOP_LEFT_ID):
+        if self.svg.getElementById(REGMARK_TOP_LEFT_ID) is not None:
             return
-        if self.svg.getElementById(REGMARK_TOP_RIGHT_ID):
+        if self.svg.getElementById(REGMARK_TOP_RIGHT_ID) is not None:
             return
-        if self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID):
+        if self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID) is not None:
             return
         self.doc_reg_x = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).left, "mm")
         self.doc_reg_y = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).top, "mm")
