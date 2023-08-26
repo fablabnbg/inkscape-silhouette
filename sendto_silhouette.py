@@ -622,7 +622,7 @@ class SendtoSilhouette(EffectExtension):
     def get_default_logfile_path(self):
         if platform.system() == "Windows":
             if os.environ.get("TMP"):
-                return os.path.join("TMP", "inkscape-silhouette.log")
+                return os.path.join("\TMP", "inkscape-silhouette.log")
             else:
                 return os.path.expanduser(os.path.join("~", "Documents", "inkscape-silhouette.log"))
         elif platform.system() == "Darwin" or platform.system() == "Linux":
