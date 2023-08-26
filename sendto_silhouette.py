@@ -587,17 +587,15 @@ class SendtoSilhouette(EffectExtension):
         # Auto detect mark to document corner and mark to mark distance from Regmark layer (Quality of life improvement)
         # Generated Regmarks from inkscape silhouette embeds ids so we can automatically derive offset calculations from it
         doc_reg_x = doc_reg_y = doc_reg_width = doc_reg_length = 0
-        try:
-            if self.svg.getElementById(REGMARK_TOP_LEFT_ID) is not None and self.svg.getElementById(REGMARK_TOP_RIGHT_ID) is not None and self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID) is not None:
-                doc_reg_x = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).x.minimum, "mm")
-                doc_reg_y = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).y.minimum, "mm")
-                doc_reg_width = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).x.maximum, "mm") - doc_reg_x
-                doc_reg_length = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).y.maximum, "mm") - doc_reg_y
-                self.report(f"Detected Existing Registration Mark:: mark distance from document: Left={doc_reg_x}mm, Top={doc_reg_y}mm; mark to mark distance: X={doc_reg_width}mm, Y={doc_reg_length}mm;", 'log')
-        except Exception:
-            doc_reg_x = doc_reg_y = doc_reg_width = doc_reg_length = 0
+        if self.svg.getElementById(REGMARK_TOP_LEFT_ID) is not None and self.svg.getElementById(REGMARK_TOP_RIGHT_ID) is not None and self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID) is not None:
+            doc_reg_x = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).x.minimum, "mm")
+            doc_reg_y = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).y.minimum, "mm")
+            doc_reg_width = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).x.maximum, "mm") - doc_reg_x
+            doc_reg_length = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).y.maximum, "mm") - doc_reg_y
+            self.report(f"Detected Existing Registration Mark:: mark distance from document: Left={doc_reg_x}mm, Top={doc_reg_y}mm; mark to mark distance: X={doc_reg_width}mm, Y={doc_reg_length}mm;", 'log')
 
         # Registration Mark Selection/Calcuation
+        # Note that any user defined values will overrride any auto calcuated values
         reg_origin_X = self.options.regoriginx or doc_reg_x
         reg_origin_Y = self.options.regoriginy or doc_reg_y
         reg_width = self.options.regwidth or doc_reg_width or self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
@@ -672,7 +670,7 @@ class SendtoSilhouette(EffectExtension):
         if self.options.preview:
             extraText = None
             if self.options.regmark:
-                extraText = f"Registration mark to origin distance Left={reg_origin_X}mm, Top={reg_origin_Y}mm;\n Registration mark to mark distance: X={reg_width}mm, Y={reg_length}mm;"
+                extraText = f"Registration mark to origin distance: Left={reg_origin_X}mm, Top={reg_origin_Y}mm;\n Registration mark to mark distance: X={reg_width}mm, Y={reg_length}mm;"
             if silhouette.read_dump.show_plotcuts(cut, buttons=True, extraText=extraText) > 0:
                 self.report("Preview aborted.", 'log')
                 return

@@ -9,7 +9,7 @@
   <param name="regwidth" type="float" min="0.0" max="10000" gui-text="X mark to mark distance [mm]"></param>
   <param name="reglength" type="float" min="0.0" max="10000" gui-text="Y mark to mark distance [mm]"></param>
   <param indent="2">Distance between registration mark edges</param>
-  <label indent="2">Note: If width and length spacing is empty, then it is calculated from current document size.</label>
+  <label indent="2">Note: If width and length spacing is zero, then it is calculated from current document size.</label>
   <param name="verbose" type="bool" gui-text="display verbose log messages">false</param>
   <effect>
     <object-type>all</object-type>
