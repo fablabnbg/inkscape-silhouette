@@ -32,6 +32,8 @@ This extension should work with the following devices:
 
 WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 
+#### Install Inkscape and other requirements
+
 <details>
 <summary>Click to get bash commands</summary>
 
