@@ -5,6 +5,7 @@ import subprocess
 import sys
 import os
 
+from tempfile import gettempdir
 
 class TestRun(unittest.TestCase):
 
@@ -136,6 +137,21 @@ class TestRun(unittest.TestCase):
             result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--strategy=matfree", "--logfile=silhouette.log", "examples/testcut_matfree.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
             filehandle = open("silhouette.log",'r')
+            log = filehandle.read()
+            filehandle.close()
+            self.assertIn('matfree', log)
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
+            print(e)
+            self.assertEqual(e.returncode, 0)
+            assert False
+
+    def test_10dry_run(self):
+        try:
+            # Test that default temporary log filepath is writable
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--strategy=matfree", "examples/testcut_matfree.svg"], stderr=subprocess.STDOUT)
+            print(result.decode())
+            filehandle = open(os.path.join(gettempdir(), "silhouette.log"),'r')
             log = filehandle.read()
             filehandle.close()
             self.assertIn('matfree', log)
