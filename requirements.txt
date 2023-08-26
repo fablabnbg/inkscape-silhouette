@@ -1,5 +1,5 @@
 numpy      >= 1.21.5
-pyusb      >= 1.2.1.post1
+pyusb      >= 1.2.1
 lxml       >= 4.8.0
 xmltodict  >= 0.13.0 # required for Silhouette Multiple Actions
 cssselect  >= 1.1.0  # required for inkscape >= 1.2
