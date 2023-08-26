@@ -22,7 +22,7 @@ def hsv_to_rgb(h, s, v):
     if i == 4: return (t, p, v)
     if i == 5: return (v, p, q)
 
-def show_plotcuts(cuts, buttons=False):
+def show_plotcuts(cuts, buttons=False, extraText=None):
     """
         Show a graphical representation of the cut paths in (the argument) cuts,
         and block until the display window has been closed.
@@ -74,6 +74,9 @@ def show_plotcuts(cuts, buttons=False):
         bcancel.on_clicked(response.pushedcancel)
         bcut.connect_event('key_press_event', lambda event: response.pushedcut(event) if(event.key=='enter') else None)
         bcancel.connect_event('key_press_event', lambda event: response.pushedcancel(event) if(event.key=='escape') else None)
+    if extraText:
+        plt.text(1, -1, str(extraText), fontsize = 12, horizontalalignment='right')
+
     plt.show()
 
     return response.returnvalue

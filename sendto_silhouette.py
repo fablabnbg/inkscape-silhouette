@@ -670,7 +670,10 @@ class SendtoSilhouette(EffectExtension):
             self.report(cut, 'log')
 
         if self.options.preview:
-            if silhouette.read_dump.show_plotcuts(cut, buttons=True) > 0:
+            extraText = None
+            if self.options.regmark:
+                extraText = f"Registration mark to origin distance Left={reg_origin_X}mm, Top={reg_origin_Y}mm;\n Registration mark to mark distance: X={reg_width}mm, Y={reg_length}mm;"
+            if silhouette.read_dump.show_plotcuts(cut, buttons=True, extraText=extraText) > 0:
                 self.report("Preview aborted.", 'log')
                 return
 
