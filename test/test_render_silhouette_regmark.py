@@ -36,7 +36,7 @@ class RegmarkTest(InsertRegmarkTest):
         self.e.parse_arguments([self.data_file(self.source_file), "--reglength=300"])
         self.e.load_raw()
         self.e.effect()
-        self.e.file_io.close()
+        self.e.clean_up()
 
         """Ensure top-left regmark"""
         self.assertEqual(
