@@ -75,7 +75,7 @@ def show_plotcuts(cuts, buttons=False, extraText=None):
         bcut.connect_event('key_press_event', lambda event: response.pushedcut(event) if(event.key=='enter') else None)
         bcancel.connect_event('key_press_event', lambda event: response.pushedcancel(event) if(event.key=='escape') else None)
     if extraText:
-        plt.text(1, -1, str(extraText), fontsize = 12, horizontalalignment='right')
+        plt.text(-1.3, 0.5, str(extraText), fontsize = 8, horizontalalignment='right')
 
     plt.show()
 
