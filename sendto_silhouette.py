@@ -162,9 +162,9 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("-D", "--depth",
                 dest = "depth", type = int, default = -1,
                 help="[0..10], or -1 for media default")
-        pars.add_argument("--create_log",
-                dest = "create_log", type = Boolean, default = False,
-                help="Include log")
+        pars.add_argument("--disable_logging",
+                dest = "disable_logging", type = Boolean, default = False,
+                help="Disable logging to file")
         pars.add_argument("--log_paths",
                 dest = "dump_paths", type = Boolean, default = False,
                 help="Include final cut paths in log")
@@ -632,8 +632,8 @@ class SendtoSilhouette(EffectExtension):
             return os.path.expanduser(os.path.join("~", "inkscape-silhouette.log"))
 
     def effect(self):
-        if self.options.create_log:
-            log_path = self.options.logfile if self.options.logfile else self.get_default_logfile_path()
+        if not self.options.disable_logging:
+            log_path = self.options.logfile or self.get_default_logfile_path()
             mode = "a" if self.options.append_logs else "w"
             self.log = open(log_path, mode)
             if self.tty:

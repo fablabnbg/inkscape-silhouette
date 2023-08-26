@@ -129,14 +129,14 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
     </page>
 
     <page name="logdump" gui-text="Log and Dump">
-      <param name="create_log" type="boolean" _gui-text="Generate log file">true</param>
       <param name="logfile" type="path" mode="file_new" filetypes="log" gui-text="Save log messages in file"></param>
-      <label indent="2">Note: If path is empty, system default will be choosen and printed as an info message.</label>
+      <label indent="2">Note: If path is empty, system default will be chosen.</label>
       <param name="log_paths" type="bool" indent="2" gui-text="Include final cut paths in log (for debugging)">false</param>
       <param name="append_logs" type="bool" indent="2" gui-text="Append to log/dump files rather than overwriting">false</param>
       <param name="cmdfile" type="path" mode="file_new" filetypes="cut" gui-text="Transcribe cutter commands to file"></param>
       <param name="inc_queries" type="bool" indent="2" gui-text="Include cutter queries in command transcript">false</param>
       <param name="dry_run" type="bool" gui-text="Dry Run: do not send commands to device">false</param>
+      <param name="disable_logging" type="boolean" _gui-text="disable log file">true</param>
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="optiongroup" appearance="combo" gui-text="Override cutter model">
 	<option value="DETECT">-- as detected --</option>
