@@ -307,6 +307,7 @@ class SyncDetectRegmarks(SendtoSilhouetteTest):
     def test_detect_regmarks(self):
         self.e.parse_arguments([self.data_file(self.source_file)])
         self.e.load_raw()
+        self.e.clean_up()
         self.e.detect_doc_regmark()
         self.assertEqual(self.e.doc_reg_x, 10.0)
         self.assertEqual(self.e.doc_reg_y, 10.0)
@@ -316,6 +317,7 @@ class SyncDetectRegmarks(SendtoSilhouetteTest):
     def test_override_regmarks(self):
         self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=12.3", "--regoriginy=12.4", "--regwidth=12.5", "--reglength=12.6"])
         self.e.load_raw()
+        self.e.clean_up()
         self.e.sync_regmark_settings()
         self.assertEqual(self.e.reg_origin_X, 12.3)
         self.assertEqual(self.e.reg_origin_Y, 12.4)
@@ -328,6 +330,7 @@ class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
     def test_detect_regmarks(self):
         self.e.parse_arguments([self.data_file(self.source_file)])
         self.e.load_raw()
+        self.e.clean_up()
         self.e.detect_doc_regmark()
         self.assertEqual(self.e.doc_reg_x, 0.0)
         self.assertEqual(self.e.doc_reg_y, 0.0)
@@ -337,6 +340,7 @@ class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
     def test_override_regmarks(self):
         self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=12.3", "--regoriginy=12.4", "--regwidth=12.5", "--reglength=12.6"])
         self.e.load_raw()
+        self.e.clean_up()
         self.e.sync_regmark_settings()
         self.assertEqual(self.e.reg_origin_X, 12.3)
         self.assertEqual(self.e.reg_origin_Y, 12.4)
@@ -346,6 +350,7 @@ class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
     def test_derived_regmarks(self):
         self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=10.0", "--regoriginy=10.0"])
         self.e.load_raw()
+        self.e.clean_up()
         self.e.sync_regmark_settings()
         self.assertEqual(self.e.reg_origin_X, 10.0)
         self.assertEqual(self.e.reg_origin_Y, 10.0)
