@@ -300,3 +300,55 @@ class CutTest(SendtoSilhouetteTest):
                 [(1.876888020833, 0.934309895833), (1.876888020833, 3.356901041666), (2.339908854166, 3.28247375), (2.888472579752, 3.392885201822), (3.33808420572, 3.694039739583), (3.642074952799,  4.14081763671), (3.75377604166, 4.68809916666), (3.642074952799, 5.23536126627), (3.33808420572, 5.68212221354), (2.888472579752, 5.98326476236), (2.339908854166, 6.09367166666), (1.876888020833, 6.011015833333), (1.8768880208, 8.43359375), (8.43359375, 4.68809916666), (1.876888020833, 0.934309895833), (1.876888020833, 0.934309895833)]
             ]
         )
+
+class SyncDetectRegmarks(SendtoSilhouetteTest):
+    source_file = "detect_regmarks.svg"
+
+    def test_detect_regmarks(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.detect_doc_regmark()
+        self.assertEqual(self.e.doc_reg_x, 10.0)
+        self.assertEqual(self.e.doc_reg_y, 10.0)
+        self.assertEqual(self.e.doc_reg_width, 190.0)
+        self.assertEqual(self.e.doc_reg_length, 277.0)
+
+    def test_override_regmarks(self):
+        self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=12.3", "--regoriginy=12.4", "--regwidth=12.5", "--reglength=12.6"])
+        self.e.load_raw()
+        self.e.sync_regmark_settings()
+        self.assertEqual(self.e.reg_origin_X, 12.3)
+        self.assertEqual(self.e.reg_origin_Y, 12.4)
+        self.assertEqual(self.e.reg_width,    12.5)
+        self.assertEqual(self.e.reg_length,   12.6)
+
+class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
+    source_file = "detect_regmarks_corrupted.svg"
+
+    def test_detect_regmarks(self):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.detect_doc_regmark()
+        self.assertEqual(self.e.doc_reg_x, 0.0)
+        self.assertEqual(self.e.doc_reg_y, 0.0)
+        self.assertEqual(self.e.doc_reg_width, 0.0)
+        self.assertEqual(self.e.doc_reg_length, 0.0)
+
+    def test_override_regmarks(self):
+        self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=12.3", "--regoriginy=12.4", "--regwidth=12.5", "--reglength=12.6"])
+        self.e.load_raw()
+        self.e.sync_regmark_settings()
+        self.assertEqual(self.e.reg_origin_X, 12.3)
+        self.assertEqual(self.e.reg_origin_Y, 12.4)
+        self.assertEqual(self.e.reg_width,    12.5)
+        self.assertEqual(self.e.reg_length,   12.6)
+
+    def test_derived_regmarks(self):
+        self.e.parse_arguments([self.data_file(self.source_file), "--regoriginx=10.0", "--regoriginy=10.0"])
+        self.e.load_raw()
+        self.e.sync_regmark_settings()
+        self.assertEqual(self.e.reg_origin_X, 10.0)
+        self.assertEqual(self.e.reg_origin_Y, 10.0)
+        self.assertEqual(self.e.reg_width,   190.0)
+        self.assertEqual(self.e.reg_length,  277.0)
+

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 420 594"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="detect_regmarks.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <g
+     inkscape:groupmode="layer"
+     id="regmark"
+     inkscape:label="Regmarks"
+     transform="scale(2, 2)"
+     sodipodi:insensitive="true">
+    <rect
+       x="10.0"
+       y="10.0"
+       width="5"
+       height="5"
+       id="regmark-tl"
+       style="fill:black" />
+    <path
+       d="M 180 10 L 200 10 L 200 30"
+       id="regmark-tr"
+       style="fill:none;stroke:black;stroke-width:0.3" />
+    <path
+       d="M 30 287 L 10 287 L 10 267"
+       id="regmark-bl"
+       style="fill:none;stroke:black;stroke-width:0.3" />
+    <path
+       d="M 10 30 L 30 30 L 30 10 L 180 10 L 180 30 L 200 30 L 200 287 L 30 287 L 30 267 L 10 267 Z"
+       id="regmark-safe-area"
+       style="fill:white;stroke:none" />
+    <text
+       x="33.0"
+       y="292.0"
+       id="regmark-notes"
+       style="font-size:2.5px">mark distance from document: Left=10.0mm, Top=10.0mm; mark to mark distance: X=190.0mm, Y=277.0mm; </text>
+  </g>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="true"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.78751403"
+     inkscape:cx="396.81833"
+     inkscape:cy="561.25984"
+     inkscape:window-width="2048"
+     inkscape:window-height="1123"
+     inkscape:window-x="2048"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1" />
+</svg>
