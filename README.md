@@ -28,37 +28,50 @@ This extension should work with the following devices:
 
 ## Installation
 
-### Ubuntu 20.10 or newer (features Inkscape 1.0+ natively)
+### Ubuntu
 
-WARNING: SNAP packages may cause issues.
+WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 
-Install Inkscape
-* `sudo apt install inkscape`
+#### Install Inkscape and other requirements
 
-Install requirements
-* `sudo apt install python3-usb`
+<details>
+<summary>Click to get bash commands</summary>
 
-Install inkscape-silhouette
+```bash
+# Add inkscape dev team's PPA key to APT.
+# This project require minimum of inkscape V1.0+
+# But we want to always keep to latest inkscape version
+sudo add-apt-repository ppa:inkscape.dev/stable
+
+# Install Inkscape
+sudo apt-get update
+sudo apt install inkscape
+
+# Install Inkscape with newer version directly from inkscape dev team
+# even if newer than what Ubuntu's package management team is willing
+# to certify at the moment
+sudo apt-get --with-new-pkgs upgrade inkscape
+
+# Install requirements for usb support
+sudo apt-get install python3-usb
+
+# Install requirements for Silhouette Multiple Actions
+sudo apt install python3-wxgtk4.0
+
+# Install all requirements from python package manager
+sudo apt-get install python3-pip
+python3 -m pip install -U pip
+python3 -m pip install -r requirements.txt
+```
+</details>
+
+#### Install inkscape-silhouette
+
+From here, you should have all the required python packages and inkscape version.
+So now we shall install inkscape-silhouette, so scroll down the latest releases and head to the Assets section of releases and click on the *.deb file. You can then use `sudo apt-get install ./*.deb` where `*.deb` is the name of your newly downloaded file.
+
 * https://github.com/fablabnbg/inkscape-silhouette/releases
-  Scroll down to Downloads and click on the *.deb file.
 
-### Ubuntu 18.04 or 20.04
-
-WARNING: SNAP packages may cause issues.
-
-Add Inkscape 1.0+ repo
-* `sudo add-apt-repository ppa:inkscape.dev/stable`
-* `sudo apt-get update`
-
-Install Inkscape
-* `sudo apt install inkscape`
-
-Install requirements
-* `sudo apt install python3-usb`
-
-Install inkscape-silhouette
-* https://github.com/fablabnbg/inkscape-silhouette/releases
-  Scroll down to Downloads and click on the *.deb file.
 
 ### Other Debian based Linux
 
