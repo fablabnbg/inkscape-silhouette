@@ -299,3 +299,13 @@ For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y
 * https://inkscape.gitlab.io/extensions/documentation/authors/
 * https://inkscape.gitlab.io/extensions/documentation/authors/inx-widgets.html
 * https://wiki.inkscape.org/wiki/ExtensionsSystem
+
+## Credits/Appreciations
+
+### Specific Credits
+
+* @miLORD1337 : For contributing [silhouette regmarks](https://github.com/miLORD1337/silhouette-regmarks) to this project
+
+### Collaborators and Contributors List
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
