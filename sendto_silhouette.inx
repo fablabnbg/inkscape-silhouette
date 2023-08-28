@@ -136,7 +136,6 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <param name="cmdfile" type="path" mode="file_new" filetypes="cut" gui-text="Transcribe cutter commands to file"></param>
       <param name="inc_queries" type="bool" indent="2" gui-text="Include cutter queries in command transcript">false</param>
       <param name="dry_run" type="bool" gui-text="Dry Run: do not send commands to device">false</param>
-      <param name="disable_logging" type="boolean" _gui-text="disable log file">true</param>
       <!-- CAUTION: keep hardware list in sync with silhouette/Graphtec.py -->
       <param name="force_hardware" type="optiongroup" appearance="combo" gui-text="Override cutter model">
 	<option value="DETECT">-- as detected --</option>
