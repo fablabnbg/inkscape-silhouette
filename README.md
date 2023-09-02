@@ -58,6 +58,9 @@ sudo apt-get install python3-usb
 # Install requirements for Silhouette Multiple Actions
 sudo apt install python3-wxgtk4.0
 
+# This forces installation of gtk4 to fix some warnings #259
+sudo apt-get install gir1.2-gtk-4.0
+
 # Install all requirements from python package manager
 sudo apt-get install python3-pip
 python3 -m pip install -U pip

@@ -56,6 +56,18 @@ import silhouette.StrategyMinTraveling
 import silhouette.read_dump
 from silhouette.Geometry import dist_sq, XY_a
 
+from contextlib import redirect_stderr
+import io
+with redirect_stderr(io.StringIO()) as h:
+    import gi
+    gi.require_version('Gtk', '4.0')
+    from gi.repository import Gtk
+
+# Sort out messages matching the ImportWarning, keep all others and send them to stderr
+for msg in (val for val in h.getvalue().splitlines(keepends=True)
+            if val and val.find("ImportWarning: DynamicImporter") == -1):
+    sys.stderr.write(msg)
+
 # Temporary Monkey Backport Patches to support functions that exist only after v1.2
 # TODO: If support for Inkscape v1.1 is dropped then this backport can be removed
 if not hasattr(inkex, "__version__") or inkex.__version__[0:3] < "1.2":
