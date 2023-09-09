@@ -15,7 +15,7 @@ The `Print` layer in addition to `Regmarks` will be ignored by `Send to Silhouet
 
 ### Add registration mark
 
-<img src="./assets/c9c32197-4967-42f9-b8fa-f407d4f12203" alt="screenshot of the regmarked document" height=200px>
+<img src="./assets/screenshot_of_the_regmarked_document.png" alt="screenshot of the regmarked document" height=200px>
 
 The plotter will search the registration marks at the given positions.
 If it locates the marks, they will serve as accurate reference and define the origin.
@@ -39,7 +39,7 @@ Note: You have the option of using the provided template at `examples/registrati
 
 ## Plot
 
-<img src="./assets/859b134f-8765-4768-89c0-a5a9fe569243" alt="screenshot of Send to Silhouette" height=200px>
+<img src="./assets/screenshot_of_send_to_silhouette.png" alt="screenshot of Send to Silhouette" height=200px>
 
 1. Open your document with inkscape.
 2. Ensure the unit of document width and height is mm or inch, but not px. (File - Document settings - Page - Custom - Unit mm) Otherwise you may observe differences in dimensions at inkscape 0.91/0.92, because default dpi has changed from 90 to 96.
@@ -60,7 +60,7 @@ Note: You have the option of using the provided template at `examples/registrati
 
 ### Plot with registration marks steps
 
-<img src="./assets/672d24e4-7455-4d29-b7b8-dc638fd9305e" alt="screenshot of registration mark settings page" height=200px>
+<img src="./assets/screenshot_of_registration_mark_settings_page.png" alt="screenshot of registration mark settings page" height=200px>
 
 1. Open the document which fit to your setup (e.g. With rendered registration mark as illustrated above)
 2. Insert your cutting paths and graphics on the apropriate layers.
