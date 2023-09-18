@@ -846,7 +846,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
       self.set_boundary(0, 0, bottom, right)
 
-  def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0):
+  def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0, skip_init=False):
     """Setup the Silhouette Device
 
     Parameters
@@ -890,21 +890,24 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             Defaults to 210.0.
         mediaheight : float, optional
             Defaults to 297.0.
+        skip_init : bool, optional
+            Defaults to False.
     """
 
 
     if leftaligned is not None:
       self.leftaligned = leftaligned
 
-    self.initialize()
+    if not skip_init:
+      self.initialize()
 
-    self.set_cutting_mat(cuttingmat, mediawidth, mediaheight)
+      self.set_cutting_mat(cuttingmat, mediawidth, mediaheight)
 
     if media is not None:
       if media < 100 or media > 300: media = 300
 
       # Silhouette Studio does not appear to issue this command
-      if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
+      if self.product_id() not in PRODUCT_LINE_CAMEO3_ON and not skip_init:
         self.send_command("FW%d" % media)
 
       if pen is None:
@@ -1055,7 +1058,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # if enabled, rollers three times forward and back.
     # needs a pressure of 19 or more, else nothing will happen
-    if trackenhancing is not None:
+    if trackenhancing is not None and not skip_init:
       if trackenhancing:
         self.send_command("FY0")
       else:
@@ -1067,17 +1070,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
     #TB50,x: x = 1 landscape mode, x = 0 portrait mode
-    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
-      pass
-    else:
-      if landscape is not None:
-        if landscape:
-          self.send_command(["FN0", "TB50,1"])
-        else:
-          self.send_command(["FN0", "TB50,0"])
+    if not skip_init:
+      if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
+        pass
+      else:
+        if landscape is not None:
+          if landscape:
+            self.send_command(["FN0", "TB50,1"])
+          else:
+            self.send_command(["FN0", "TB50,0"])
 
-      # Don't lift plotter head between paths
-      self.send_command("FE0,0")
+        # Don't lift plotter head between paths
+        self.send_command("FE0,0")
 
   def find_bbox(self, cut):
     """Find the bounding box of the cut, returns (xmin,ymin,xmax,ymax)"""
@@ -1246,7 +1250,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def plot(self, mediawidth=210.0, mediaheight=297.0, margintop=None,
            marginleft=None, pathlist=None, offset=None, bboxonly=False,
            end_paper_offset=0, endposition='below', regmark=False, regsearch=False,
-           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0):
+           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0, skip_init=False, skip_reset=False):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -1317,6 +1321,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       height = reglength
       width = regwidth
 
+    if regmark and not skip_init:
       self.send_command("TB50,0") #only with registration (it was TB50,1), landscape mode
       self.send_command("TB99")
       self.send_command("TB52,2")     #type of regmarks: 0='Original,SD', 2='Cameo,Portrait'
@@ -1327,7 +1332,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if regsearch:
         # automatic regmark test
         # add a search range of 10mm
-        self.send_command(self.automatic_regmark_test_mm_cmd(reglength, regwidth, regoriginy - 10, regoriginx - 10))
+        self.send_command(self.automatic_regmark_test_mm_cmd(reglength, regwidth, max(regoriginy - 10, 0), max(regoriginx - 10, 0)))
       else:
         # manual regmark
         self.send_command(self.manual_regmark_mm_cmd(reglength, regwidth))
@@ -1368,7 +1373,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     #p = b"FU%d,%d\x03" % (height,width) # optional
     #s.write(p)
 
-    if self.product_id() not in PRODUCT_LINE_CAMEO3_ON:
+    if self.product_id() not in PRODUCT_LINE_CAMEO3_ON and not skip_init:
       self.send_command([
         self.upper_left_mm_cmd(0, 0),
         self.lower_right_mm_cmd(height, width),
@@ -1415,7 +1420,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         self.move_mm_cmd(bbox['lly'] + end_paper_offset, 0),
         "SO0"]
     #new_home += b"FN0\x03TB50,0\x03"
-    self.send_command(new_home)
+    if not skip_reset:
+      self.send_command(new_home)
 
     return {
         'bbox': bbox,

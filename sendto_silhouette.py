@@ -270,6 +270,13 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("--force_hardware",
                 dest = "force_hardware", default = None,
                 help = "Override hardware model of cutting device.")
+        # For Multi-Action
+        pars.add_argument("--skip_init",
+                dest = "skip_init", type = Boolean, default = False,
+                help = "Skip any setup, such as regmark searching (for Multi-Action).")
+        pars.add_argument("--skip_reset",
+                dest = "skip_reset", type = Boolean, default = False,
+                help = "Skip resetting to home at the end (for Multi-Action).")
         # Can't set up the log here because arguments have not yet been parsed;
         # defer that to the top of the effect() method, which is where all
         # of the real activity happens.
@@ -741,7 +748,8 @@ class SendtoSilhouette(EffectExtension):
                 sw_clipping=self.options.sw_clipping,
                 bladediameter=self.options.bladediameter,
                 pressure=self.options.pressure,
-                speed=self.options.speed)
+                speed=self.options.speed,
+                skip_init=self.options.skip_init)
 
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
@@ -757,7 +765,9 @@ class SendtoSilhouette(EffectExtension):
                     regwidth=self.reg_width,
                     reglength=self.reg_length,
                     regoriginx=self.reg_origin_X,
-                    regoriginy=self.reg_origin_Y)
+                    regoriginy=self.reg_origin_Y,
+                    skip_init=self.options.skip_init,
+                    skip_reset=self.options.skip_reset)
 
             if len(bbox["bbox"].keys()):
                     self.report(
@@ -779,7 +789,9 @@ class SendtoSilhouette(EffectExtension):
             regwidth=self.reg_width,
             reglength=self.reg_length,
             regoriginx=self.reg_origin_X,
-            regoriginy=self.reg_origin_Y)
+            regoriginy=self.reg_origin_Y,
+            skip_init=self.options.skip_init,
+            skip_reset=self.options.skip_reset)
         if len(bbox["bbox"].keys()) == 0:
             self.report("empty page?", 'error')
         else:
