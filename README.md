@@ -2,7 +2,7 @@
 
 [![Run Python tests](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml/badge.svg)](https://github.com/fablabnbg/inkscape-silhouette/actions/workflows/run-tests.yml)
 
-An extension to drive a Silhoutte Cameo and similar plotter devices from within inkscape.
+An extension to drive a Silhouette Cameo and similar plotter devices from within inkscape.
 100% pure python, ontop of the libusb backend.
 
 Here is the wiki with photos and a video: https://github.com/fablabnbg/inkscape-silhouette/wiki
@@ -274,7 +274,7 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * Improve MatFree cutting by finding a better scan sort algorithm.
   Wide shadow casting towards negative y?
 
-* Implement paper-zip as a seperate inkscape extension.
+* Implement paper-zip as a separate inkscape extension.
 
 ## References
 
