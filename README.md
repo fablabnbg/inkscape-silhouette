@@ -126,7 +126,6 @@ and then either `make install-local` to install just for your user account, or `
   * Add brew python for user extensions in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/preferences.xml` on `<group id="extensions" python-interpreter="/..." />`. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://inkscape.gitlab.io/extensions/documentation/authors/interpreters.html):
     * `python-interpreter="/usr/local/bin/python3"` on X86 platform
     * `python-interpreter="/opt/homebrew/bin/python3"` on ARM platform (Apple Silicon)
-    * Example: `
 
 </details>
 
