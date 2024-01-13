@@ -382,7 +382,7 @@ class MultiFrame(wx.Frame):
 
     def run(self, event):
         self.save_color_settings()
-        actions = self.colsep.generate_actions(self.notebook.get_defaults)
+        actions = self.colsep.generate_actions(self.notebook.get_defaults())
         if actions:
             if not self.options.dry_run:
                 if not Dialog.confirm(None, "About to perform %d actions, continue?" % len(actions)):
