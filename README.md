@@ -281,3 +281,13 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * https://inkscape.gitlab.io/extensions/documentation/authors/
 * https://inkscape.gitlab.io/extensions/documentation/authors/inx-widgets.html
 * https://wiki.inkscape.org/wiki/ExtensionsSystem
+
+## Credits/Appreciations
+
+### Specific Credits
+
+* @miLORD1337 : For contributing [silhouette regmarks](https://github.com/miLORD1337/silhouette-regmarks) to this project
+
+### Collaborators and Contributors List
+<!-- readme: collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -end -->
