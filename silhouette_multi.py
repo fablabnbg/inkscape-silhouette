@@ -29,6 +29,7 @@ from functools import partial
 from itertools import groupby
 
 from silhouette.ColorSeparation import ColorSeparation
+from silhouette.Dialog import Dialog
 
 multilogfile = None
 
@@ -71,6 +72,10 @@ class SilhouetteMulti(EffectExtension):
             "-v", "--verbose", dest="verbose", type=Boolean,
             default=False,
             help="Enable verbose logging")
+        pars.add_argument(
+            "--register_once", dest="register_once", type=Boolean,
+            default=True,
+            help="Skip reading registration marks after the first action")
 
     def get_style(self, element):
         element_style = element.get('style')
@@ -182,9 +187,24 @@ class SilhouetteMulti(EffectExtension):
     def format_commands(self, actions):
         commands = []
 
-        for color, settings in actions:
+        for i in range(0, len(actions)):
+            (color, settings) = actions[i]
+
+            # Copy regmark settings from first action to other actions for correct positioning
+            if i > 0 and self.options.register_once:
+                settings["regmark"] = actions[0][1]["regmark"]
+                settings["regoriginx"] = actions[0][1]["regoriginx"]
+                settings["regoriginy"] = actions[0][1]["regoriginy"]
+                settings["regwidth"] = actions[0][1]["regwidth"]
+                settings["reglength"] = actions[0][1]["reglength"]
+
             command = '<PYTHON>' if self.options.dry_run else sys.executable
             command += " sendto_silhouette.py"
+            if self.options.register_once:
+                if i > 0:
+                    command += " --skip_init=True"
+                elif i < len(actions) - 1:
+                    command += " --skip_reset=True"
             command += " " + self.format_args(settings)
             command += " " + self.id_args(self.objects_by_color[color])
             command += " " + self.svg_copy_file_name

@@ -1,6 +1,8 @@
 import os
 import pickle
 
+from silhouette.Dialog import Dialog
+
 class ColorSeparation:
     """Keep sendto_silhouette settings on a per-color basis"""
     def __init__(self, *args, **kwargs):
@@ -71,7 +73,7 @@ class ColorSeparation:
             message.append("%d colors from the preset were not used." % len(extra_colors))
 
         if message and not silent:
-            Dialog.info(self, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
+            Dialog.info(None, "Colors in the preset and this SVG did not match fully. " + " ".join(message))
 
     def generate_actions(self, default_actions):
         actions = []
