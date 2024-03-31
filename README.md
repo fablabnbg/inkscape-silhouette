@@ -94,7 +94,7 @@ and " ... -> Silhouette Multi Action".
 
 ### openSUSE
 
-* Same as Debian-based, except install the usb package with `sudo zypper in python-usb`
+* Same as Debian-based, except install the usb package with `sudo zypper in python3-usb`
 
 ### Arch Linux
 
