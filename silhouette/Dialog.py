@@ -1,8 +1,7 @@
-import wx
-from wx.lib.agw import genericmessagedialog as gmd
-
 class Dialog:
     def confirm(parent, question, caption = 'Silhouette Multiple Actions'):
+        import wx
+        from wx.lib.agw import genericmessagedialog as gmd
         dlg = wx.MessageDialog(parent, question, caption, wx.YES_NO | wx.ICON_QUESTION)
         result = dlg.ShowModal() == wx.ID_YES
         dlg.Destroy()
@@ -10,6 +9,7 @@ class Dialog:
 
     def info(parent, message, extended = '',
                     caption = 'Silhouette Multiple Actions',):
+        from wx.lib.agw import genericmessagedialog as gmd
         dlg = gmd.GenericMessageDialog(
             parent, message, caption, wrap=1000,
             agwStyle=wx.OK | wx.ICON_INFORMATION | gmd.GMD_USE_AQUABUTTONS)
