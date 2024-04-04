@@ -9,6 +9,7 @@ class Dialog:
 
     def info(parent, message, extended = '',
                     caption = 'Silhouette Multiple Actions',):
+        import wx
         from wx.lib.agw import genericmessagedialog as gmd
         dlg = gmd.GenericMessageDialog(
             parent, message, caption, wrap=1000,
