@@ -74,7 +74,7 @@ class SilhouetteMulti(EffectExtension):
             help="Enable verbose logging")
         pars.add_argument(
             "--register_once", dest="register_once", type=Boolean,
-            default=True,
+            default=False,
             help="Skip reading registration marks after the first action")
 
     def get_style(self, element):
