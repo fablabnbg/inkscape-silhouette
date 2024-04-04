@@ -12,7 +12,7 @@
     <vbox>
       <label>For normal use you may leave these options unchecked.</label>
       <param name="dry_run" type="bool" gui-text="Dry run: only show commands">false</param>
-      <param name="register_once" type="bool" gui-text="Skip reading registration marks after the first action">true</param>
+      <param name="register_once" type="bool" gui-text="Skip reading registration marks after the first action">false</param>
       <param name="block" type="bool" gui-text="Wait for cutter to finish before returning to Inkscape">false</param>
       <param name="verbose" type="bool" gui-text="Verbose output">false</param>
     </vbox>
