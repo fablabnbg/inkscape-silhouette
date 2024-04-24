@@ -111,6 +111,30 @@ and then either `make install-local` to install just for your user account, or `
 
 </details>
 
+### Fedora Linux
+
+<details>
+<summary>Click to get steps</summary>
+
+Install the necessary packages:
+`sudo dnf install python3-pyusb python3-matplotlib  make`
+
+Clone the inkscape-silhoutte repo and make/install the extension:
+```shell
+git clone https://github.com/fablabnbg/inkscape-silhouette.git
+cd inkscape-silhouette
+sudo make install
+```
+Add a new rule file to the udev device manager:
+`sudo nano /etc/udev/rules.d/99-graphtec-silhouette.rules`
+
+And add the following:
+`SUBSYSTEM=="usb", ATTR{idVendor}=="0b4d", ATTR{idProduct}=="1137", MODE="666"`
+
+Finally, load the file with:
+`sudo udevadm trigger`
+ 
+</details>
 
 ### Mac OS X
 
