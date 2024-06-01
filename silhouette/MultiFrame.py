@@ -226,7 +226,7 @@ class ParamsTab(ScrolledPanel):
                 self.choices_by_value[param_name] = { v: k for k, v in choices.items() }
                 choice_list = list(choices.keys())
                 input = wx.Choice(self, wx.ID_ANY, choices=choice_list,
-                                  style=wx.LB_SINGLE)
+                                  style=wx.LB_SINGLE|wx.CB_READONLY|wx.CB_DROPDOWN)
                 input.SetStringSelection(choice_list[0])
             elif param_type == 'string':
                 input = wx.TextCtrl(self)
