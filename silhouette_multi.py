@@ -284,7 +284,8 @@ class SilhouetteMulti(EffectExtension):
 if __name__ == "__main__":
 
     unblock_inkscape = True
-    if any(('--block=true' in sys.argv, '--help' in sys.argv, '-h' in sys.argv)):
+    if any(('--block=true' in sys.argv, '--help' in sys.argv, '-h' in sys.argv, sys.platform.lower().startswith('win'))):
+        # windows doesn't support os.fork()
         unblock_inkscape = False
 
     pid = 0
