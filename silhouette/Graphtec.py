@@ -133,6 +133,7 @@ PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
 PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
 PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
+PRODUCT_ID_SILHOUETTE_CAMEO5 =  0x1140                                      
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
@@ -141,6 +142,7 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
   PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,
   PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
+  PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
   PRODUCT_ID_SILHOUETTE_PORTRAIT3,
 ]
 
@@ -182,6 +184,14 @@ SILHOUETTE_CAMEO4_TOOL_ROTARYBLADE = 5
 SILHOUETTE_CAMEO4_TOOL_PEN = 7
 SILHOUETTE_CAMEO4_TOOL_ERROR = 255
 
+SILHOUETTE_CAMEO5_TOOL_EMPTY = 0
+SILHOUETTE_CAMEO5_TOOL_RATCHETBLADE = 1
+SILHOUETTE_CAMEO5_TOOL_AUTOBLADE = 2
+SILHOUETTE_CAMEO5_TOOL_DEEPCUTBLADE = 3
+SILHOUETTE_CAMEO5_TOOL_KRAFTBLADE = 4
+SILHOUETTE_CAMEO5_TOOL_ROTARYBLADE = 5
+SILHOUETTE_CAMEO5_TOOL_PEN = 7
+SILHOUETTE_CAMEO5_TOOL_ERROR = 255                                
 DEVICE = [
  # CAUTION: keep in sync with sendto_silhouette.inx
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT, 'name': 'Silhouette_Portrait',
@@ -222,6 +232,10 @@ DEVICE = [
                     # the prior Cameo4 settings above.
    'length_mm': 3000,
    'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
+   { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5, 'name': 'Silhouette_Cameo5',
+   # Took these settings from Cameo 4, haven't noticed any performance issues.
+   #added extra margin space to experiment with the software cross-cutting feature
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':-6.0, 'margin_top_mm':0.0, 'regmark': True },                    
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft_Robo_CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft_Robo_CC300-20' },
