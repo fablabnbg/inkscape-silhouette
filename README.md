@@ -20,6 +20,7 @@ This extension should work with the following devices:
 * Silhouette Cameo 4
 * Silhouette Cameo 4 Plus
 * Silhouette Cameo 4 Pro
+* Silhouette Cameo 5
 * Silhouette Curio (partial success confirmed in #36)
 * Craft Robo CC200-20
 * Craft Robo CC300-20
