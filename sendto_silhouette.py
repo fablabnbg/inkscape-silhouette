@@ -5,7 +5,7 @@
 # (C) 2013 jw@suse.de. Licensed under CC-BY-SA-3.0 or GPL-2.0 at your choice.
 # (C) 2014 - 2023  juewei@fabmail.org and contributors
 
-__version__ = "1.28"     # Keep in sync with sendto_silhouette.inx ca line 179
+__version__ = "1.29"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
 import sys, os, time, math, operator
