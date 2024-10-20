@@ -27,7 +27,7 @@ jobs:
           - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.12', inkscape-version: 'TRUNK', continue-on-error: true }
           - { os: 'ubuntu-latest', python-version: '3.12', inkscape-version: 'inkex', continue-on-error: false }
-          - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: '1.3.2', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: '1.4.0', continue-on-error: false }
 #          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
     continue-on-error: ${{ matrix.continue-on-error }}
 
