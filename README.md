@@ -14,6 +14,7 @@ This extension should work with the following devices:
 * Silhouette Portrait
 * Silhouette Portrait 2 (working confirmed)
 * Silhouette Portrait 3
+* Silhouette Portrait 4 (working confirmed)
 * Silhouette Cameo
 * Silhouette Cameo 2
 * Silhouette Cameo 3
@@ -104,7 +105,7 @@ and " ... -> Silhouette Multi Action".
 <summary>Click to get steps</summary>
 
 ```shell
-sudo pacman -S inkscape python-lxml python-pyusb
+sudo pacman -S inkscape python-lxml python-pyusb python-tinycss2 python-matplotlib
 git clone https://github.com/fablabnbg/inkscape-silhouette.git
 cd inkscape-silhouette
 ```
