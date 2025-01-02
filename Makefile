@@ -22,7 +22,7 @@ VERS=$$(python3 ./sendto_silhouette.py --version)
 
 DEST=$(DESTDIR)$(PREFIX)/share/inkscape/extensions
 LOCALE=$(DESTDIR)$(PREFIX)/share/locale
-UDEV=$(DESTDIR)/lib/udev
+UDEV=$(DESTDIR)$(PREFIX)/lib/udev
 INKSCAPE_TEMPLATES=$(DESTDIR)$(PREFIX)/share/inkscape/templates
 
 # User-specifc inkscape extensions folder for local install
