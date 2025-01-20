@@ -283,6 +283,12 @@ class SilhouetteMulti(EffectExtension):
 
 if __name__ == "__main__":
 
+    if not any(('--gui=false' in sys.argv, '-g=false' in sys.argv)):
+        # load modules early to throw errors early before forking
+        import wx
+        from silhouette.MultiFrame import MultiFrame
+        from silhouette.Dialog import Dialog
+
     unblock_inkscape = True
     if any(('--block=true' in sys.argv, '--help' in sys.argv, '-h' in sys.argv, sys.platform.lower().startswith('win'))):
         # windows doesn't support os.fork()
