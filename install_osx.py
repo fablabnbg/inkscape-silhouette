@@ -17,6 +17,7 @@ prerequisites = ["cssselect", "xmltodict", "lxml", "pyusb", "libusb1", "numpy"]
 extensions_dir = os.path.join(os.path.expanduser("~"), "Library","Application Support","org.inkscape.Inkscape","config","inkscape","extensions")
 extension_files = ["sendto_silhouette.inx", "sendto_silhouette.py",
                    "silhouette_multi.inx",  "silhouette_multi.py",
+                   "render_silhouette_regmarks.inx", "render_silhouette_regmarks.py",
                    "silhouette"]
 
 
