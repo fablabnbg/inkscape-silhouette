@@ -53,6 +53,7 @@ jobs:
     - name: 🐧 install Inkex standalone & umockdev
       if: ${{ matrix.os == 'ubuntu-latest' && startsWith(matrix.inkscape-version, 'inkex') }}
       run: |
+        sudo apt-get update
         sudo apt-get -y install umockdev libgirepository1.0-dev
         pip install --break-system-packages ${{ matrix.inkscape-version }}
     - name: 🍏 install Inkscape
