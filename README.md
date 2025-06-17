@@ -120,7 +120,7 @@ and then either `make install-local` to install just for your user account, or `
 <summary>Click to get steps</summary>
 
 Install the necessary packages:
-`sudo dnf install python3-pyusb python3-matplotlib  make`
+`sudo dnf install python3-pyusb python3-matplotlib make gettext`
 
 Clone the inkscape-silhoutte repo and make/install the extension:
 ```shell
