@@ -24,11 +24,8 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.65367474"
-     inkscape:cx="494.12954"
-     inkscape:cy="616.51457"
      inkscape:document-units="in"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="true"
      inkscape:pagecheckerboard="false"
@@ -124,38 +121,6 @@
        style="fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 389.952,1170.8231 18,31.1769 18,-31.1769 h -36"
        id="path3" />
-    <path
-       id="rect3"
-       style="fill:#4d4d4d;fill-opacity:1;stroke:#4d4d4d;stroke-width:1.152;stroke-dasharray:none;stroke-opacity:1"
-       d="M -12.850409,0 V 36 Z"
-       sodipodi:nodetypes="ccc" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.6667px;line-height:1.25;font-family:sans-serif;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:0.96;stroke-dasharray:none"
-       x="-52.464172"
-       y="-9.8847923"
-       id="text3"
-       transform="rotate(-90)"><tspan
-         sodipodi:role="line"
-         id="tspan3"
-         x="-52.464172"
-         y="-9.8847923">A4</tspan></text>
-    <path
-       id="rect4"
-       style="fill:#4d4d4d;stroke:#4d4d4d;stroke-width:1.152;stroke-dasharray:none"
-       d="M -23.423986,0 V 36 Z"
-       sodipodi:nodetypes="ccc" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.6667px;line-height:1.25;font-family:sans-serif;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:0.96;stroke-dasharray:none"
-       x="-82.464172"
-       y="-19.884792"
-       id="text4"
-       transform="rotate(-90)"><tspan
-         sodipodi:role="line"
-         id="tspan4"
-         x="-82.464172"
-         y="-19.884792">8.5 x 11</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
