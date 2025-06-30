@@ -367,8 +367,11 @@ class SendtoSilhouette(EffectExtension):
                     my_transform = parent_transform @ node.transform
 
             if isinstance(node, Group):
-                # Check if layer name is referring to registration mark or print layer
+                # Check if layer name is referring to cutting mat, registration mark or print layer
                 if node.label:
+                    if "cuttingmat" in node.label.lower():
+                        self.report(f"layer '{node.label}' is a cutting mat layer - skipped", 'log')
+                        continue
                     if "regmark" in node.label.lower():
                         self.report(f"layer '{node.label}' is a registration mark layer - skipped", 'log')
                         continue
