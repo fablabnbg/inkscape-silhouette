@@ -12,6 +12,7 @@
         <option translatable="no" value="cameo_12x12">Cameo 12x12</option>
         <option translatable="no" value="cameo_12x24">Cameo 12x24</option>
         <option translatable="no" value="portrait_8x12">Portrait 8x12</option>
+        <option translatable="no" value="portrait_8_5x12">Portrait 4 8.5x12</option>
         <option translatable="no" value="cameo_plus_15x15">Cameo Plus 15x15</option>
         <option translatable="no" value="cameo_pro_24x24">Cameo Pro 24x24</option>
         <option value="no_mat">None</option>
