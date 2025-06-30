@@ -21,6 +21,7 @@
 # 2020-06-    Adding Cameo4 and refactor code
 # 2021-06-03  Adding Cameo4 Pro
 # 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
+# 2025-06-30  Add Portrait4
 
 import os
 import re
@@ -138,6 +139,7 @@ PRODUCT_ID_SILHOUETTE_CAMEO5PLUS =  0x1141
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
+PRODUCT_ID_SILHOUETTE_PORTRAIT4 = 0x113f
 
 PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
@@ -146,10 +148,11 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
   PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
   PRODUCT_ID_SILHOUETTE_PORTRAIT3,
+  PRODUCT_ID_SILHOUETTE_PORTRAIT4,
 ]
 
 PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
-PRODUCTS_WITH_TWO_TOOLS = [p for p in PRODUCT_LINE_CAMEO3_ON if p != PRODUCT_ID_SILHOUETTE_PORTRAIT3]
+PRODUCTS_WITH_TWO_TOOLS = [p for p in PRODUCT_LINE_CAMEO3_ON if p != PRODUCT_ID_SILHOUETTE_PORTRAIT3 and p != PRODUCT_ID_SILHOUETTE_PORTRAIT4]
 
 # End Of Text - marks the end of a command
 CMD_ETX = b'\x03'
@@ -194,6 +197,8 @@ DEVICE = [
    'width_mm':  203, 'length_mm': 3000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT3, 'name': 'Silhouette_Portrait3',
    'width_mm':  203, 'length_mm': 18290, 'regmark': True },
+ { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT4, 'name': 'Silhouette_Portrait4',
+   'width_mm':  216, 'length_mm': 18290, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO, 'name': 'Silhouette_Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!

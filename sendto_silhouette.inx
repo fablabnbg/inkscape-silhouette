@@ -142,6 +142,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
 	<option translatable="no" value="Silhouette_Portrait">Silhouette Portrait</option>
 	<option translatable="no" value="Silhouette_Portrait2">Silhouette Portrait 2</option>
 	<option translatable="no" value="Silhouette_Portrait3">Silhouette Portrait 3</option>
+	<option translatable="no" value="Silhouette_Portrait4">Silhouette Portrait 4</option>
 	<option translatable="no" value="Silhouette_Cameo">Silhouette Cameo</option>
 	<option translatable="no" value="Silhouette_Cameo2">Silhouette Cameo 2</option>
 	<option translatable="no" value="Silhouette_Cameo3">Silhouette Cameo 3</option>
