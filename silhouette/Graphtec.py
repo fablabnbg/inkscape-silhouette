@@ -21,7 +21,7 @@
 # 2020-06-    Adding Cameo4 and refactor code
 # 2021-06-03  Adding Cameo4 Pro
 # 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
-# 2025-06-30  Add Portrait4
+# 2025-06-30  Add Portrait4 and matching 8.5x12 cutting mat definition
 
 import os
 import re
@@ -119,7 +119,8 @@ CAMEO_MATS = dict(
   cameo_12x24=('2', 24, 12),
   portrait_8x12=('3', 12, 8),
   cameo_plus_15x15=('8', 15, 15),
-  cameo_pro_24x24=('9', 24, 24)
+  cameo_pro_24x24=('9', 24, 24),
+  portrait_8_5x12=('11', 12, 8.5)
 )
 
 #  robocut/Plotter.h:53 ff
