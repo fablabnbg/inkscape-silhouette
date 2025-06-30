@@ -43,14 +43,8 @@
      inkscape:snap-bbox-edge-midpoints="true"
      units="in"
      inkscape:snap-smooth-nodes="true"
-     inkscape:window-width="1920"
-     inkscape:window-height="1531"
-     inkscape:window-x="1920"
-     inkscape:window-y="32"
-     inkscape:window-maximized="0"
      inkscape:snap-global="false"
-     width="8.5in"
-     inkscape:deskcolor="#d1d1d1">
+     width="8.5in">
     <inkscape:grid
        originy="1152"
        originx="0"
@@ -572,10 +566,10 @@
      transform="translate(0,181.41733)"
      style="display:inline" />
   <inkscape:templateinfo>
-    <inkscape:name>Portrait 8&quot; x 12&quot; Cutting Mat</inkscape:name>
-    <inkscape:author>Moritz von Göwels</inkscape:author>
-    <inkscape:shortdesc>8 by 12 cutting mat for silhouette's portrait plotters</inkscape:shortdesc>
-    <inkscape:date>2023-08-05</inkscape:date>
+    <inkscape:name>Portrait 8.5&quot; x 12&quot; Cutting Mat</inkscape:name>
+    <inkscape:author>Moritz von Göwels, Erik Gustavsson</inkscape:author>
+    <inkscape:shortdesc>8.5 by 12 cutting mat for silhouette's portrait 4 plotter</inkscape:shortdesc>
+    <inkscape:date>2025-06-30</inkscape:date>
     <inkscape:keywords>Cutting Mat</inkscape:keywords>
   </inkscape:templateinfo>
 </svg>
