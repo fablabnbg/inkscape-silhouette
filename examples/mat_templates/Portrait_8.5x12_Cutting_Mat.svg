@@ -83,7 +83,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="Mat_8&quot;x12&quot;"
+     inkscape:label="CuttingMatEdge"
      style="display:inline"
      sodipodi:insensitive="true">
     <rect
@@ -125,7 +125,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer3"
-     inkscape:label="Grid_1&quot;x1&quot;"
+     inkscape:label="CuttingMatGrid"
      style="display:inline"
      sodipodi:insensitive="true">
     <g
@@ -525,7 +525,7 @@
     </g>
   </g>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="Cut"
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,181.41733)"
