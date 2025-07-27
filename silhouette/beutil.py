@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Conversion utilities for printer's binary encoding commands
 # (c) 2018 D. Bajar
