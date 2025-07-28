@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 #
 # This test cut differs from the test cut in Silhouette Studio:
 # as our triangle is not a simple triangle, but a more complex

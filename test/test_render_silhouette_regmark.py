@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 from render_silhouette_regmarks import InsertRegmark
 from inkex import BoundingBox
