@@ -244,6 +244,9 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("--regsearch",
                 dest = "regsearch", type = Boolean, default = False,
                 help="Search for the registration marks.")
+        pars.add_argument("-Q", "--quadregmarks",
+                dest = "quadregmarks", type = Boolean, default = False,
+                help="Use 4 registration marks.")
         pars.add_argument("-X", "--reg-x", "--regwidth",
                 type = float, dest = "regwidth", default = 0.0, help="X mark to mark distance [mm]")
         pars.add_argument("-Y", "--reg-y", "--reglength",
@@ -765,6 +768,7 @@ class SendtoSilhouette(EffectExtension):
                     endposition="start",
                     regmark=self.options.regmark,
                     regsearch=self.options.regsearch,
+                    quadregmarks=self.options.quadregmarks,
                     regwidth=self.reg_width,
                     reglength=self.reg_length,
                     regoriginx=self.reg_origin_X,
@@ -789,6 +793,7 @@ class SendtoSilhouette(EffectExtension):
             end_paper_offset=self.options.end_offset,
             regmark=self.options.regmark,
             regsearch=self.options.regsearch,
+            quadregmarks=self.options.quadregmarks,
             regwidth=self.reg_width,
             reglength=self.reg_length,
             regoriginx=self.reg_origin_X,

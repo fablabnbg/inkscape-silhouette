@@ -125,6 +125,8 @@ CAMEO_MATS = dict(
 
 #  robocut/Plotter.h:53 ff
 VENDOR_ID_GRAPHTEC = 0x0b4d
+VENDOR_ID_CAMEO5ALPHA = 0x3844
+
 PRODUCT_ID_CC200_20 = 0x110a
 PRODUCT_ID_CC300_20 = 0x111a
 PRODUCT_ID_SILHOUETTE_SD_1 = 0x111c
@@ -137,6 +139,7 @@ PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
 PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
 PRODUCT_ID_SILHOUETTE_CAMEO5 =  0x1140                                      
 PRODUCT_ID_SILHOUETTE_CAMEO5PLUS =  0x1141                                      
+PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA =  0x0001
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
@@ -148,6 +151,7 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
   PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
   PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
+  PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA,
   PRODUCT_ID_SILHOUETTE_PORTRAIT3,
   PRODUCT_ID_SILHOUETTE_PORTRAIT4,
 ]
@@ -239,6 +243,10 @@ DEVICE = [
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5PLUS, 'name': 'Silhouette_Cameo5_Plus',
    # Took these settings from Cameo 4 Plus, haven't noticed any performance issues.
    'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },                    
+ { 'vendor_id': VENDOR_ID_CAMEO5ALPHA, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA, 'name': 'Silhouette_Cameo5_Alpha',
+   # Took these settings from Cameo 4, haven't noticed any performance issues.
+   #added extra margin space to experiment with the software cross-cutting feature
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':-6.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },  
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft_Robo_CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft_Robo_CC300-20' },
@@ -959,8 +967,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     # cameo 4 sets some parameters two times (force, acceleration, Cutter offset)
     if self.product_id() in PRODUCT_LINE_CAMEO4:
       if pressure is not None:
-        if pressure <  1: pressure = 1
-        if pressure > 33: pressure = 33
+        if 'max_pressure' in self.hardware:
+          if pressure > self.hardware['max_pressure']:
+            pressure = self.hardware['max_pressure']
+        else:
+          if pressure > 33: pressure = 33
         self.send_command(tool.pressure(pressure))
         print("pressure: %d" % pressure, file=self.log)
 
@@ -1155,6 +1166,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def automatic_regmark_test_mm_cmd(self, height, width, top, left):
     """ TB123,h,w,t,l """
     return "TB123,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
+  
+  # Cameo 5 Alpha
+  def automatic_quad_regmark_test_mm_cmd(self, height, width, top, left):
+    """ TB124,h,w,t,l """
+    return "TB124,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
 
   def manual_regmark_mm_cmd(self, height, width):
     """ TB23,h,w """
@@ -1267,7 +1283,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def plot(self, mediawidth=210.0, mediaheight=297.0, margintop=None,
            marginleft=None, pathlist=None, offset=None, bboxonly=False,
            end_paper_offset=0, endposition='below', regmark=False, regsearch=False,
-           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0, skip_init=False, skip_reset=False):
+           regwidth=180, reglength=230, regoriginx=15.0, regoriginy=20.0, quadregmarks=False, skip_init=False, skip_reset=False):
     """plot sends the pathlist to the device (real or dummy) and computes the
        bounding box of the pathlist, which is returned.
 
@@ -1323,6 +1339,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     else:
       if type(offset) != type([]) and type(offset) != type(()):
         offset = (offset, 0)
+    
+    if not 'quadregmarks' in self.hardware or self.hardware['quadregmarks'] == False:
+      quadregmarks = False
 
     if regmark:
       # after registration logically (0,0) is at regmark position
@@ -1349,7 +1368,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if regsearch:
         # automatic regmark test
         # add a search range of 10mm
-        self.send_command(self.automatic_regmark_test_mm_cmd(reglength, regwidth, max(regoriginy - 10, 0), max(regoriginx - 10, 0)))
+        if quadregmarks:
+          self.send_command(self.automatic_quad_regmark_test_mm_cmd(reglength, regwidth, max(regoriginy - 10, 0), max(regoriginx - 10, 0)))
+        else:
+          self.send_command(self.automatic_regmark_test_mm_cmd(reglength, regwidth, max(regoriginy - 10, 0), max(regoriginx - 10, 0)))
       else:
         # manual regmark
         self.send_command(self.manual_regmark_mm_cmd(reglength, regwidth))

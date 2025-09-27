@@ -1,3 +1,4 @@
+ATTRS{idVendor}=="3844", ATTRS{idProduct}=="0001", MODE="666", ENV{silhouette_cameo5alpha}="yes", GOTO="end"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1140", MODE="666", ENV{silhouette_cameo5}="yes", GOTO="end"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1139", MODE="666", ENV{silhouette_cameo4pro}="yes"
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="1138", MODE="666", ENV{silhouette_cameo4plus}="yes"
@@ -15,6 +16,7 @@ ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="110a", MODE="666", ENV{craftrobo_cc2
 ATTRS{idVendor}=="0b4d", ATTRS{idProduct}=="111a", MODE="666", ENV{craftrobo_cc300_20}="yes"
 LABEL="end"
 
+ENV{silhouette_cameo5alpha}=="yes",     RUN="/lib/udev/silhouette-udev-notify.sh", GOTO="very_end"
 ENV{silhouette_cameo5}=="yes",     RUN="/lib/udev/silhouette-udev-notify.sh", GOTO="very_end"
 ENV{silhouette_cameo4pro}=="yes",  RUN="/lib/udev/silhouette-udev-notify.sh"
 ENV{silhouette_cameo4plus}=="yes", RUN="/lib/udev/silhouette-udev-notify.sh"
