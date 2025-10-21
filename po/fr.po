@@ -1,0 +1,507 @@
+# Traduction française pour inkscape-silhouette
+# Ce fichier est distribué sous la même licence que le paquet inkscape-silhouette par fablabnbg.
+# Copyright (C) 2025
+# jubonhomme <>, 2025.
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.29\n"
+"Report-Msgid-Bugs-To: jubonhomme\n"
+"POT-Creation-Date: 2025-10-02 12:18+0100\n"
+"PO-Revision-Date: 2025-10-21 13:59+0100\n"
+"Last-Translator: jubonhomme <>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: sendto_silhouette.inx:3
+msgid "Send to Silhouette"
+msgstr "Envoyer à Silhouette"
+
+#: sendto_silhouette.inx:11
+msgid "Cutting Mat"
+msgstr "Tapis de découpe"
+
+#: sendto_silhouette.inx:17
+msgid "None"
+msgstr "Aucun"
+
+#: sendto_silhouette.inx:19
+msgid "Tool Holder"
+msgstr "Porte-outil"
+
+#: sendto_silhouette.inx:20
+msgid "Red (left tool)"
+msgstr "Rouge (outil de gauche)"
+
+#: sendto_silhouette.inx:21
+msgid "Blue (right tool)"
+msgstr "Bleu (outil de droite)"
+
+#: sendto_silhouette.inx:23
+msgid "Tool"
+msgstr "Outil"
+
+#: sendto_silhouette.inx:24
+msgid "Media default"
+msgstr "Matériau par défaut"
+
+#: sendto_silhouette.inx:25
+msgid "Pen"
+msgstr "Stylo"
+
+#: sendto_silhouette.inx:26
+msgid "Cut"
+msgstr "Découpe"
+
+#: sendto_silhouette.inx:27
+msgid "AutoBlade"
+msgstr "Lame Auto-ajustable"
+
+#: sendto_silhouette.inx:29
+msgid "'pen' executes the strokes exactly as sent, 'cut' adds small serifs to help the knive find its orientation at corners."
+msgstr "'Stylo' réalise les traits exactement comme envoyés, 'découpe' ajoute de petites empattements pour aider la lame à s’orienter aux coins."
+
+#: sendto_silhouette.inx:31
+msgid "Media"
+msgstr "Matériau"
+
+#: sendto_silhouette.inx:32
+msgid "[P>0 S>0 D>=0] Custom: use non-zero Pressure and Speed below"
+msgstr "[P>0 S>0 D>=0] Personnalisé : utiliser une pression et une vitesse non nulles ci-dessous"
+
+#: sendto_silhouette.inx:33
+msgid "[P=27,S=10,D=1] SCard without Craft Paper Backing"
+msgstr "[P=27,S=10,D=1] Carte sans support en papier kraft"
+
+#: sendto_silhouette.inx:34
+msgid "[P=27,S=10,D=1] Card with Craft Paper Backing"
+msgstr "[P=27,S=10,D=1] Carte avec support en papier kraft"
+
+#: sendto_silhouette.inx:35
+msgid "[P=10,S= 5,D=1] Vinyl Sticker"
+msgstr "[P=10,S= 5,D=1] Autocollant vinyle"
+
+#: sendto_silhouette.inx:36
+msgid "[P=14,S=10,D=1] Film Labels"
+msgstr "[P=14,S=10,D=1] Étiquettes film"
+
+#: sendto_silhouette.inx:37
+msgid "[P=27,S=10,D=1] Thick Media"
+msgstr "[P=27,S=10,D=1] Matériau épais"
+
+#: sendto_silhouette.inx:38
+msgid "[P= 2,S=10,D=1] Thin Media"
+msgstr "[P= 2,S=10,D=1] Matériau fin"
+
+#: sendto_silhouette.inx:39
+msgid "[P=18,S=10,D=0] Pen"
+msgstr "[P=18,S=10,D=0] Stylo"
+
+#: sendto_silhouette.inx:40
+msgid "[P=30,S=10,D=1] Bond Paper 13-28 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Papier bond 105g (13-28 lbs)"
+
+#: sendto_silhouette.inx:41
+msgid "[P=30,S=10,D=1] Bristol Paper 57-67 lbs (145g)"
+msgstr "[P=30,S=10,D=1] Papier bristol 145g (57-67 lbs)"
+
+#: sendto_silhouette.inx:42
+msgid "[P=30,S=10,D=1] Cardstock 40-60 lbs (90g)"
+msgstr "[P=30,S=10,D=1] Carton 90g (40-60 lbs)"
+
+#: sendto_silhouette.inx:43
+msgid "[P=30,S=10,D=1] Cover 40-60 lbs (170g)"
+msgstr "[P=30,S=10,D=1] Couverture 170g (40-60 lbs)"
+
+#: sendto_silhouette.inx:44
+msgid "[P= 1,S=10,D=1] Film, Double Matte Translucent"
+msgstr "[P= 1,S=10,D=1] Film, double mat translucide"
+
+#: sendto_silhouette.inx:45
+msgid "[P= 1,S=10,D=1] Film, Vinyl With Adhesive Back"
+msgstr "[P= 1,S=10,D=1] Film, vinyle avec dos adhésif"
+
+#: sendto_silhouette.inx:46
+msgid "[P= 1,S=10,D=1] Film, Window With Kling Adhesive"
+msgstr "[P= 1,S=10,D=1] Film, fenêtre avec adhésif Kling"
+
+#: sendto_silhouette.inx:47
+msgid "[P=30,S=10,D=1] Index 90 lbs (165g)"
+msgstr "[P=30,S=10,D=1] Papier index 165g (90 lbs)"
+
+#: sendto_silhouette.inx:48
+msgid "[P=20,S=10,D=1] Inkjet Photo Paper 28-44 lbs (70g)"
+msgstr "[P=20,S=10,D=1] Papier photo jet d'encre 70g (28-44 lbs)"
+
+#: sendto_silhouette.inx:49
+msgid "[P=27,S=10,D=1] Inkjet Photo Paper 45-75 lbs (110g)"
+msgstr "[P=27,S=10,D=1] Papier photo jet d'encre 110g (45-75 lbs)"
+
+#: sendto_silhouette.inx:50
+msgid "[P=30,S= 3,D=1] Magnetic Sheet"
+msgstr "[P=30,S= 3,D=1] Feuille magnétique"
+
+#: sendto_silhouette.inx:51
+msgid "[P=30,S=10,D=1] Offset 24-60 lbs (90g)"
+msgstr "[P=30,S=10,D=1] Offset 90g (24-60 lbs)"
+
+#: sendto_silhouette.inx:52
+msgid "[P= 5,S=10,D=1] Print Paper Light Weight"
+msgstr "[P= 5,S=10,D=1] Papier d'impression léger"
+
+#: sendto_silhouette.inx:53
+msgid "[P=25,S=10,D=1] Print Paper Medium Weight"
+msgstr "[P=25,S=10,D=1] Papier d'impression poids moyen"
+
+#: sendto_silhouette.inx:54
+msgid "[P=20,S=10,D=1] Sticker Sheet"
+msgstr "[P=20,S=10,D=1] Feuille d'autocollants"
+
+#: sendto_silhouette.inx:55
+msgid "[P=20,S=10,D=1] Tag 100 lbs (275g)"
+msgstr "[P=20,S=10,D=1] Étiquette 275g (100 lbs)"
+
+#: sendto_silhouette.inx:56
+msgid "[P=30,S=10,D=1] Text Paper 24-70 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Papier texte 105g (24-70 lbs)"
+
+#: sendto_silhouette.inx:57
+msgid "[P=30,S=10,D=1] Vellum Bristol 57-67 lbs (145g)"
+msgstr "[P=30,S=10,D=1] Vélin bristol 145g (57-67 lbs)"
+
+#: sendto_silhouette.inx:58
+msgid "[P=30,S=10,D=1] Writing Paper 24-70 lbs (105g)"
+msgstr "[P=30,S=10,D=1] Papier à écrire 105g (24-70 lbs)"
+
+#: sendto_silhouette.inx:60
+msgid "Speed"
+msgstr "Vitesse"
+
+#: sendto_silhouette.inx:61
+msgid "Pressure"
+msgstr "Pression"
+
+#: sendto_silhouette.inx:62
+msgid "Blade Depth (for AutoBlade)"
+msgstr "Profondeur de la lame (pour Lame Auto-ajustable)"
+
+#: sendto_silhouette.inx:63
+msgid "Use speed=0, pressure=0, depth=-1 to take the media defaults. Pressure values of 19 or more could trigger the trackenhancing feature, which means a movement along the full media height before start. Beware."
+msgstr "Utilisez vitesse=0, pression=0, profondeur=-1 pour prendre les valeurs par défaut du matériau. Des valeurs de pression de 19 ou plus peuvent déclencher la fonction d'amélioration de piste, ce qui signifie un déplacement sur toute la hauteur du matériau avant le démarrage. Prudence."
+
+#: sendto_silhouette.inx:64
+msgid "Preview: show cut pattern before sending"
+msgstr "Aperçu : montrer le motif de coupe avant l'envoi"
+
+#: sendto_silhouette.inx:65
+msgid "Note that for Preview to operate, the `matplotlib' package for Python must be installed."
+msgstr "Notez que pour que l'aperçu fonctionne, le paquet `matplotlib' pour Python doit être installé."
+
+#: sendto_silhouette.inx:67
+msgid "Options"
+msgstr "Options"
+
+#: sendto_silhouette.inx:68
+msgid "Convert to dashes"
+msgstr "Convertir en tirets"
+
+#: sendto_silhouette.inx:68
+msgid "Convert paths with dashed strokes to separate subpaths for perforated cuts."
+msgstr "Convertir les chemins avec des traits pointillés en sous-chemins séparés pour des découpes perforées."
+
+#: sendto_silhouette.inx:69
+msgid "Trim margins"
+msgstr "Réduire les marges"
+
+#: sendto_silhouette.inx:69
+msgid "Shift to the top lefthand corner, then do offsets."
+msgstr "Déplacer vers le coin supérieur gauche, puis appliquer les décalages."
+
+#: sendto_silhouette.inx:70
+msgid "Draft Bounding Box Only"
+msgstr "Boîte englobante du brouillon uniquement"
+
+#: sendto_silhouette.inx:71
+msgid "To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)"
+msgstr "Pour voir la zone utilisée, cochez la case ci-dessus et utilisez pression=1 (ou mieux retirez l'outil)"
+
+#: sendto_silhouette.inx:72
+msgid "Repeat each stroke"
+msgstr "Répéter chaque trait"
+
+#: sendto_silhouette.inx:73
+msgid "Cut in opposite direction(s)"
+msgstr "Couper dans la ou les directions opposées"
+
+#: sendto_silhouette.inx:74
+msgid "Position After Cutting"
+msgstr "Position après coupe"
+
+#: sendto_silhouette.inx:75
+msgid "Start Position"
+msgstr "Position de départ"
+
+#: sendto_silhouette.inx:76
+msgid "Below Cut-Out"
+msgstr "Sous la découpe"
+
+#: sendto_silhouette.inx:78
+msgid "Choose position of blade relative to the media after cutting. \"Below Cut-Out\" is ideal for using cross-cutter."
+msgstr "Choisissez la position de la lame par rapport au matériau après la coupe. \"Sous la découpe\" est idéal pour l'utilisation d'une coupe transversale."
+
+#: sendto_silhouette.inx:79
+msgid "End Position Offset [mm]"
+msgstr "Décalage de la position finale [mm]"
+
+#: sendto_silhouette.inx:80
+msgid "Adjusts the final position selected above; currently only implemented for \"Below Cut-Out\". Allows you to leave space between cuts (or with a negative value, position above the bottom of the cut, which can reduce wasted material for repeating certain patterns)."
+msgstr "Ajuste la position finale sélectionnée ci-dessus ; actuellement implémenté uniquement pour \"Sous la découpe\". Permet de laisser de l'espace entre les découpes (ou avec une valeur négative, position au-dessus du bas de la découpe, ce qui peut réduire le gaspillage de matériel pour certains motifs répétitifs)."
+
+#: sendto_silhouette.inx:83
+msgid "Regmarks"
+msgstr "Marques d'alignement"
+
+#: sendto_silhouette.inx:84
+msgid "The document has registration marks"
+msgstr "Le document contient des marques d'alignement"
+
+#: sendto_silhouette.inx:85
+msgid "The document contains printed registration marks"
+msgstr "Le document contient des marques d'alignement imprimées"
+
+#: sendto_silhouette.inx:86
+msgid "Search for the registration marks automatically"
+msgstr "Recherche automatique des marques d'alignement"
+
+#: sendto_silhouette.inx:87
+msgid "Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually."
+msgstr "Recherche automatique des marques d'alignement. Il semble que certains appareils aient un autre mode où vous pouvez définir les références manuellement."
+
+#: sendto_silhouette.inx:88
+msgid "X mark distance [mm]"
+msgstr "Distance entre marques horizontales [mm]"
+
+#: sendto_silhouette.inx:89
+msgid "Y mark distance [mm]"
+msgstr "Distance entre marques verticales [mm]"
+
+#: sendto_silhouette.inx:90
+msgid "Position of regmark from document left [mm]"
+msgstr "Position de la marque d'alignement depuis la gauche du document [mm]"
+
+#: sendto_silhouette.inx:91
+msgid "Position of regmark from document top [mm]"
+msgstr "Position de la marque d'alignement depuis le haut du document [mm]"
+
+#: sendto_silhouette.inx:92
+msgid "Distance of the registration mark edges"
+msgstr "Distance des bords des marques d'alignement"
+
+#: sendto_silhouette.inx:95
+msgid "Advanced"
+msgstr "Avancé"
+
+#: sendto_silhouette.inx:96
+msgid "Wait til done, after all data is sent"
+msgstr "Attendre la fin, après l'envoi de toutes les données"
+
+#: sendto_silhouette.inx:97
+msgid "Keep dialog open until device becomes idle again."
+msgstr "Garder la boîte de dialogue ouverte jusqu'à ce que l'appareil soit à nouveau inactif."
+
+#: sendto_silhouette.inx:98
+msgid "Sharpen Corners"
+msgstr "Aiguiser les coins"
+
+#: sendto_silhouette.inx:98
+msgid "Lift head at sharp corners"
+msgstr "Soulever la tête aux coins aigus"
+
+#: sendto_silhouette.inx:99
+msgid "Sharpen Corners - Start Ext. [mm]"
+msgstr "Aiguiser les coins - Extension début [mm]"
+
+#: sendto_silhouette.inx:100
+msgid "Sharpen Corners - End Ext. [mm]"
+msgstr "Aiguiser les coins - Extension fin [mm]"
+
+#: sendto_silhouette.inx:101
+msgid "Overcut on closed paths [mm]"
+msgstr "Surcoupe sur chemins fermés [mm]"
+
+#: sendto_silhouette.inx:102
+msgid "Cutting Strategy"
+msgstr "Stratégie de découpe"
+
+#: sendto_silhouette.inx:103
+msgid "Z-Order"
+msgstr "Par ordre de profondeur"
+
+#: sendto_silhouette.inx:104
+msgid "Without mat"
+msgstr "Sans tapis"
+
+#: sendto_silhouette.inx:105
+msgid "Minimized Traveling"
+msgstr "Parcours minimisé"
+
+#: sendto_silhouette.inx:106
+msgid "Minimized Traveling (fully optimized)"
+msgstr "Parcours minimisé (entièrement optimisé)"
+
+#: sendto_silhouette.inx:107
+msgid "Minimized Traveling (no reverse)"
+msgstr "Parcours minimisé (sans retour)"
+
+#: sendto_silhouette.inx:109
+msgid "\nZ-Order: Leaf cut order as defined in input svg.\nWithout mat: Subdivide, sort, and choose cut directions, so that a cutting mat is not needed in most cases.\nMinimal Traveling: Find the nearest startpoint to minimize travel movements\nMinimal Traveling (fully optimized): Additionally search startpoints in closed paths\nMinimal Traveling (no reverse): Like fully optimized but respect original orientations of paths"
+msgstr "\nZ-Order : ordre de coupe des feuilles tel que défini dans le svg d'entrée.\nSans tapis : subdivision, tri, et choix des directions de coupe de manière à ce qu'un tapis de coupe ne soit pas nécessaire dans la plupart des cas.\nParcours minimisé : trouve le point de départ le plus proche pour minimiser les déplacements.\nParcours minimisé (entièrement optimisé) : recherche également les points de départ dans les chemins fermés.\nParcours minimisé (sans retour) : comme entièrement optimisé mais respecte les orientations originales des chemins."
+
+#: sendto_silhouette.inx:115
+msgid "Pre-orient paths"
+msgstr "Préorientation des chemins"
+
+#: sendto_silhouette.inx:116
+msgid "As in SVG"
+msgstr "Comme dans SVG"
+
+#: sendto_silhouette.inx:117
+msgid "Descending Y (pull through tool)"
+msgstr "Descendant Y (tirer à travers l’outil)"
+
+#: sendto_silhouette.inx:118
+msgid "Ascending Y (push into tool)"
+msgstr "Ascendant Y (pousser dans l’outil)"
+
+#: sendto_silhouette.inx:119
+msgid "Descending X (right to left)"
+msgstr "Descendant X (droite vers gauche)"
+
+#: sendto_silhouette.inx:120
+msgid "Ascending X (left to right)"
+msgstr "Ascendant X (gauche vers droite)"
+
+#: sendto_silhouette.inx:122
+msgid "Note: Some strategies like \"Without Mat\" may reverse some path orientations, so final cut may not strictly obey orientation chosen above."
+msgstr "Note : Certaines stratégies comme \"Sans tapis\" peuvent inverser certaines orientations de chemin, donc la coupe finale peut ne pas strictement respecter l’orientation choisie ci-dessus."
+
+#: sendto_silhouette.inx:123
+msgid "Fuse coincident paths"
+msgstr "Fusionner les chemins superposés"
+
+#: sendto_silhouette.inx:124
+msgid "Merges consecutive paths that end and start with same point to minimize tool lifting. (Most effective with the Min Travel strategies.)"
+msgstr "Fusionne les chemins consécutifs qui se terminent et commencent au même point pour minimiser le levage de l’outil. (Plus efficace avec les stratégies de parcours minimisé.)"
+
+#: sendto_silhouette.inx:125
+msgid "Enable Software Clipping"
+msgstr "Activer le découpage logiciel"
+
+#: sendto_silhouette.inx:128
+msgid "Log and Dump"
+msgstr "Journal et vidage"
+
+#: sendto_silhouette.inx:129
+msgid "Save log messages in file"
+msgstr "Enregistrer les messages du journal dans un fichier"
+
+#: sendto_silhouette.inx:130
+msgid "Include final cut paths in log (for debugging)"
+msgstr "Inclure les chemins de coupe finaux dans le journal (pour le débogage)"
+
+#: sendto_silhouette.inx:131
+msgid "Append to log/dump files rather than overwriting"
+msgstr "Ajouter aux fichiers journal/vidage au lieu d’écraser"
+
+#: sendto_silhouette.inx:132
+msgid "Transcribe cutter commands to file"
+msgstr "Transcrire les commandes de la découpeuse dans un fichier"
+
+#: sendto_silhouette.inx:133
+msgid "Include cutter queries in command transcript"
+msgstr "Inclure les requêtes de la découpeuse dans la transcription des commandes"
+
+#: sendto_silhouette.inx:134
+msgid "Dry Run: do not send commands to device"
+msgstr "Essai à blanc : ne pas envoyer de commandes à l'appareil"
+
+#: sendto_silhouette.inx:136
+msgid "Override cutter model"
+msgstr "Ignorer le modèle de découpeuse"
+
+#: sendto_silhouette.inx:137
+msgid "-- as detected --"
+msgstr "-- tel que détecté --"
+
+#: sendto_silhouette.inx:152
+msgid "Using any setting other than `as detected' is not recommended except when performing a dry run."
+msgstr "L’utilisation de toute autre configuration que 'tel que détecté' n’est pas recommandée sauf en cas d’essai à blanc."
+
+#: sendto_silhouette.inx:155
+msgid "Blade Setting"
+msgstr "Réglage de la lame"
+
+#: sendto_silhouette.inx:156
+msgid "\nAlways use the least amount of blade possible.\n\n1) Take a sheet of the media you are trying to cut and fold it in half.\n\n2) Take the blade out of the machine, set it to 1 and hold it in your hand as you would a pen but held vertically as it would be in the machine.\n\n3) Get your folded media and with your blade held like a pen but kept vertically press firmly down on the media and 'draw' a line.\n\n4) Next have a look at the media; with the correct setting you should have just cut a line through the top layer of the folded card without cutting in to the back layer. If you have not cut through the media, increase the blade by 1 position and repeat from step 3.\n\n5) Keep doing this until you reach the correct setting to cut the top layer without cutting the back.\n\n6) Once this is done the blade can be put back in to the machine.\n      "
+msgstr "\nUtilisez toujours le réglage de lame le plus faible possible.\n\n1) Prenez une feuille du matériau que vous souhaitez couper et pliez-la en deux.\n\n2) Retirez la lame de la machine, réglez-la sur 1 et tenez-la dans votre main comme un stylo, mais verticalement comme elle le serait dans la machine.\n\n3) Avec la lame tenue comme un stylo et conservée verticalement, appuyez fermement sur la feuille pliée et 'dessinez' une ligne.\n\n4) Ensuite, examinez la feuille ; avec le réglage correct, vous devriez avoir coupé une ligne à travers la couche supérieure sans couper la couche inférieure. Si la coupe ne traverse pas le matériau, augmentez la lame d'une position et répétez depuis l'étape 3.\n\n5) Continuez ainsi jusqu'à obtenir le réglage correct pour couper la couche supérieure sans toucher la couche inférieure.\n\n6) Une fois cela fait, la lame peut être remise dans la machine.\n      "
+
+#: sendto_silhouette.inx:171
+msgid "Diameter of the used blade type [mm]"
+msgstr "Diamètre du type de lame utilisé [mm]"
+
+#: sendto_silhouette.inx:172
+msgid "Correct value for the silhouette blade is 0.9mm"
+msgstr "La valeur correcte pour la lame Silhouette est de 0,9 mm"
+
+#: sendto_silhouette.inx:174
+msgid "About"
+msgstr "À propos"
+
+#: sendto_silhouette.inx:186 silhouette_multi.inx:29
+msgid "Export"
+msgstr "Exporter"
+
+#: silhouette_multi.inx:3
+msgid "Silhouette Multiple Actions"
+msgstr "Actions multiples Silhouette"
+
+#: silhouette_multi.inx:10
+msgid "Debugging Settings"
+msgstr "Paramètres de débogage"
+
+#: silhouette_multi.inx:13
+msgid "For normal use you may leave these options unchecked."
+msgstr "Pour une utilisation normale, vous pouvez laisser ces options décochées."
+
+#: silhouette_multi.inx:14
+msgid "Dry run: only show commands"
+msgstr "Exécution test : afficher uniquement les commandes"
+
+#: silhouette_multi.inx:15
+msgid "Wait for cutter to finish before returning to Inkscape"
+msgstr "Attendre que la découpeuse ait fini avant de revenir à Inkscape"
+
+#: silhouette_multi.inx:16
+msgid "Verbose output"
+msgstr "Sortie détaillée"
+
+#: silhouette_multi.inx:23
+msgid "Cutting settings appear in the next step."
+msgstr "Les paramètres de découpe apparaissent à l'étape suivante."
+
+#: sendto_silhouette.py:861
+msgid "Warning: unable to draw text; please convert it to a path first. Or consider using the Hershey Text extension which can be installed in the 'Render' category of extensions."
+msgstr "Avertissement : impossible de dessiner le texte ; veuillez d'abord le convertir en chemin. Ou envisagez d'utiliser l'extension Hershey Text disponible dans la catégorie 'Rendu' des extensions."
+
+#: sendto_silhouette.py:871
+msgid "Warning: unable to draw bitmap images; please convert them to line art first.  Consider using the 'Trace bitmap...' tool of the 'Path' menu.  Mac users please note that some X11 settings may cause cut-and-paste operations to paste in bitmap copies."
+msgstr "Avertissement : impossible de dessiner les images bitmap ; veuillez d'abord les convertir en lignes. Envisagez d'utiliser l'outil 'Tracer la bitmap...' du menu 'Chemin'. Les utilisateurs Mac doivent noter que certains paramètres X11 peuvent provoquer des opérations de couper-coller qui collent des copies bitmap."
+
+#: sendto_silhouette.py:909
+msgid "Warning: unable to draw <{str(t[-1])}> object,"
+msgstr "Avertissement : impossible de dessiner l'objet <{str(t[-1])}>,"
+
