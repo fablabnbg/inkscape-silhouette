@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.11']
+        python-version: ['3.12']
         inkscape-version: ['STABLE']
         continue-on-error: [false]
         include:
@@ -28,6 +28,7 @@ jobs:
           - { os: 'ubuntu-latest', python-version: '3.12', inkscape-version: 'TRUNK', continue-on-error: true }
           - { os: 'ubuntu-latest', python-version: 'native', inkscape-version: 'inkex', continue-on-error: false }  # native python to work around https://github.com/actions/runner-images/issues/10781
           - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: '1.4.0', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.14', inkscape-version: '1.4.0', continue-on-error: false }
 #          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
     continue-on-error: ${{ matrix.continue-on-error }}
 
