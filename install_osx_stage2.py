@@ -13,7 +13,7 @@ import os, sys, shutil, logging, subprocess
 
 logger = logging.getLogger(__name__)
 
-prerequisites = ["cssselect", "xmltodict", "lxml", "pyusb", "libusb1", "numpy"]
+prerequisites = ["cssselect", "xmltodict", "lxml", "pyusb", "libusb1", "matplotlib", "wxPython"]
 extensions_dir = os.path.join(os.path.expanduser("~"), "Library","Application Support","org.inkscape.Inkscape","config","inkscape","extensions")
 extension_files = ["sendto_silhouette.inx", "sendto_silhouette.py",
                    "silhouette_multi.inx",  "silhouette_multi.py",
@@ -41,7 +41,7 @@ def install_inkscape_silhouette():
         install_extension()
         check_libusb()
         logger.info("inkscape_silhouette extension install ended")
-        logger.info("Don't forget to add 'python-interpreter=\"%s\"' to your extension preference file.", subprocess.check_output(["which", "python3"]).decode("utf-8").replace("\n", ""))
+        logger.info("\x1b[31;20mDon't forget\x1b[0m to add 'python-interpreter=\"%s\"' to your extension preference file.", subprocess.check_output(["which", "python3"]).decode("utf-8").replace("\n", ""))
     except Exception as ex:
         logger.warning("inkscape_silhouette install was unsuccessful. Please check previous messages for the cause. Details: %s", ex)
 
@@ -116,6 +116,10 @@ if __name__ == "__main__":
     log_formatter = logging.Formatter('%(levelname)s: %(message)s')
     log_console.setFormatter(log_formatter)
     logger.addHandler(log_console)
+
+    if sys.prefix == sys.base_prefix:
+        logger.critical("The installer should be running in a virtual environment. \x1b[31;20mPlease run install_osx.sh\x1b[0m. Bailing out.")
+        sys.exit(-1)
 
     # run installer
     install_inkscape_silhouette()

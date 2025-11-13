@@ -145,14 +145,15 @@ Finally, load the file with:
 <summary>Click to get steps</summary>
 
 * Install prerequisites:
-  * install homebrew http://brew.sh/
+  * Install homebrew http://brew.sh/
   * `brew install libusb`
-  * `brew install python3`
+  * Install Inkscape
+      * Either with homebrew: `brew install inkscape`
+      * Or manually from their [website](https://inkscape.org/)
 * Install the extension:
-  * `./install_osx.py`
-  * Add brew python for user extensions in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/preferences.xml` on `<group id="extensions" python-interpreter="/..." />`. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://inkscape.gitlab.io/extensions/documentation/authors/interpreters.html):
-    * `python-interpreter="/usr/local/bin/python3"` on X86 platform
-    * `python-interpreter="/opt/homebrew/bin/python3"` on ARM platform (Apple Silicon)
+  * `./install_osx.sh`
+  * Add the suggested python interpreter for user extensions in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/preferences.xml` on `<group id="extensions" python-interpreter="/..." />`. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://inkscape.gitlab.io/extensions/documentation/authors/interpreters.html):
+    * e.g. `python-interpreter="/Users/username/.local/share/venvs/inkscape/bin/python3"`
 
 </details>
 
