@@ -34,7 +34,7 @@ jobs:
     continue-on-error: ${{ matrix.continue-on-error }}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       if: ${{ matrix.python-version != 'native' }}
       uses: actions/setup-python@v6
