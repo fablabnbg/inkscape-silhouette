@@ -144,6 +144,8 @@ PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
 PRODUCT_ID_SILHOUETTE_PORTRAIT4 = 0x113f
+PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MARK2 = 0x1146
+
 
 PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
@@ -154,6 +156,7 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA,
   PRODUCT_ID_SILHOUETTE_PORTRAIT3,
   PRODUCT_ID_SILHOUETTE_PORTRAIT4,
+          PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MARK2,
 ]
 
 PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
@@ -203,7 +206,9 @@ DEVICE = [
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT3, 'name': 'Silhouette_Portrait3',
    'width_mm':  203, 'length_mm': 18290, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_PORTRAIT4, 'name': 'Silhouette_Portrait4',
-   'width_mm':  216, 'length_mm': 18290, 'regmark': True },
+   'width_mm':  216, 'length_mm': 18290, 'regmark': True }
+      { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MARK2, 'name': 'Silhouette_Cameo_Pro_Mark2',
+             'width_mm': 609, 'length_mm': 18290, 'regmark': True},,
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO, 'name': 'Silhouette_Cameo',
    # margin_top_mm is just for safety when moving backwards with thin media
    # margin_left_mm is a physical limit, but is relative to width_mm!
