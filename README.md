@@ -23,12 +23,13 @@ This extension should work with the following devices:
 * Silhouette Cameo 4 Pro
 * Silhouette Cameo 5
 * Silhouette Cameo 5 Plus
+* Silhouette Cameo Pro Mark 2
 * Silhouette Curio (partial success confirmed in #36)
 * Craft Robo CC200-20
 * Craft Robo CC300-20
 * Silhouette SD 1
 * Silhouette SD 2
-
+**Note for Cameo Pro Mark 2:** Basic cutting and movement are supported, but Registration Mark sensing (Print & Cut) is currently disabled and under development.
 ---
 
 ## Installation
