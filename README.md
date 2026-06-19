@@ -37,7 +37,7 @@ This extension should work with the following devices:
 
 ## Installation
 
-### Ubuntu
+### Ubuntu and Debian
 
 <details>
 <summary>Click to get steps</summary>
