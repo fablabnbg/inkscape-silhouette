@@ -56,8 +56,13 @@ REGMARK_LAYER_ID = 'regmark'
 REGMARK_TOP_LEFT_ID = 'regmark-tl'
 REGMARK_TOP_RIGHT_ID = 'regmark-tr'
 REGMARK_BOTTOM_LEFT_ID = 'regmark-bl'
+REGMARK_BOTTOM_RIGHT_ID = 'regmark-br'
 REGMARK_SAFE_AREA_ID = 'regmark-safe-area'
 REGMARK_NOTES_ID = 'regmark-notes'
+
+# Registration mark styles
+REGSTYLE_STANDARD = 'standard'
+REGSTYLE_FOUR_CORNER = 'four_corner'
 
 REG_SQUARE_MM = 5
 REG_LINE_MM = 20
@@ -79,13 +84,25 @@ class InsertRegmark(EffectExtension):
 		pars.add_argument("-Y", "--reg-y", "--reglength", type = float, dest = "reglength",  default = 0.0, help="Y mark to mark distance [mm]")
 		pars.add_argument("--rego-x",  "--regoriginx",    type = float, dest = "regoriginx", default = 10.0,  help="X mark origin from left [mm]")
 		pars.add_argument("--rego-y", "--regoriginy",     type = float, dest = "regoriginy", default = 10.0,  help="X mark origin from top [mm]")
+		pars.add_argument("--regstyle", dest = "regstyle", type = str, default = REGSTYLE_STANDARD, help="registration mark style (standard or four_corner)")
 		pars.add_argument("--verbose", dest = "verbose",  type = Boolean, default = False, help="enable log messages")
+
+	def l_mark(self, corner_x, corner_y, h_dir, v_dir, mark_id, line_width):
+		# Build an L-shaped corner mark: a horizontal and a vertical arm meeting
+		# at (corner_x, corner_y). h_dir/v_dir (+1 or -1) point the arms inward.
+		path = [
+			(corner_x + h_dir * REG_LINE_MM, corner_y),
+			(corner_x, corner_y),
+			(corner_x, corner_y + v_dir * REG_LINE_MM),
+		]
+		return PathElement.new(path="M"+str(path), id=mark_id, style=f"fill:none; stroke:black; stroke-width:{line_width};")
 
 	def effect(self):
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
 		reg_width = self.options.regwidth or self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
 		reg_length = self.options.reglength or self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
+		reg_style = self.options.regstyle
 
 		if self.options.verbose == True:
 			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.viewport_width, "mm")))
@@ -107,18 +124,25 @@ class InsertRegmark(EffectExtension):
 		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
 		regmark_layer.transform = Transform(scale=mm_to_user_unit)
 
-		# Create square in top left corner
-		regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=REGMARK_TOP_LEFT_ID, style='fill:black;'))
-
-		# Create horizontal and vertical lines in group for top right corner
 		top_right_x = reg_origin_X+reg_width
-		top_right_path = [(top_right_x-REG_LINE_MM,reg_origin_Y), (top_right_x,reg_origin_Y), (top_right_x,reg_origin_Y + REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path="M"+str(top_right_path), id=REGMARK_TOP_RIGHT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM};"))
-
-		# Create horizontal and vertical lines in group for bottom left corner
 		bottom_left_y = reg_origin_Y+reg_length
-		bottom_left_path = [(reg_origin_X+REG_LINE_MM,bottom_left_y), (reg_origin_X,bottom_left_y), (reg_origin_X,bottom_left_y - REG_LINE_MM)]
-		regmark_layer.append(PathElement.new(path="M"+str(bottom_left_path), id=REGMARK_BOTTOM_LEFT_ID, style=f"fill:none; stroke:black; stroke-width:{REG_MARK_LINE_WIDTH_MM};"))
+
+		# Top left corner: a filled square for the standard style, or an L-shaped
+		# mark for the four-corner style (which uses four matching corner marks).
+		if reg_style == REGSTYLE_FOUR_CORNER:
+			regmark_layer.append(self.l_mark(reg_origin_X, reg_origin_Y, +1, +1, REGMARK_TOP_LEFT_ID, REG_MARK_LINE_WIDTH_MM))
+		else:
+			regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=REGMARK_TOP_LEFT_ID, style='fill:black;'))
+
+		# Create horizontal and vertical lines for top right corner
+		regmark_layer.append(self.l_mark(top_right_x, reg_origin_Y, -1, +1, REGMARK_TOP_RIGHT_ID, REG_MARK_LINE_WIDTH_MM))
+
+		# Create horizontal and vertical lines for bottom left corner
+		regmark_layer.append(self.l_mark(reg_origin_X, bottom_left_y, +1, -1, REGMARK_BOTTOM_LEFT_ID, REG_MARK_LINE_WIDTH_MM))
+
+		# The four-corner style additionally uses a fourth L-shaped mark in the bottom right corner
+		if reg_style == REGSTYLE_FOUR_CORNER:
+			regmark_layer.append(self.l_mark(top_right_x, bottom_left_y, -1, -1, REGMARK_BOTTOM_RIGHT_ID, REG_MARK_LINE_WIDTH_MM))
 
 		# Safe Area Marker #
 		# This draws the safe drawing area
@@ -126,6 +150,19 @@ class InsertRegmark(EffectExtension):
 		safearea_top_y = reg_origin_Y+REG_LINE_MM
 		safearea_right_x = reg_origin_X+reg_width-REG_LINE_MM
 		safearea_bottom_y = reg_origin_Y+reg_length-REG_LINE_MM
+		if reg_style == REGSTYLE_FOUR_CORNER:
+			# Notch the safe area around the fourth (bottom right) mark, just like
+			# the other three corners, so its stroke is not partially covered.
+			bottom_right_corner = [
+				(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y),
+				(safearea_right_x,safearea_bottom_y),
+				(safearea_right_x,safearea_bottom_y+REG_SAFE_AREA_MM),
+			]
+		else:
+			# Standard style has no bottom right mark, so keep the corner square.
+			bottom_right_corner = [
+				(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y+REG_SAFE_AREA_MM),
+			]
 		safe_area_points = [
 			(safearea_left_x-REG_SAFE_AREA_MM,safearea_top_y),
 			(safearea_left_x,safearea_top_y),
@@ -133,7 +170,7 @@ class InsertRegmark(EffectExtension):
 			(safearea_right_x,safearea_top_y-REG_SAFE_AREA_MM),
 			(safearea_right_x,safearea_top_y),
 			(safearea_right_x+REG_SAFE_AREA_MM,safearea_top_y),
-			(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y+REG_SAFE_AREA_MM),
+		] + bottom_right_corner + [
 			(safearea_left_x,safearea_bottom_y+REG_SAFE_AREA_MM),
 			(safearea_left_x,safearea_bottom_y),
 			(safearea_left_x-REG_SAFE_AREA_MM,safearea_bottom_y),

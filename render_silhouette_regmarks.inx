@@ -3,6 +3,10 @@
   <name>Silhouette Regmarks</name>
   <id>com.github.fablabnbg.inkscape-silhouette.silhouette-regmarks</id>
   <dependency type="executable" location="inx">render_silhouette_regmarks.py</dependency>
+  <param name="regstyle" type="optiongroup" appearance="combo" gui-text="Registration mark style">
+    <option value="standard">Standard (square + two L-marks)</option>
+    <option value="four_corner">4 corner (four L-marks, e.g. Cameo 5 Alpha)</option>
+  </param>
   <param name="regoriginx" type="float" min="10.0" max="10000" gui-text="Position of regmark from document left [mm]">10</param>
   <param name="regoriginy" type="float" min="10.0" max="10000" gui-text="Position of regmark from document top [mm]">10</param>
   <label indent="2">Spacing of the registration mark edges</label>
