@@ -15,6 +15,7 @@ REGMARK_LAYER_ID = 'regmark'
 REGMARK_TOP_LEFT_ID = 'regmark-tl'
 REGMARK_TOP_RIGHT_ID = 'regmark-tr'
 REGMARK_BOTTOM_LEFT_ID = 'regmark-bl'
+REGMARK_BOTTOM_RIGHT_ID = 'regmark-br'
 REGMARK_SAFE_AREA_ID = 'regmark-safe-area'
 REGMARK_NOTES_ID = 'regmark-notes'
 
@@ -59,6 +60,67 @@ class RegmarkTest(InsertRegmarkTest):
         )
 
         """Ensure y distance"""
+        self.assertEqual(
+            self.e.svg.unit_to_viewport(
+                    (self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).y.maximum
+                    - self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).y.minimum),
+                "mm"),
+            300
+        )
+
+    def test_standard_has_no_bottom_right_regmark(self):
+        """The standard style only draws three marks (square + two L-marks)"""
+        self.e.parse_arguments([self.data_file(self.source_file), "--reglength=300"])
+        self.e.load_raw()
+        self.e.effect()
+        self.e.clean_up()
+
+        self.assertIsNone(self.e.svg.getElementById(REGMARK_BOTTOM_RIGHT_ID))
+
+
+class FourCornerRegmarkTest(InsertRegmarkTest):
+    source_file = "plus_with_duplicate.svg"
+
+    def setUp(self):
+        super().setUp()
+        self.e.parse_arguments(
+            [self.data_file(self.source_file), "--reglength=300", "--regstyle=four_corner"]
+        )
+        self.e.load_raw()
+        self.e.effect()
+        self.e.clean_up()
+
+    def test_top_left_is_l_mark(self):
+        """In four-corner style the top-left mark is an L-shaped path, not a filled square"""
+        top_left = self.e.svg.getElementById(REGMARK_TOP_LEFT_ID)
+        self.assertEqual(top_left.tag_name, "path")
+        self.assertEqual(
+            top_left.bounding_box(),
+            BoundingBox((10.0, 30.0), (10.0, 30.0))
+        )
+
+    def test_bottom_right_regmark(self):
+        """Four-corner style adds a fourth L-shaped mark in the bottom-right corner"""
+        bottom_right = self.e.svg.getElementById(REGMARK_BOTTOM_RIGHT_ID)
+        self.assertIsNotNone(bottom_right)
+        self.assertEqual(bottom_right.tag_name, "path")
+        self.assertEqual(
+            bottom_right.bounding_box(),
+            BoundingBox((390.0, 410.0), (290.0, 310.0))
+        )
+
+    def test_x_distance(self):
+        """Ensure x distance between right and left marks"""
+        self.assertEqual(
+            self.e.svg.unit_to_viewport(
+                    (self.e.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).x.maximum
+                    - self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).x.minimum),
+                "mm"),
+            400
+        )
+
+    def test_y_distance(self):
+        """Ensure y distance between top and bottom marks"""
         self.assertEqual(
             self.e.svg.unit_to_viewport(
                     (self.e.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).y.maximum
