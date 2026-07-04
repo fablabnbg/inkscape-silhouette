@@ -525,3 +525,20 @@ msgstr ""
 #: sendto_silhouette.py:909
 msgid "Warning: unable to draw <{str(t[-1])}> object,"
 msgstr ""
+
+
+#: sendto_silhouette.inx:169
+msgid "Bluetooth MAC address"
+msgstr ""
+
+#: sendto_silhouette.inx:170
+msgid "Scan for Bluetooth devices (list, then stop)"
+msgstr ""
+
+#: sendto_silhouette.inx:171
+msgid "Connect over Bluetooth instead of USB (e.g. 00:1B:41:33:44:55); tick the scan above to discover the address. Leave empty for USB; pair the cutter with your operating system first."
+msgstr ""
+
+#: sendto_silhouette.inx:172
+msgid "The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab."
+msgstr ""

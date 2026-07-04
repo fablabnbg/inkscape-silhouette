@@ -165,6 +165,13 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <label indent="2">Using any setting other than `as detected' is not recommended except when performing a dry run.</label>
     </page>
 
+    <page name='bluetooth' gui-text='Bluetooth'>
+      <param name="bluetooth_addr" type="string" gui-text="Bluetooth MAC address"></param>
+      <param name="bluetooth_scan" type="bool" gui-text="Scan for Bluetooth devices (list, then stop)">false</param>
+      <label indent="2">Connect over Bluetooth instead of USB (e.g. 00:1B:41:33:44:55); tick the scan above to discover the address. Leave empty for USB; pair the cutter with your operating system first.</label>
+      <label indent="2">The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab.</label>
+    </page>
+
     <page name='blade' gui-text='Blade Setting'>
       <label xml:space="preserve">
 Always use the least amount of blade possible.

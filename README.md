@@ -236,6 +236,12 @@ Refer to the [userguide instructions](./USERGUIDE.md) for further details.
 
 Run `sendto_silhouette.py --help` for information on CLI usage.
 
+### Bluetooth
+
+Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and similar) can be driven wirelessly instead of over USB. Pair the cutter with your operating system first, then use the **Bluetooth** tab in the GUI (or `--bluetooth_scan` / `--bluetooth_addr` on the CLI). See [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth) for step-by-step instructions.
+
+Bluetooth is currently supported on **Linux and Windows only**; macOS lacks Python RFCOMM socket support, so USB must be used there for now (contributions to add macOS Bluetooth are welcome).
+
 ---
 
 ## Templates
@@ -288,6 +294,9 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * reverse toggle options, to cut the opposite direction. This might also be
   helpful with mat-free cutting via multipass.
 * honors hidden layers.
+* Bluetooth support. Cutters with Bluetooth can be driven wirelessly instead of
+  over USB, after pairing with the operating system. See
+  [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth).
 
 ## Misfeatures of InkCut that we do not 'feature'
 
