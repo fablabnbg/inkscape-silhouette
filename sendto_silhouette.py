@@ -324,13 +324,8 @@ class SendtoSilhouette(EffectExtension):
 
 
     def report_bluetooth_scan(self):
-        """Discover paired/reachable Bluetooth cutters and report them.
-
-        Inkscape cannot fill a dropdown at runtime, so this surfaces the
-        discovered devices (with their addresses and detected models) in the
-        extension's message dialog; the user copies the address of the intended
-        cutter into the 'Bluetooth MAC address' field.
-        """
+        """List paired Bluetooth cutters (address, name, model) in the message
+        dialog for the user to copy an address from."""
         from silhouette.Transport import BluetoothTransport
         from silhouette.Graphtec import _match_bluetooth_hardware
 

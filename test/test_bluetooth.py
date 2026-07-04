@@ -237,72 +237,93 @@ class DiscoveryParsingTest(unittest.TestCase):
         self.assertIn(("11:22:33:44:55:66", "Generic BT Speaker"), devices)
 
 
-class DiscoverTest(unittest.TestCase):
-    """discover() aggregates backends, applies the name filter, and dedups."""
+class CollectDevicesTest(unittest.TestCase):
+    """The platform-independent aggregation core of discover().
+
+    Backends are injected directly, so these test the real merge / filter /
+    short-circuit logic without any reference to the host platform.
+    """
 
     CUTTER = ("00:1B:41:33:44:55", "CAMEO 5 ALPHA-000000")
     OTHER = ("11:22:33:44:55:66", "Generic BT Speaker")
 
-    def _patch_backends(self, win=None, linux=None, pybluez=None):
-        return [
-            mock.patch.object(BluetoothTransport, "_discover_windows",
-                              classmethod(lambda cls, t: list(win or []))),
-            mock.patch.object(BluetoothTransport, "_discover_linux",
-                              classmethod(lambda cls, t: list(linux or []))),
-            mock.patch.object(BluetoothTransport, "_discover_pybluez",
-                              classmethod(lambda cls, t: list(pybluez or []))),
-        ]
+    @staticmethod
+    def backend(devices):
+        """A fake discovery backend that returns a fixed device list."""
+        return lambda timeout: list(devices)
+
+    def collect(self, paired, inquiry, name_filter=None):
+        return BluetoothTransport._collect_devices(paired, inquiry, 8, name_filter)
 
     def test_name_filter_selects_matching_devices(self):
-        patches = self._patch_backends(win=[self.CUTTER, self.OTHER])
-        for p in patches: p.start()
-        try:
-            # The scan filters to Silhouette cutters via Graphtec's model table.
-            self.assertEqual(
-                BluetoothTransport.discover(name_filter=is_silhouette_name),
-                [self.CUTTER])
-            # With no filter, every device is returned.
-            self.assertEqual(len(BluetoothTransport.discover()), 2)
-        finally:
-            for p in patches: p.stop()
+        paired = [self.backend([self.CUTTER, self.OTHER])]
+        # Filtered to Silhouette cutters via Graphtec's model table.
+        self.assertEqual(
+            self.collect(paired, None, name_filter=is_silhouette_name),
+            [self.CUTTER])
+        # With no filter, every device is returned.
+        self.assertEqual(len(self.collect(paired, None)), 2)
 
-    def test_fast_backend_short_circuits_pybluez(self):
-        # If the OS paired list already yields a matching cutter, no live
-        # inquiry runs.
-        pybluez_called = []
+    def test_fast_backend_short_circuits_inquiry(self):
+        # A paired backend already found a matching cutter: the slow live
+        # inquiry backend must never be invoked.
+        inquiry_called = []
 
-        def spy(cls, t):
-            pybluez_called.append(True)
+        def inquiry(timeout):
+            inquiry_called.append(True)
             return []
-        patches = [
-            mock.patch.object(BluetoothTransport, "_discover_windows",
-                              classmethod(lambda cls, t: [self.CUTTER])),
-            mock.patch.object(BluetoothTransport, "_discover_linux",
-                              classmethod(lambda cls, t: [])),
-            mock.patch.object(BluetoothTransport, "_discover_pybluez",
-                              classmethod(spy)),
-        ]
-        for p in patches: p.start()
-        try:
-            BluetoothTransport.discover(name_filter=is_silhouette_name)
-            self.assertEqual(pybluez_called, [])
-        finally:
-            for p in patches: p.stop()
+        self.collect([self.backend([self.CUTTER])], inquiry,
+                     name_filter=is_silhouette_name)
+        self.assertEqual(inquiry_called, [])
+
+    def test_inquiry_runs_when_no_paired_match(self):
+        # Paired backend found only a non-matching device, so we fall back to
+        # the live inquiry, which turns up the cutter.
+        inquiry_called = []
+
+        def inquiry(timeout):
+            inquiry_called.append(True)
+            return [self.CUTTER]
+        result = self.collect([self.backend([self.OTHER])], inquiry,
+                              name_filter=is_silhouette_name)
+        self.assertEqual(inquiry_called, [True])
+        self.assertEqual(result, [self.CUTTER])
 
     def test_backend_exception_is_swallowed(self):
-        def boom(cls, t):
+        def boom(timeout):
             raise RuntimeError("tool missing")
-        patches = [
-            mock.patch.object(BluetoothTransport, "_discover_windows", classmethod(boom)),
-            mock.patch.object(BluetoothTransport, "_discover_linux", classmethod(boom)),
-            mock.patch.object(BluetoothTransport, "_discover_pybluez",
-                              classmethod(lambda cls, t: [self.CUTTER])),
-        ]
-        for p in patches: p.start()
-        try:
-            self.assertEqual(BluetoothTransport.discover(), [self.CUTTER])
-        finally:
-            for p in patches: p.stop()
+        result = self.collect([boom], self.backend([self.CUTTER]))
+        self.assertEqual(result, [self.CUTTER])
+
+    def test_dedups_by_address_preferring_named(self):
+        # The same address arrives twice (different case, one unnamed); the
+        # named sighting wins and only one entry remains.
+        paired = [self.backend([
+            ("00:1B:41:33:44:55", ""),
+            ("00:1b:41:33:44:55", "CAMEO 5 ALPHA-000000"),
+        ])]
+        self.assertEqual(self.collect(paired, None),
+                         [("00:1B:41:33:44:55", "CAMEO 5 ALPHA-000000")])
+
+
+class PairedBackendSelectionTest(unittest.TestCase):
+    """_paired_backends() picks the right fast backend for each platform."""
+
+    def _backends_on(self, platform):
+        with mock.patch("silhouette.Transport.sys.platform", platform):
+            return BluetoothTransport._paired_backends()
+
+    def test_windows_uses_pnp(self):
+        self.assertEqual(self._backends_on("win32"),
+                         [BluetoothTransport._discover_windows])
+
+    def test_linux_uses_bluetoothctl(self):
+        self.assertEqual(self._backends_on("linux"),
+                         [BluetoothTransport._discover_linux])
+
+    def test_macos_has_no_paired_backend(self):
+        # macOS lacks RFCOMM sockets; only the (optional) live inquiry applies.
+        self.assertEqual(self._backends_on("darwin"), [])
 
 
 if __name__ == "__main__":
