@@ -16,11 +16,10 @@ import sys
 
 
 class Transport:
-  """Abstract connection to a Silhouette cutter.
+  """Abstract connection to a cutter.
 
-  Concrete subclasses implement the low level byte transfer. Everything above
-  (the Graphtec command protocol) is transport agnostic and talks to a
-  Transport exclusively through write_bytes()/read_bytes().
+  The protocol layer (Graphtec.SilhouetteCameo) talks to a transport only
+  through write_bytes()/read_bytes(); subclasses supply the byte transfer.
   """
 
   # Human readable description of where the device sits, used for logging.
@@ -54,9 +53,8 @@ class Transport:
 class USBTransport(Transport):
   """USB connection via pyusb (Linux/Windows) or libusb1 (macOS).
 
-  The raw device object is discovered by Graphtec.SilhouetteCameo (which owns
-  the platform specific probing and the USB id tables) and handed to us here.
-  We only encapsulate the bulk read/write on the fixed endpoints.
+  The raw device is discovered and handed in by Graphtec.SilhouetteCameo; this
+  only wraps the bulk read/write on the fixed endpoints.
   """
 
   ENDPOINT_WRITE = 0x01
@@ -118,11 +116,8 @@ class USBTransport(Transport):
 class BluetoothTransport(Transport):
   """Bluetooth connection over an RFCOMM serial port.
 
-  BT enabled cutters expose the very same Graphtec command protocol as over
-  USB, so once the socket is connected the protocol layer treats it exactly
-  like a USB device. The only differences are that there are no bulk endpoints
-  (we simply send/recv on the stream) and that timeouts are expressed in
-  seconds rather than milliseconds.
+  BT cutters speak the same Graphtec protocol as over USB; unlike USB there are
+  no bulk endpoints (plain stream send/recv) and timeouts are in seconds.
   """
 
   # RFCOMM channel used by the cutters. Channel 1 works for all known models.
@@ -172,11 +167,9 @@ class BluetoothTransport(Transport):
 
   # ---- Discovery ---------------------------------------------------------
   #
-  # Inkscape's static .inx UI cannot populate a dropdown at runtime, so we
-  # expose discovery as a helper that the --bluetooth_scan command uses to list
-  # cutters and their addresses for the user to choose from explicitly.
-  # Discovery is best effort and platform dependent; the cutter must already be
-  # paired with the operating system.
+  # Used by the --bluetooth_scan command to list paired cutters for the user to
+  # pick from (Inkscape's static .inx cannot populate a dropdown at runtime).
+  # Best effort and platform dependent; the cutter must already be OS-paired.
 
   @staticmethod
   def _format_addr(hex12):
@@ -185,38 +178,45 @@ class BluetoothTransport(Transport):
     return ":".join(h[i:i + 2] for i in range(0, 12, 2))
 
   @classmethod
+  def _paired_backends(cls):
+    """Fast 'already paired' discovery backends for the current platform."""
+    platform = sys.platform.lower()
+    if platform.startswith("win"):
+      return [cls._discover_windows]
+    if platform.startswith("linux"):
+      return [cls._discover_linux]
+    return []
+
+  @classmethod
   def discover(cls, timeout=8, name_filter=None):
-    """Discover reachable/paired Bluetooth devices.
+    """Discover paired/reachable Bluetooth devices as sorted (address, name) tuples.
 
-    Returns a list of (address, name) tuples, sorted by name. Best effort:
-    uses the OS list of paired devices (Windows PnP / BlueZ bluetoothctl) and
-    falls back to a live PyBluez inquiry if that library is installed. The
-    device must be paired with the OS first.
+    Best effort; the device must already be OS-paired. name_filter, if given,
+    restricts the result by name -- callers pass Graphtec's model matcher to
+    list only Silhouette cutters, so no device-name list is duplicated here.
+    """
+    # Fast path: the OS's list of already-paired devices for this platform.
+    # Fallback: a live PyBluez inquiry, tried only when the fast path finds no
+    # match, and itself a no-op when PyBluez is not installed.
+    return cls._collect_devices(
+        paired_backends=cls._paired_backends(),
+        inquiry_backend=cls._discover_pybluez,
+        timeout=timeout,
+        name_filter=name_filter)
 
-    name_filter, if given, is a predicate on the device name; only devices for
-    which it returns true are returned (and only they short-circuit the slow
-    live-inquiry fallback). This keeps the transport model agnostic: callers
-    that want just Silhouette cutters pass a filter based on the model tables
-    in Graphtec, so there is no second list of model names to maintain here.
+  @staticmethod
+  def _collect_devices(paired_backends, inquiry_backend, timeout, name_filter):
+    """Merge injected discovery backends into a sorted (address, name) list.
+
+    The paired backends run first; the slow inquiry_backend (PyBluez) is a
+    fallback used only when they yield no name_filter match.
     """
     def matches(name):
       return True if name_filter is None else bool(name_filter(name))
 
-    platform = sys.platform.lower()
-    backends = []
-    if platform.startswith("win"):
-      backends.append(cls._discover_windows)
-    elif platform.startswith("linux"):
-      backends.append(cls._discover_linux)
-    # Cross-platform live inquiry, only if PyBluez is available.
-    backends.append(cls._discover_pybluez)
-
     seen = {}
-    for backend in backends:
-      try:
-        results = backend(timeout)
-      except Exception:
-        results = []
+
+    def collect(results):
       for addr, name in results:
         key = (addr or "").upper()
         if not key:
@@ -224,11 +224,24 @@ class BluetoothTransport(Transport):
         # Keep the first sighting, but upgrade to a named entry if we get one.
         if key not in seen or (not seen[key] and name):
           seen[key] = name
+
+    found_match = False
+    for backend in paired_backends:
+      try:
+        collect(backend(timeout))
+      except Exception:
+        pass
       # A fast paired-device backend already found a matching device: don't pay
       # the multi-second cost of a live inquiry.
-      if backend is not cls._discover_pybluez and any(
-          matches(n) for n in seen.values()):
+      if any(matches(n) for n in seen.values()):
+        found_match = True
         break
+
+    if not found_match and inquiry_backend is not None:
+      try:
+        collect(inquiry_backend(timeout))
+      except Exception:
+        pass
 
     devices = list(seen.items())
     if name_filter is not None:

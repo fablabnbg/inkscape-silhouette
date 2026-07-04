@@ -614,11 +614,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     return dev
 
   def _connect_bluetooth(self, bluetooth_addr, bluetooth_channel):
-    """Open a Bluetooth RFCOMM connection and identify the cutter model.
+    """Open an RFCOMM connection, setting self.transport and self.hardware.
 
-    Sets self.transport and self.hardware. The address must be explicit (use
-    the Bluetooth scan to discover it); the model is inferred from the firmware
-    version query (FG), or pass force_hardware to override it."""
+    The model is identified from the firmware query (FG) unless force_hardware
+    overrides it."""
     try:
       self.transport = BluetoothTransport.connect(bluetooth_addr, bluetooth_channel)
     except Exception as e:
