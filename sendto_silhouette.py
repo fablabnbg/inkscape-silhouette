@@ -273,6 +273,15 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("--force_hardware",
                 dest = "force_hardware", default = None,
                 help = "Override hardware model of cutting device.")
+        pars.add_argument("--bluetooth_addr",
+                dest = "bluetooth_addr", default = None,
+                help = "Connect over Bluetooth to this MAC address (e.g. 00:1B:41:33:44:55) instead of USB. Use --bluetooth_scan to discover addresses.")
+        pars.add_argument("--bluetooth_channel",
+                dest = "bluetooth_channel", type = int, default = None,
+                help = "RFCOMM channel for the Bluetooth connection (default: standard channel).")
+        pars.add_argument("--bluetooth_scan",
+                dest = "bluetooth_scan", type = Boolean, default = False,
+                help = "List paired/reachable Bluetooth Silhouette cutters and their addresses, then stop.")
         # For Multi-Action
         pars.add_argument("--skip_init",
                 dest = "skip_init", type = Boolean, default = False,
@@ -312,6 +321,44 @@ class SendtoSilhouette(EffectExtension):
             # oops accidentally used an invalid level
             print(f"  ... WARNING: message issued at invalid level {level}",
                   file=sys.stderr)
+
+
+    def report_bluetooth_scan(self):
+        """Discover paired/reachable Bluetooth cutters and report them.
+
+        Inkscape cannot fill a dropdown at runtime, so this surfaces the
+        discovered devices (with their addresses and detected models) in the
+        extension's message dialog; the user copies the address of the intended
+        cutter into the 'Bluetooth MAC address' field.
+        """
+        from silhouette.Transport import BluetoothTransport
+        from silhouette.Graphtec import _match_bluetooth_hardware
+
+        if not BluetoothTransport.is_available():
+            self.report("Bluetooth is not supported by this Python build/platform.", 'error')
+            return
+        try:
+            # Filter to Silhouette cutters using Graphtec's model table, so
+            # there is no separate list of device names to keep in sync.
+            devices = BluetoothTransport.discover(
+                name_filter=lambda n: _match_bluetooth_hardware(n) is not None)
+        except Exception as e:
+            self.report("Bluetooth scan failed: %s" % e, 'error')
+            return
+        if not devices:
+            self.report("No paired Silhouette Bluetooth cutters found.\n"
+                        "Pair the cutter with your operating system first, then scan again.", 'error')
+            return
+
+        lines = ["Found %d Bluetooth Silhouette cutter(s):" % len(devices)]
+        for addr, name in devices:
+            hw = _match_bluetooth_hardware(name)
+            model = hw['name'] if hw else 'unknown model'
+            lines.append("    %s   %s   [%s]" % (addr, name, model))
+        lines.append("")
+        lines.append("Copy the address of the cutter you want into the "
+                     "'Bluetooth MAC address' field.")
+        self.report("\n".join(lines), 'error')
 
 
     def plotPath(self, path: Path):
@@ -646,6 +693,12 @@ class SendtoSilhouette(EffectExtension):
 
         self.logEnvironment()
 
+        # Bluetooth device scan: list cutters and stop, before doing any work
+        # that depends on the document geometry or a connected device.
+        if self.options.bluetooth_scan:
+            self.report_bluetooth_scan()
+            return
+
         # Registration Mark Selection/Calcuation
         self.sync_regmark_settings()
 
@@ -728,13 +781,18 @@ class SendtoSilhouette(EffectExtension):
             self.options.speed = None
         if self.options.depth == -1:
             self.options.depth = None
+        # An empty Bluetooth address means "use USB".
+        if not self.options.bluetooth_addr:
+            self.options.bluetooth_addr = None
 
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
                                   cmdfile=self.cmdfile,
                                   inc_queries=self.options.inc_queries,
                                   dry_run=self.options.dry_run,
-                                  force_hardware=self.options.force_hardware)
+                                  force_hardware=self.options.force_hardware,
+                                  bluetooth_addr=self.options.bluetooth_addr,
+                                  bluetooth_channel=self.options.bluetooth_channel)
         except Exception as e:
             self.report(e, 'error')
             return

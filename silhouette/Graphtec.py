@@ -25,8 +25,11 @@
 
 import os
 import re
+import socket
 import sys
 import time
+
+from silhouette.Transport import USBTransport, BluetoothTransport
 
 usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
@@ -265,6 +268,54 @@ DEVICE = [
 ]
 
 
+# Bluetooth cutters do not expose USB vendor/product ids. Instead they identify
+# themselves via the advertised BLE name and the firmware version query (FG),
+# e.g. "CAMEO 5 ALPHA V1.02". Map those model names to the USB product id so a
+# Bluetooth connection resolves to the same hardware definition (and therefore
+# the same command behaviour) as the equivalent USB device.
+#
+# Order matters: more specific names must come first so that e.g.
+# "CAMEO 5 ALPHA PLUS" is matched before "CAMEO 5 ALPHA" before "CAMEO 5".
+BLUETOOTH_NAME_TO_PRODUCT_ID = [
+  ("CAMEO 5 ALPHA PLUS", PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS),
+  ("CAMEO 5 ALPHA",      PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA),
+  ("CAMEO 5 PLUS",       PRODUCT_ID_SILHOUETTE_CAMEO5PLUS),
+  ("CAMEO 5",            PRODUCT_ID_SILHOUETTE_CAMEO5),
+  ("CAMEO PRO MARK2",    PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MK_II),
+  ("CAMEO 4 PLUS",       PRODUCT_ID_SILHOUETTE_CAMEO4PLUS),
+  ("CAMEO 4 PRO",        PRODUCT_ID_SILHOUETTE_CAMEO4PRO),
+  ("CAMEO 4",            PRODUCT_ID_SILHOUETTE_CAMEO4),
+  ("CAMEO3",             PRODUCT_ID_SILHOUETTE_CAMEO3),
+  ("PORTRAIT4",          PRODUCT_ID_SILHOUETTE_PORTRAIT4),
+  ("PORTRAIT3",          PRODUCT_ID_SILHOUETTE_PORTRAIT3),
+  ("PORTRAIT2",          PRODUCT_ID_SILHOUETTE_PORTRAIT2),
+]
+
+
+def _hardware_by_product_id(product_id):
+  """Return the DEVICE entry for a given USB product id, or None."""
+  for hardware in DEVICE:
+    if hardware.get('product_id') == product_id:
+      return hardware
+  return None
+
+
+def _match_bluetooth_hardware(model_string):
+  """Map an advertised BLE name / FG firmware response to a DEVICE entry.
+
+  Matching is case-insensitive and ignores the trailing firmware version, so
+  both "CAMEO 5 ALPHA" and "CAMEO 5 ALPHA V1.02" resolve to the same device.
+  Returns the DEVICE dict or None if no known model matches.
+  """
+  if not model_string:
+    return None
+  needle = model_string.strip().upper()
+  for name, product_id in BLUETOOTH_NAME_TO_PRODUCT_ID:
+    if needle.startswith(name) or name in needle:
+      return _hardware_by_product_id(product_id)
+  return None
+
+
 def _bbox_extend(bb, x, y):
     # The coordinate system origin is in the top lefthand corner.
     # Downwards and rightwards we count positive. Just like SVG or HPGL.
@@ -366,11 +417,18 @@ class SilhouetteCameoTool:
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
-               dry_run=False, progress_cb=None, force_hardware=None):
+               dry_run=False, progress_cb=None, force_hardware=None,
+               bluetooth_addr=None, bluetooth_channel=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
+
+        If bluetooth_addr is specified, the cutter is contacted over an RFCOMM
+        Bluetooth connection at that MAC address (e.g. "00:1B:41:33:44:55")
+        instead of being probed on USB. The model is then identified from the
+        firmware version query (or from force_hardware). bluetooth_channel
+        defaults to the standard RFCOMM channel used by these cutters.
 
         If cmdfile is specified, it is taken as a file-like object in which to
         record a transcript of all commands sent to the cutter. If inc_queries is
@@ -402,6 +460,42 @@ class SilhouetteCameo:
     if self.dry_run:
       print("Dry run specified; no commands will be sent to cutter.",
             file=self.log)
+
+    self.transport = None
+    self.mock_response = None
+    self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
+
+    if bluetooth_addr is not None:
+      # Bluetooth: connect to the given MAC address instead of probing USB.
+      dev = None
+      self._connect_bluetooth(bluetooth_addr, bluetooth_channel)
+    else:
+      # USB: probe the known devices and wrap the result in a transport.
+      dev = self._find_usb_device()
+      if dev is not None:
+        self.transport = USBTransport(dev, need_interface=self.need_interface)
+
+    for hardware in DEVICE:
+      if hardware["name"] == force_hardware:
+        print("NOTE: Overriding device from", self.hardware.get('name','None'),
+              "to", hardware['name'], file=self.log)
+        self.hardware = hardware
+        break
+
+    self.dev = dev
+    self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
+    if self.transport is None or 'width_mm' in self.hardware:
+      self.leftaligned = True
+    self.enable_sw_clipping = True
+    self.clip_fuzz = 0.05
+
+  def _find_usb_device(self):
+    """Probe the USB bus for a known Graphtec/Silhouette device.
+
+    Sets self.hardware, performs any platform specific device initialization
+    and returns the raw pyusb/libusb device object (or None when running as a
+    dry run with no device attached)."""
+    dev = None
 
     for hardware in DEVICE:
       try:
@@ -445,10 +539,11 @@ class SilhouetteCameo:
         dev = None
 
     if dev is None:
-      if dry_run:
+      if self.dry_run:
         print("No device detected; continuing dry run with dummy device",
               file=self.log)
         self.hardware = dict(name='Crashtest Dummy Device')
+        return None
       else:
         msg = ''
         try:
@@ -470,25 +565,24 @@ class SilhouetteCameo:
 
     print("%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr), file=self.log)
 
-    if dev is not None:
-      if sys_platform.startswith('win'):
-        print("device init under windows not implemented. Help adding code!", file=self.log)
+    if sys_platform.startswith('win'):
+      print("device init under windows not implemented. Help adding code!", file=self.log)
 
-      elif sys_platform.startswith('darwin'):
-        dev.claimInterface(0)
-        # usb_enpoint = 1
-        # dev.bulkWrite(usb_endpoint, data)
+    elif sys_platform.startswith('darwin'):
+      dev.claimInterface(0)
+      # usb_enpoint = 1
+      # dev.bulkWrite(usb_endpoint, data)
 
-      else:     # linux
-        try:
-          if dev.is_kernel_driver_active(0):
-            print("is_kernel_driver_active(0) returned nonzero", file=self.log)
-            if dev.detach_kernel_driver(0):
-              print("detach_kernel_driver(0) returned nonzero", file=self.log)
-        except usb.core.USBError as e:
-          print("usb.core.USBError:", e, file=self.log)
-          if e.errno == 13:
-            msg = """
+    else:     # linux
+      try:
+        if dev.is_kernel_driver_active(0):
+          print("is_kernel_driver_active(0) returned nonzero", file=self.log)
+          if dev.detach_kernel_driver(0):
+            print("detach_kernel_driver(0) returned nonzero", file=self.log)
+      except usb.core.USBError as e:
+        print("usb.core.USBError:", e, file=self.log)
+        if e.errno == 13:
+          msg = """
 If you are not running as root, this might be a udev issue.
 Try a file /etc/udev/rules.d/99-graphtec-silhouette.rules
 with the following example syntax:
@@ -497,43 +591,68 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="%04x", ATTR{idProduct}=="%04x", MODE="666"
 Then run 'sudo udevadm trigger' to load this file.
 
 Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.hardware['vendor_id'], self.hardware['product_id'])
-            print(msg, file=self.log)
-            print(msg, file=sys.stderr)
-          sys.exit(0)
+          print(msg, file=self.log)
+          print(msg, file=sys.stderr)
+        sys.exit(0)
 
-        if usb_reset_needed:
-          for i in range(5):
-            try:
-              dev.reset()
-              break
-            except usb.core.USBError as e:
-              print("reset failed: ", e, file=self.log)
-              print("retrying reset in 5 sec", file=self.log)
-              time.sleep(5)
+      if usb_reset_needed:
+        for i in range(5):
+          try:
+            dev.reset()
+            break
+          except usb.core.USBError as e:
+            print("reset failed: ", e, file=self.log)
+            print("retrying reset in 5 sec", file=self.log)
+            time.sleep(5)
 
-        try:
-          dev.set_configuration()
-          dev.set_interface_altsetting()      # Probably not really necessary.
-        except usb.core.USBError:
-          pass
+      try:
+        dev.set_configuration()
+        dev.set_interface_altsetting()      # Probably not really necessary.
+      except usb.core.USBError:
+        pass
 
-    for hardware in DEVICE:
-      if hardware["name"] == force_hardware:
-        print("NOTE: Overriding device from", self.hardware.get('name','None'),
-              "to", hardware['name'], file=self.log)
-        self.hardware = hardware
-        break
+    return dev
 
-    self.dev = dev
-    self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
-    self.regmark = False                # not yet implemented. See robocut/Plotter.cpp:446
-    if self.dev is None or 'width_mm' in self.hardware:
-      self.leftaligned = True
-    self.enable_sw_clipping = True
-    self.clip_fuzz = 0.05
-    self.mock_response = None
+  def _connect_bluetooth(self, bluetooth_addr, bluetooth_channel):
+    """Open a Bluetooth RFCOMM connection and identify the cutter model.
+
+    Sets self.transport and self.hardware. The address must be explicit (use
+    the Bluetooth scan to discover it); the model is inferred from the firmware
+    version query (FG), or pass force_hardware to override it."""
+    try:
+      self.transport = BluetoothTransport.connect(bluetooth_addr, bluetooth_channel)
+    except Exception as e:
+      if self.dry_run:
+        print("Bluetooth connect to %s failed (%s); continuing dry run with dummy device"
+              % (bluetooth_addr, e), file=self.log)
+        self.transport = None
+        self.hardware = dict(name='Crashtest Dummy Device')
+        return
+      raise ValueError("Could not open Bluetooth connection to %s: %s" % (bluetooth_addr, e))
+
+    # Identify the model from the firmware version response, e.g. "CAMEO 5 ALPHA V1.02".
+    model = None
+    try:
+      model = self.get_version()
+    except Exception as e:
+      print("Bluetooth firmware version query failed: %s" % e, file=self.log)
+
+    hardware = _match_bluetooth_hardware(model)
+    if hardware is not None:
+      self.hardware = hardware
+      print("%s (firmware '%s') connected on %s"
+            % (self.hardware['name'], model, self.transport.location), file=self.log)
+    else:
+      self.hardware = { 'name': 'Unknown Bluetooth Graphtec device' }
+      if model:
+        self.hardware['name'] += " (%s)" % model.strip()
+      print("Connected to unrecognized Bluetooth device (firmware '%s') on %s;\n"
+            "use --force_hardware to select the model."
+            % (model, self.transport.location), file=self.log)
 
   def __del__(self, *args):
+    if getattr(self, 'transport', None) is not None:
+      self.transport.close()
     if self.commands:
       self.commands.close()
 
@@ -558,7 +677,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # If there is no device, the only thing we might need to do is mock
     # a response:
-    if self.dev is None:
+    if self.transport is None:
       if data in SilhouetteCameo.mock_responses:
         self.mock_response = SilhouetteCameo.mock_responses[data]
       return None
@@ -589,22 +708,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           self.log.flush()
       chunk = data[o:o+chunksz]
       try:
-        if self.need_interface:
-          try:
-            r = self.dev.write(endpoint, chunk, interface=0, timeout=timeout)
-          except AttributeError:
-            r = self.dev.bulkWrite(endpoint, chunk, interface=0, timeout=timeout)
-        else:
-          try:
-            r = self.dev.write(endpoint, chunk, timeout=timeout)
-          except AttributeError:
-            r = self.dev.bulkWrite(endpoint, chunk, timeout=timeout)
+        r = self.transport.write_bytes(chunk, timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
-        raise TypeError("Write Exception: %s, %s dev=%s" % (type(te), te, type(self.dev)))
+        raise TypeError("Write Exception: %s, %s transport=%s" % (type(te), te, type(self.transport)))
       except AttributeError as ae:
         # write() got an unexpected keyword argument 'interface'
-        raise TypeError("Write Exception: %s, %s dev=%s" % (type(ae), ae, type(self.dev)))
+        raise TypeError("Write Exception: %s, %s transport=%s" % (type(ae), ae, type(self.transport)))
 
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
@@ -675,20 +785,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """Low level read method, returns response as bytes"""
     endpoint = 0x82
     data = None
-    if self.dev is None:
+    if self.transport is None:
       data = self.mock_response
       self.mock_response = None
       if data is None: return None
-    elif self.need_interface:
-        try:
-            data = self.dev.read(endpoint, size, timeout=timeout, interface=0)
-        except AttributeError:
-            data = self.dev.bulkRead(endpoint, size, timeout=timeout, interface=0)
     else:
-        try:
-            data = self.dev.read(endpoint, size, timeout=timeout)
-        except AttributeError:
-            data = self.dev.bulkRead(endpoint, size, timeout=timeout)
+      data = self.transport.read_bytes(size, timeout)
     if data is None:
       raise ValueError('read failed: none')
     if isinstance(data, (bytes, bytearray)):
@@ -730,8 +832,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     resp = b"None\x03"
     try:
       resp = self.read(timeout=5000)
-    except usb.core.USBError as e:
-      print("usb.core.USBError:", e, file=self.log)
+    except OSError as e:
+      print("read error in status():", e, file=self.log)
       pass
     if resp[-1] != CMD_ETX[0]:
       raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
