@@ -651,18 +651,22 @@ msgid "Warning: unable to draw <{str(t[-1])}> object,"
 msgstr "Aviso: não é possível desenhar o objeto <{str(t[-1])}>,"
 
 
+# Machine-generated translation; needs review.
 #: sendto_silhouette.inx:169
 msgid "Bluetooth MAC address"
-msgstr ""
+msgstr "Endereço MAC Bluetooth"
 
+# Machine-generated translation; needs review.
 #: sendto_silhouette.inx:170
 msgid "Scan for Bluetooth devices (list, then stop)"
-msgstr ""
+msgstr "Procurar dispositivos Bluetooth (listar e depois parar)"
 
+# Machine-generated translation; needs review.
 #: sendto_silhouette.inx:171
 msgid "Connect over Bluetooth instead of USB (e.g. 00:1B:41:33:44:55); tick the scan above to discover the address. Leave empty for USB; pair the cutter with your operating system first."
-msgstr ""
+msgstr "Conectar via Bluetooth em vez de USB (por ex. 00:1B:41:33:44:55); marque a busca acima para descobrir o endereço. Deixe vazio para USB; primeiro emparelhe a ferramenta de corte com o seu sistema operacional."
 
+# Machine-generated translation; needs review.
 #: sendto_silhouette.inx:172
 msgid "The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab."
-msgstr ""
+msgstr "O modelo da ferramenta de corte é detectado a partir de seu firmware. Se não for reconhecido, defina-o com 'Sobrepor modelo da ferramenta de corte' na aba 'Registro e Despejo'."
