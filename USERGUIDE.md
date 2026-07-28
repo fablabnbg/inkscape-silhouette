@@ -23,6 +23,7 @@ Therefore it is necessary to set the correct offset values of the mark.
 As a result the cut will go precisely along the graphics.
 
 1. Extention > Render > Silhouette Regmarks
+1. For a Cameo 5 Alpha, select **4 corner (four L-marks, e.g. Cameo 5 Alpha)** as the registration mark style
 1. Check regmark from document left and top is set to desired value
 1. Set mark to mark distance or clear it to zero if autocalculating from document size
 1. Press Apply
@@ -32,7 +33,7 @@ This will create a new layer called `Regmarks` with the newly generated registra
 On the bottom will also be a string shown below that would remind you what settings this was generated with.
 - `mark distance from document: Left=10.0mm, Top=10.0mm; mark to mark distance: X=190.0mm, Y=277.0mm;`
 
-Note: You have the option of using the provided template at `examples/registration-marks-cameo-silhouette-a4-maxi.svg` for Silhouette Cameo using A4 paper format.
+Note: You have the option of using the provided template at `examples/registration-marks-cameo-silhouette-a4-maxi.svg` for Silhouette Cameo using A4 paper format. Cameo 5 Alpha users can use the ready-made A4 template at `templates/silhouette-cameo-5-alpha-registration-marks-a4.svg` without running the regmark generator.
 
 
 ---
@@ -69,6 +70,7 @@ Note: You have the option of using the provided template at `examples/registrati
 5. On the **Regmarks** tab:
   - Check **Document has registration marks**
   - Check **Search for registration marks**
+  - On a Cameo 5 Alpha, also check **Use 4 registration marks**
 6. Set all following parameters according to the registration file used:
   - **X mark distance** (e.g. *190*)
   - **Y mark distance** (e.g. *277*)
