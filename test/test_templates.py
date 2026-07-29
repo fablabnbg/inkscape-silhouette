@@ -12,18 +12,9 @@ TEMPLATE_PATH = (
 
 
 class Cameo5AlphaA4TemplateTest(unittest.TestCase):
-    def setUp(self):
-        self.root = ElementTree.parse(TEMPLATE_PATH).getroot()
-        self.elements_by_id = {
-            element.get("id"): element for element in self.root.iter()
-        }
-
-    def test_page_size(self):
-        self.assertEqual(self.root.get("width"), "210mm")
-        self.assertEqual(self.root.get("height"), "297mm")
-        self.assertEqual(self.root.get("viewBox"), "0 0 210 297")
-
-    def test_four_corner_mark_geometry(self):
+    def test_page_and_regmark_geometry(self):
+        root = ElementTree.parse(TEMPLATE_PATH).getroot()
+        elements_by_id = {element.get("id"): element for element in root.iter()}
         expected_paths = {
             "regmark-tl": "M 30,10 H 10 V 30",
             "regmark-tr": "M 180,10 H 200 V 30",
@@ -31,14 +22,16 @@ class Cameo5AlphaA4TemplateTest(unittest.TestCase):
             "regmark-br": "M 180,287 H 200 V 267",
         }
 
+        self.assertEqual(
+            (root.get("width"), root.get("height"), root.get("viewBox")),
+            ("210mm", "297mm", "0 0 210 297"),
+        )
         for mark_id, path in expected_paths.items():
-            mark = self.elements_by_id[mark_id]
+            mark = elements_by_id[mark_id]
             self.assertEqual(mark.tag, f"{{{SVG_NAMESPACE}}}path")
             self.assertEqual(mark.get("d"), path)
 
-    def test_regmark_layer_style(self):
-        layer = self.elements_by_id["regmark"]
-
+        layer = elements_by_id["regmark"]
         self.assertEqual(
             layer.get(f"{{{INKSCAPE_NAMESPACE}}}label"),
             "Regmarks",
