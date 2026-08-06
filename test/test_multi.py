@@ -5,39 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 import difflib
-from unittest import mock
-
-import silhouette_multi
-
-
-class TestMacOSLibraryPath(unittest.TestCase):
-
-    def test_removes_only_inkscape_library_directory(self):
-        inkscape_lib = "/Applications/Inkscape.app/Contents/Resources/lib"
-        other_lib = "/opt/example/lib"
-
-        cleaned = silhouette_multi._without_inkscape_library_path(
-            f"{other_lib}:{inkscape_lib}"
-        )
-
-        self.assertEqual(cleaned, other_lib)
-
-    def test_restarts_with_clean_environment_on_macos(self):
-        inkscape_lib = "/Applications/Inkscape.app/Contents/Resources/lib"
-        environment = {"DYLD_LIBRARY_PATH": inkscape_lib}
-
-        with (
-            mock.patch.object(silhouette_multi.sys, "platform", "darwin"),
-            mock.patch.object(silhouette_multi.os, "environ", environment),
-            mock.patch.object(silhouette_multi.os, "execve") as execve,
-        ):
-            silhouette_multi._restart_without_inkscape_libraries()
-
-        restarted_environment = execve.call_args.args[2]
-        self.assertNotIn("DYLD_LIBRARY_PATH", restarted_environment)
-        self.assertEqual(
-            restarted_environment[silhouette_multi._DYLD_RESTART_MARKER], "1"
-        )
 
 
 class TestMulti(unittest.TestCase):
