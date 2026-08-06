@@ -12,6 +12,9 @@ the protocol layer.
 
 The import of bleak is intentionally lazy. USB and RFCOMM users must remain
 able to import and use the driver without installing the optional BLE stack.
+
+Characteristic roles and the initialization handshake were cross-checked
+against bob-takuya/cameo-cut (MIT): https://github.com/bob-takuya/cameo-cut
 """
 
 import asyncio
@@ -36,11 +39,13 @@ class BLETransport(Transport):
     SERVICE_UUID = "e2088282-4fde-42f9-bb22-6ec3c7ed8f91"
     WRITE_UUID = "6d92661d-f429-4d67-929b-28e7a9780912"
     READ_UUID = "8dcf199a-30e7-4bd4-beb6-beb57dca866c"
-    STATUS_UUID = "61490654-b5b4-458c-a867-9e15bc1471e0"
+    CONTROL_UUID = "61490654-b5b4-458c-a867-9e15bc1471e0"
 
     INIT = b"\x1b\x04"
     CHUNK_SIZE = 20
     HANDSHAKE_SETTLE_SECONDS = 1.0
+    WRITE_BACKPRESSURE_RETRIES = 3
+    WRITE_BACKPRESSURE_DELAY_SECONDS = 0.1
 
     timeout_exceptions = (BLETimeoutError, BLEDisconnectedError, OSError)
 
@@ -91,6 +96,49 @@ class BLETransport(Transport):
         return getattr(device, "address", None) or ""
 
     @classmethod
+    def _discovery_records(cls, discovered):
+        """Normalize Bleak discovery into ``(device, advertisement)`` pairs."""
+        values = discovered.values() if isinstance(discovered, dict) else discovered
+        records = []
+        for value in values:
+            if isinstance(value, tuple) and len(value) == 2:
+                records.append(value)
+            else:
+                records.append((value, None))
+        return records
+
+    @classmethod
+    def _prefer_service_advertisements(cls, discovered):
+        """Prefer peripherals advertising the known vendor service.
+
+        Some platforms and older Bleak versions omit service UUIDs from scan
+        results. In that case selection falls back to name/identifier and the
+        connected GATT service is validated before the handshake.
+        """
+        records = cls._discovery_records(discovered)
+        matching = []
+        for device, advertisement in records:
+            service_uuids = getattr(advertisement, "service_uuids", None) or []
+            if cls.SERVICE_UUID in {uuid.casefold() for uuid in service_uuids}:
+                matching.append((device, advertisement))
+        return matching or records
+
+    @classmethod
+    def _client_has_vendor_service(cls, client):
+        """Return whether a connected client exposes the expected GATT service."""
+        services = getattr(client, "services", None)
+        if services is None:
+            # Compatibility with old Bleak clients that did not expose the
+            # resolved service collection as a property.
+            return True
+        get_service = getattr(services, "get_service", None)
+        if get_service is not None:
+            return get_service(cls.SERVICE_UUID) is not None
+        return cls.SERVICE_UUID in {
+            getattr(service, "uuid", "").casefold() for service in services
+        }
+
+    @classmethod
     def _select_device(cls, devices, name=None, identifier=None, name_filter=None):
         """Choose one device without assuming that its identifier is a MAC.
 
@@ -98,21 +146,35 @@ class BLETransport(Transport):
         name is therefore the portable selector; identifier remains useful as an
         optional local override.
         """
-        candidates = list(devices)
+        candidates = cls._discovery_records(devices)
 
         if identifier:
             wanted = identifier.casefold()
             candidates = [
-                d for d in candidates if cls._device_identifier(d).casefold() == wanted
+                record
+                for record in candidates
+                if cls._device_identifier(record[0]).casefold() == wanted
             ]
         elif name:
             wanted = name.casefold()
-            exact = [d for d in candidates if cls._device_name(d).casefold() == wanted]
+            exact = [
+                record
+                for record in candidates
+                if cls._device_name(record[0]).casefold() == wanted
+            ]
             candidates = exact or [
-                d for d in candidates if wanted in cls._device_name(d).casefold()
+                record
+                for record in candidates
+                if wanted in cls._device_name(record[0]).casefold()
             ]
         elif name_filter is not None:
-            candidates = [d for d in candidates if name_filter(cls._device_name(d))]
+            candidates = [
+                record
+                for record in candidates
+                if name_filter(cls._device_name(record[0]))
+            ]
+
+        candidates = cls._prefer_service_advertisements(candidates)
 
         if not candidates:
             selector = identifier or name or "a supported Silhouette cutter"
@@ -122,14 +184,14 @@ class BLETransport(Transport):
             descriptions = [
                 f"{cls._device_name(d) or 'unnamed'} "
                 f"({cls._device_identifier(d) or 'no identifier'})"
-                for d in candidates
+                for d, _ in candidates
             ]
             raise ValueError(
                 "More than one Bluetooth LE cutter matched; select one by its exact "
                 f"advertised name or local identifier: {', '.join(descriptions)}"
             )
 
-        return candidates[0]
+        return candidates[0][0]
 
     @classmethod
     def discover(cls, timeout=8, name_filter=None):
@@ -208,15 +270,21 @@ class BLETransport(Transport):
             future.cancel()
             raise BLETimeoutError("Bluetooth LE operation timed out")
 
-    async def _async_discover(self, timeout):
+    async def _async_discover(self, timeout, return_adv=False):
         from bleak import BleakScanner
 
+        if return_adv:
+            try:
+                return await BleakScanner.discover(timeout=timeout, return_adv=True)
+            except TypeError:
+                # Compatibility with older Bleak scanners.
+                pass
         return await BleakScanner.discover(timeout=timeout)
 
     async def _async_connect(self, name, identifier, timeout, name_filter):
         from bleak import BleakClient
 
-        devices = await self._async_discover(timeout)
+        devices = await self._async_discover(timeout, return_adv=True)
         device = self._select_device(
             devices, name=name, identifier=identifier, name_filter=name_filter
         )
@@ -235,16 +303,20 @@ class BLETransport(Transport):
 
         await client.connect()
         self.client = client
+        if not self._client_has_vendor_service(client):
+            raise ValueError(
+                f"Bluetooth LE device does not expose vendor service {self.SERVICE_UUID}"
+            )
         self.name = self._device_name(device)
         self.identifier = self._device_identifier(device)
         self.location = "bluetooth-le {} ({})".format(
             self.name or "unnamed", self.identifier or "no identifier"
         )
 
-        await client.start_notify(self.STATUS_UUID, self._on_notification)
+        await client.start_notify(self.CONTROL_UUID, self._on_notification)
         await client.start_notify(self.READ_UUID, self._on_notification)
 
-        for characteristic in (self.STATUS_UUID, self.READ_UUID, self.WRITE_UUID):
+        for characteristic in (self.CONTROL_UUID, self.READ_UUID, self.WRITE_UUID):
             await client.write_gatt_char(characteristic, self.INIT, response=True)
 
         if self.HANDSHAKE_SETTLE_SECONDS:
@@ -268,7 +340,26 @@ class BLETransport(Transport):
     async def _async_write_chunk(self, chunk):
         if self.client is None or not getattr(self.client, "is_connected", False):
             raise BLEDisconnectedError("Bluetooth LE cutter is not connected")
-        await self.client.write_gatt_char(self.WRITE_UUID, chunk, response=True)
+        for attempt in range(self.WRITE_BACKPRESSURE_RETRIES + 1):
+            try:
+                await self.client.write_gatt_char(self.WRITE_UUID, chunk, response=True)
+                return
+            except Exception as error:
+                if (
+                    not self._is_backpressure_error(error)
+                    or attempt == self.WRITE_BACKPRESSURE_RETRIES
+                ):
+                    raise
+                await asyncio.sleep(
+                    self.WRITE_BACKPRESSURE_DELAY_SECONDS * (2**attempt)
+                )
+
+    @staticmethod
+    def _is_backpressure_error(error):
+        """Recognize the cutter's transient ATT buffer-busy response."""
+        details = getattr(error, "dbus_error_details", None)
+        message = " ".join(str(part) for part in (error, details) if part).casefold()
+        return "att error: 0x0e" in message or "unlikely error" in message
 
     def write_bytes(self, data, timeout):
         """Write all bytes as acknowledged 20-byte ATT payloads."""
