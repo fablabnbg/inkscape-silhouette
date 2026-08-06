@@ -166,9 +166,19 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
     </page>
 
     <page name='bluetooth' gui-text='Bluetooth'>
+      <param name="connection_type" type="optiongroup" appearance="combo" gui-text="Connection type">
+        <option value="usb">USB</option>
+        <option value="bluetooth">Bluetooth Classic (RFCOMM)</option>
+        <option value="ble">Bluetooth Low Energy (BLE)</option>
+      </param>
+      <param name="bluetooth_scan" type="bool" gui-text="Scan for nearby devices (list, then stop)">false</param>
+      <label indent="2">Scanning lists every device visible through the selected Bluetooth transport. It is not limited to Silhouette cutters.</label>
       <param name="bluetooth_addr" type="string" gui-text="Bluetooth MAC address"></param>
-      <param name="bluetooth_scan" type="bool" gui-text="Scan for Bluetooth devices (list, then stop)">false</param>
-      <label indent="2">Connect over Bluetooth instead of USB (e.g. 00:1B:41:33:44:55); tick the scan above to discover the address. Leave empty for USB; pair the cutter with your operating system first.</label>
+      <label indent="2">Bluetooth Classic only. Pair the cutter with the operating system, scan, then enter its MAC address.</label>
+      <param name="bluetooth_name" type="string" gui-text="BLE advertised name">CAMEO</param>
+      <label indent="2">Bluetooth LE only. Defaults to CAMEO. Prefer the advertised name because it works across operating systems.</label>
+      <param name="bluetooth_identifier" type="string" gui-text="BLE local identifier"></param>
+      <label indent="2">Optional BLE override. On macOS this is a computer-specific CoreBluetooth UUID, not a portable MAC address.</label>
       <label indent="2">The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab.</label>
     </page>
 

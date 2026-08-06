@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+from unittest import mock
+
 from sendto_silhouette import SendtoSilhouette, __version__
 from inkex import Transform
 from inkex.tester import TestCase
@@ -24,6 +26,10 @@ class SendtoSilhouetteTest(TestCase):
 
 
 class ParameterTest(SendtoSilhouetteTest):
+    def test_ble_name_defaults_to_cameo(self):
+        self.e.parse_arguments([])
+        self.assertEqual(self.e.options.bluetooth_name, "CAMEO")
+
     def test_run_help(self):
         """Ensure we can run `--help`"""
         with Capture("stdout") as stdout:
@@ -39,6 +45,34 @@ class ParameterTest(SendtoSilhouetteTest):
                 self.e.run(["--version"])
             self.assertIn(__version__, stdout.getvalue())
             self.assertEqual(e.exception.code, 0)
+
+    def test_ble_connection_parameters(self):
+        self.e.parse_arguments([
+            "--connection_type=ble",
+            "--bluetooth_name=CAMEO 5 ALPHA-TEST",
+            "--bluetooth_identifier=LOCAL-ID",
+        ])
+        self.assertEqual(self.e.options.connection_type, "ble")
+        self.assertEqual(self.e.options.bluetooth_name, "CAMEO 5 ALPHA-TEST")
+        self.assertEqual(self.e.options.bluetooth_identifier, "LOCAL-ID")
+
+    @mock.patch("silhouette.BLETransport.BLETransport.is_available",
+                return_value=True)
+    @mock.patch("silhouette.BLETransport.BLETransport.discover",
+                return_value=[("MOUSE-ID", "Nearby Mouse"),
+                              ("CUTTER-ID", "CAMEO 5 ALPHA-TEST")])
+    def test_ble_scan_is_unfiltered(self, discover, is_available):
+        del is_available
+        self.e.parse_arguments(["--connection_type=ble"])
+        self.e.report = mock.Mock()
+
+        self.e.report_bluetooth_scan()
+
+        discover.assert_called_once_with(name_filter=None)
+        message, level = self.e.report.call_args.args
+        self.assertEqual(level, "error")
+        self.assertIn("Nearby Mouse", message)
+        self.assertIn("CAMEO 5 ALPHA-TEST", message)
 
 
 class PlusTest(SendtoSilhouetteTest):
@@ -356,4 +390,3 @@ class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
         self.assertEqual(self.e.reg_origin_Y, 10.0)
         self.assertEqual(self.e.reg_width,   190.0)
         self.assertEqual(self.e.reg_length,  277.0)
-
