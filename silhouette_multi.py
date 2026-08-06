@@ -2,6 +2,48 @@
 import os
 import sys
 
+
+_DYLD_RESTART_MARKER = "INKSCAPE_SILHOUETTE_DYLD_CLEAN"
+_INKSCAPE_LIBRARY_SUFFIX = "/Inkscape.app/Contents/Resources/lib"
+
+
+def _without_inkscape_library_path(value):
+    """Remove Inkscape's bundled libraries while preserving other entries."""
+    entries = value.split(os.pathsep)
+    filtered = [
+        entry
+        for entry in entries
+        if not os.path.realpath(entry).endswith(_INKSCAPE_LIBRARY_SUFFIX)
+    ]
+    return os.pathsep.join(filtered)
+
+
+def _restart_without_inkscape_libraries():
+    """Keep Inkscape's libiconv from shadowing the one used by wxPython."""
+    if not sys.platform.lower().startswith("darwin"):
+        return
+    if os.environ.get(_DYLD_RESTART_MARKER):
+        return
+
+    dyld_library_path = os.environ.get("DYLD_LIBRARY_PATH")
+    if not dyld_library_path:
+        return
+
+    cleaned_path = _without_inkscape_library_path(dyld_library_path)
+    if cleaned_path == dyld_library_path:
+        return
+
+    environment = os.environ.copy()
+    if cleaned_path:
+        environment["DYLD_LIBRARY_PATH"] = cleaned_path
+    else:
+        environment.pop("DYLD_LIBRARY_PATH", None)
+    environment[_DYLD_RESTART_MARKER] = "1"
+    os.execve(sys.executable, [sys.executable, *sys.argv], environment)
+
+
+_restart_without_inkscape_libraries()
+
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
 
