@@ -21,17 +21,42 @@ from silhouette.Transport import Transport
 
 
 class FakeDevice:
-    def __init__(self, address, name):
+    def __init__(self, address, name, service_uuids=None):
         self.address = address
         self.name = name
+        self.service_uuids = service_uuids or [BLETransport.SERVICE_UUID]
+
+
+class FakeAdvertisement:
+    def __init__(self, service_uuids):
+        self.service_uuids = service_uuids
+
+
+class FakeServices:
+    def __init__(self, service_uuids):
+        self.service_uuids = {uuid.casefold() for uuid in service_uuids}
+
+    def get_service(self, uuid):
+        return object() if uuid.casefold() in self.service_uuids else None
 
 
 class FakeBleakScanner:
     devices: ClassVar[list] = []
+    supports_return_adv = True
 
     @classmethod
-    async def discover(cls, timeout=8):
+    async def discover(cls, timeout=8, return_adv=False):
         del timeout
+        if return_adv:
+            if not cls.supports_return_adv:
+                raise TypeError("return_adv is not supported")
+            return {
+                device.address: (
+                    device,
+                    FakeAdvertisement(device.service_uuids),
+                )
+                for device in cls.devices
+            }
         return list(cls.devices)
 
 
@@ -43,8 +68,11 @@ class FakeBleakClient:
         self.timeout = timeout
         self.disconnected_callback = disconnected_callback
         self.is_connected = False
+        self.services = FakeServices(device.service_uuids)
         self.notifications = {}
         self.writes = []
+        self.write_failures_remaining = 0
+        self.write_failure = RuntimeError("ATT error: 0x0e")
         self.__class__.instances.append(self)
 
     async def connect(self):
@@ -57,6 +85,9 @@ class FakeBleakClient:
     async def write_gatt_char(self, characteristic, data, response=False):
         raw = bytes(data)
         self.writes.append((characteristic, raw, response))
+        if characteristic == BLETransport.WRITE_UUID and self.write_failures_remaining:
+            self.write_failures_remaining -= 1
+            raise self.write_failure
         if characteristic != BLETransport.WRITE_UUID:
             return
 
@@ -82,6 +113,7 @@ class BLEFakeStackMixin:
         FakeBleakScanner.devices = [
             FakeDevice("LOCAL-CAMEO-ID", "CAMEO 5 ALPHA-TEST"),
         ]
+        FakeBleakScanner.supports_return_adv = True
         FakeBleakClient.instances = []
         fake_bleak = types.ModuleType("bleak")
         fake_bleak.BleakScanner = FakeBleakScanner
@@ -92,8 +124,13 @@ class BLEFakeStackMixin:
             BLETransport, "HANDSHAKE_SETTLE_SECONDS", 0.0
         )
         self.settle_patch.start()
+        self.retry_delay_patch = mock.patch.object(
+            BLETransport, "WRITE_BACKPRESSURE_DELAY_SECONDS", 0.0
+        )
+        self.retry_delay_patch.start()
 
     def tearDown(self):
+        self.retry_delay_patch.stop()
         self.settle_patch.stop()
         self.bleak_patch.stop()
 
@@ -115,12 +152,12 @@ class BLETransportTest(BLEFakeStackMixin, unittest.TestCase):
             client = FakeBleakClient.instances[-1]
             self.assertEqual(
                 set(client.notifications),
-                {BLETransport.STATUS_UUID, BLETransport.READ_UUID},
+                {BLETransport.CONTROL_UUID, BLETransport.READ_UUID},
             )
             self.assertEqual(
                 client.writes[:3],
                 [
-                    (BLETransport.STATUS_UUID, BLETransport.INIT, True),
+                    (BLETransport.CONTROL_UUID, BLETransport.INIT, True),
                     (BLETransport.READ_UUID, BLETransport.INIT, True),
                     (BLETransport.WRITE_UUID, BLETransport.INIT, True),
                 ],
@@ -149,6 +186,39 @@ class BLETransportTest(BLEFakeStackMixin, unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "More than one"):
             self.connect()
 
+    def test_service_advertisement_disambiguates_matching_names(self):
+        FakeBleakScanner.devices.append(
+            FakeDevice(
+                "WRONG-SERVICE-ID",
+                "CAMEO 5 ALPHA-TEST",
+                service_uuids=["0000180a-0000-1000-8000-00805f9b34fb"],
+            )
+        )
+        transport = BLETransport.connect(name="CAMEO 5 ALPHA-TEST")
+        try:
+            self.assertEqual(transport.identifier, "LOCAL-CAMEO-ID")
+        finally:
+            transport.close()
+
+    def test_connected_device_must_expose_vendor_service(self):
+        FakeBleakScanner.devices = [
+            FakeDevice(
+                "WRONG-SERVICE-ID",
+                "CAMEO 5 ALPHA-TEST",
+                service_uuids=["0000180a-0000-1000-8000-00805f9b34fb"],
+            )
+        ]
+        with self.assertRaisesRegex(ValueError, "does not expose vendor service"):
+            BLETransport.connect(name="CAMEO 5 ALPHA-TEST")
+
+    def test_older_scanner_without_advertisement_data_falls_back(self):
+        FakeBleakScanner.supports_return_adv = False
+        transport = BLETransport.connect(name="CAMEO 5 ALPHA-TEST")
+        try:
+            self.assertEqual(transport.identifier, "LOCAL-CAMEO-ID")
+        finally:
+            transport.close()
+
     def test_discover_filters_and_sorts(self):
         FakeBleakScanner.devices.extend(
             [
@@ -176,6 +246,54 @@ class BLETransportTest(BLEFakeStackMixin, unittest.TestCase):
             self.assertEqual([len(item[1]) for item in writes], [20, 20, 5])
             self.assertTrue(all(item[0] == BLETransport.WRITE_UUID for item in writes))
             self.assertTrue(all(item[2] is True for item in writes))
+        finally:
+            transport.close()
+
+    def test_write_retries_att_backpressure_with_acknowledgement(self):
+        transport = self.connect()
+        try:
+            client = FakeBleakClient.instances[-1]
+            client.write_failures_remaining = 2
+            before = len(client.writes)
+
+            self.assertEqual(transport.write_bytes(b"retry", timeout=1000), 5)
+
+            writes = client.writes[before:]
+            self.assertEqual(len(writes), 3)
+            self.assertTrue(all(write[1] == b"retry" for write in writes))
+            self.assertTrue(all(write[2] is True for write in writes))
+        finally:
+            transport.close()
+
+    def test_write_does_not_retry_non_backpressure_error(self):
+        transport = self.connect()
+        try:
+            client = FakeBleakClient.instances[-1]
+            client.write_failures_remaining = 1
+            client.write_failure = RuntimeError("permission denied")
+            before = len(client.writes)
+
+            with self.assertRaisesRegex(RuntimeError, "permission denied"):
+                transport.write_bytes(b"fail", timeout=1000)
+
+            self.assertEqual(len(client.writes[before:]), 1)
+        finally:
+            transport.close()
+
+    def test_write_backpressure_retries_are_bounded(self):
+        transport = self.connect()
+        try:
+            client = FakeBleakClient.instances[-1]
+            client.write_failures_remaining = 10
+            before = len(client.writes)
+
+            with self.assertRaisesRegex(RuntimeError, "ATT error: 0x0e"):
+                transport.write_bytes(b"busy", timeout=1000)
+
+            self.assertEqual(
+                len(client.writes[before:]),
+                BLETransport.WRITE_BACKPRESSURE_RETRIES + 1,
+            )
         finally:
             transport.close()
 

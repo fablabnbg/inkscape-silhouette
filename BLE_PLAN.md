@@ -10,6 +10,8 @@ The BLE protocol research lives in `/Users/lexa/silhouette-test`. Its probes
 establish the vendor GATT service, characteristic roles, initialization
 handshake, 20-byte payload size, and name-based discovery required by macOS.
 Those probes are evidence and test fixtures, not production modules to import.
+Characteristic roles and the handshake were also cross-checked against
+[`bob-takuya/cameo-cut`](https://github.com/bob-takuya/cameo-cut) (MIT).
 
 ## Implementation status
 
@@ -26,7 +28,8 @@ Implemented locally:
 Still pending:
 
 - Real cutter connection and hardware verification from Inkscape on macOS.
-- Connection retry policy, final user documentation, and broader device tests.
+- Connection retry policy beyond ATT backpressure, final user documentation,
+  and broader device tests.
 
 Verified on macOS with Inkscape 1.4.4:
 
