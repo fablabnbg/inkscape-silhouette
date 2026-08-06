@@ -273,6 +273,10 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("--force_hardware",
                 dest = "force_hardware", default = None,
                 help = "Override hardware model of cutting device.")
+        pars.add_argument("--connection_type",
+                choices=("usb", "bluetooth", "ble"),
+                dest = "connection_type", default = "usb",
+                help = "Connection type: usb, bluetooth (Classic/RFCOMM), or ble.")
         pars.add_argument("--bluetooth_addr",
                 dest = "bluetooth_addr", default = None,
                 help = "Connect over Bluetooth to this MAC address (e.g. 00:1B:41:33:44:55) instead of USB. Use --bluetooth_scan to discover addresses.")
@@ -281,7 +285,13 @@ class SendtoSilhouette(EffectExtension):
                 help = "RFCOMM channel for the Bluetooth connection (default: standard channel).")
         pars.add_argument("--bluetooth_scan",
                 dest = "bluetooth_scan", type = Boolean, default = False,
-                help = "List paired/reachable Bluetooth Silhouette cutters and their addresses, then stop.")
+                help = "List Bluetooth devices visible through the selected connection type, then stop.")
+        pars.add_argument("--bluetooth_name",
+                dest = "bluetooth_name", default = "CAMEO",
+                help = "Connect over BLE to this advertised device name (default: CAMEO).")
+        pars.add_argument("--bluetooth_identifier",
+                dest = "bluetooth_identifier", default = None,
+                help = "Optional platform-local BLE identifier (a CoreBluetooth UUID on macOS, not a portable MAC address).")
         # For Multi-Action
         pars.add_argument("--skip_init",
                 dest = "skip_init", type = Boolean, default = False,
@@ -324,35 +334,46 @@ class SendtoSilhouette(EffectExtension):
 
 
     def report_bluetooth_scan(self):
-        """List paired Bluetooth cutters (address, name, model) in the message
-        dialog for the user to copy an address from."""
-        from silhouette.Transport import BluetoothTransport
-        from silhouette.Graphtec import _match_bluetooth_hardware
+        """List devices for the selected Bluetooth transport.
 
-        if not BluetoothTransport.is_available():
-            self.report("Bluetooth is not supported by this Python build/platform.", 'error')
-            return
+        Discovery is deliberately unfiltered so users can verify that scanning
+        works even when no Silhouette cutter is nearby.
+        """
+        connection_type = self.options.connection_type
+        heading = "Bluetooth LE" if connection_type == "ble" else "Bluetooth Classic"
         try:
-            # Filter to Silhouette cutters using Graphtec's model table, so
-            # there is no separate list of device names to keep in sync.
-            devices = BluetoothTransport.discover(
-                name_filter=lambda n: _match_bluetooth_hardware(n) is not None)
+            if connection_type == "ble":
+                from silhouette.BLETransport import BLETransport
+                if not BLETransport.is_available():
+                    self.report("Bluetooth LE scanning requires the optional 'bleak' package.", 'error')
+                    return
+                devices = BLETransport.discover(name_filter=None)
+                identifier_label = "local identifier"
+            else:
+                from silhouette.Transport import BluetoothTransport
+                if not BluetoothTransport.is_available():
+                    self.report("Bluetooth Classic is not supported by this Python build/platform.", 'error')
+                    return
+                devices = BluetoothTransport.discover(name_filter=None)
+                identifier_label = "MAC address"
         except Exception as e:
-            self.report("Bluetooth scan failed: %s" % e, 'error')
-            return
-        if not devices:
-            self.report("No paired Silhouette Bluetooth cutters found.\n"
-                        "Pair the cutter with your operating system first, then scan again.", 'error')
+            self.report("%s scan failed: %s" % (heading, e), 'error')
             return
 
-        lines = ["Found %d Bluetooth Silhouette cutter(s):" % len(devices)]
-        for addr, name in devices:
-            hw = _match_bluetooth_hardware(name)
-            model = hw['name'] if hw else 'unknown model'
-            lines.append("    %s   %s   [%s]" % (addr, name, model))
+        if not devices:
+            self.report("No %s devices found." % heading, 'error')
+            return
+
+        lines = ["Found %d %s device(s):" % (len(devices), heading)]
+        for identifier, name in devices:
+            lines.append("    %s   %s" % (identifier, name or "(unnamed)"))
         lines.append("")
-        lines.append("Copy the address of the cutter you want into the "
-                     "'Bluetooth MAC address' field.")
+        if connection_type == "ble":
+            lines.append("Use the advertised name for portable BLE selection, or copy the %s for this computer only."
+                         % identifier_label)
+        else:
+            lines.append("Copy the %s of the cutter into the Bluetooth MAC address field."
+                         % identifier_label)
         self.report("\n".join(lines), 'error')
 
 
@@ -776,9 +797,26 @@ class SendtoSilhouette(EffectExtension):
             self.options.speed = None
         if self.options.depth == -1:
             self.options.depth = None
-        # An empty Bluetooth address means "use USB".
+        # Normalize connection settings. Preserve the historical CLI behavior
+        # where supplying --bluetooth_addr by itself selects RFCOMM.
         if not self.options.bluetooth_addr:
             self.options.bluetooth_addr = None
+        if not self.options.bluetooth_name:
+            self.options.bluetooth_name = None
+        if not self.options.bluetooth_identifier:
+            self.options.bluetooth_identifier = None
+        if (self.options.connection_type == "usb" and
+                self.options.bluetooth_addr is not None):
+            self.options.connection_type = "bluetooth"
+
+        use_ble = self.options.connection_type == "ble"
+        if self.options.connection_type == "bluetooth":
+            if self.options.bluetooth_addr is None:
+                self.report("Bluetooth Classic requires a MAC address. Use Scan to discover it.", 'error')
+                return
+            bluetooth_addr = self.options.bluetooth_addr
+        else:
+            bluetooth_addr = None
 
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
@@ -786,8 +824,11 @@ class SendtoSilhouette(EffectExtension):
                                   inc_queries=self.options.inc_queries,
                                   dry_run=self.options.dry_run,
                                   force_hardware=self.options.force_hardware,
-                                  bluetooth_addr=self.options.bluetooth_addr,
-                                  bluetooth_channel=self.options.bluetooth_channel)
+                                  bluetooth_addr=bluetooth_addr,
+                                  bluetooth_channel=self.options.bluetooth_channel,
+                                  bluetooth_le=use_ble,
+                                  bluetooth_name=self.options.bluetooth_name if use_ble else None,
+                                  bluetooth_identifier=self.options.bluetooth_identifier if use_ble else None)
         except Exception as e:
             self.report(e, 'error')
             return

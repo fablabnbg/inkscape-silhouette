@@ -30,6 +30,7 @@ import sys
 import time
 
 from silhouette.Transport import USBTransport, BluetoothTransport
+from silhouette.BLETransport import BLETransport
 
 usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
@@ -418,7 +419,9 @@ class SilhouetteCameoTool:
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
                dry_run=False, progress_cb=None, force_hardware=None,
-               bluetooth_addr=None, bluetooth_channel=None):
+               bluetooth_addr=None, bluetooth_channel=None,
+               bluetooth_le=False, bluetooth_name=None,
+               bluetooth_identifier=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
@@ -429,6 +432,12 @@ class SilhouetteCameo:
         instead of being probed on USB. The model is then identified from the
         firmware version query (or from force_hardware). bluetooth_channel
         defaults to the standard RFCOMM channel used by these cutters.
+
+        If bluetooth_le is true (or bluetooth_name/bluetooth_identifier is
+        specified), the cutter is contacted over its BLE GATT service instead.
+        bluetooth_name is the portable selector: macOS exposes a per-host UUID
+        rather than the cutter's BLE MAC address. bluetooth_identifier is an
+        optional platform-local override for selecting one discovered device.
 
         If cmdfile is specified, it is taken as a file-like object in which to
         record a transcript of all commands sent to the cutter. If inc_queries is
@@ -465,7 +474,13 @@ class SilhouetteCameo:
     self.mock_response = None
     self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
 
-    if bluetooth_addr is not None:
+    if (bluetooth_le or bluetooth_name is not None or
+        bluetooth_identifier is not None):
+      # Bluetooth Low Energy: discover by advertised name (portable) or by an
+      # optional platform-local identifier.
+      dev = None
+      self._connect_bluetooth_le(bluetooth_name, bluetooth_identifier)
+    elif bluetooth_addr is not None:
       # Bluetooth: connect to the given MAC address instead of probing USB.
       dev = None
       self._connect_bluetooth(bluetooth_addr, bluetooth_channel)
@@ -646,6 +661,51 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if model:
         self.hardware['name'] += " (%s)" % model.strip()
       print("Connected to unrecognized Bluetooth device (firmware '%s') on %s;\n"
+            "use --force_hardware to select the model."
+            % (model, self.transport.location), file=self.log)
+
+  def _connect_bluetooth_le(self, bluetooth_name, bluetooth_identifier):
+    """Open a BLE connection, setting self.transport and self.hardware.
+
+    Discovery is filtered through the existing Bluetooth model table when the
+    caller has not selected an exact advertised name or local identifier.
+    The model is then confirmed from the firmware version query, just as it is
+    for RFCOMM.
+    """
+    selector = bluetooth_identifier or bluetooth_name or "a Silhouette cutter"
+    try:
+      self.transport = BLETransport.connect(
+        name=bluetooth_name,
+        identifier=bluetooth_identifier,
+        name_filter=lambda name: _match_bluetooth_hardware(name) is not None)
+    except Exception as e:
+      if self.dry_run:
+        print("Bluetooth LE connect to %s failed (%s); continuing dry run with dummy device"
+              % (selector, e), file=self.log)
+        self.transport = None
+        self.hardware = dict(name='Crashtest Dummy Device')
+        return
+      raise ValueError("Could not open Bluetooth LE connection to %s: %s"
+                       % (selector, e))
+
+    model = None
+    try:
+      model = self.get_version()
+    except Exception as e:
+      print("Bluetooth LE firmware version query failed: %s" % e,
+            file=self.log)
+
+    hardware = _match_bluetooth_hardware(model)
+    if hardware is not None:
+      self.hardware = hardware
+      print("%s (firmware '%s') connected on %s"
+            % (self.hardware['name'], model, self.transport.location),
+            file=self.log)
+    else:
+      self.hardware = { 'name': 'Unknown Bluetooth LE Graphtec device' }
+      if model:
+        self.hardware['name'] += " (%s)" % model.strip()
+      print("Connected to unrecognized Bluetooth LE device (firmware '%s') on %s;\n"
             "use --force_hardware to select the model."
             % (model, self.transport.location), file=self.log)
 
