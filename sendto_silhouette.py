@@ -377,6 +377,40 @@ class SendtoSilhouette(EffectExtension):
         self.report("\n".join(lines), 'error')
 
 
+    def require_media_loaded(self, dev):
+        """Return cutter status or fail before setup when media is absent.
+
+        A cutter without media must not receive setup or geometry commands.
+        Close the transport immediately so Bluetooth devices can resume
+        advertising and a corrected job can reconnect promptly.
+        """
+        transport = getattr(dev, "transport", None)
+        try:
+            state = dev.status()
+        except Exception as error:
+            if transport is not None:
+                transport.close()
+            raise ValueError(
+                "Could not query cutter status before starting: %s" % error
+            ) from error
+
+        self.report("status=%s" % state, 'log')
+        if state in ("ready", "moving"):
+            return state
+
+        if transport is not None:
+            transport.close()
+
+        if state == "unloaded":
+            raise ValueError(
+                "No media is loaded. Load media into the cutter and try again."
+            )
+        raise ValueError(
+            "Cannot determine whether media is loaded (status=%s). Job aborted."
+            % state
+        )
+
+
     def plotPath(self, path: Path):
         """
         Plot the path after smoothing curves to straights
@@ -841,8 +875,11 @@ class SendtoSilhouette(EffectExtension):
         except Exception as e:
             self.report(e, 'error')
             return
-        state = dev.status()  # hint at loading paper, if not ready.
-        self.report("status=%s" % (state), 'log')
+        try:
+            state = self.require_media_loaded(dev)
+        except Exception as e:
+            self.report(e, 'error')
+            return
         self.report("device version: '%s'" % dev.get_version(), 'log')
 
         dev.setup(media=int(self.options.media, 10),

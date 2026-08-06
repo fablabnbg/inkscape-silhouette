@@ -74,6 +74,49 @@ class ParameterTest(SendtoSilhouetteTest):
         self.assertIn("Nearby Mouse", message)
         self.assertIn("CAMEO 5 ALPHA-TEST", message)
 
+    def test_loaded_media_can_continue(self):
+        dev = mock.Mock()
+        dev.status.return_value = "ready"
+        self.e.report = mock.Mock()
+
+        self.assertEqual(self.e.require_media_loaded(dev), "ready")
+
+        dev.transport.close.assert_not_called()
+        self.e.report.assert_called_once_with("status=ready", "log")
+
+        dev.status.return_value = "moving"
+        self.assertEqual(self.e.require_media_loaded(dev), "moving")
+        dev.transport.close.assert_not_called()
+
+    def test_unloaded_device_fails_early_and_closes_transport(self):
+        dev = mock.Mock()
+        dev.status.return_value = "unloaded"
+        self.e.report = mock.Mock()
+
+        with self.assertRaisesRegex(ValueError, "No media is loaded"):
+            self.e.require_media_loaded(dev)
+
+        dev.transport.close.assert_called_once_with()
+
+    def test_unknown_media_status_fails_early_and_closes_transport(self):
+        dev = mock.Mock()
+        dev.status.return_value = b"unknown"
+        self.e.report = mock.Mock()
+
+        with self.assertRaisesRegex(ValueError, "Cannot determine"):
+            self.e.require_media_loaded(dev)
+
+        dev.transport.close.assert_called_once_with()
+
+    def test_status_query_failure_closes_transport(self):
+        dev = mock.Mock()
+        dev.status.side_effect = OSError("connection lost")
+
+        with self.assertRaisesRegex(ValueError, "Could not query cutter status"):
+            self.e.require_media_loaded(dev)
+
+        dev.transport.close.assert_called_once_with()
+
 
 class PlusTest(SendtoSilhouetteTest):
     source_file = "plus_with_duplicate.svg"
