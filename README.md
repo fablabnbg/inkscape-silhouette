@@ -158,6 +158,7 @@ Finally, load the file with:
   * `./install_osx.sh`
   * Add the suggested python interpreter for user extensions in `~/Library/Application Support/org.inkscape.Inkscape/config/inkscape/preferences.xml` on `<group id="extensions" python-interpreter="/..." />`. For details on selecting a specific interpreter version see [Inkscape Wiki - Extension Interpreters](https://inkscape.gitlab.io/extensions/documentation/authors/interpreters.html):
     * e.g. `python-interpreter="/Users/username/.local/share/venvs/inkscape/bin/python3"`
+  * The installer includes `bleak`, which provides Bluetooth Low Energy support. On the first BLE scan, macOS may ask for Bluetooth permission for Inkscape; allow it to discover and connect to the cutter.
 
 </details>
 
@@ -238,9 +239,12 @@ Run `sendto_silhouette.py --help` for information on CLI usage.
 
 ### Bluetooth
 
-Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and similar) can be driven wirelessly instead of over USB. Pair the cutter with your operating system first, then use the **Bluetooth** tab in the GUI (or `--bluetooth_scan` / `--bluetooth_addr` on the CLI). See [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth) for step-by-step instructions.
+Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and similar) can be driven wirelessly instead of over USB. The **Bluetooth** tab offers two transports:
 
-Bluetooth is currently supported on **Linux and Windows only**; macOS lacks Python RFCOMM socket support, so USB must be used there for now (contributions to add macOS Bluetooth are welcome).
+- **Bluetooth Classic (RFCOMM)** on Linux and Windows. Pair the cutter with the operating system and select it by MAC address.
+- **Bluetooth Low Energy (BLE)** through `bleak`. BLE does not require Bluetooth Classic pairing and selects the cutter by its advertised name or an optional platform-local identifier. The macOS installer includes this dependency.
+
+The complete BLE flow has been verified with Inkscape 1.4.4 on macOS and a Silhouette Cameo 5 Alpha using the pen attachment. Other platforms supported by `bleak` may also work, but the current physical hardware verification is on macOS. See [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth) for step-by-step instructions.
 
 ---
 
@@ -294,8 +298,8 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * reverse toggle options, to cut the opposite direction. This might also be
   helpful with mat-free cutting via multipass.
 * honors hidden layers.
-* Bluetooth support. Cutters with Bluetooth can be driven wirelessly instead of
-  over USB, after pairing with the operating system. See
+* Bluetooth support. Cutters can use Bluetooth Classic after operating-system
+  pairing, or Bluetooth Low Energy without Classic pairing. See
   [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth).
 
 ## Misfeatures of InkCut that we do not 'feature'
