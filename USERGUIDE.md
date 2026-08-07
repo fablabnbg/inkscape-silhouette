@@ -87,40 +87,69 @@ For enhanced precision, you may have to set an offset on **X-Offset** and/or **Y
 
 ## Connecting over Bluetooth
 
-Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and similar) can be driven wirelessly instead of over USB.
+Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and similar) can be driven wirelessly instead of over USB. The extension supports Bluetooth Classic and Bluetooth Low Energy as separate connection types.
 
-**Before you start:** pair the cutter with your operating system's own Bluetooth settings first, exactly as you would any other Bluetooth device. The extension does not do the pairing for you; it only connects to a cutter your computer has already paired. Make sure the cutter is powered on and in range.
+### Bluetooth Classic (RFCOMM)
 
-**Steps:**
+Bluetooth Classic is supported on Linux and Windows. Pair the cutter in the operating system's Bluetooth settings first, then make sure it is powered on and in range.
 
 1. Open **Extensions &rarr; Export &rarr; Send to Silhouette** and switch to the **Bluetooth** tab.
-2. Find your cutter's address: tick **Scan for Bluetooth devices (list, then stop)** and click **Apply**. A dialog lists each paired Silhouette cutter with its address, name, and detected model, then stops without cutting. For example:
+2. Select **Bluetooth Classic (RFCOMM)** as the connection type.
+3. Tick **Scan for nearby devices (list, then stop)** and click **Apply**. The extension lists visible devices and stops without plotting. For example:
+
    ```
-   Found 1 Bluetooth Silhouette cutter(s):
-       00:1B:41:33:44:55   CAMEO 5 ALPHA-000000   [Silhouette_Cameo5_Alpha]
+   Found 1 Bluetooth Classic device(s):
+       00:1B:41:33:44:55   CAMEO 5 ALPHA-000000
 
    Copy the address of the cutter you want into the 'Bluetooth MAC address' field.
    ```
-3. Copy the address of the cutter you want into the **Bluetooth MAC address** field, and untick the scan box.
-4. Set your plot parameters as usual and click **Apply** to cut over Bluetooth.
+4. Copy the address into **Bluetooth MAC address** and untick the scan option.
+5. Set the plot parameters and click **Apply**.
 
-**Notes:**
+On Linux the scan uses `bluetoothctl` (BlueZ). Installing PyBluez (`python3 -m pip install pybluez`) additionally enables a live inquiry.
 
-- Leave the **Bluetooth MAC address** field empty to use USB (the default).
-- You must enter the address explicitly. There is intentionally no "connect to whatever is nearby" option, so a stranger's cutter that comes into range — or the wrong one, if you own several — can never be selected by accident.
-- The cutter model is detected automatically from its firmware. If it is not recognised, set it with **Override cutter model** on the **Log and Dump** tab.
-- **Bluetooth Classic vs. BLE (important):** some (most?) cutters advertise themselves *twice* — once as a **Bluetooth Classic** device and once as a **Bluetooth Low Energy (BLE)** device, often with the same or a nearly identical name. This extension communicates over Bluetooth Classic (the RFCOMM serial profile), so you must pair the **Classic** entry. If you pair only the BLE entry, the cutter will not show up in the scan and a connection will fail. The scan deliberately lists only the Classic, RFCOMM-connectable address, so if two entries appear in your OS Bluetooth settings, pair the one that lets the cutter appear in the scan.
-- The scan lists devices your operating system has already paired. If your cutter is missing, pair it in your OS Bluetooth settings (as a Classic device — see above), confirm it is on and in range, and scan again. On Linux the scan uses `bluetoothctl` (BlueZ); installing PyBluez (`pip install pybluez`) additionally enables a live inquiry.
-- **macOS is not currently supported.** Python's Bluetooth RFCOMM sockets are only available on Linux and Windows, so the Bluetooth features described here do not work on macOS. USB still works normally on macOS. Adding macOS Bluetooth support — for example via a `/dev/cu.*` serial port or Apple's IOBluetooth framework — would be a very welcome contribution; see [CONTRIBUTING](./CONTRIBUTING.md).
+### Bluetooth Low Energy (BLE)
 
-**From the command line** the same is available without the dialog:
+BLE is supported through the optional `bleak` package. The macOS installer installs it automatically; on other systems install it into the Python environment used by Inkscape:
 
 ```sh
-# list paired Bluetooth cutters and their addresses, then stop
-sendto_silhouette.py --bluetooth_scan=True yourfile.svg
+python3 -m pip install bleak
+```
 
-# cut over Bluetooth using an explicit address
-sendto_silhouette.py --bluetooth_addr=00:1B:41:33:44:55 yourfile.svg
+BLE does not require Bluetooth Classic pairing. Make sure Bluetooth is enabled and the cutter is powered on and in range.
+
+1. Open **Extensions &rarr; Export &rarr; Send to Silhouette** and switch to the **Bluetooth** tab.
+2. Select **Bluetooth Low Energy (BLE)**. On the first scan, macOS may ask for Bluetooth permission for Inkscape; allow it.
+3. Tick **Scan for nearby devices (list, then stop)** and click **Apply**. Scanning intentionally lists every visible BLE device, not only Silhouette cutters.
+4. Identify the cutter by its advertised name. The **BLE advertised name** field defaults to `CAMEO`; enter the exact name if more than one device matches.
+5. Alternatively, copy the reported **BLE local identifier**. On macOS this is a computer-specific CoreBluetooth UUID, not a portable MAC address.
+6. Untick the scan option, set the plot parameters, and click **Apply**.
+
+The extension rejects ambiguous matches rather than choosing an arbitrary nearby device. It detects the cutter model from the firmware after connecting; use **Override cutter model** on the **Log and Dump** tab if the model is not recognised.
+
+The complete Inkscape-to-cutter BLE flow has been verified with Inkscape 1.4.4 on macOS and a Silhouette Cameo 5 Alpha using the pen attachment, including discovery, connection, status checking, setup, and drawing.
+
+### Media check
+
+Before setup or plot commands are sent, the extension queries the cutter status. If no media is loaded—or the status cannot be confirmed—the job exits early, closes the connection, and displays an error. Load the media and run the job again.
+
+### Command-line examples
+
+```sh
+# List visible Bluetooth Classic devices, then stop.
+sendto_silhouette.py --connection_type=bluetooth --bluetooth_scan=True yourfile.svg
+
+# Plot over Bluetooth Classic using an explicit MAC address.
+sendto_silhouette.py --connection_type=bluetooth --bluetooth_addr=00:1B:41:33:44:55 yourfile.svg
+
+# List visible BLE devices, then stop.
+sendto_silhouette.py --connection_type=ble --bluetooth_scan=True yourfile.svg
+
+# Plot over BLE using the cutter's advertised name.
+sendto_silhouette.py --connection_type=ble --bluetooth_name="CAMEO 5 ALPHA-000000" yourfile.svg
+
+# Select a BLE cutter by a platform-local identifier instead.
+sendto_silhouette.py --connection_type=ble --bluetooth_identifier="LOCAL-IDENTIFIER" yourfile.svg
 ```
 
 ---
