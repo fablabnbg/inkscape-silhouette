@@ -313,7 +313,7 @@ class BLETransport(Transport):
             self.name or "unnamed", self.identifier or "no identifier"
         )
 
-        await client.start_notify(self.CONTROL_UUID, self._on_notification)
+        await client.start_notify(self.CONTROL_UUID, self._on_control_notification)
         await client.start_notify(self.READ_UUID, self._on_notification)
 
         for characteristic in (self.CONTROL_UUID, self.READ_UUID, self.WRITE_UUID):
@@ -329,6 +329,16 @@ class BLETransport(Transport):
         with self._incoming_condition:
             self._incoming.extend(bytes(data))
             self._incoming_condition.notify_all()
+
+    def _on_control_notification(self, sender, data):
+        """Do not mix cutter state indications into command responses.
+
+        The control characteristic emits short movement events such as
+        ``b"1\\x03"`` and ``b"0\\x03"``. Query and registration responses arrive
+        on READ_UUID. Combining both streams can therefore make a registration
+        search consume the initial "moving" event as its result and fail early.
+        """
+        del sender, data
 
     def _on_disconnected(self, client):
         del client
