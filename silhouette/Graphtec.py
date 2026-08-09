@@ -256,11 +256,10 @@ DEVICE = [
    'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },                    
  { 'vendor_id': VENDOR_ID_CAMEO5ALPHA, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA, 'name': 'Silhouette_Cameo5_Alpha',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
-   #added extra margin space to experiment with the software cross-cutting feature
-   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':-6.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
  { 'vendor_id': VENDOR_ID_CAMEO5ALPHA, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS, 'name': 'Silhouette_Cameo5_Alpha_Plus',
-   # Width matches Cameo 5 Plus (372mm / ~14.6in). Verify margin_left_mm on hardware.
-   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm':-6.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
+   # Width matches Cameo 5 Plus (372mm / ~14.6in).
+   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC200_20, 'name': 'Craft_Robo_CC200-20',
    'width_mm':  200, 'length_mm': 1000, 'regmark': True },
  { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_CC300_20, 'name': 'Craft_Robo_CC300-20' },

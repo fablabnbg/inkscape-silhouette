@@ -310,6 +310,22 @@ class BLETransportTest(BLEFakeStackMixin, unittest.TestCase):
         finally:
             transport.close()
 
+    def test_control_notifications_are_not_returned_as_command_responses(self):
+        transport = self.connect()
+        try:
+            client = FakeBleakClient.instances[-1]
+            client.notifications[BLETransport.CONTROL_UUID](None, b"1\x03")
+
+            with self.assertRaises(BLETimeoutError):
+                transport.read_bytes(64, timeout=1)
+
+            client.notifications[BLETransport.READ_UUID](None, b"    0\x03")
+            self.assertEqual(
+                transport.read_bytes(64, timeout=1000), b"    0\x03"
+            )
+        finally:
+            transport.close()
+
     def test_read_timeout_uses_transport_exception(self):
         transport = self.connect()
         try:
