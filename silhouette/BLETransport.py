@@ -46,6 +46,11 @@ class BLETransport(Transport):
     HANDSHAKE_SETTLE_SECONDS = 1.0
     WRITE_BACKPRESSURE_RETRIES = 3
     WRITE_BACKPRESSURE_DELAY_SECONDS = 0.1
+    # How long to keep scanning after the first plausible match, to still
+    # catch a second (ambiguous) advertiser nearby -- short because BLE
+    # peripherals re-advertise every ~100ms-1s, so a second device would
+    # already have shown up within this window too.
+    DISCOVERY_GRACE_SECONDS = 2.0
 
     timeout_exceptions = (BLETimeoutError, BLEDisconnectedError, OSError)
 
@@ -281,34 +286,90 @@ class BLETransport(Transport):
                 pass
         return await BleakScanner.discover(timeout=timeout)
 
-    async def _async_connect(self, name, identifier, timeout, name_filter):
+    async def _async_scan_for_match(self, timeout, name, identifier, name_filter):
+        """Scan for a specific cutter and stop shortly after finding it,
+        instead of always blocking for the full `timeout` regardless --
+
+        Returns the same {address: (device, advertisement_data)} shape
+        _async_discover(return_adv=True) does, so the caller's existing
+        _select_device() call is unaffected -- this only changes when
+        scanning stops, not how a match among several candidates is
+        eventually chosen.
+        """
+        from bleak import BleakScanner
+
+        loop = asyncio.get_event_loop()
+        found = {}
+        stop_event = asyncio.Event()
+        grace_handle = None
+
+        def is_plausible_match(device):
+            device_name = self._device_name(device)
+            if identifier:
+                wanted = self._device_identifier(device).casefold()
+                if wanted and wanted == identifier.casefold():
+                    return True
+            if name:
+                wanted_name = name.casefold()
+                dn = device_name.casefold()
+                if dn == wanted_name or wanted_name in dn:
+                    return True
+            if name_filter is not None and name_filter(device_name):
+                return True
+            if not identifier and not name and name_filter is None:
+                return True
+            return False
+
+        def on_detect(device, advertisement_data):
+            nonlocal grace_handle
+            if device.address in found:
+                return
+            if not is_plausible_match(device):
+                return
+            found[device.address] = (device, advertisement_data)
+            if grace_handle is None:
+                grace_handle = loop.call_later(
+                    self.DISCOVERY_GRACE_SECONDS, stop_event.set
+                )
+
+        async with BleakScanner(detection_callback=on_detect):
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=timeout)
+            except asyncio.TimeoutError:
+                pass  # nothing plausible showed up in the full timeout either
+        if grace_handle is not None:
+            grace_handle.cancel()
+        return found
+
+    def _make_client(self, address_or_device, timeout):
         from bleak import BleakClient
 
-        devices = await self._async_discover(timeout, return_adv=True)
-        device = self._select_device(
-            devices, name=name, identifier=identifier, name_filter=name_filter
-        )
-
         try:
-            client = BleakClient(
-                device, timeout=timeout, disconnected_callback=self._on_disconnected
+            return BleakClient(
+                address_or_device,
+                timeout=timeout,
+                disconnected_callback=self._on_disconnected,
             )
         except TypeError:
-            # Compatibility with older bleak clients that do not accept the callback
-            # in the constructor.
-            client = BleakClient(device, timeout=timeout)
+            # Compatibility with older bleak clients that do not accept the
+            # callback in the constructor.
+            client = BleakClient(address_or_device, timeout=timeout)
             setter = getattr(client, "set_disconnected_callback", None)
             if setter is not None:
                 setter(self._on_disconnected)
+            return client
 
-        await client.connect()
+    async def _finish_connect(self, client, name=None, identifier=None):
+        """Common post-connect steps: verify the vendor service, subscribe,
+        run the init handshake, and settle -- shared by both the discovery
+        path and the skip-discovery direct-connect path below."""
         self.client = client
         if not self._client_has_vendor_service(client):
             raise ValueError(
                 f"Bluetooth LE device does not expose vendor service {self.SERVICE_UUID}"
             )
-        self.name = self._device_name(device)
-        self.identifier = self._device_identifier(device)
+        self.name = name or getattr(client, "name", None) or ""
+        self.identifier = identifier or getattr(client, "address", None) or ""
         self.location = "bluetooth-le {} ({})".format(
             self.name or "unnamed", self.identifier or "no identifier"
         )
@@ -323,6 +384,42 @@ class BLETransport(Transport):
             await asyncio.sleep(self.HANDSHAKE_SETTLE_SECONDS)
         with self._incoming_condition:
             self._incoming.clear()
+
+    async def _async_connect_direct(self, identifier, timeout):
+        """Connect straight to a known identifier/address, skipping the scan
+        entirely. Works when the OS Bluetooth stack can resolve the address
+        without an active scan -- always true for a MAC address on
+        Linux/Windows, and true on macOS only if this Mac has already seen
+        the peripheral at least once (CoreBluetooth caches known
+        peripherals by identifier; a never-before-seen identifier fails
+        here and the caller falls back to a scan)."""
+        client = self._make_client(identifier, timeout)
+        await client.connect()
+        await self._finish_connect(client, identifier=identifier)
+
+    async def _async_connect(self, name, identifier, timeout, name_filter):
+        if identifier:
+            try:
+                await self._async_connect_direct(identifier, timeout)
+                return
+            except Exception:
+                # Not resolvable without a scan (e.g. macOS has never seen
+                # this identifier before) -- fall back to discovery below,
+                # same as if no identifier had been given at all.
+                pass
+
+        devices = await self._async_scan_for_match(
+            timeout, name=name, identifier=identifier, name_filter=name_filter
+        )
+        device = self._select_device(
+            devices, name=name, identifier=identifier, name_filter=name_filter
+        )
+
+        client = self._make_client(device, timeout)
+        await client.connect()
+        await self._finish_connect(
+            client, name=self._device_name(device),
+            identifier=self._device_identifier(device))
 
     def _on_notification(self, sender, data):
         del sender
