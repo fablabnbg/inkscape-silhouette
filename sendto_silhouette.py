@@ -709,6 +709,15 @@ class SendtoSilhouette(EffectExtension):
             # Traverse the entire document
             self.recursivelyTraverseSvg(self.document.getroot())
 
+        if self.warnings:
+            # stop if there are any known issues with the document
+            self.report(
+                "Aborting: the document contains content that cannot be "
+                "cut as-is (see the warning(s) above). Nothing has been "
+                "sent to the cutter. Fix the document and try again.",
+                'error')
+            return
+
         if self.options.toolholder is not None:
             self.options.toolholder = int(self.options.toolholder)
         self.pen=None
