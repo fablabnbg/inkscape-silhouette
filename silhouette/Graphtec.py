@@ -779,13 +779,33 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # usb.core.USBError: [Errno 110] Operation timed
         #print("Write Exception: %s, %s errno=%s" % (type(e), e, e.errno), file=s.log)
         import errno
+        is_etimedout = False
         try:
-          if e.errno == errno.ETIMEDOUT:
-            time.sleep(1)
-            msg += 't'
-            continue
+          is_etimedout = (e.errno == errno.ETIMEDOUT)
         except Exception as ee:
           msg += "s.dev.write Error:  {}".format(ee)
+        if is_etimedout:
+          # Bounded like the r==0 retry below: a persistently unresponsive
+          # link (e.g. a flaky Bluetooth connection) must not retry forever
+          # -- this used to be an unconditional `continue`, i.e. an infinite
+          # loop on a link that never recovers.
+          if retry < 5:
+            time.sleep(1)
+            retry += 1
+            msg += 't'
+            continue
+          else:
+            raise ValueError(
+              'write %d bytes failed: repeated timeout (ETIMEDOUT) after '
+              '%d retries' % (len(chunk), retry))
+        # Any other exception (e.g. BLETimeoutError/BLEDisconnectedError
+        # from the BLE transport, neither of which sets errno==ETIMEDOUT)
+        # must not fall through silently: without this raise, execution
+        # continued past this block using a *stale* value of r from a
+        # previous iteration, discarding the real exception and reporting
+        # a meaningless "r=0"-style error instead of what actually failed.
+        raise ValueError('write %d bytes failed: %s: %s'
+                          % (len(chunk), type(e).__name__, e))
       else:
         if len(msg):
           msg = ''
