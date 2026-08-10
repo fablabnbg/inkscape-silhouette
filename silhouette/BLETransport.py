@@ -298,7 +298,7 @@ class BLETransport(Transport):
         """
         from bleak import BleakScanner
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         found = {}
         stop_event = asyncio.Event()
         grace_handle = None
@@ -307,18 +307,14 @@ class BLETransport(Transport):
             device_name = self._device_name(device)
             if identifier:
                 wanted = self._device_identifier(device).casefold()
-                if wanted and wanted == identifier.casefold():
-                    return True
+                return bool(wanted) and wanted == identifier.casefold()
             if name:
                 wanted_name = name.casefold()
                 dn = device_name.casefold()
-                if dn == wanted_name or wanted_name in dn:
-                    return True
+                return dn == wanted_name or wanted_name in dn
             if name_filter is not None and name_filter(device_name):
                 return True
-            if not identifier and not name and name_filter is None:
-                return True
-            return False
+            return name_filter is None
 
         def on_detect(device, advertisement_data):
             nonlocal grace_handle
@@ -328,9 +324,13 @@ class BLETransport(Transport):
                 return
             found[device.address] = (device, advertisement_data)
             if grace_handle is None:
-                grace_handle = loop.call_later(
-                    self.DISCOVERY_GRACE_SECONDS, stop_event.set
-                )
+                if identifier:
+                    # Identifiers are unique, so an exact match is unambiguous.
+                    stop_event.set()
+                else:
+                    grace_handle = loop.call_later(
+                        self.DISCOVERY_GRACE_SECONDS, stop_event.set
+                    )
 
         async with BleakScanner(detection_callback=on_detect):
             try:
@@ -361,8 +361,7 @@ class BLETransport(Transport):
 
     async def _finish_connect(self, client, name=None, identifier=None):
         """Common post-connect steps: verify the vendor service, subscribe,
-        run the init handshake, and settle -- shared by both the discovery
-        path and the skip-discovery direct-connect path below."""
+        run the init handshake, and settle."""
         self.client = client
         if not self._client_has_vendor_service(client):
             raise ValueError(
@@ -385,29 +384,7 @@ class BLETransport(Transport):
         with self._incoming_condition:
             self._incoming.clear()
 
-    async def _async_connect_direct(self, identifier, timeout):
-        """Connect straight to a known identifier/address, skipping the scan
-        entirely. Works when the OS Bluetooth stack can resolve the address
-        without an active scan -- always true for a MAC address on
-        Linux/Windows, and true on macOS only if this Mac has already seen
-        the peripheral at least once (CoreBluetooth caches known
-        peripherals by identifier; a never-before-seen identifier fails
-        here and the caller falls back to a scan)."""
-        client = self._make_client(identifier, timeout)
-        await client.connect()
-        await self._finish_connect(client, identifier=identifier)
-
     async def _async_connect(self, name, identifier, timeout, name_filter):
-        if identifier:
-            try:
-                await self._async_connect_direct(identifier, timeout)
-                return
-            except Exception:
-                # Not resolvable without a scan (e.g. macOS has never seen
-                # this identifier before) -- fall back to discovery below,
-                # same as if no identifier had been given at all.
-                pass
-
         devices = await self._async_scan_for_match(
             timeout, name=name, identifier=identifier, name_filter=name_filter
         )
@@ -418,8 +395,10 @@ class BLETransport(Transport):
         client = self._make_client(device, timeout)
         await client.connect()
         await self._finish_connect(
-            client, name=self._device_name(device),
-            identifier=self._device_identifier(device))
+            client,
+            name=self._device_name(device),
+            identifier=self._device_identifier(device),
+        )
 
     def _on_notification(self, sender, data):
         del sender

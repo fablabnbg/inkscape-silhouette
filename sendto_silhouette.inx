@@ -179,7 +179,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <label indent="2">Bluetooth LE only. Defaults to CAMEO. Prefer the advertised name because it works across operating systems.</label>
       <param name="bluetooth_identifier" type="string" gui-text="BLE local identifier"></param>
       <label indent="2">Optional BLE override. On macOS this is a computer-specific CoreBluetooth UUID, not a portable MAC address.</label>
-      <label indent="2">Setting this is usually faster than name-based discovery: it skips the scan and connects directly. Run a scan once to find the identifier, then paste it here.</label>
+      <label indent="2">Setting this is usually faster than name-based discovery because scanning stops as soon as the exact identifier is found. Run a scan once to find the identifier, then paste it here.</label>
       <label indent="2">The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab.</label>
     </page>
 
