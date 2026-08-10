@@ -44,6 +44,25 @@ class FakeBleakScanner:
     devices: ClassVar[list] = []
     supports_return_adv = True
 
+    def __init__(self, detection_callback=None, **kwargs):
+        del kwargs
+        self.detection_callback = detection_callback
+
+    async def __aenter__(self):
+        # The fake has no real over-the-air timing, so it delivers every
+        # configured device to the callback immediately -- the production
+        # code's own grace period (patched to 0 in tests, see setUp) is what
+        # then lets _async_scan_for_match stop right away in tests.
+        if self.detection_callback is not None:
+            for device in self.devices:
+                self.detection_callback(
+                    device, FakeAdvertisement(device.service_uuids)
+                )
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
     @classmethod
     async def discover(cls, timeout=8, return_adv=False):
         del timeout
@@ -62,13 +81,26 @@ class FakeBleakScanner:
 
 class FakeBleakClient:
     instances: ClassVar[list] = []
+    # Identifiers a direct (skip-discovery) connect can resolve without a
+    # scan -- simulating either a Linux/Windows MAC address (always
+    # resolvable) or a macOS CoreBluetooth identifier this "Mac" has
+    # already seen before. Anything else fails connect(), forcing the
+    # scan-based fallback path.
+    known_identifiers: ClassVar[set] = set()
 
     def __init__(self, device, timeout=None, disconnected_callback=None):
         self.device = device
         self.timeout = timeout
         self.disconnected_callback = disconnected_callback
         self.is_connected = False
-        self.services = FakeServices(device.service_uuids)
+        if isinstance(device, str):
+            # A bare identifier/address, not a FakeDevice from discovery --
+            # this is the skip-discovery direct-connect path.
+            self.resolvable = device in self.known_identifiers
+            self.services = FakeServices([BLETransport.SERVICE_UUID])
+        else:
+            self.resolvable = True
+            self.services = FakeServices(device.service_uuids)
         self.notifications = {}
         self.writes = []
         self.write_failures_remaining = 0
@@ -76,6 +108,9 @@ class FakeBleakClient:
         self.__class__.instances.append(self)
 
     async def connect(self):
+        if not self.resolvable:
+            raise RuntimeError(
+                "could not resolve identifier without a preceding scan")
         self.is_connected = True
         return True
 
@@ -115,6 +150,7 @@ class BLEFakeStackMixin:
         ]
         FakeBleakScanner.supports_return_adv = True
         FakeBleakClient.instances = []
+        FakeBleakClient.known_identifiers = set()
         fake_bleak = types.ModuleType("bleak")
         fake_bleak.BleakScanner = FakeBleakScanner
         fake_bleak.BleakClient = FakeBleakClient
@@ -128,8 +164,13 @@ class BLEFakeStackMixin:
             BLETransport, "WRITE_BACKPRESSURE_DELAY_SECONDS", 0.0
         )
         self.retry_delay_patch.start()
+        self.grace_patch = mock.patch.object(
+            BLETransport, "DISCOVERY_GRACE_SECONDS", 0.0
+        )
+        self.grace_patch.start()
 
     def tearDown(self):
+        self.grace_patch.stop()
         self.retry_delay_patch.stop()
         self.settle_patch.stop()
         self.bleak_patch.stop()
@@ -216,6 +257,31 @@ class BLETransportTest(BLEFakeStackMixin, unittest.TestCase):
         transport = BLETransport.connect(name="CAMEO 5 ALPHA-TEST")
         try:
             self.assertEqual(transport.identifier, "LOCAL-CAMEO-ID")
+        finally:
+            transport.close()
+
+    def test_known_identifier_connects_directly_without_scanning(self):
+        # Emptying the scan results proves discovery was skipped entirely:
+        # if connect() fell through to the scan-based path, it would find
+        # nothing to select and raise "No Bluetooth LE device found".
+        FakeBleakClient.known_identifiers = {"LOCAL-CAMEO-ID"}
+        FakeBleakScanner.devices = []
+        transport = BLETransport.connect(identifier="LOCAL-CAMEO-ID")
+        try:
+            self.assertEqual(transport.identifier, "LOCAL-CAMEO-ID")
+            client = FakeBleakClient.instances[-1]
+            self.assertEqual(client.device, "LOCAL-CAMEO-ID")
+        finally:
+            transport.close()
+
+    def test_unresolvable_identifier_falls_back_to_scanning(self):
+        # The identifier is not in known_identifiers, so the direct connect
+        # attempt fails -- connect() must fall back to the normal
+        # discovery path rather than giving up, and still find the device
+        # there (matched by identifier, same as before this feature existed).
+        transport = BLETransport.connect(identifier="LOCAL-CAMEO-ID")
+        try:
+            self.assertEqual(transport.name, "CAMEO 5 ALPHA-TEST")
         finally:
             transport.close()
 
@@ -357,9 +423,18 @@ class CameoOverBLETest(BLEFakeStackMixin, unittest.TestCase):
 
     def test_ble_connect_failure_can_continue_a_dry_run(self):
         FakeBleakScanner.devices = []
-        dev = SilhouetteCameo(
-            log=io.StringIO(), dry_run=True, bluetooth_le=True, bluetooth_name="MISSING"
-        )
+        # Nothing will ever match, so _async_scan_for_match's wait_for
+        # genuinely blocks for the full timeout before giving up (unlike
+        # the old fake's discover(), which returned instantly regardless of
+        # the requested timeout) -- shorten it here so the test stays fast
+        # rather than waiting out the real default of 20s.
+        with mock.patch.object(
+            BLETransport.connect.__func__, "__defaults__", (None, None, 0.2, None)
+        ):
+            dev = SilhouetteCameo(
+                log=io.StringIO(), dry_run=True, bluetooth_le=True,
+                bluetooth_name="MISSING"
+            )
         self.assertIsNone(dev.transport)
         self.assertEqual(dev.hardware["name"], "Crashtest Dummy Device")
 
