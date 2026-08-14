@@ -97,95 +97,153 @@ class InsertRegmark(EffectExtension):
 		]
 		return PathElement.new(path="M"+str(path), id=mark_id, style=f"fill:none; stroke:black; stroke-width:{line_width};")
 
-	def effect(self):
+	def get_document_pages(self):
+		"""Return Inkscape page rectangles in document viewport coordinates."""
+		namedview = getattr(self.svg, "namedview", None)
+		if namedview is not None and hasattr(namedview, "get_pages"):
+			page_elements = namedview.get_pages()
+		elif namedview is not None:
+			page_elements = [
+				node for node in namedview
+				if isinstance(node.tag, str) and node.tag.endswith("}page")
+			]
+		else:
+			page_elements = []
+
+		pages = [
+			{
+				"x": float(getattr(page, "x", page.get("x", 0))),
+				"y": float(getattr(page, "y", page.get("y", 0))),
+				"width": float(getattr(page, "width", page.get("width", 0))),
+				"height": float(getattr(page, "height", page.get("height", 0))),
+			}
+			for page in page_elements
+		]
+		if pages:
+			return pages
+
+		viewbox = self.svg.get_viewbox()
+		return [{
+			"x": viewbox[0],
+			"y": viewbox[1],
+			"width": viewbox[2],
+			"height": viewbox[3],
+		}]
+
+	def remove_existing_regmark_layers(self):
+		"""Remove renderer-owned layers from prior single- or multi-page runs."""
+		page_prefix = REGMARK_LAYER_ID + "-page-"
+		for element in list(self.svg.iter()):
+			element_id = element.get("id", "")
+			if (element_id == REGMARK_LAYER_ID or
+					(element_id.startswith(page_prefix) and
+					 element_id[len(page_prefix):].isdigit())):
+				element.delete()
+
+	def regmark_ids(self, page_index, page_count):
+		"""Keep single-page IDs stable and make multi-page IDs unique."""
+		if page_count == 1:
+			return {
+				"layer": REGMARK_LAYER_ID,
+				"top_left": REGMARK_TOP_LEFT_ID,
+				"top_right": REGMARK_TOP_RIGHT_ID,
+				"bottom_left": REGMARK_BOTTOM_LEFT_ID,
+				"bottom_right": REGMARK_BOTTOM_RIGHT_ID,
+				"safe_area": REGMARK_SAFE_AREA_ID,
+				"notes": REGMARK_NOTES_ID,
+			}
+		suffix = "-page-" + str(page_index + 1)
+		return {
+			"layer": REGMARK_LAYER_ID + suffix,
+			"top_left": REGMARK_TOP_LEFT_ID + suffix,
+			"top_right": REGMARK_TOP_RIGHT_ID + suffix,
+			"bottom_left": REGMARK_BOTTOM_LEFT_ID + suffix,
+			"bottom_right": REGMARK_BOTTOM_RIGHT_ID + suffix,
+			"safe_area": REGMARK_SAFE_AREA_ID + suffix,
+			"notes": REGMARK_NOTES_ID + suffix,
+		}
+
+	def render_page_regmarks(self, page, page_index, page_count):
+		"""Render one page's registration marks in its local coordinates."""
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		reg_width = self.options.regwidth or self.svg.to_dimensional(self.svg.viewport_width, "mm") - reg_origin_X * 2
-		reg_length = self.options.reglength or self.svg.to_dimensional(self.svg.viewport_height, "mm") - reg_origin_Y * 2
+		page_width = self.svg.unit_to_viewport(page["width"], "mm")
+		page_height = self.svg.unit_to_viewport(page["height"], "mm")
+		reg_width = self.options.regwidth or page_width - reg_origin_X * 2
+		reg_length = self.options.reglength or page_height - reg_origin_Y * 2
 		reg_style = self.options.regstyle
+		ids = self.regmark_ids(page_index, page_count)
 
 		if self.options.verbose == True:
-			self.msg(gettext("[INFO]: page width ")+str(self.svg.to_dimensional(self.svg.viewport_width, "mm")))
-			self.msg(gettext("[INFO]: page height ")+str(self.svg.to_dimensional(self.svg.viewport_height, "mm")))
+			self.msg(gettext("[INFO]: page width ")+str(page_width))
+			self.msg(gettext("[INFO]: page height ")+str(page_height))
 			self.msg(gettext("[INFO]: regmark from document left ")+str(reg_origin_X))
 			self.msg(gettext("[INFO]: regmark from document top ")+str(reg_origin_Y))
 			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
 			self.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
-		# Check if existing regmark layer exist and delete it
-		old_regmark_layer = self.svg.getElementById(REGMARK_LAYER_ID)
-		if old_regmark_layer is not None:
-			old_regmark_layer.delete()
-
-		# Register Mark #
 		mm_to_user_unit = self.svg.viewport_to_unit('1mm')
+		layer_name = REGMARK_LAYERNAME
+		if page_count > 1:
+			layer_name += " (page " + str(page_index + 1) + ")"
+		regmark_layer = Layer.new(layer_name, id=ids["layer"])
+		regmark_layer.transform = (
+			Transform(translate=(page["x"], page["y"])) @
+			Transform(scale=mm_to_user_unit)
+		)
 
-		# Create a new register mark layer
-		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
-		regmark_layer.transform = Transform(scale=mm_to_user_unit)
+		top_right_x = reg_origin_X + reg_width
+		bottom_left_y = reg_origin_Y + reg_length
 
-		top_right_x = reg_origin_X+reg_width
-		bottom_left_y = reg_origin_Y+reg_length
-
-		# Top left corner: a filled square for the standard style, or an L-shaped
-		# mark for the four-corner style (which uses four matching corner marks).
 		if reg_style == REGSTYLE_FOUR_CORNER:
-			regmark_layer.append(self.l_mark(reg_origin_X, reg_origin_Y, +1, +1, REGMARK_TOP_LEFT_ID, REG_MARK_LINE_WIDTH_MM))
+			regmark_layer.append(self.l_mark(reg_origin_X, reg_origin_Y, +1, +1, ids["top_left"], REG_MARK_LINE_WIDTH_MM))
 		else:
-			regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=REGMARK_TOP_LEFT_ID, style='fill:black;'))
+			regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=ids["top_left"], style='fill:black;'))
 
-		# Create horizontal and vertical lines for top right corner
-		regmark_layer.append(self.l_mark(top_right_x, reg_origin_Y, -1, +1, REGMARK_TOP_RIGHT_ID, REG_MARK_LINE_WIDTH_MM))
-
-		# Create horizontal and vertical lines for bottom left corner
-		regmark_layer.append(self.l_mark(reg_origin_X, bottom_left_y, +1, -1, REGMARK_BOTTOM_LEFT_ID, REG_MARK_LINE_WIDTH_MM))
-
-		# The four-corner style additionally uses a fourth L-shaped mark in the bottom right corner
+		regmark_layer.append(self.l_mark(top_right_x, reg_origin_Y, -1, +1, ids["top_right"], REG_MARK_LINE_WIDTH_MM))
+		regmark_layer.append(self.l_mark(reg_origin_X, bottom_left_y, +1, -1, ids["bottom_left"], REG_MARK_LINE_WIDTH_MM))
 		if reg_style == REGSTYLE_FOUR_CORNER:
-			regmark_layer.append(self.l_mark(top_right_x, bottom_left_y, -1, -1, REGMARK_BOTTOM_RIGHT_ID, REG_MARK_LINE_WIDTH_MM))
+			regmark_layer.append(self.l_mark(top_right_x, bottom_left_y, -1, -1, ids["bottom_right"], REG_MARK_LINE_WIDTH_MM))
 
-		# Safe Area Marker #
-		# This draws the safe drawing area
-		safearea_left_x = reg_origin_X+REG_LINE_MM
-		safearea_top_y = reg_origin_Y+REG_LINE_MM
-		safearea_right_x = reg_origin_X+reg_width-REG_LINE_MM
-		safearea_bottom_y = reg_origin_Y+reg_length-REG_LINE_MM
+		safearea_left_x = reg_origin_X + REG_LINE_MM
+		safearea_top_y = reg_origin_Y + REG_LINE_MM
+		safearea_right_x = reg_origin_X + reg_width - REG_LINE_MM
+		safearea_bottom_y = reg_origin_Y + reg_length - REG_LINE_MM
 		if reg_style == REGSTYLE_FOUR_CORNER:
-			# Notch the safe area around the fourth (bottom right) mark, just like
-			# the other three corners, so its stroke is not partially covered.
 			bottom_right_corner = [
-				(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y),
-				(safearea_right_x,safearea_bottom_y),
-				(safearea_right_x,safearea_bottom_y+REG_SAFE_AREA_MM),
+				(safearea_right_x + REG_SAFE_AREA_MM, safearea_bottom_y),
+				(safearea_right_x, safearea_bottom_y),
+				(safearea_right_x, safearea_bottom_y + REG_SAFE_AREA_MM),
 			]
 		else:
-			# Standard style has no bottom right mark, so keep the corner square.
 			bottom_right_corner = [
-				(safearea_right_x+REG_SAFE_AREA_MM,safearea_bottom_y+REG_SAFE_AREA_MM),
+				(safearea_right_x + REG_SAFE_AREA_MM, safearea_bottom_y + REG_SAFE_AREA_MM),
 			]
 		safe_area_points = [
-			(safearea_left_x-REG_SAFE_AREA_MM,safearea_top_y),
-			(safearea_left_x,safearea_top_y),
-			(safearea_left_x,safearea_top_y-REG_SAFE_AREA_MM),
-			(safearea_right_x,safearea_top_y-REG_SAFE_AREA_MM),
-			(safearea_right_x,safearea_top_y),
-			(safearea_right_x+REG_SAFE_AREA_MM,safearea_top_y),
+			(safearea_left_x - REG_SAFE_AREA_MM, safearea_top_y),
+			(safearea_left_x, safearea_top_y),
+			(safearea_left_x, safearea_top_y - REG_SAFE_AREA_MM),
+			(safearea_right_x, safearea_top_y - REG_SAFE_AREA_MM),
+			(safearea_right_x, safearea_top_y),
+			(safearea_right_x + REG_SAFE_AREA_MM, safearea_top_y),
 		] + bottom_right_corner + [
-			(safearea_left_x,safearea_bottom_y+REG_SAFE_AREA_MM),
-			(safearea_left_x,safearea_bottom_y),
-			(safearea_left_x-REG_SAFE_AREA_MM,safearea_bottom_y),
+			(safearea_left_x, safearea_bottom_y + REG_SAFE_AREA_MM),
+			(safearea_left_x, safearea_bottom_y),
+			(safearea_left_x - REG_SAFE_AREA_MM, safearea_bottom_y),
 		]
-		regmark_layer.append(PathElement.new(path="M"+str(safe_area_points)+"Z", id=REGMARK_SAFE_AREA_ID, style='fill:white;stroke:none;'))
+		regmark_layer.append(PathElement.new(path="M" + str(safe_area_points) + "Z", id=ids["safe_area"], style='fill:white;stroke:none;'))
 
-		# Add some settings reminders to the print layer as a reminder
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		regmark_layer.append(TextElement(safe_area_note, x=f"{(safearea_left_x+3)}", y=f"{(safearea_bottom_y+(REG_SAFE_AREA_MM+reg_origin_Y/2))}", id = REGMARK_NOTES_ID, style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px;"))
+		regmark_layer.append(TextElement(safe_area_note, x=f"{(safearea_left_x + 3)}", y=f"{(safearea_bottom_y + (REG_SAFE_AREA_MM + reg_origin_Y / 2))}", id=ids["notes"], style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px;"))
 
-		# Lock Layer
 		regmark_layer.set_sensitive(False)
-
-		# Insert regmark layer to the bottom of the svg layer stack to avoid covering any existing artwork
 		self.svg.insert(0, regmark_layer)
+
+	def effect(self):
+		pages = self.get_document_pages()
+		self.remove_existing_regmark_layers()
+		for page_index, page in enumerate(pages):
+			self.render_page_regmarks(page, page_index, len(pages))
 
 		# Set Page Setting to enable checkerboard (This is required so that safe area is easier to see)
 		self.svg.namedview.set('inkscape:pagecheckerboard', str(ENABLE_CHECKERBOARD).lower())

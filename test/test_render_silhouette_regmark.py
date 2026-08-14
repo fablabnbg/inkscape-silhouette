@@ -128,3 +128,37 @@ class FourCornerRegmarkTest(InsertRegmarkTest):
                 "mm"),
             300
         )
+
+
+class MultiPageRegmarkTest(InsertRegmarkTest):
+    source_file = "multipage_pages.svg"
+
+    def setUp(self):
+        super().setUp()
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.effect()
+        self.e.clean_up()
+
+    def test_regmarks_are_created_on_each_page(self):
+        page_one_layer = self.e.svg.getElementById("regmark-page-1")
+        page_two_layer = self.e.svg.getElementById("regmark-page-2")
+        self.assertEqual(page_one_layer.label, "Regmarks (page 1)")
+        self.assertEqual(page_two_layer.label, "Regmarks (page 2)")
+
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-tl-page-1").bounding_box(transform=True),
+            BoundingBox((20.0, 30.0), (20.0, 30.0)),
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-tl-page-2").bounding_box(transform=True),
+            BoundingBox((460.0, 470.0), (20.0, 30.0)),
+        )
+
+    def test_regenerating_marks_replaces_every_page_layer(self):
+        self.e.effect()
+        layer_ids = [
+            element.get("id") for element in self.e.svg
+            if element.get("id", "").startswith("regmark-page-")
+        ]
+        self.assertEqual(layer_ids, ["regmark-page-2", "regmark-page-1"])
