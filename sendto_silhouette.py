@@ -799,6 +799,12 @@ class SendtoSilhouette(EffectExtension):
                 continue
             if not group.label or "regmark" not in group.label.lower():
                 continue
+            if (group.get("id") == REGMARK_LAYER_ID and any(
+                    child.get("id", "").startswith(REGMARK_LAYER_ID + "-page-")
+                    for child in group)):
+                # Multi-page marks live in page-specific groups inside this
+                # common layer; inspect the page group, not their union.
+                continue
             parent = group.getparent()
             parent_transform = (
                 parent.composed_transform()

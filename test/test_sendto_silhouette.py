@@ -6,6 +6,7 @@ import subprocess
 from unittest import mock
 
 from sendto_silhouette import SendtoSilhouette, __version__
+from render_silhouette_regmarks import InsertRegmark
 from inkex import Transform
 from inkex.tester import TestCase
 from inkex.tester.mock import Capture
@@ -447,6 +448,27 @@ class MultiPageTest(SendtoSilhouetteTest):
         self.assertEqual(self.e.reg_origin_Y, 10)
         self.assertEqual(self.e.reg_width, 190)
         self.assertEqual(self.e.reg_length, 277)
+
+
+class GeneratedMultiPageRegmarksTest(SendtoSilhouetteTest):
+    source_file = "multipage_pages.svg"
+
+    def test_page_groups_are_detected_inside_the_regmark_layer(self):
+        renderer = InsertRegmark()
+        renderer.parse_arguments([self.data_file(self.source_file)])
+        renderer.load_raw()
+        renderer.effect()
+        renderer.clean_up()
+
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.svg = renderer.svg
+        self.e.document = renderer.document
+        self.assertEqual(
+            self.e.page_regmark_settings(0), (10, 10, 190, 277)
+        )
+        self.assertEqual(
+            self.e.page_regmark_settings(1), (10, 10, 190, 277)
+        )
 
 
 #@mark.xfail(__inkex_version__[0:3] < "1.2", reason="earlier versions generate other curves")

@@ -141,10 +141,20 @@ class MultiPageRegmarkTest(InsertRegmarkTest):
         self.e.clean_up()
 
     def test_regmarks_are_created_on_each_page(self):
-        page_one_layer = self.e.svg.getElementById("regmark-page-1")
-        page_two_layer = self.e.svg.getElementById("regmark-page-2")
-        self.assertEqual(page_one_layer.label, "Regmarks (page 1)")
-        self.assertEqual(page_two_layer.label, "Regmarks (page 2)")
+        regmark_layer = self.e.svg.getElementById(REGMARK_LAYER_ID)
+        self.assertEqual(regmark_layer.label, REGMARK_LAYERNAME)
+        self.assertEqual(
+            [element.get("id") for element in regmark_layer],
+            ["regmark-page-1", "regmark-page-2"],
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-page-1").label,
+            "Regmarks (page 1)",
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-page-2").label,
+            "Regmarks (page 2)",
+        )
 
         self.assertEqual(
             self.e.svg.getElementById("regmark-tl-page-1").bounding_box(transform=True),
@@ -157,8 +167,12 @@ class MultiPageRegmarkTest(InsertRegmarkTest):
 
     def test_regenerating_marks_replaces_every_page_layer(self):
         self.e.effect()
-        layer_ids = [
+        page_group_ids = [
             element.get("id") for element in self.e.svg
-            if element.get("id", "").startswith("regmark-page-")
+            if element.get("id") == REGMARK_LAYER_ID
         ]
-        self.assertEqual(layer_ids, ["regmark-page-2", "regmark-page-1"])
+        self.assertEqual(page_group_ids, [REGMARK_LAYER_ID])
+        self.assertEqual(
+            [element.get("id") for element in self.e.svg.getElementById(REGMARK_LAYER_ID)],
+            ["regmark-page-1", "regmark-page-2"],
+        )

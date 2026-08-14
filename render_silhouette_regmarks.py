@@ -144,7 +144,6 @@ class InsertRegmark(EffectExtension):
 		"""Keep single-page IDs stable and make multi-page IDs unique."""
 		suffix = "" if page_count == 1 else "-page-" + str(page_index + 1)
 		return {
-			"layer": REGMARK_LAYER_ID + suffix,
 			"top_left": REGMARK_TOP_LEFT_ID + suffix,
 			"top_right": REGMARK_TOP_RIGHT_ID + suffix,
 			"bottom_left": REGMARK_BOTTOM_LEFT_ID + suffix,
@@ -153,7 +152,7 @@ class InsertRegmark(EffectExtension):
 			"notes": REGMARK_NOTES_ID + suffix,
 		}
 
-	def render_page_regmarks(self, page, page_index, page_count):
+	def render_page_regmarks(self, page, page_index, page_count, regmark_layer, mm_to_user_unit):
 		"""Render one page's registration marks in its local coordinates."""
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
@@ -172,28 +171,30 @@ class InsertRegmark(EffectExtension):
 			self.msg(gettext("[INFO]: regmark to regmark spacing X ")+str(reg_width))
 			self.msg(gettext("[INFO]: regmark to regmark spacing Y ")+str(reg_length))
 
-		mm_to_user_unit = self.svg.viewport_to_unit('1mm')
-		layer_name = REGMARK_LAYERNAME
+		mark_group = regmark_layer
 		if page_count > 1:
-			layer_name += " (page " + str(page_index + 1) + ")"
-		regmark_layer = Layer.new(layer_name, id=ids["layer"])
-		regmark_layer.transform = (
-			Transform(translate=(page["x"], page["y"])) @
-			Transform(scale=mm_to_user_unit)
-		)
+			mark_group = Group.new(
+				REGMARK_LAYERNAME + " (page " + str(page_index + 1) + ")",
+				id=REGMARK_LAYER_ID + "-page-" + str(page_index + 1),
+			)
+			mark_group.transform = (
+				Transform(translate=(page["x"], page["y"])) @
+				Transform(scale=mm_to_user_unit)
+			)
+			regmark_layer.append(mark_group)
 
 		top_right_x = reg_origin_X + reg_width
 		bottom_left_y = reg_origin_Y + reg_length
 
 		if reg_style == REGSTYLE_FOUR_CORNER:
-			regmark_layer.append(self.l_mark(reg_origin_X, reg_origin_Y, +1, +1, ids["top_left"], REG_MARK_LINE_WIDTH_MM))
+			mark_group.append(self.l_mark(reg_origin_X, reg_origin_Y, +1, +1, ids["top_left"], REG_MARK_LINE_WIDTH_MM))
 		else:
-			regmark_layer.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=ids["top_left"], style='fill:black;'))
+			mark_group.append(Rectangle.new(left=reg_origin_X, top=reg_origin_Y, width=REG_SQUARE_MM, height=REG_SQUARE_MM, id=ids["top_left"], style='fill:black;'))
 
-		regmark_layer.append(self.l_mark(top_right_x, reg_origin_Y, -1, +1, ids["top_right"], REG_MARK_LINE_WIDTH_MM))
-		regmark_layer.append(self.l_mark(reg_origin_X, bottom_left_y, +1, -1, ids["bottom_left"], REG_MARK_LINE_WIDTH_MM))
+		mark_group.append(self.l_mark(top_right_x, reg_origin_Y, -1, +1, ids["top_right"], REG_MARK_LINE_WIDTH_MM))
+		mark_group.append(self.l_mark(reg_origin_X, bottom_left_y, +1, -1, ids["bottom_left"], REG_MARK_LINE_WIDTH_MM))
 		if reg_style == REGSTYLE_FOUR_CORNER:
-			regmark_layer.append(self.l_mark(top_right_x, bottom_left_y, -1, -1, ids["bottom_right"], REG_MARK_LINE_WIDTH_MM))
+			mark_group.append(self.l_mark(top_right_x, bottom_left_y, -1, -1, ids["bottom_right"], REG_MARK_LINE_WIDTH_MM))
 
 		safearea_left_x = reg_origin_X + REG_LINE_MM
 		safearea_top_y = reg_origin_Y + REG_LINE_MM
@@ -221,19 +222,24 @@ class InsertRegmark(EffectExtension):
 			(safearea_left_x, safearea_bottom_y),
 			(safearea_left_x - REG_SAFE_AREA_MM, safearea_bottom_y),
 		]
-		regmark_layer.append(PathElement.new(path="M" + str(safe_area_points) + "Z", id=ids["safe_area"], style='fill:white;stroke:none;'))
+		mark_group.append(PathElement.new(path="M" + str(safe_area_points) + "Z", id=ids["safe_area"], style='fill:white;stroke:none;'))
 
 		safe_area_note = f"mark distance from document: Left={reg_origin_X}mm, Top={reg_origin_Y}mm; mark to mark distance: X={reg_width}mm, Y={reg_length}mm; "
-		regmark_layer.append(TextElement(safe_area_note, x=f"{(safearea_left_x + 3)}", y=f"{(safearea_bottom_y + (REG_SAFE_AREA_MM + reg_origin_Y / 2))}", id=ids["notes"], style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px;"))
-
-		regmark_layer.set_sensitive(False)
-		self.svg.insert(0, regmark_layer)
+		mark_group.append(TextElement(safe_area_note, x=f"{(safearea_left_x + 3)}", y=f"{(safearea_bottom_y + (REG_SAFE_AREA_MM + reg_origin_Y / 2))}", id=ids["notes"], style=f"font-size:{REG_MARK_INFO_FONT_SIZE_PX}px;"))
 
 	def effect(self):
 		pages = self.get_document_pages()
 		self.remove_existing_regmark_layers()
+		mm_to_user_unit = self.svg.viewport_to_unit('1mm')
+		regmark_layer = Layer.new(REGMARK_LAYERNAME, id=REGMARK_LAYER_ID)
+		if len(pages) == 1:
+			regmark_layer.transform = Transform(scale=mm_to_user_unit)
 		for page_index, page in enumerate(pages):
-			self.render_page_regmarks(page, page_index, len(pages))
+			self.render_page_regmarks(
+				page, page_index, len(pages), regmark_layer, mm_to_user_unit
+			)
+		regmark_layer.set_sensitive(False)
+		self.svg.insert(0, regmark_layer)
 
 		# Set Page Setting to enable checkerboard (This is required so that safe area is easier to see)
 		self.svg.namedview.set('inkscape:pagecheckerboard', str(ENABLE_CHECKERBOARD).lower())
