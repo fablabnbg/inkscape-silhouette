@@ -8,7 +8,7 @@
 __version__ = "1.29"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, math, operator
+import sys, os, time, math, operator, subprocess
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -119,6 +119,7 @@ class SendtoSilhouette(EffectExtension):
         self.paths = []
         self.docTransform = Transform()
         self.cmdfile = None
+        self.caffeinate_process = None
 
         self.doc_reg_x = 0
         self.doc_reg_y = 0
@@ -139,10 +140,58 @@ class SendtoSilhouette(EffectExtension):
 
 
     def __del__(self, *args):
+        self.stop_macos_sleep_inhibitor()
         if self.log:
             self.log.close()  # will always close tty if there is one
         if self.cmdfile:
             self.cmdfile.close()  # will always try to close cmdfile
+
+    def report_sleep_inhibitor(self, message):
+        """Log sleep-inhibitor messages without affecting the cutting job."""
+        try:
+            self.report(message, "log")
+        except Exception:
+            pass
+
+    def start_macos_sleep_inhibitor(self):
+        """Keep macOS awake until cutting finishes or this process exits."""
+        if (not sys_platform.startswith("darwin") or
+                self.options.dry_run or self.caffeinate_process is not None):
+            return False
+
+        try:
+            self.caffeinate_process = subprocess.Popen(
+                ["/usr/bin/caffeinate", "-i", "-w", str(os.getpid())],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except OSError as error:
+            self.report_sleep_inhibitor(
+                "Could not prevent macOS sleep: %s" % error)
+            return False
+
+        self.report_sleep_inhibitor("Preventing macOS sleep while cutting.")
+        return True
+
+    def stop_macos_sleep_inhibitor(self):
+        """Stop only the caffeinate process started by this extension."""
+        process = self.caffeinate_process
+        self.caffeinate_process = None
+        if process is None:
+            return
+
+        try:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=2)
+        except Exception as error:
+            self.report_sleep_inhibitor(
+                "Could not stop macOS sleep prevention: %s" % error)
 
 
     def add_arguments(self, pars):
@@ -852,6 +901,7 @@ class SendtoSilhouette(EffectExtension):
         else:
             bluetooth_addr = None
 
+        self.start_macos_sleep_inhibitor()
         try:
             dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
                                   cmdfile=self.cmdfile,
@@ -956,7 +1006,9 @@ class SendtoSilhouette(EffectExtension):
                 while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
                     wait_sec *= 2
             dots = "."
-            while self.options.wait_done and state == "moving":
+            while ((self.options.wait_done or
+                    self.caffeinate_process is not None) and
+                    state == "moving"):
                 time.sleep(wait_sec)
                 self.device_buffer_perc -= wait_sec * percent_per_sec
                 if self.device_buffer_perc < 0.0:
@@ -972,19 +1024,22 @@ class SendtoSilhouette(EffectExtension):
 if __name__ == "__main__":
     e = SendtoSilhouette()
 
-        # write a tempfile that is removed on exit
-    if (len(sys.argv) < 2):
-        tmpfile=NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
-        tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
-        tmpfile.close()
-        e.run([tmpfile.name])
-        os.remove(tmpfile.name)
-    else:
-        start = time.time()
-        e.run()
-        ss = int(time.time()-start+.5)
-        mm = int(ss/60)
-        ss -= mm*60
-        e.report(" done. %d min %d sec" % (mm, ss), 'log')
+    try:
+            # write a tempfile that is removed on exit
+        if (len(sys.argv) < 2):
+            tmpfile=NamedTemporaryFile(suffix=".svg", prefix="inkscape-silhouette", delete=False)
+            tmpfile.write(b'<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><path d="M 0, 0" /></svg>')
+            tmpfile.close()
+            e.run([tmpfile.name])
+            os.remove(tmpfile.name)
+        else:
+            start = time.time()
+            e.run()
+            ss = int(time.time()-start+.5)
+            mm = int(ss/60)
+            ss -= mm*60
+            e.report(" done. %d min %d sec" % (mm, ss), 'log')
+    finally:
+        e.stop_macos_sleep_inhibitor()
 
     sys.exit(0)
