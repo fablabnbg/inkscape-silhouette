@@ -407,6 +407,48 @@ class TransformTest(SendtoSilhouetteTest):
         )
 
 
+class MultiPageTest(SendtoSilhouetteTest):
+    source_file = "multipage_regmarks.svg"
+
+    def load_page_paths(self, *element_ids):
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.clean_up()
+        self.e.initDocScale()
+        for element_id in element_ids:
+            self.e.recursivelyTraverseSvg([
+                self.e.svg.getElementById(element_id)
+            ])
+        self.e.sync_page_settings()
+
+    def test_second_page_path_is_converted_to_page_local_coordinates(self):
+        self.load_page_paths("page2-cut")
+
+        self.assertDeepAlmostEqual(
+            self.e.paths,
+            [[(20, 40), (40, 40), (40, 60), (20, 60), (20, 40)]],
+        )
+        self.assertEqual(self.e.active_page_indices, [1])
+        self.assertAlmostEqual(self.e.media_width_mm, 210)
+        self.assertAlmostEqual(self.e.media_height_mm, 297)
+
+    def test_paths_on_multiple_pages_are_normalized_independently(self):
+        self.load_page_paths("page1-cut", "page2-cut")
+
+        expected = [(20, 40), (40, 40), (40, 60), (20, 60), (20, 40)]
+        self.assertDeepAlmostEqual(self.e.paths, [expected, expected])
+        self.assertEqual(self.e.active_page_indices, [0, 1])
+
+    def test_registration_marks_are_detected_on_selected_page(self):
+        self.load_page_paths("page2-cut")
+        self.e.sync_regmark_settings()
+
+        self.assertEqual(self.e.reg_origin_X, 10)
+        self.assertEqual(self.e.reg_origin_Y, 10)
+        self.assertEqual(self.e.reg_width, 190)
+        self.assertEqual(self.e.reg_length, 277)
+
+
 #@mark.xfail(__inkex_version__[0:3] < "1.2", reason="earlier versions generate other curves")
 class CurvesTest(SendtoSilhouetteTest):
     source_file = "curved_dashes.test.svg"

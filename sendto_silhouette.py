@@ -8,7 +8,7 @@
 __version__ = "1.29"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, math, operator, subprocess
+import sys, os, time, math, operator, re, subprocess
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -117,9 +117,14 @@ class SendtoSilhouette(EffectExtension):
         self.warnings = {}
         self.pathcount = 0
         self.paths = []
+        self.path_page_indices = []
         self.docTransform = Transform()
         self.cmdfile = None
         self.caffeinate_process = None
+        self.document_pages = None
+        self.active_page_indices = []
+        self.media_width_mm = None
+        self.media_height_mm = None
 
         self.doc_reg_x = 0
         self.doc_reg_y = 0
@@ -460,7 +465,7 @@ class SendtoSilhouette(EffectExtension):
         )
 
 
-    def plotPath(self, path: Path):
+    def plotPath(self, path: Path, page_index=None):
         """
         Plot the path after smoothing curves to straights
         """
@@ -475,6 +480,113 @@ class SendtoSilhouette(EffectExtension):
             # extract path
             if len(sp) > 1:
                 self.paths.append([tuple(csp[1]) for csp in sp])
+                self.path_page_indices.append(page_index)
+
+
+    def get_document_pages(self):
+        """Return Inkscape page rectangles in document viewport coordinates."""
+        if self.document_pages is not None:
+            return self.document_pages
+
+        pages = []
+        namedview = getattr(self.svg, "namedview", None)
+        if namedview is not None and hasattr(namedview, "get_pages"):
+            page_elements = namedview.get_pages()
+        elif namedview is not None:
+            page_elements = [
+                node for node in namedview
+                if isinstance(node.tag, str) and node.tag.endswith("}page")
+            ]
+        else:
+            page_elements = []
+
+        for page in page_elements:
+            pages.append({
+                "id": page.get("id"),
+                "x": float(getattr(page, "x", page.get("x", 0))),
+                "y": float(getattr(page, "y", page.get("y", 0))),
+                "width": float(getattr(page, "width", page.get("width", 0))),
+                "height": float(getattr(page, "height", page.get("height", 0))),
+            })
+
+        if not pages:
+            viewbox = self.svg.get_viewbox()
+            pages.append({
+                "id": None,
+                "x": viewbox[0],
+                "y": viewbox[1],
+                "width": viewbox[2],
+                "height": viewbox[3],
+            })
+
+        self.document_pages = pages
+        return pages
+
+
+    def page_index_for_bbox(self, bbox):
+        """Find the page containing a document-coordinate bounding box."""
+        if bbox is None:
+            return None
+
+        left, right = bbox.left, bbox.right
+        top, bottom = bbox.top, bbox.bottom
+        center_x = (left + right) / 2
+        center_y = (top + bottom) / 2
+        pages = self.get_document_pages()
+
+        # The center is stable for paths touching a page edge or having no area.
+        for index, page in enumerate(pages):
+            if (page["x"] <= center_x <= page["x"] + page["width"] and
+                    page["y"] <= center_y <= page["y"] + page["height"]):
+                return index
+
+        # For an object crossing a page edge, use the page with the largest
+        # intersection. Objects entirely on the canvas remain document-global.
+        best_index = None
+        best_overlap = 0
+        for index, page in enumerate(pages):
+            overlap_x = max(0, min(right, page["x"] + page["width"]) -
+                            max(left, page["x"]))
+            overlap_y = max(0, min(bottom, page["y"] + page["height"]) -
+                            max(top, page["y"]))
+            overlap = overlap_x * overlap_y
+            if overlap > best_overlap:
+                best_index = index
+                best_overlap = overlap
+        return best_index
+
+
+    def sync_page_settings(self):
+        """Select media geometry from the pages containing the cut paths."""
+        pages = self.get_document_pages()
+        used = sorted({index for index in self.path_page_indices
+                       if index is not None})
+        if not used:
+            used = [0]
+        self.active_page_indices = used
+
+        sizes = [(
+            self.svg.unit_to_viewport(pages[index]["width"], "mm"),
+            self.svg.unit_to_viewport(pages[index]["height"], "mm"),
+        ) for index in used]
+        first_width, first_height = sizes[0]
+        if any(abs(width - first_width) > 0.01 or
+               abs(height - first_height) > 0.01
+               for width, height in sizes[1:]):
+            raise ValueError(
+                "Selected paths span pages with different sizes. "
+                "Send one page size at a time."
+            )
+
+        self.media_width_mm = first_width
+        self.media_height_mm = first_height
+        page_names = ", ".join(
+            pages[index]["id"] or str(index + 1) for index in used
+        )
+        self.report(
+            f"Using page-local coordinates for page(s) {page_names}: "
+            f"{first_width:g} x {first_height:g} mm", "log"
+        )
 
 
     def recursivelyTraverseSvg(self, aNodeList,
@@ -550,10 +662,6 @@ class SendtoSilhouette(EffectExtension):
             elif isinstance(node, (PathElement, Rectangle, Circle, Ellipse, Line, Polyline, Polygon)):
                 if v == "hidden" or v == "collapse":
                     continue
-                # calculate this object's transform
-                # NOTE: <<< transforms operate from right (detail) to left (whole)
-                transform = self.docTransform @ my_transform
-
                 # convert element to path
                 node = node.to_path_element()
 
@@ -561,8 +669,23 @@ class SendtoSilhouette(EffectExtension):
                 if self.options.dashes:
                     convert2dash(node)
 
+                # Resolve the page after applying the element's complete SVG
+                # transform, but before converting viewport units to mm. In a
+                # multi-page Inkscape document, page 2+ objects retain their
+                # canvas offset unless it is explicitly removed here.
+                document_path = node.path.transform(my_transform)
+                page_index = self.page_index_for_bbox(document_path.bounding_box())
+                page_transform = Transform()
+                if page_index is not None:
+                    page = self.get_document_pages()[page_index]
+                    page_transform = Transform(
+                        translate=(-page["x"], -page["y"])
+                    )
+
+                # NOTE: <<< transforms operate from right (detail) to left (whole)
+                transform = self.docTransform @ page_transform
                 self.pathcount += 1
-                self.plotPath(node.path.transform(transform))
+                self.plotPath(document_path.transform(transform), page_index)
 
             elif isinstance(node, TextElement):
                 texts = []
@@ -616,6 +739,95 @@ class SendtoSilhouette(EffectExtension):
         self.report(f"8 svg.viewport_width = {self.svg.viewport_width}", 'tty')
         self.docTransform = Transform(scale=(self.svg._base_scale("mm")))
 
+    def regmark_settings_from_group(self, group, page_index):
+        """Read and validate renderer metadata from one page's regmark layer."""
+        notes = " ".join(
+            "".join(node.itertext())
+            for node in group.iter()
+            if isinstance(node, TextElement)
+        )
+        match = re.search(
+            r"Left\s*=\s*([-+0-9.eE]+)\s*mm.*?"
+            r"Top\s*=\s*([-+0-9.eE]+)\s*mm.*?"
+            r"X\s*=\s*([-+0-9.eE]+)\s*mm.*?"
+            r"Y\s*=\s*([-+0-9.eE]+)\s*mm",
+            notes,
+            re.DOTALL,
+        )
+        if match is None:
+            return None
+        settings = tuple(float(value) for value in match.groups())
+
+        page = self.get_document_pages()[page_index]
+        marker_boxes = []
+        marker_types = (PathElement, Rectangle, Circle, Ellipse,
+                        Line, Polyline, Polygon)
+        for node in group.iter():
+            if not isinstance(node, marker_types):
+                continue
+            bbox = node.bounding_box(transform=True)
+            if bbox is None:
+                continue
+            left = self.svg.unit_to_viewport(bbox.left - page["x"], "mm")
+            right = self.svg.unit_to_viewport(bbox.right - page["x"], "mm")
+            top = self.svg.unit_to_viewport(bbox.top - page["y"], "mm")
+            bottom = self.svg.unit_to_viewport(bbox.bottom - page["y"], "mm")
+            # Exclude the large safe-area shape, which touches every corner.
+            if right - left <= 40 and bottom - top <= 40:
+                marker_boxes.append((left, right, top, bottom))
+
+        origin_x, origin_y, width, length = settings
+        required_points = (
+            (origin_x, origin_y),
+            (origin_x + width, origin_y),
+            (origin_x, origin_y + length),
+        )
+        tolerance = 1.0
+        for x, y in required_points:
+            if not any(
+                left - tolerance <= x <= right + tolerance and
+                top - tolerance <= y <= bottom + tolerance
+                for left, right, top, bottom in marker_boxes
+            ):
+                return None
+        return settings
+
+    def page_regmark_settings(self, page_index):
+        """Find registration marks belonging to a specific Inkscape page."""
+        for group in self.svg.iter():
+            if not isinstance(group, Group):
+                continue
+            if not group.label or "regmark" not in group.label.lower():
+                continue
+            parent = group.getparent()
+            parent_transform = (
+                parent.composed_transform()
+                if hasattr(parent, "composed_transform") else Transform()
+            )
+            if self.page_index_for_bbox(group.bounding_box(parent_transform)) != page_index:
+                continue
+            settings = self.regmark_settings_from_group(group, page_index)
+            if settings is not None:
+                return settings
+
+        # Compatibility fallback for older generated files without notes.
+        top_left = self.svg.getElementById(REGMARK_TOP_LEFT_ID)
+        top_right = self.svg.getElementById(REGMARK_TOP_RIGHT_ID)
+        bottom_left = self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID)
+        if top_left is None or top_right is None or bottom_left is None:
+            return None
+        tl_bbox = top_left.bounding_box(transform=True)
+        tr_bbox = top_right.bounding_box(transform=True)
+        bl_bbox = bottom_left.bounding_box(transform=True)
+        if self.page_index_for_bbox(tl_bbox) != page_index:
+            return None
+        page = self.get_document_pages()[page_index]
+        origin_x = self.svg.unit_to_viewport(tl_bbox.left - page["x"], "mm")
+        origin_y = self.svg.unit_to_viewport(tl_bbox.top - page["y"], "mm")
+        width = self.svg.unit_to_viewport(tr_bbox.right - page["x"], "mm") - origin_x
+        length = self.svg.unit_to_viewport(bl_bbox.bottom - page["y"], "mm") - origin_y
+        return origin_x, origin_y, width, length
+
     def detect_doc_regmark(self):
         """
         This scans the svg document for svg element relating to an autogenerated registration mark
@@ -627,18 +839,24 @@ class SendtoSilhouette(EffectExtension):
         self.doc_reg_y = 0
         self.doc_reg_width = 0
         self.doc_reg_length = 0
-        # Check if all expected regmark svg elements is present
-        if self.svg.getElementById(REGMARK_TOP_LEFT_ID) is None:
-            return
-        if self.svg.getElementById(REGMARK_TOP_RIGHT_ID) is None:
-            return
-        if self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID) is None:
-            return
-        # Calculate and derive the expected registration mark offsets
-        self.doc_reg_x = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).left, "mm")
-        self.doc_reg_y = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_LEFT_ID).bounding_box(transform=True).top, "mm")
-        self.doc_reg_width = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_TOP_RIGHT_ID).bounding_box(transform=True).right, "mm") - self.doc_reg_x
-        self.doc_reg_length = self.svg.unit_to_viewport(self.svg.getElementById(REGMARK_BOTTOM_LEFT_ID).bounding_box(transform=True).bottom, "mm") - self.doc_reg_y
+        page_indices = self.active_page_indices or [0]
+        page_settings = []
+        for page_index in page_indices:
+            settings = self.page_regmark_settings(page_index)
+            if settings is None:
+                return
+            page_settings.append(settings)
+
+        first = page_settings[0]
+        if any(any(abs(actual - expected) > 0.01
+                   for actual, expected in zip(settings, first))
+               for settings in page_settings[1:]):
+            raise ValueError(
+                "Selected Print & Cut paths span pages with different "
+                "registration-mark geometry. Send one page at a time."
+            )
+        (self.doc_reg_x, self.doc_reg_y,
+         self.doc_reg_width, self.doc_reg_length) = first
         self.report(f"Detected Existing Registration Mark:: mark distance from document: Left={self.doc_reg_x}mm, Top={self.doc_reg_y}mm; mark to mark distance: X={self.doc_reg_width}mm, Y={self.doc_reg_length}mm;", 'log')
 
     def sync_regmark_settings(self):
@@ -649,8 +867,10 @@ class SendtoSilhouette(EffectExtension):
         self.detect_doc_regmark()
         self.reg_origin_X = self.options.regoriginx or self.doc_reg_x
         self.reg_origin_Y = self.options.regoriginy or self.doc_reg_y
-        self.reg_width    = self.options.regwidth or self.doc_reg_width or self.svg.to_dimensional(self.svg.viewport_width, "mm") - self.reg_origin_X * 2
-        self.reg_length   = self.options.reglength or self.doc_reg_length or self.svg.to_dimensional(self.svg.viewport_height, "mm") - self.reg_origin_Y * 2
+        media_width = self.media_width_mm or convert_unit(self.svg.viewport_width, "mm")
+        media_height = self.media_height_mm or convert_unit(self.svg.viewport_height, "mm")
+        self.reg_width    = self.options.regwidth or self.doc_reg_width or media_width - self.reg_origin_X * 2
+        self.reg_length   = self.options.reglength or self.doc_reg_length or media_height - self.reg_origin_Y * 2
         self.report(f"Using Registration Mark:: mark distance from document: Left={self.reg_origin_X}mm, Top={self.reg_origin_Y}mm; mark to mark distance: X={self.reg_width}mm, Y={self.reg_length}mm;", 'log')
 
     @staticmethod
@@ -804,9 +1024,6 @@ class SendtoSilhouette(EffectExtension):
             self.report_bluetooth_scan()
             return
 
-        # Registration Mark Selection/Calcuation
-        self.sync_regmark_settings()
-
         # Init docTransform
         self.initDocScale()
 
@@ -827,6 +1044,12 @@ class SendtoSilhouette(EffectExtension):
                 "sent to the cutter. Fix the document and try again.",
                 'error')
             return
+
+        # Multi-page documents use canvas-global coordinates. Paths have now
+        # been assigned to pages and normalized, so page-specific media and
+        # registration geometry can be selected safely.
+        self.sync_page_settings()
+        self.sync_regmark_settings()
 
         if self.options.toolholder is not None:
             self.options.toolholder = int(self.options.toolholder)
@@ -956,8 +1179,8 @@ class SendtoSilhouette(EffectExtension):
         if self.options.autocrop:
             # this takes much longer, if we have a complext drawing
             bbox = dev.plot(pathlist=cut,
-                    mediawidth=convert_unit(self.svg.viewport_width, "mm"),
-                    mediaheight=convert_unit(self.svg.viewport_height, "mm"),
+                    mediawidth=self.media_width_mm,
+                    mediaheight=self.media_height_mm,
                     margintop=0,
                     marginleft=0,
                     bboxonly=None,         # only return the bbox, do not draw it.
@@ -981,8 +1204,8 @@ class SendtoSilhouette(EffectExtension):
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
         bbox = dev.plot(pathlist=cut,
-            mediawidth=convert_unit(self.svg.viewport_width, "mm"),
-            mediaheight=convert_unit(self.svg.viewport_height, "mm"),
+            mediawidth=self.media_width_mm,
+            mediaheight=self.media_height_mm,
             offset=(self.options.x_off, self.options.y_off),
             bboxonly=self.options.bboxonly,
             endposition=self.options.endposition,
