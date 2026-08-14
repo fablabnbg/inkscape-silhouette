@@ -142,17 +142,7 @@ class InsertRegmark(EffectExtension):
 
 	def regmark_ids(self, page_index, page_count):
 		"""Keep single-page IDs stable and make multi-page IDs unique."""
-		if page_count == 1:
-			return {
-				"layer": REGMARK_LAYER_ID,
-				"top_left": REGMARK_TOP_LEFT_ID,
-				"top_right": REGMARK_TOP_RIGHT_ID,
-				"bottom_left": REGMARK_BOTTOM_LEFT_ID,
-				"bottom_right": REGMARK_BOTTOM_RIGHT_ID,
-				"safe_area": REGMARK_SAFE_AREA_ID,
-				"notes": REGMARK_NOTES_ID,
-			}
-		suffix = "-page-" + str(page_index + 1)
+		suffix = "" if page_count == 1 else "-page-" + str(page_index + 1)
 		return {
 			"layer": REGMARK_LAYER_ID + suffix,
 			"top_left": REGMARK_TOP_LEFT_ID + suffix,
