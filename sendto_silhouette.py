@@ -780,6 +780,12 @@ class SendtoSilhouette(EffectExtension):
         return cut
 
     def effect(self):
+        try:
+            return self._effect()
+        finally:
+            self.stop_macos_sleep_inhibitor()
+
+    def _effect(self):
         log_path = self.options.logfile or self.default_logfile_path
         mode = "a" if self.options.append_logs else "w"
         self.log = open(log_path, mode)

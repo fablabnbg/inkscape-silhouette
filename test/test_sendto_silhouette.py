@@ -103,6 +103,19 @@ class ParameterTest(SendtoSilhouetteTest):
         self.assertIsNone(self.e.caffeinate_process)
         self.assertIn("already gone", self.e.report.call_args.args[0])
 
+    def test_effect_stops_sleep_inhibitor_when_cutting_fails(self):
+        process = mock.Mock()
+        process.poll.return_value = None
+        self.e.caffeinate_process = process
+
+        with mock.patch.object(self.e, "_effect",
+                               side_effect=RuntimeError("cut failed")):
+            with self.assertRaisesRegex(RuntimeError, "cut failed"):
+                self.e.effect()
+
+        process.terminate.assert_called_once_with()
+        self.assertIsNone(self.e.caffeinate_process)
+
     def test_ble_name_defaults_to_cameo(self):
         self.e.parse_arguments([])
         self.assertEqual(self.e.options.bluetooth_name, "CAMEO")
