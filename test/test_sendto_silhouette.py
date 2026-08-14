@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import os
+import subprocess
 from unittest import mock
 
 from sendto_silhouette import SendtoSilhouette, __version__
@@ -26,6 +28,81 @@ class SendtoSilhouetteTest(TestCase):
 
 
 class ParameterTest(SendtoSilhouetteTest):
+    @mock.patch("sendto_silhouette.subprocess.Popen")
+    @mock.patch("sendto_silhouette.sys_platform", "darwin")
+    def test_macos_sleep_inhibitor_tracks_and_stops_child(self, popen):
+        self.e.parse_arguments([])
+        self.e.report = mock.Mock()
+        process = popen.return_value
+        process.poll.return_value = None
+
+        self.assertTrue(self.e.start_macos_sleep_inhibitor())
+
+        popen.assert_called_once_with(
+            ["/usr/bin/caffeinate", "-i", "-w", str(os.getpid())],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.assertIs(self.e.caffeinate_process, process)
+
+        self.e.stop_macos_sleep_inhibitor()
+
+        self.assertIsNone(self.e.caffeinate_process)
+        process.terminate.assert_called_once_with()
+        process.wait.assert_called_once_with(timeout=2)
+        process.kill.assert_not_called()
+
+    @mock.patch("sendto_silhouette.subprocess.Popen")
+    @mock.patch("sendto_silhouette.sys_platform", "darwin")
+    def test_macos_sleep_inhibitor_skips_dry_run(self, popen):
+        self.e.parse_arguments(["--dry_run=true"])
+
+        self.assertFalse(self.e.start_macos_sleep_inhibitor())
+
+        popen.assert_not_called()
+
+    @mock.patch("sendto_silhouette.subprocess.Popen",
+                side_effect=OSError("unavailable"))
+    @mock.patch("sendto_silhouette.sys_platform", "darwin")
+    def test_macos_sleep_inhibitor_failure_does_not_abort(self, popen):
+        self.e.parse_arguments([])
+        self.e.report = mock.Mock()
+
+        self.assertFalse(self.e.start_macos_sleep_inhibitor())
+
+        popen.assert_called_once()
+        self.assertIsNone(self.e.caffeinate_process)
+        self.assertIn("unavailable", self.e.report.call_args.args[0])
+
+    def test_macos_sleep_inhibitor_kills_child_after_timeout(self):
+        process = mock.Mock()
+        process.poll.return_value = None
+        process.wait.side_effect = [
+            subprocess.TimeoutExpired(cmd="caffeinate", timeout=2),
+            None,
+        ]
+        self.e.caffeinate_process = process
+
+        self.e.stop_macos_sleep_inhibitor()
+
+        process.terminate.assert_called_once_with()
+        process.kill.assert_called_once_with()
+        self.assertEqual(process.wait.call_count, 2)
+        self.assertIsNone(self.e.caffeinate_process)
+
+    def test_macos_sleep_inhibitor_cleanup_failure_is_suppressed(self):
+        process = mock.Mock()
+        process.poll.return_value = None
+        process.terminate.side_effect = OSError("already gone")
+        self.e.caffeinate_process = process
+        self.e.report = mock.Mock()
+
+        self.e.stop_macos_sleep_inhibitor()
+
+        self.assertIsNone(self.e.caffeinate_process)
+        self.assertIn("already gone", self.e.report.call_args.args[0])
+
     def test_ble_name_defaults_to_cameo(self):
         self.e.parse_arguments([])
         self.assertEqual(self.e.options.bluetooth_name, "CAMEO")
