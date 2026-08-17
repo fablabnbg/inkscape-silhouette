@@ -47,7 +47,7 @@ install: mo # Install is used by dist or use this with this command `sudo make i
 	cp -r silhouette $(DEST)
 	install -m 755 *silhouette*.py $(DEST)
 	install -m 644 *.inx $(DEST)
-	cp -r locale $(LOCALE)
+	cp -r locale/* $(LOCALE) #Fixed to copy only the files and subfolders, not the entire folder
 	mkdir -p $(UDEV)/rules.d
 	install -m 644 -T silhouette-udev.rules $(UDEV)/rules.d/40-silhouette-udev.rules
 	install -m 644 silhouette-icon.png $(UDEV)
