@@ -296,8 +296,6 @@ class MultiFrame(wx.Frame):
         # end wxGlade
 
     def wrapup(self):
-        if self.options.unblock_inkscape:
-            show_log_as_dialog(self)
         self.Close()
 
     def close(self, event):
