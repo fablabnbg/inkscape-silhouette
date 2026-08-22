@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:svg="http://www.w3.org/2000/svg"
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+  width="210mm"
+  height="297mm"
+  viewBox="0 0 420 594">
+  <sodipodi:namedview id="namedview1">
+    <inkscape:page x="0" y="0" width="420" height="594" id="page1" />
+    <inkscape:page x="440" y="0" width="420" height="594" id="page2" />
+  </sodipodi:namedview>
+  <g inkscape:groupmode="layer" inkscape:label="Regmarks" transform="scale(2)">
+    <path d="M 30,10 H 10 V 30" />
+    <path d="M 180,10 H 200 V 30" />
+    <path d="M 30,287 H 10 V 267" />
+    <text x="33" y="292">mark distance from document: Left=10mm, Top=10mm; mark to mark distance: X=190mm, Y=277mm;</text>
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="Regmarks copy" transform="matrix(2,0,0,2,440,0)">
+    <path d="M 30,10 H 10 V 30" />
+    <path d="M 180,10 H 200 V 30" />
+    <path d="M 30,287 H 10 V 267" />
+    <text x="33" y="292">mark distance from document: Left=10mm, Top=10mm; mark to mark distance: X=190mm, Y=277mm;</text>
+  </g>
+  <path id="page1-cut" d="M 40,80 H 80 V 120 H 40 Z" />
+  <path id="page2-cut" transform="translate(440,0)" d="M 40,80 H 80 V 120 H 40 Z" />
+</svg>

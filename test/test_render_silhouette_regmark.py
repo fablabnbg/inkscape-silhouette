@@ -128,3 +128,51 @@ class FourCornerRegmarkTest(InsertRegmarkTest):
                 "mm"),
             300
         )
+
+
+class MultiPageRegmarkTest(InsertRegmarkTest):
+    source_file = "multipage_pages.svg"
+
+    def setUp(self):
+        super().setUp()
+        self.e.parse_arguments([self.data_file(self.source_file)])
+        self.e.load_raw()
+        self.e.effect()
+        self.e.clean_up()
+
+    def test_regmarks_are_created_on_each_page(self):
+        regmark_layer = self.e.svg.getElementById(REGMARK_LAYER_ID)
+        self.assertEqual(regmark_layer.label, REGMARK_LAYERNAME)
+        self.assertEqual(
+            [element.get("id") for element in regmark_layer],
+            ["regmark-page-1", "regmark-page-2"],
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-page-1").label,
+            "Regmarks (page 1)",
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-page-2").label,
+            "Regmarks (page 2)",
+        )
+
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-tl-page-1").bounding_box(transform=True),
+            BoundingBox((20.0, 30.0), (20.0, 30.0)),
+        )
+        self.assertEqual(
+            self.e.svg.getElementById("regmark-tl-page-2").bounding_box(transform=True),
+            BoundingBox((460.0, 470.0), (20.0, 30.0)),
+        )
+
+    def test_regenerating_marks_replaces_every_page_layer(self):
+        self.e.effect()
+        page_group_ids = [
+            element.get("id") for element in self.e.svg
+            if element.get("id") == REGMARK_LAYER_ID
+        ]
+        self.assertEqual(page_group_ids, [REGMARK_LAYER_ID])
+        self.assertEqual(
+            [element.get("id") for element in self.e.svg.getElementById(REGMARK_LAYER_ID)],
+            ["regmark-page-1", "regmark-page-2"],
+        )

@@ -28,7 +28,7 @@ As a result the cut will go precisely along the graphics.
 1. Set mark to mark distance or clear it to zero if autocalculating from document size
 1. Press Apply
 
-This will create a new layer called `Regmarks` with the newly generated registration mark.
+This will create a new layer called `Regmarks` with the newly generated registration mark. In a multi-page document, it creates one `Regmarks (page N)` layer on every page.
 
 On the bottom will also be a string shown below that would remind you what settings this was generated with.
 - `mark distance from document: Left=10.0mm, Top=10.0mm; mark to mark distance: X=190.0mm, Y=277.0mm;`
