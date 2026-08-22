@@ -123,11 +123,23 @@ class InsertRegmark(EffectExtension):
 			return pages
 
 		viewbox = self.svg.get_viewbox()
+		if viewbox[2] and viewbox[3]:
+			return [{
+				"x": viewbox[0],
+				"y": viewbox[1],
+				"width": viewbox[2],
+				"height": viewbox[3],
+			}]
+
+		# Inkex 1.1 and 1.2 report a zero-sized viewBox for legacy documents
+		# that specify only width and height.
 		return [{
-			"x": viewbox[0],
-			"y": viewbox[1],
-			"width": viewbox[2],
-			"height": viewbox[3],
+			"x": 0,
+			"y": 0,
+			"width": self.svg.viewport_width,
+			"height": self.svg.viewport_height,
+			"width_mm": self.svg.to_dimensional(self.svg.viewport_width, "mm"),
+			"height_mm": self.svg.to_dimensional(self.svg.viewport_height, "mm"),
 		}]
 
 	def remove_existing_regmark_layers(self):
@@ -156,8 +168,14 @@ class InsertRegmark(EffectExtension):
 		"""Render one page's registration marks in its local coordinates."""
 		reg_origin_X = self.options.regoriginx
 		reg_origin_Y = self.options.regoriginy
-		page_width = self.svg.unit_to_viewport(page["width"], "mm")
-		page_height = self.svg.unit_to_viewport(page["height"], "mm")
+		page_width = (
+			page["width_mm"] if "width_mm" in page
+			else self.svg.unit_to_viewport(page["width"], "mm")
+		)
+		page_height = (
+			page["height_mm"] if "height_mm" in page
+			else self.svg.unit_to_viewport(page["height"], "mm")
+		)
 		reg_width = self.options.regwidth or page_width - reg_origin_X * 2
 		reg_length = self.options.reglength or page_height - reg_origin_Y * 2
 		reg_style = self.options.regstyle

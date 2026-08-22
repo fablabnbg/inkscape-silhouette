@@ -511,13 +511,30 @@ class SendtoSilhouette(EffectExtension):
 
         if not pages:
             viewbox = self.svg.get_viewbox()
-            pages.append({
-                "id": None,
-                "x": viewbox[0],
-                "y": viewbox[1],
-                "width": viewbox[2],
-                "height": viewbox[3],
-            })
+            if viewbox[2] and viewbox[3]:
+                pages.append({
+                    "id": None,
+                    "x": viewbox[0],
+                    "y": viewbox[1],
+                    "width": viewbox[2],
+                    "height": viewbox[3],
+                })
+            else:
+                # Inkex 1.1 and 1.2 report a zero-sized viewBox for legacy
+                # documents that specify only width and height.
+                pages.append({
+                    "id": None,
+                    "x": 0,
+                    "y": 0,
+                    "width": self.svg.viewport_width,
+                    "height": self.svg.viewport_height,
+                    "width_mm": self.svg.to_dimensional(
+                        self.svg.viewport_width, "mm"
+                    ),
+                    "height_mm": self.svg.to_dimensional(
+                        self.svg.viewport_height, "mm"
+                    ),
+                })
 
         self.document_pages = pages
         return pages
@@ -566,8 +583,12 @@ class SendtoSilhouette(EffectExtension):
         self.active_page_indices = used
 
         sizes = [(
-            self.svg.unit_to_viewport(pages[index]["width"], "mm"),
-            self.svg.unit_to_viewport(pages[index]["height"], "mm"),
+            pages[index]["width_mm"]
+            if "width_mm" in pages[index]
+            else self.svg.unit_to_viewport(pages[index]["width"], "mm"),
+            pages[index]["height_mm"]
+            if "height_mm" in pages[index]
+            else self.svg.unit_to_viewport(pages[index]["height"], "mm"),
         ) for index in used]
         first_width, first_height = sizes[0]
         if any(abs(width - first_width) > 0.01 or
