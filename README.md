@@ -45,6 +45,7 @@ This extension should work with the following devices:
 WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 Install Inkscape and other requirements
 
+```bash
 # Add inkscape dev team's PPA key to APT.
 # This project require minimum of inkscape V1.0+
 # But we want to always keep to latest inkscape version
@@ -58,6 +59,7 @@ sudo apt install inkscape
 # even if newer than what Ubuntu's package management team is willing
 # to certify at the moment
 sudo apt-get --with-new-pkgs upgrade inkscape
+```
 
 Install inkscape-silhouette
 
