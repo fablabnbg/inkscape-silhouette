@@ -26,7 +26,4 @@ fakeroot checkinstall --fstrans --reset-uid --type debian \
   --pkgaltsource "http://fablab-nuernberg.de" \
   --maintainer "'Juergen Weigert (juewei@fabmail.org)'" \
   --requires "$requires" make install \
-  -e PREFIX=/usr || {
-  echo "fakeroot checkinstall error "
-  exit 1
-}
+  -e PREFIX=/usr || { echo "fakeroot checkinstall error "; exit 1; }
