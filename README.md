@@ -37,7 +37,7 @@ This extension should work with the following devices:
 
 ## Installation
 
-### Ubuntu
+### Ubuntu 23.04 and newer
 
 <details>
 <summary>Click for Ubuntu 23.04 and newer steps</summary>
@@ -65,7 +65,12 @@ So now we shall install inkscape-silhouette, so scroll down the latest releases 
 
     https://github.com/fablabnbg/inkscape-silhouette/releases
 
-<summary>Click to get depricated steps for Ubuntu earlier than 23.04</summary>
+</details>
+
+### Ubuntu 22.10 and older
+
+<details>
+<summary>Click for Ubuntu 22.10 and older steps</summary>
 
 WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 
