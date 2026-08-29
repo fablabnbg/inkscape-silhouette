@@ -1,6 +1,6 @@
-# Graphtec GP-GL Hardware-Native Bezier Splines and Carriage Observations
+# Graphtec GP-GL Hardware-Native Bezier Splines (The BZ1 Command)
 
-This document details the reverse-engineered mathematical syntax and physical verification of hardware-native cubic Bezier curves (`BZ1`) and provides exact physical clarifications on key coordinate and movement commands in the Graphtec GP-GL protocol.
+This document details the reverse-engineered mathematical syntax and physical verification of hardware-native cubic Bezier curves (`BZ1`) in the Graphtec GP-GL protocol.
 
 ---
 
@@ -62,20 +62,4 @@ print(repr(bezier_command))
 # Output: 'BZ1,100.00,100.00,300.00,100.00,300.00,300.00,100.00,300.00,0\x03'
 ```
 
----
 
-## 2. Carriage Axis and Homing Physical Clarifications
-
-Physical hardware verification has debunked several historical assumptions regarding coordinate setup and carriage feeding:
-
-### Carriage Movement vs. Media Feed (`FO` and `FN` commands)
-*   **Observed Behavior**: In modern firmware implementations (e.g., Graphtec/Silhouette Cameo 5 and Pro MK-II), the `FO[n]` and `FN[n]` commands control the **horizontal movement of the tool carriage (X-axis)**. 
-*   **Clarification**: These commands do **not** feed or tracciona the media (Y-axis). Developers designing media-advancing routines should avoid using `FO` or `FN` for that purpose, as they will cause tool-head carriage displacement and potential mechanical collision.
-
-### Logic Scaling Boundary (`Z` command)
-*   **Observed Behavior**: The `Z[x],[y]` command is Graphtec's `Write Upper Right` function. 
-*   **Clarification**: `Z` performs a virtual, software-level scaling recalculation of the logical plotting area. It is **not** a physical command for feeding, home-positioning, or ejecting paper. Misuse of the `Z` command at the end of a transmission can cause scale distortion in subsequent cutting jobs.
-
-### Mechanical Tool Initialization Bypass
-*   **Observed Behavior**: By sending explicit calibration queries and setting physical tool characteristics via manual command structures (`FA` / manual blade profiles), the plotter completely bypasses the noisy mechanical AutoBlade depth-adjustment tapping sequence.
-*   **Clarification**: This allows immediate transition from registration mark sensing to active vector cutting, saving significant time and reducing structural wear on the tool head carriage.
