@@ -87,7 +87,7 @@
       <param name="regsearch" type="bool" gui-text="Search for the registration marks automatically">false</param>
       <label indent="2">Search for the registration marks automatically. Seems on some devices there is another mode, where you can set the references manually.</label>
       <param name="quadregmarks" type="bool" gui-text="Use 4 registration marks">false</param>
-      <label indent="2">On the Cameo 5α, registration marks in 4 corners can be used. Has no effect on other devices.</label>
+      <label indent="2">On the Cameo 5α/plus and pro mk-ii, registration marks in 4 corners can be used. Has no effect on other devices.</label>
       <param name="regoriginx" type="float" min="0.0" max="10000" gui-text="Position of regmark from document left [mm]">10</param>
       <param name="regoriginy" type="float" min="0.0" max="10000" gui-text="Position of regmark from document top [mm]">10</param>
       <label indent="2">Distance of the registration mark edges</label>

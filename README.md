@@ -32,7 +32,6 @@ This extension should work with the following devices:
 * Silhouette SD 1
 * Silhouette SD 2
 
-**Note for Cameo Pro MK-II:** Full cutting, movement, and automatic four-corner Registration Mark sensing (Print & Cut) are fully supported and verified.
 ---
 
 ## Installation
