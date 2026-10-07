@@ -249,8 +249,7 @@ DEVICE = [
    'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5, 'name': 'Silhouette_Cameo5',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
-   #added extra margin space to experiment with the software cross-cutting feature
-   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': -6.0, 'margin_top_mm': 0.0, 'regmark': True },  
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },  
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5PLUS, 'name': 'Silhouette_Cameo5_Plus',
    # Took these settings from Cameo 4 Plus, haven't noticed any performance issues.
    'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },                    
