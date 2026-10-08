@@ -2,6 +2,28 @@
 
 This document details the reverse-engineered mathematical syntax and physical verification of hardware-native cubic Bezier curves (`BZ1`) in the Graphtec GP-GL protocol.
 
+## Scope and physical verification
+
+- **Physically verified on:** Silhouette CAMEO Pro Mark II (USB `0B4D:1146`,
+  firmware `V1.09`). This is the only device on which the `BZ1` syntax below has
+  been tested so far.
+- **Protocol provenance:** `BZ` is a standard Graphtec GP-GL command, not a
+  model-specific extension. It is already listed in this repository's
+  `Commands.md` as
+  `BZ a,xa,ya,xb,yb,xc,yc,xd,yd[,d]   Bezier Curve   (G)`, where `(G)` marks
+  commands taken from the Graphtec GP-GL reference (CraftRoboPro S, CE5000-60,
+  CE5000-120). This manual resolves, and verifies physically, the two parameters
+  that were previously unknown: `a = 1` selects a cubic spline, and the trailing
+  `[,d]` is the terminating parameter `0`.
+- **Precedent in this repository:** other commands in the same `B` family are
+  already recorded here as observed on more than one model; `Commands.md` notes
+  `BEn` as "Observed on Cameo 4 Pro and Portrait 3". `BZ` belongs to that same
+  GP-GL family.
+- Because `BZ` belongs to the shared GP-GL command set, the same syntax is
+  expected to apply to other Graphtec-based Silhouette models (CAMEO 4/5,
+  Portrait 3/4, Curio 2). That expectation has **not** been physically verified
+  here and is stated as a hypothesis, not a claim.
+
 ---
 
 ## 1. Hardware-Native Bezier Splines (The `BZ1` Command)
