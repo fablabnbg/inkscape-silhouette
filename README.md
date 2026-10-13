@@ -20,7 +20,7 @@ This extension should work with the following devices:
 * Silhouette Cameo 3
 * Silhouette Cameo 4
 * Silhouette Cameo 4 Plus
-* Silhouette Cameo 4 Pro
+* Silhouette Cameo 4 Pro (working confirmed)
 * Silhouette Cameo 5
 * Silhouette Cameo 5 Plus
 * Silhouette Cameo 5 Alpha
