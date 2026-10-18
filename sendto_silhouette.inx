@@ -168,6 +168,7 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
     <page name='bluetooth' gui-text='Bluetooth'>
       <param name="connection_type" type="optiongroup" appearance="combo" gui-text="Connection type">
         <option value="usb">USB</option>
+        <option value="usbprint">Windows USBPRINT (CAMEO 4, experimental)</option>
         <option value="bluetooth">Bluetooth Classic (RFCOMM)</option>
         <option value="ble">Bluetooth Low Energy (BLE)</option>
       </param>

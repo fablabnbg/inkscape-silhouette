@@ -328,9 +328,9 @@ class SendtoSilhouette(EffectExtension):
                 dest = "force_hardware", default = None,
                 help = "Override hardware model of cutting device.")
         pars.add_argument("--connection_type",
-                choices=("usb", "bluetooth", "ble"),
+                choices=("usb", "usbprint", "bluetooth", "ble"),
                 dest = "connection_type", default = "usb",
-                help = "Connection type: usb, bluetooth (Classic/RFCOMM), or ble.")
+                help = "Connection type: usb, usbprint (experimental Windows CAMEO 4), bluetooth (Classic/RFCOMM), or ble.")
         pars.add_argument("--bluetooth_addr",
                 dest = "bluetooth_addr", default = None,
                 help = "Connect over Bluetooth to this MAC address (e.g. 00:1B:41:33:44:55) instead of USB. Use --bluetooth_scan to discover addresses.")
@@ -1177,7 +1177,8 @@ class SendtoSilhouette(EffectExtension):
                                   bluetooth_channel=self.options.bluetooth_channel,
                                   bluetooth_le=use_ble,
                                   bluetooth_name=self.options.bluetooth_name if use_ble else None,
-                                  bluetooth_identifier=self.options.bluetooth_identifier if use_ble else None)
+                                  bluetooth_identifier=self.options.bluetooth_identifier if use_ble else None,
+                                  usbprint=self.options.connection_type == "usbprint")
         except Exception as e:
             self.report(e, 'error')
             return
