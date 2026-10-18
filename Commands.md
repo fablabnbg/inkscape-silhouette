@@ -6,6 +6,7 @@ The protocol is called GPGL (Graphtec Plotter Graphics Language)
 Resources
 ---------
 
+ * [CAMEO 4 Windows USBPRINT transport and registration observations](docs/cameo4-usbprint-observations.md)
  * http://www.ohthehugemanatee.net/2011/07/gpgl-reference-courtesy-of-graphtec/
  * https://github.com/tonnerre/Inkcut
  * https://github.com/pmonta/gerber2graphtec/blob/master/graphtec.py#L19-L110
