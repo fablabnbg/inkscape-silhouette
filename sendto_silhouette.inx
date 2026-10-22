@@ -183,6 +183,31 @@ Minimal Traveling (no reverse): Like fully optimized but respect original orient
       <label indent="2">The cutter model is detected from its firmware. If it is not recognised, set it with 'Override cutter model' on the Log and Dump tab.</label>
     </page>
 
+    <page name='second_cutter' gui-text='Second Cutter'>
+      <param name="second_device" type="bool" gui-text="Send the same job to a second cutter">false</param>
+      <label indent="2">Leave this unchecked to send only to the first cutter (the normal single-cutter behavior).</label>
+      <label indent="2">Both cutters receive the same paths and cutting settings. The first cutter uses the settings on the other tabs.</label>
+      <label indent="2">Both cutters are prepared before cutting starts. If either cutter cannot be prepared, the job is aborted before anything is cut.</label>
+      <label indent="2">For best results, load the same media and use the same registration-mark setup on both cutters.</label>
+      <param name="connection_type_2" type="optiongroup" appearance="combo" gui-text="Second connection type">
+        <option value="bluetooth">Bluetooth Classic (RFCOMM)</option>
+        <option value="ble">Bluetooth Low Energy (BLE)</option>
+        <option value="usb">USB</option>
+      </param>
+      <param name="bluetooth_scan_2" type="bool" gui-text="Scan for nearby devices for the second cutter (list, then stop)">false</param>
+      <label indent="2">Scanning lists every device visible through the selected Bluetooth transport. It is not limited to Silhouette cutters.</label>
+      <param name="bluetooth_addr_2" type="string" gui-text="Second cutter Bluetooth MAC address"></param>
+      <label indent="2">Bluetooth Classic only. Pair the second cutter with the operating system, scan, then enter its MAC address.</label>
+      <param name="bluetooth_name_2" type="string" gui-text="Second cutter BLE advertised name">CAMEO</param>
+      <label indent="2">Bluetooth LE only. Prefer the advertised name because it works across operating systems.</label>
+      <param name="bluetooth_identifier_2" type="string" gui-text="Second cutter BLE local identifier"></param>
+      <label indent="2">Optional BLE override. On macOS this is a computer-specific CoreBluetooth UUID, not a portable MAC address.</label>
+      <param name="force_hardware_2" type="string" gui-text="Override second cutter model (optional)"></param>
+      <label indent="2">Leave empty for automatic detection. Example: Silhouette_Cameo5.</label>
+      <param name="cmdfile_2" type="path" mode="file_new" filetypes="cut" gui-text="Transcribe second cutter commands to file"></param>
+      <label indent="2">Two USB cutters cannot be addressed separately by this extension. Use USB for the first cutter and Bluetooth for the second, or run the jobs separately.</label>
+    </page>
+
     <page name='blade' gui-text='Blade Setting'>
       <label xml:space="preserve">
 Always use the least amount of blade possible.

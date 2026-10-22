@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import io
 import os
 import subprocess
 from unittest import mock
@@ -207,6 +208,244 @@ class ParameterTest(SendtoSilhouetteTest):
             self.e.require_media_loaded(dev)
 
         dev.transport.close.assert_called_once_with()
+
+
+class SecondCutterTest(SendtoSilhouetteTest):
+    """Connection selection and plotting for a two-cutter job."""
+
+    MAC = "00:11:22:33:44:55"
+
+    def test_second_cutter_defaults(self):
+        self.e.parse_arguments([])
+
+        self.assertFalse(self.e.options.second_device)
+        self.assertEqual(self.e.options.connection_type_2, "bluetooth")
+        self.assertEqual(self.e.options.bluetooth_name_2, "CAMEO")
+        self.assertFalse(self.e.options.bluetooth_scan_2)
+
+    def test_second_cutter_argument_parsing(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type_2=ble",
+            "--bluetooth_name_2=CAMEO 5 TEST",
+            "--bluetooth_identifier_2=LOCAL-ID-2",
+            "--force_hardware_2=Silhouette_Cameo5",
+        ])
+
+        self.assertTrue(self.e.options.second_device)
+        self.assertEqual(self.e.options.connection_type_2, "ble")
+        self.assertEqual(self.e.options.bluetooth_name_2, "CAMEO 5 TEST")
+        self.assertEqual(self.e.options.bluetooth_identifier_2, "LOCAL-ID-2")
+        self.assertEqual(self.e.options.force_hardware_2, "Silhouette_Cameo5")
+
+    def test_one_usb_and_one_classic_bluetooth_cutter(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type=usb",
+            "--connection_type_2=bluetooth",
+            "--bluetooth_addr_2=%s" % self.MAC,
+        ])
+
+        specs = self.e._device_specs()
+
+        self.assertEqual(len(specs), 2)
+        self.assertEqual(specs[0]["label"], "cutter 1")
+        self.assertEqual(specs[0]["connection_type"], "usb")
+        self.assertEqual(specs[1]["label"], "cutter 2")
+        self.assertEqual(specs[1]["connection_type"], "bluetooth")
+        self.assertEqual(specs[1]["bluetooth_addr"], self.MAC)
+
+    def test_second_cutter_can_use_ble(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type_2=ble",
+            "--bluetooth_name_2=CAMEO 5 TEST",
+        ])
+
+        spec = self.e._device_specs()[1]
+
+        self.assertEqual(spec["connection_type"], "ble")
+        self.assertEqual(spec["bluetooth_name"], "CAMEO 5 TEST")
+
+    def test_two_usb_cutters_are_rejected(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type=usb",
+            "--connection_type_2=usb",
+        ])
+
+        with self.assertRaisesRegex(ValueError,
+                                    "Both cutters are configured for USB"):
+            self.e._device_specs()
+
+    def test_duplicate_bluetooth_mac_is_rejected(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type=bluetooth",
+            "--bluetooth_addr=%s" % self.MAC,
+            "--connection_type_2=bluetooth",
+            "--bluetooth_addr_2=%s" % self.MAC.upper(),
+        ])
+
+        with self.assertRaisesRegex(ValueError,
+                                    "same Bluetooth MAC address"):
+            self.e._device_specs()
+
+    def test_duplicate_ble_identifier_is_rejected(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type=ble",
+            "--bluetooth_identifier=LOCAL-ID",
+            "--connection_type_2=ble",
+            "--bluetooth_identifier_2=LOCAL-ID",
+        ])
+
+        with self.assertRaisesRegex(ValueError,
+                                    "same BLE identifier"):
+            self.e._device_specs()
+
+    def test_duplicate_ble_name_is_rejected(self):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type=ble",
+            "--connection_type_2=ble",
+        ])
+
+        with self.assertRaisesRegex(ValueError,
+                                    "same BLE advertised name"):
+            self.e._device_specs()
+
+    @mock.patch("sendto_silhouette.SilhouetteCameo")
+    def test_usb_device_does_not_request_bluetooth_le(self, cameo):
+        self.e.parse_arguments(["--connection_type=usb"])
+        self.e.log = mock.Mock()
+
+        self.e._open_device(self.e._device_specs()[0])
+
+        kwargs = cameo.call_args.kwargs
+        for name in ("bluetooth_addr", "bluetooth_channel", "bluetooth_le",
+                     "bluetooth_name", "bluetooth_identifier"):
+            self.assertNotIn(name, kwargs)
+        self.assertIsNone(kwargs["force_hardware"])
+
+    @mock.patch("sendto_silhouette.SilhouetteCameo")
+    def test_second_device_uses_its_own_mac(self, cameo):
+        self.e.parse_arguments([
+            "--second_device=true",
+            "--connection_type_2=bluetooth",
+            "--bluetooth_addr_2=%s" % self.MAC,
+        ])
+        self.e.log = mock.Mock()
+
+        self.e._open_device(self.e._device_specs()[1])
+
+        kwargs = cameo.call_args.kwargs
+        self.assertEqual(kwargs["bluetooth_addr"], self.MAC)
+        self.assertNotIn("bluetooth_le", kwargs)
+        self.assertNotIn("bluetooth_name", kwargs)
+        self.assertNotIn("bluetooth_identifier", kwargs)
+
+    def test_plot_devices_streams_the_same_job_to_both(self):
+        dev1 = mock.Mock()
+        dev2 = mock.Mock()
+        bbox = {"bbox": {"count": 1}, "unit": 1}
+        dev1.plot.return_value = bbox
+        dev2.plot.return_value = bbox
+        pathlist = [[(0, 0), (10, 10)]]
+        kwargs = {"pathlist": pathlist, "mediawidth": 210.0}
+
+        results, errors = self.e._plot_devices(
+            [("cutter 1", dev1), ("cutter 2", dev2)], kwargs)
+
+        self.assertEqual(errors, {})
+        self.assertEqual(set(results), {"cutter 1", "cutter 2"})
+        dev1.plot.assert_called_once_with(**kwargs)
+        dev2.plot.assert_called_once_with(**kwargs)
+        self.assertIs(dev1.plot.call_args.kwargs["pathlist"], pathlist)
+        self.assertIs(dev2.plot.call_args.kwargs["pathlist"], pathlist)
+
+    def test_plot_devices_keeps_going_when_one_cutter_fails(self):
+        dev1 = mock.Mock()
+        dev2 = mock.Mock()
+        bbox = {"bbox": {"count": 1}, "unit": 1}
+        dev1.plot.side_effect = RuntimeError("usb connection lost")
+        dev2.plot.return_value = bbox
+
+        results, errors = self.e._plot_devices(
+            [("cutter 1", dev1), ("cutter 2", dev2)],
+            {"pathlist": [[(0, 0), (1, 1)]]})
+
+        self.assertEqual(set(results), {"cutter 2"})
+        self.assertIn("cutter 1", errors)
+        self.assertIn("usb connection lost", str(errors["cutter 1"]))
+
+    @mock.patch("sendto_silhouette.SilhouetteCameo")
+    def test_effect_aborts_before_plot_when_second_cutter_is_not_ready(
+            self, cameo):
+        dev1 = mock.Mock()
+        dev2 = mock.Mock()
+        dev1.status.return_value = "ready"
+        dev2.status.return_value = "unloaded"
+        dev1.get_version.return_value = "CAMEO 5"
+        dev2.get_version.return_value = "CAMEO 5"
+        cameo.side_effect = [dev1, dev2]
+        self.e.report = mock.Mock()
+
+        self.e.run([
+            "--preview=false",
+            "--second_device=true",
+            "--connection_type=usb",
+            "--connection_type_2=bluetooth",
+            "--bluetooth_addr_2=%s" % self.MAC,
+            self.data_file("lines_and_circle.test.svg"),
+        ], output=io.StringIO())
+
+        self.assertEqual(cameo.call_count, 2)
+        dev1.setup.assert_called_once()
+        dev2.setup.assert_not_called()
+        dev1.plot.assert_not_called()
+        dev2.plot.assert_not_called()
+        dev1.transport.close.assert_called_once()
+        # require_media_loaded() closes the failed transport immediately to
+        # let Bluetooth advertise again; the common cleanup closes it again.
+        self.assertGreaterEqual(dev2.transport.close.call_count, 1)
+
+    @mock.patch("sendto_silhouette.SilhouetteCameo")
+    def test_effect_prepares_and_plots_to_both_cutters(self, cameo):
+        dev1 = mock.Mock()
+        dev2 = mock.Mock()
+        bbox = {
+            "bbox": {"llx": 0, "lly": 0, "urx": 10, "ury": 10, "count": 4},
+            "unit": 1,
+        }
+        for dev in (dev1, dev2):
+            dev.status.return_value = "ready"
+            dev.get_version.return_value = "CAMEO 5"
+            dev.plot.return_value = bbox
+        cameo.side_effect = [dev1, dev2]
+
+        self.e.run([
+            "--preview=false",
+            "--second_device=true",
+            "--connection_type=usb",
+            "--connection_type_2=bluetooth",
+            "--bluetooth_addr_2=%s" % self.MAC,
+            self.data_file("lines_and_circle.test.svg"),
+        ], output=io.StringIO())
+
+        self.assertEqual(cameo.call_count, 2)
+        self.assertEqual(dev1.setup.call_count, 1)
+        self.assertEqual(dev2.setup.call_count, 1)
+        dev1.plot.assert_called_once()
+        dev2.plot.assert_called_once()
+        self.assertEqual(
+            dev1.plot.call_args.kwargs["pathlist"],
+            dev2.plot.call_args.kwargs["pathlist"])
+
+        first_kwargs = cameo.call_args_list[0].kwargs
+        second_kwargs = cameo.call_args_list[1].kwargs
+        self.assertNotIn("bluetooth_addr", first_kwargs)
+        self.assertEqual(second_kwargs["bluetooth_addr"], self.MAC)
 
 
 class PlusTest(SendtoSilhouetteTest):
