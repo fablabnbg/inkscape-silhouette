@@ -8,7 +8,7 @@
 __version__ = "1.29"     # Keep in sync with sendto_silhouette.inx ca line 179
 __author__ = "Juergen Weigert <juergen@fabmail.org> and contributors"
 
-import sys, os, time, math, operator, re, subprocess
+import sys, os, time, math, operator, re, subprocess, threading
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
@@ -120,7 +120,13 @@ class SendtoSilhouette(EffectExtension):
         self.path_page_indices = []
         self.docTransform = Transform()
         self.cmdfile = None
+        self.cmdfile_2 = None
         self.caffeinate_process = None
+        # The report stream and progress counters are shared by the plot
+        # threads when more than one cutter receives the same job.
+        self._report_lock = threading.Lock()
+        self._progress_lock = threading.Lock()
+        self._progress = {}
         self.document_pages = None
         self.active_page_indices = []
         self.media_width_mm = None
@@ -150,6 +156,8 @@ class SendtoSilhouette(EffectExtension):
             self.log.close()  # will always close tty if there is one
         if self.cmdfile:
             self.cmdfile.close()  # will always try to close cmdfile
+        if self.cmdfile_2:
+            self.cmdfile_2.close()
 
     def report_sleep_inhibitor(self, message):
         """Log sleep-inhibitor messages without affecting the cutting job."""
@@ -346,6 +354,36 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("--bluetooth_identifier",
                 dest = "bluetooth_identifier", default = None,
                 help = "Optional platform-local BLE identifier (a CoreBluetooth UUID on macOS, not a portable MAC address).")
+        # Optional second cutter.  The same paths and cutting settings are sent
+        # to both devices; only the connection details differ.
+        pars.add_argument("--second_device",
+                dest = "second_device", type = Boolean, default = False,
+                help = "Also send this job to a second cutter.")
+        pars.add_argument("--connection_type_2",
+                choices=("usb", "bluetooth", "ble"),
+                dest = "connection_type_2", default = "bluetooth",
+                help = "Connection type for the second cutter: usb, bluetooth (Classic/RFCOMM), or ble.")
+        pars.add_argument("--bluetooth_addr_2",
+                dest = "bluetooth_addr_2", default = None,
+                help = "Bluetooth MAC address of the second cutter (Classic/RFCOMM).")
+        pars.add_argument("--bluetooth_channel_2",
+                dest = "bluetooth_channel_2", type = int, default = None,
+                help = "RFCOMM channel for the second cutter (default: standard channel).")
+        pars.add_argument("--bluetooth_scan_2",
+                dest = "bluetooth_scan_2", type = Boolean, default = False,
+                help = "List Bluetooth devices visible to the second cutter's transport, then stop.")
+        pars.add_argument("--bluetooth_name_2",
+                dest = "bluetooth_name_2", default = "CAMEO",
+                help = "BLE advertised name of the second cutter (default: CAMEO).")
+        pars.add_argument("--bluetooth_identifier_2",
+                dest = "bluetooth_identifier_2", default = None,
+                help = "Optional platform-local BLE identifier for the second cutter.")
+        pars.add_argument("--force_hardware_2",
+                dest = "force_hardware_2", default = None,
+                help = "Override the hardware model of the second cutter (e.g. Silhouette_Cameo5).")
+        pars.add_argument("--cmdfile_2",
+                dest = "cmdfile_2", default = None,
+                help = "Save a transcript of commands sent to the second cutter in this file.")
         # For Multi-Action
         pars.add_argument("--skip_init",
                 dest = "skip_init", type = Boolean, default = False,
@@ -366,72 +404,78 @@ class SendtoSilhouette(EffectExtension):
             log   - record in logfile if there is one
             tty   - write to tty and flush if there is one
         """
-        if level == 'tty':
-            if self.tty:
-                print(message, file=self.tty)
-                self.tty.flush()
-            return
-        if level == 'log' or level == 'error':
-            if self.log:
-                print(message, file=self.log)
-                # That handles the tty also, because of the tee, but
-                # we have to flush the tty:
+        with self._report_lock:
+            if level == 'tty':
                 if self.tty:
+                    print(message, file=self.tty)
                     self.tty.flush()
-            if level == 'log':
                 return
-        print(message, file=sys.stderr)
-        if level != 'error':
-            # oops accidentally used an invalid level
-            print(f"  ... WARNING: message issued at invalid level {level}",
-                  file=sys.stderr)
+            if level == 'log' or level == 'error':
+                if self.log:
+                    print(message, file=self.log)
+                    # That handles the tty also, because of the tee, but
+                    # we have to flush the tty:
+                    if self.tty:
+                        self.tty.flush()
+                if level == 'log':
+                    return
+            print(message, file=sys.stderr)
+            if level != 'error':
+                # oops accidentally used an invalid level
+                print(f"  ... WARNING: message issued at invalid level {level}",
+                      file=sys.stderr)
 
 
-    def report_bluetooth_scan(self):
+    def report_bluetooth_scan(self, connection_type=None, label=None):
         """List devices for the selected Bluetooth transport.
 
         Discovery is deliberately unfiltered so users can verify that scanning
-        works even when no Silhouette cutter is nearby.
+        works even when no Silhouette cutter is nearby.  label names the target
+        cutter when a second device is configured.
         """
-        connection_type = self.options.connection_type
+        if connection_type is None:
+            connection_type = self.options.connection_type
+        prefix = "[%s] " % label if label else ""
         heading = "Bluetooth LE" if connection_type == "ble" else "Bluetooth Classic"
         try:
             if connection_type == "ble":
                 from silhouette.BLETransport import BLETransport
                 if not BLETransport.is_available():
-                    self.report("Bluetooth LE scanning requires the optional 'bleak' package.", 'error')
+                    self.report(prefix + "Bluetooth LE scanning requires the optional 'bleak' package.", 'error')
                     return
                 devices = BLETransport.discover(name_filter=None)
                 identifier_label = "local identifier"
             else:
                 from silhouette.Transport import BluetoothTransport
                 if not BluetoothTransport.is_available():
-                    self.report("Bluetooth Classic is not supported by this Python build/platform.", 'error')
+                    self.report(prefix + "Bluetooth Classic is not supported by this Python build/platform.", 'error')
                     return
                 devices = BluetoothTransport.discover(name_filter=None)
                 identifier_label = "MAC address"
         except Exception as e:
-            self.report("%s scan failed: %s" % (heading, e), 'error')
+            self.report("%s%s scan failed: %s" % (prefix, heading, e), 'error')
             return
 
         if not devices:
-            self.report("No %s devices found." % heading, 'error')
+            self.report(prefix + "No %s devices found." % heading, 'error')
             return
 
-        lines = ["Found %d %s device(s):" % (len(devices), heading)]
+        lines = ["%sFound %d %s device(s):" % (prefix, len(devices), heading)]
         for identifier, name in devices:
             lines.append("    %s   %s" % (identifier, name or "(unnamed)"))
         lines.append("")
+        field = ("second cutter's " if label and label != "cutter 1" else "")
+        second_suffix = " for the second cutter" if field else ""
         if connection_type == "ble":
-            lines.append("Use the advertised name for portable BLE selection, or copy the %s for this computer only."
-                         % identifier_label)
+            lines.append("Use the advertised name%s for portable BLE selection, or copy the %s for this computer only."
+                         % (second_suffix, identifier_label))
         else:
-            lines.append("Copy the %s of the cutter into the Bluetooth MAC address field."
-                         % identifier_label)
+            lines.append("Copy the %s of the cutter into the %sBluetooth MAC address field."
+                         % (identifier_label, field))
         self.report("\n".join(lines), 'error')
 
 
-    def require_media_loaded(self, dev):
+    def require_media_loaded(self, dev, label=None):
         """Return cutter status or fail before setup when media is absent.
 
         A cutter without media must not receive setup or geometry commands.
@@ -448,7 +492,8 @@ class SendtoSilhouette(EffectExtension):
                 "Could not query cutter status before starting: %s" % error
             ) from error
 
-        self.report("status=%s" % state, 'log')
+        prefix = "[%s] " % label if label else ""
+        self.report(prefix + "status=%s" % state, 'log')
         if state in ("ready", "moving"):
             return state
 
@@ -463,6 +508,222 @@ class SendtoSilhouette(EffectExtension):
             "Cannot determine whether media is loaded (status=%s). Job aborted."
             % state
         )
+
+
+    def _connection_spec(self, suffix="", label=None):
+        """Build one cutter's normalized connection settings.
+
+        suffix is "" for the first cutter and "_2" for the optional second
+        cutter.  Keeping this in one place means the GUI, the CLI and the
+        legacy --bluetooth_addr shortcut all behave identically.
+        """
+        def opt(name):
+            return getattr(self.options, name + suffix, None)
+
+        connection_type = opt("connection_type") or "usb"
+        bluetooth_addr = (opt("bluetooth_addr") or "").strip() or None
+        bluetooth_name = (opt("bluetooth_name") or "").strip() or None
+        bluetooth_identifier = (opt("bluetooth_identifier") or "").strip() or None
+
+        # Preserve the historical CLI behavior: a MAC address by itself
+        # selects Bluetooth Classic, even when the connection type is USB.
+        if connection_type == "usb" and bluetooth_addr is not None:
+            connection_type = "bluetooth"
+        if connection_type == "bluetooth" and bluetooth_addr is None:
+            raise ValueError(
+                "%s: Bluetooth Classic requires a MAC address. Use Scan to "
+                "discover it." % (label or "Cutter"))
+
+        force_hardware = opt("force_hardware")
+        if isinstance(force_hardware, str):
+            force_hardware = force_hardware.strip()
+        if force_hardware in (None, "", "DETECT"):
+            force_hardware = None
+
+        return {
+            "label": label,
+            "connection_type": connection_type,
+            "bluetooth_addr": bluetooth_addr,
+            "bluetooth_channel": opt("bluetooth_channel"),
+            "bluetooth_name": bluetooth_name,
+            "bluetooth_identifier": bluetooth_identifier,
+            "force_hardware": force_hardware,
+            "cmdfile": self.cmdfile if suffix == "" else self.cmdfile_2,
+        }
+
+
+    def _device_specs(self):
+        """Return the connection specs for the first and optional second cutter."""
+        second = bool(getattr(self.options, "second_device", False))
+        specs = [self._connection_spec(
+            "", label="cutter 1" if second else None)]
+        if second:
+            specs.append(self._connection_spec("_2", label="cutter 2"))
+        self._validate_device_specs(specs)
+        return specs
+
+
+    @staticmethod
+    def _validate_device_specs(specs):
+        """Reject configurations that cannot address two distinct cutters."""
+        if len(specs) < 2:
+            return
+        first, second = specs
+        if first["connection_type"] == second["connection_type"] == "usb":
+            raise ValueError(
+                "Both cutters are configured for USB. This extension cannot "
+                "choose between two USB devices; connect the second cutter "
+                "over Bluetooth or run the jobs separately.")
+        if (first["connection_type"] == second["connection_type"] == "bluetooth"
+                and first["bluetooth_addr"].upper() ==
+                second["bluetooth_addr"].upper()):
+            raise ValueError(
+                "Both cutters use the same Bluetooth MAC address. Give the "
+                "second cutter its own address.")
+        if first["connection_type"] == second["connection_type"] == "ble":
+            first_id = first["bluetooth_identifier"]
+            second_id = second["bluetooth_identifier"]
+            if first_id and second_id and first_id == second_id:
+                raise ValueError(
+                    "Both cutters use the same BLE identifier. Give the "
+                    "second cutter its own identifier or advertised name.")
+            if not (first_id and second_id) and (
+                    first["bluetooth_name"] == second["bluetooth_name"]):
+                raise ValueError(
+                    "Both cutters use the same BLE advertised name. Give the "
+                    "second cutter its own identifier or a distinct name.")
+
+
+    def _open_device(self, spec):
+        """Connect to one cutter described by a _connection_spec() dict."""
+        label = spec["label"]
+        progress_cb = (
+            lambda done, total, msg: self.writeProgress(
+                done, total, msg, device_label=label))
+        kwargs = dict(
+            log=self.log,
+            cmdfile=spec["cmdfile"],
+            inc_queries=self.options.inc_queries,
+            dry_run=self.options.dry_run,
+            force_hardware=spec["force_hardware"],
+            progress_cb=progress_cb,
+        )
+        if spec["connection_type"] == "ble":
+            # Only pass BLE selectors here.  SilhouetteCameo treats a
+            # bluetooth_name value as a request for BLE, even for USB jobs.
+            kwargs.update(
+                bluetooth_le=True,
+                bluetooth_name=spec["bluetooth_name"],
+                bluetooth_identifier=spec["bluetooth_identifier"],
+            )
+        elif spec["connection_type"] == "bluetooth":
+            kwargs.update(
+                bluetooth_addr=spec["bluetooth_addr"],
+                bluetooth_channel=spec["bluetooth_channel"],
+            )
+        return SilhouetteCameo(**kwargs)
+
+
+    def _setup_device(self, dev):
+        """Apply the shared cutting settings to one cutter."""
+        dev.setup(
+            media=int(self.options.media, 10),
+            pen=self.pen,
+            toolholder=self.options.toolholder,
+            cuttingmat=self.options.cuttingmat,
+            sharpencorners=self.options.sharpencorners,
+            sharpencorners_start=self.options.sharpencorners_start,
+            sharpencorners_end=self.options.sharpencorners_end,
+            autoblade=self.autoblade,
+            depth=self.options.depth,
+            sw_clipping=self.options.sw_clipping,
+            bladediameter=self.options.bladediameter,
+            pressure=self.options.pressure,
+            speed=self.options.speed,
+            skip_init=self.options.skip_init)
+
+
+    @staticmethod
+    def _close_devices(devices):
+        """Release every transport opened for this job, ignoring late errors."""
+        for _label, dev in devices:
+            transport = getattr(dev, "transport", None)
+            if transport is not None:
+                try:
+                    transport.close()
+                except Exception:
+                    pass
+
+
+    def _report_device(self, label, message, level):
+        prefix = "[%s] " % label if label else ""
+        self.report(prefix + str(message), level)
+
+
+    def _plot_devices(self, devices, plot_kwargs):
+        """Stream the same job to all cutters concurrently.
+
+        Returns (results, errors), dicts keyed by device label.  A failure on
+        one cutter does not prevent the other cutter from receiving its job.
+        """
+        results = {}
+        errors = {}
+        result_lock = threading.Lock()
+
+        def run(label, dev):
+            try:
+                result = dev.plot(**plot_kwargs)
+            except Exception as error:
+                with result_lock:
+                    errors[label or "cutter"] = error
+            else:
+                with result_lock:
+                    results[label or "cutter"] = result
+
+        threads = []
+        for label, dev in devices:
+            thread = threading.Thread(
+                target=run, args=(label, dev),
+                name="silhouette-%s" % (label or "cutter"), daemon=True)
+            threads.append(thread)
+            thread.start()
+        for thread in threads:
+            thread.join()
+        return results, errors
+
+
+    def _wait_for_ready(self, label, dev):
+        """Poll one cutter until it is no longer moving, if requested."""
+        state = dev.status()
+        key = label or ""
+        progress = self._progress.get(key)
+        if progress is None:
+            progress = {"start": time.time(), "buffer": 0.0}
+            self._progress[key] = progress
+
+        write_duration = time.time() - progress["start"]
+        if write_duration > 1.0:
+            percent_per_sec = (100.0 - progress["buffer"]) / write_duration
+        else:
+            percent_per_sec = 1000.0
+
+        wait_sec = 1
+        if percent_per_sec > 1:
+            while percent_per_sec * wait_sec < 1.6:
+                wait_sec *= 2
+
+        dots = "."
+        prefix = "[%s] " % label if label else ""
+        while ((self.options.wait_done or self.caffeinate_process is not None)
+               and state == "moving"):
+            time.sleep(wait_sec)
+            progress["buffer"] = max(
+                0.0, progress["buffer"] - wait_sec * percent_per_sec)
+            self.report("%s%s\r" % (prefix, dots), 'tty')
+            dots += "."
+            state = dev.status()
+        progress["buffer"] = 0.0
+        return state
 
 
     def plotPath(self, path: Path, page_index=None):
@@ -923,20 +1184,26 @@ class SendtoSilhouette(EffectExtension):
             self.report("Arguments: %s" % (" ".join(sys.argv)), 'log')
 
 
-    def writeProgress(self, done, total, msg):
-        """Show the current progress"""
-        if "write_start_tstamp" not in self.__dict__:
-            self.write_start_tstamp = time.time()
-            self.device_buffer_perc = 0.0
-        perc = 100.*done/total
-        if time.time() - self.write_start_tstamp < 1.0:
-            self.device_buffer_perc = perc
-        buf = ""
-        if self.device_buffer_perc > 1.0:
-            buf = " (+%d%%)" % (self.device_buffer_perc+.5)
-        self.report("%d%%%s %s\r" % (perc-self.device_buffer_perc+.5,
-                                        buf, msg),
-                    'tty')
+    def writeProgress(self, done, total, msg, device_label=None):
+        """Show the current progress.
+
+        Each cutter has its own buffer estimate, so parallel plot threads do
+        not overwrite each other's percentage.
+        """
+        key = device_label or ""
+        now = time.time()
+        with self._progress_lock:
+            state = self._progress.setdefault(
+                key, {"start": now, "buffer": 0.0})
+            perc = 100. * done / total if total else 0.0
+            if now - state["start"] < 1.0:
+                state["buffer"] = perc
+            buf = ""
+            if state["buffer"] > 1.0:
+                buf = " (+%d%%)" % (state["buffer"] + .5)
+            prefix = "[%s] " % device_label if device_label else ""
+            self.report("%s%d%%%s %s\r" % (
+                prefix, perc - state["buffer"] + .5, buf, msg), 'tty')
 
 
     @staticmethod
@@ -1033,6 +1300,15 @@ class SendtoSilhouette(EffectExtension):
             self.stop_macos_sleep_inhibitor()
 
     def _effect(self):
+        cmdfile_2 = getattr(self.options, "cmdfile_2", None)
+        if (self.options.cmdfile and cmdfile_2 and
+                os.path.normcase(os.path.abspath(self.options.cmdfile)) ==
+                os.path.normcase(os.path.abspath(cmdfile_2))):
+            self.report(
+                "The first and second cutter command transcripts must use "
+                "different files.", 'error')
+            return
+
         log_path = self.options.logfile or self.default_logfile_path
         mode = "a" if self.options.append_logs else "w"
         self.log = open(log_path, mode)
@@ -1042,13 +1318,30 @@ class SendtoSilhouette(EffectExtension):
         if self.options.cmdfile:
             mode = "ab" if self.options.append_logs else "wb"
             self.cmdfile = open(self.options.cmdfile, mode)
+        if cmdfile_2:
+            mode = "ab" if self.options.append_logs else "wb"
+            self.cmdfile_2 = open(cmdfile_2, mode)
 
         self.logEnvironment()
 
         # Bluetooth device scan: list cutters and stop, before doing any work
         # that depends on the document geometry or a connected device.
-        if self.options.bluetooth_scan:
-            self.report_bluetooth_scan()
+        scan_second = getattr(self.options, "bluetooth_scan_2", False)
+        if self.options.bluetooth_scan or scan_second:
+            primary_label = ("cutter 1"
+                             if getattr(self.options, "second_device", False)
+                             else None)
+            if self.options.bluetooth_scan:
+                self.report_bluetooth_scan(label=primary_label)
+            if scan_second:
+                if self.options.connection_type_2 == "usb":
+                    self.report(
+                        "The second cutter scan is only available for "
+                        "Bluetooth connections.", 'error')
+                else:
+                    self.report_bluetooth_scan(
+                        connection_type=self.options.connection_type_2,
+                        label="cutter 2")
             return
 
         # Init docTransform
@@ -1145,67 +1438,52 @@ class SendtoSilhouette(EffectExtension):
             self.options.speed = None
         if self.options.depth == -1:
             self.options.depth = None
-        # Normalize connection settings. Preserve the historical CLI behavior
-        # where supplying --bluetooth_addr by itself selects RFCOMM.
-        if not self.options.bluetooth_addr:
-            self.options.bluetooth_addr = None
-        if not self.options.bluetooth_name:
-            self.options.bluetooth_name = None
-        if not self.options.bluetooth_identifier:
-            self.options.bluetooth_identifier = None
-        if (self.options.connection_type == "usb" and
-                self.options.bluetooth_addr is not None):
-            self.options.connection_type = "bluetooth"
-
-        use_ble = self.options.connection_type == "ble"
-        if self.options.connection_type == "bluetooth":
-            if self.options.bluetooth_addr is None:
-                self.report("Bluetooth Classic requires a MAC address. Use Scan to discover it.", 'error')
-                return
-            bluetooth_addr = self.options.bluetooth_addr
-        else:
-            bluetooth_addr = None
+        # Build the connection settings for the first cutter and, optionally,
+        # the second cutter.  Duplicate USB/MAC/BLE targets are rejected
+        # before any device is contacted.
+        try:
+            device_specs = self._device_specs()
+        except Exception as e:
+            self.report(e, 'error')
+            return
 
         self.start_macos_sleep_inhibitor()
+        devices = []
+        initial_states = {}
         try:
-            dev = SilhouetteCameo(log=self.log, progress_cb=self.writeProgress,
-                                  cmdfile=self.cmdfile,
-                                  inc_queries=self.options.inc_queries,
-                                  dry_run=self.options.dry_run,
-                                  force_hardware=self.options.force_hardware,
-                                  bluetooth_addr=bluetooth_addr,
-                                  bluetooth_channel=self.options.bluetooth_channel,
-                                  bluetooth_le=use_ble,
-                                  bluetooth_name=self.options.bluetooth_name if use_ble else None,
-                                  bluetooth_identifier=self.options.bluetooth_identifier if use_ble else None)
-        except Exception as e:
-            self.report(e, 'error')
-            return
-        try:
-            state = self.require_media_loaded(dev)
-        except Exception as e:
-            self.report(e, 'error')
-            return
-        self.report("device version: '%s'" % dev.get_version(), 'log')
+            for spec in device_specs:
+                label = spec["label"]
+                self._report_device(
+                    label, "connecting via %s" % spec["connection_type"], 'log')
+                try:
+                    dev = self._open_device(spec)
+                except Exception as e:
+                    self._report_device(label, e, 'error')
+                    self._close_devices(devices)
+                    return
+                devices.append((label, dev))
 
-        dev.setup(media=int(self.options.media, 10),
-                pen=self.pen,
-                toolholder=self.options.toolholder,
-                cuttingmat=self.options.cuttingmat,
-                sharpencorners=self.options.sharpencorners,
-                sharpencorners_start=self.options.sharpencorners_start,
-                sharpencorners_end=self.options.sharpencorners_end,
-                autoblade=self.autoblade,
-                depth=self.options.depth,
-                sw_clipping=self.options.sw_clipping,
-                bladediameter=self.options.bladediameter,
-                pressure=self.options.pressure,
-                speed=self.options.speed,
-                skip_init=self.options.skip_init)
+            # Prepare every cutter before any of them starts cutting.  If one
+            # cutter cannot be prepared, abort the whole job rather than cut
+            # on only one machine.
+            for label, dev in devices:
+                try:
+                    initial_states[label] = self.require_media_loaded(
+                        dev, label=label)
+                    self._report_device(
+                        label, "device version: '%s'" % dev.get_version(), 'log')
+                    self._setup_device(dev)
+                except Exception as e:
+                    self._report_device(label, e, 'error')
+                    self._close_devices(devices)
+                    return
 
-        if self.options.autocrop:
-            # this takes much longer, if we have a complext drawing
-            bbox = dev.plot(pathlist=cut,
+            if self.options.autocrop:
+                # Use the first cutter as the reference for the media
+                # geometry.  Both cutters should use the same model and
+                # media for a two-cutter job.
+                bbox = devices[0][1].plot(
+                    pathlist=cut,
                     mediawidth=self.media_width_mm,
                     mediaheight=self.media_height_mm,
                     margintop=0,
@@ -1221,8 +1499,7 @@ class SendtoSilhouette(EffectExtension):
                     regoriginy=self.reg_origin_Y,
                     skip_init=self.options.skip_init,
                     skip_reset=self.options.skip_reset)
-
-            if len(bbox["bbox"].keys()):
+                if len(bbox["bbox"].keys()):
                     self.report(
                         "autocrop left=%.1fmm top=%.1fmm" % (
                             bbox["bbox"]["llx"]*bbox["unit"],
@@ -1230,22 +1507,55 @@ class SendtoSilhouette(EffectExtension):
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
-        bbox = dev.plot(pathlist=cut,
-            mediawidth=self.media_width_mm,
-            mediaheight=self.media_height_mm,
-            offset=(self.options.x_off, self.options.y_off),
-            bboxonly=self.options.bboxonly,
-            endposition=self.options.endposition,
-            end_paper_offset=self.options.end_offset,
-            regmark=self.options.regmark,
-            regsearch=self.options.regsearch,
-            quadregmarks=self.options.quadregmarks,
-            regwidth=self.reg_width,
-            reglength=self.reg_length,
-            regoriginx=self.reg_origin_X,
-            regoriginy=self.reg_origin_Y,
-            skip_init=self.options.skip_init,
-            skip_reset=self.options.skip_reset)
+            plot_kwargs = dict(
+                pathlist=cut,
+                mediawidth=self.media_width_mm,
+                mediaheight=self.media_height_mm,
+                offset=(self.options.x_off, self.options.y_off),
+                bboxonly=self.options.bboxonly,
+                endposition=self.options.endposition,
+                end_paper_offset=self.options.end_offset,
+                regmark=self.options.regmark,
+                regsearch=self.options.regsearch,
+                quadregmarks=self.options.quadregmarks,
+                regwidth=self.reg_width,
+                reglength=self.reg_length,
+                regoriginx=self.reg_origin_X,
+                regoriginy=self.reg_origin_Y,
+                skip_init=self.options.skip_init,
+                skip_reset=self.options.skip_reset)
+
+            # Start each cutter's buffer estimate fresh for the real plot
+            # (autocrop and setup queries may have updated it already).
+            for label, _dev in devices:
+                self._progress.pop(label or "", None)
+
+            plot_results, plot_errors = self._plot_devices(
+                devices, plot_kwargs)
+            failed_labels = set()
+            for key, error in plot_errors.items():
+                # A single cutter has no label; keep its messages unchanged.
+                label = None if key == "cutter" else key
+                self._report_device(label, error, 'error')
+                failed_labels.add(label)
+            if not plot_results:
+                self._close_devices(devices)
+                return
+        except Exception as e:
+            self.report(e, 'error')
+            self._close_devices(devices)
+            return
+
+        primary_key = devices[0][0] or "cutter"
+        bbox = plot_results.get(primary_key)
+        if bbox is None:
+            primary_key = next(iter(plot_results.keys()))
+            bbox = plot_results[primary_key]
+        primary_label = None if primary_key == "cutter" else primary_key
+
+        states = dict(initial_states)
+        for label in failed_labels:
+            states[label] = "error"
         if len(bbox["bbox"].keys()) == 0:
             self.report("empty page?", 'error')
         else:
@@ -1254,36 +1564,25 @@ class SendtoSilhouette(EffectExtension):
                         bbox["bbox"]["ury"]*bbox["unit"],
                         bbox["bbox"]["urx"]*bbox["unit"],
                         bbox["bbox"]["lly"]*bbox["unit"],
-                        bbox["bbox"]["count"]))
+                        bbox["bbox"]["count"]),
+                        device_label=primary_label)
             self.report("", 'tty')
-            state = dev.status()
-            write_duration = time.time() - self.write_start_tstamp
-            # we took write_duration seconds for actualy cutting
-            # 100-device_buffer_perc percent of all data.
-            # Thus we can compute the average write speed like this:
-            if write_duration > 1.0:
-                percent_per_sec = (100.0-self.device_buffer_perc) / write_duration
-            else:
-                percent_per_sec = 1000.     # unreliable data
 
-            wait_sec = 1
-            if percent_per_sec > 1:   # prevent overflow if device_buffer_perc is almost 100
-                while (percent_per_sec*wait_sec < 1.6):   # max 60 dots
-                    wait_sec *= 2
-            dots = "."
-            while ((self.options.wait_done or
-                    self.caffeinate_process is not None) and
-                    state == "moving"):
-                time.sleep(wait_sec)
-                self.device_buffer_perc -= wait_sec * percent_per_sec
-                if self.device_buffer_perc < 0.0:
-                    self.device_buffer_perc = 0.0
-                self.writeProgress(1, 1, dots)
-                dots += "."
-                state = dev.status()
-            self.device_buffer_perc = 0.0
-            self.writeProgress(1, 1, dots)
-        self.report("\nstatus=%s" % (state), 'log')
+            for label, dev in devices:
+                if (label or "cutter") not in plot_results:
+                    continue
+                try:
+                    states[label] = self._wait_for_ready(label, dev)
+                except Exception as e:
+                    self._report_device(label, e, 'error')
+                    states[label] = "unknown"
+
+        for label, _dev in devices:
+            prefix = "[%s] " % label if label else ""
+            self.report("\n%sstatus=%s" % (
+                prefix, states.get(label, "unknown")), 'log')
+
+        self._close_devices(devices)
 
 
 if __name__ == "__main__":

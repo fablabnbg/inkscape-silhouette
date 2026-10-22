@@ -243,8 +243,11 @@ class SilhouetteMulti(EffectExtension):
 
     def run_command_with_dialog(self, command, step, total):
         # exec ensures that the shell gets replaced so that we can terminate the
-        # actual python script if the user cancels
-        process = subprocess.Popen("exec " + command, shell=True)
+        # actual python script if the user cancels. Windows has no exec builtin.
+        if sys.platform.lower().startswith("win"):
+            process = subprocess.Popen(command, shell=True)
+        else:
+            process = subprocess.Popen("exec " + command, shell=True)
 
         import wx
         dialog = wx.ProgressDialog(style=wx.PD_APP_MODAL|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME,

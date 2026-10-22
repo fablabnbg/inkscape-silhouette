@@ -133,6 +133,21 @@ The complete Inkscape-to-cutter BLE flow has been verified with Inkscape 1.4.4 o
 
 Before setup or plot commands are sent, the extension queries the cutter status. If no media is loaded—or the status cannot be confirmed—the job exits early, closes the connection, and displays an error. Load the media and run the job again.
 
+### Sending one job to two cutters
+
+The **Second Cutter** tab sends the same paths and cutting settings to a second machine. A common setup is a Cameo 5 connected over USB and a second Cameo 5 connected over Bluetooth Classic.
+
+1. Configure and test the first cutter on the **Bluetooth** tab. Leave the connection type as **USB** for a USB cutter.
+2. Open the **Second Cutter** tab and tick **Send the same job to a second cutter**.
+3. Select the second cutter's **Connection type**. The default is **Bluetooth Classic (RFCOMM)**.
+4. For Bluetooth Classic, pair the second cutter with the operating system, tick **Scan for nearby devices for the second cutter**, and click **Apply**. Copy its MAC address into **Second cutter Bluetooth MAC address**, then untick the scan option.
+5. For Bluetooth LE, enter the cutter's advertised name or its platform-local identifier.
+6. Load the same media into both cutters, confirm the registration-mark setup, and click **Apply**.
+
+The extension prepares both cutters before plotting starts. If either cutter cannot be queried or set up, it closes both connections and aborts before cutting, rather than cutting on only one machine. The same job is then streamed to both cutters concurrently.
+
+To cut on only one machine, leave **Send the same job to a second cutter** unchecked and configure that machine as the first cutter. The extension then behaves exactly like a normal single-cutter job. For best results when using both, use the same cutter model, media, and registration-mark geometry on both machines. Two cutters connected over USB cannot be selected separately by the current driver; use USB for the first cutter and Bluetooth for the second, or run the jobs separately.
+
 ### Command-line examples
 
 ```sh
@@ -150,6 +165,21 @@ sendto_silhouette.py --connection_type=ble --bluetooth_name="CAMEO 5 ALPHA-00000
 
 # Select a BLE cutter by a platform-local identifier instead.
 sendto_silhouette.py --connection_type=ble --bluetooth_identifier="LOCAL-IDENTIFIER" yourfile.svg
+
+# Send the same job to a USB cutter and a Bluetooth Classic cutter.
+sendto_silhouette.py --connection_type=usb \
+  --second_device=True \
+  --connection_type_2=bluetooth \
+  --bluetooth_addr_2=00:1B:41:33:44:55 yourfile.svg
+
+# Discover a second Bluetooth Classic cutter, then stop.
+sendto_silhouette.py --second_device=True \
+  --connection_type_2=bluetooth --bluetooth_scan_2=True yourfile.svg
+
+# Send the same job to a Bluetooth Classic first cutter and a USB second cutter.
+sendto_silhouette.py --connection_type=bluetooth \
+  --bluetooth_addr=00:1B:41:33:44:55 \
+  --second_device=True --connection_type_2=usb yourfile.svg
 ```
 
 ---

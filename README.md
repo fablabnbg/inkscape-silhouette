@@ -245,6 +245,12 @@ Bluetooth-capable cutters (Cameo 3 and newer, Portrait 2 and newer, Curio 2, and
 
 The complete BLE flow has been verified with Inkscape 1.4.4 on macOS and a Silhouette Cameo 5 Alpha using the pen attachment. Other platforms supported by `bleak` may also work, but the current physical hardware verification is on macOS. See [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth) for step-by-step instructions.
 
+### Two cutters at once
+
+The **Second Cutter** tab can send the same job to a second cutter at the same time. This is useful for running one cutter over USB and another over Bluetooth from a single computer. Both cutters must have media loaded and should use the same model, media, and registration-mark setup. The extension prepares both devices before cutting; if either one cannot be prepared, it aborts without cutting on only one machine.
+
+Two cutters connected over USB cannot be selected separately by the current driver. Use USB for the first cutter and Bluetooth Classic or BLE for the second, or run the jobs one after the other. To use only one machine, leave the second-cutter option unchecked and configure that machine as the first cutter. See [Sending one job to two cutters](./USERGUIDE.md#sending-one-job-to-two-cutters) for GUI and CLI examples.
+
 ---
 
 ## Templates
@@ -300,6 +306,9 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * Bluetooth support. Cutters can use Bluetooth Classic after operating-system
   pairing, or Bluetooth Low Energy without Classic pairing. See
   [Connecting over Bluetooth](./USERGUIDE.md#connecting-over-bluetooth).
+* Two-cutter jobs. Send the same paths and cutting settings to a second
+  cutter, for example one over USB and one over Bluetooth. See
+  [Sending one job to two cutters](./USERGUIDE.md#sending-one-job-to-two-cutters).
 
 ## Misfeatures of InkCut that we do not 'feature'
 
