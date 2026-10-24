@@ -350,6 +350,22 @@ Additional Commands
 "\x1b\x00\x08"	key press left
 "\x1b\x00\x00"	key set none
 
+Interrupt Commands
+------------------
+
+Executed immediately, even while the device still has buffered cut data.
+Seen in the command table of Silhouette Studio (`action_interrupt` entries for
+cameo4_base, cameo5_base, portrait3, portrait4, curio2) and tested on a
+Cameo 5 Alpha.
+
+<pre>
+"\x1b\x07"	pause the running job
+"\x1b\x08"	resume a paused job
+"\x1b\x09"	cancel the job (sent after a pause, like the front panel); the device resets
+</pre>
+
+The status request `"\x1b\x05"` then also answers `"3\x03"` (paused) and `"4\x03"` (cancelled).
+
 Kalibration Cut
 ---------------
 

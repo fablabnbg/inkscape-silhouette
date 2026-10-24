@@ -57,6 +57,15 @@ Note: You have the option of using the provided template at `examples/registrati
   - Note: In Multi Action, you can select the color you want settings to apply to and then set all the same parameters, but with potentially different settings for each color. You can also change the order in which the colors are cut, and uncheck the box in the "Perform Action?" column to ignore a color altogether.
 7. To start the cut, in "Send to Silhouette, click the "Apply" button; in "Silhouette Multi" click the "Execute" button.
 
+### Pause or cancel a running cut
+
+While "Send to Silhouette" is cutting, a small window with **Pause** and **Cancel** buttons is shown.
+
+- On the Cameo 4 / 5 (including the 5 Alpha) and the Portrait 3 / 4, the cutter is paused, resumed or cancelled immediately with the device's interrupt commands (see [Commands.md](Commands.md#interrupt-commands)).
+- On other models the job stops after the current segment: when pausing, the tool is lifted where it stopped; when cancelling, the tool is lifted and the head is parked like at the end of a normal job.
+- **Pause/Cancel reaction distance [mm]** (Advanced tab) limits how much tool travel is sent ahead of the device, so that even long strokes can be interrupted quickly. Smaller values react faster but may slow down the cut. 0 disables the limit.
+- The window can be disabled with **Show Pause / Cancel window while cutting** on the Advanced tab. It is never shown for dry runs, and if it cannot be opened (e.g. no `tkinter`), the cut simply runs without it.
+
 
 ### Plot with registration marks steps
 
