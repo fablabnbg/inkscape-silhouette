@@ -101,6 +101,10 @@
     <page name='advanced' gui-text='Advanced'>
       <param name="wait_done" type="bool" gui-text="Wait til done, after all data is sent">false</param>
       <label indent="2">Keep dialog open until device becomes idle again.</label>
+      <param name="pause_cancel" type="bool" gui-text="Show Pause / Cancel window while cutting">true</param>
+      <label indent="2">Cameo 4/5 and Portrait 3/4 pause or cancel immediately; other models after the current segment.</label>
+      <param name="pause_chunk_mm" type="float" min="0" max="10000" precision="0" gui-text="Pause/Cancel reaction distance [mm]">50</param>
+      <label indent="2">Tool travel sent ahead while the window is shown. Smaller reacts faster but may cut slower (0: no limit).</label>
       <param name="sharpencorners" type="bool" gui-text="Sharpen Corners">false</param> <label indent="2">Lift head at sharp corners</label>
       <param name="sharpencorners_start" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - Start Ext. [mm]">0.1</param>
       <param name="sharpencorners_end" type="float" min="0.1" max="0.9" gui-text="Sharpen Corners - End Ext. [mm]">0.1</param>

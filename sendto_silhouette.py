@@ -50,6 +50,7 @@ from optparse import SUPPRESS_HELP
 from tempfile import NamedTemporaryFile, gettempdir
 
 from silhouette.Graphtec import SilhouetteCameo, CAMEO_MATS
+from silhouette.JobControl import JobCancelled, JobControlWindow
 from silhouette.Strategy import MatFree
 from silhouette.convert2dashes import convert2dash
 import silhouette.StrategyMinTraveling
@@ -125,6 +126,7 @@ class SendtoSilhouette(EffectExtension):
         self.active_page_indices = []
         self.media_width_mm = None
         self.media_height_mm = None
+        self.job_control = None
 
         self.doc_reg_x = 0
         self.doc_reg_y = 0
@@ -288,6 +290,13 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("-w", "--wait", "--wait-done", "--wait_done",
                 dest = "wait_done", type = Boolean, default = False,
                 help="After sending wait til device reports ready")
+        pars.add_argument("--pause_cancel",
+                dest = "pause_cancel", type = Boolean, default = True,
+                help="Show a window with Pause and Cancel buttons while cutting")
+        pars.add_argument("--pause_chunk_mm",
+                dest = "pause_chunk_mm", type = float, default = 50.0,
+                help="With the Pause/Cancel window: maximum tool travel [mm] "
+                     "sent ahead, i.e. reaction distance (0: no limit)")
         pars.add_argument("-x", "--x-off", "--x_off",
                 type = float, dest = "x_off", default = 0.0, help="X-Offset [mm]")
         pars.add_argument("-y", "--y-off", "--y_off",
@@ -1026,16 +1035,55 @@ class SendtoSilhouette(EffectExtension):
             cut.append(multipath)
         return cut
 
+    def start_job_control(self, dev):
+        """Open the Pause/Cancel window. The cut runs without it on failure."""
+        if (not self.options.pause_cancel or self.options.dry_run or
+                getattr(dev, "transport", None) is None):
+            return None
+        try:
+            self.job_control = JobControlWindow(title="Send to Silhouette")
+        except Exception as error:
+            self.report("Pause/Cancel window unavailable: %s" % error, 'log')
+            self.job_control = None
+        return self.job_control
+
+    def stop_job_control(self):
+        control = self.job_control
+        self.job_control = None
+        if control is not None:
+            control.close()
+
+    def plot_main(self, dev, cut):
+        """Send the actual cut job to the device."""
+        return dev.plot(pathlist=cut,
+            mediawidth=self.media_width_mm,
+            mediaheight=self.media_height_mm,
+            offset=(self.options.x_off, self.options.y_off),
+            bboxonly=self.options.bboxonly,
+            endposition=self.options.endposition,
+            end_paper_offset=self.options.end_offset,
+            regmark=self.options.regmark,
+            regsearch=self.options.regsearch,
+            quadregmarks=self.options.quadregmarks,
+            regwidth=self.reg_width,
+            reglength=self.reg_length,
+            regoriginx=self.reg_origin_X,
+            regoriginy=self.reg_origin_Y,
+            skip_init=self.options.skip_init,
+            skip_reset=self.options.skip_reset)
+
     def effect(self):
         try:
             return self._effect()
         finally:
+            self.stop_job_control()
             self.stop_macos_sleep_inhibitor()
 
     def _effect(self):
         log_path = self.options.logfile or self.default_logfile_path
         mode = "a" if self.options.append_logs else "w"
-        self.log = open(log_path, mode)
+        # line buffered: keep the log even if Inkscape kills the extension
+        self.log = open(log_path, mode, buffering=1)
         if self.tty:
             self.log = teeFile(self.tty, self.log)
 
@@ -1230,22 +1278,16 @@ class SendtoSilhouette(EffectExtension):
                     self.options.x_off -= bbox["bbox"]["llx"]*bbox["unit"]
                     self.options.y_off -= bbox["bbox"]["ury"]*bbox["unit"]
 
-        bbox = dev.plot(pathlist=cut,
-            mediawidth=self.media_width_mm,
-            mediaheight=self.media_height_mm,
-            offset=(self.options.x_off, self.options.y_off),
-            bboxonly=self.options.bboxonly,
-            endposition=self.options.endposition,
-            end_paper_offset=self.options.end_offset,
-            regmark=self.options.regmark,
-            regsearch=self.options.regsearch,
-            quadregmarks=self.options.quadregmarks,
-            regwidth=self.reg_width,
-            reglength=self.reg_length,
-            regoriginx=self.reg_origin_X,
-            regoriginy=self.reg_origin_Y,
-            skip_init=self.options.skip_init,
-            skip_reset=self.options.skip_reset)
+        dev.job_control = self.start_job_control(dev)
+        dev.job_chunk_mm = self.options.pause_chunk_mm
+        try:
+            bbox = self.plot_main(dev, cut)
+        except JobCancelled as e:
+            self.report("Cut cancelled by user (%s)." % e, 'error')
+            return
+        finally:
+            dev.job_control = None
+            self.stop_job_control()
         if len(bbox["bbox"].keys()) == 0:
             self.report("empty page?", 'error')
         else:
