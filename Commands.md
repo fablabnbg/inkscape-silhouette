@@ -360,10 +360,14 @@ Cameo 5 Alpha.
 <pre>
 "\x1b\x07"	pause the running job
 "\x1b\x08"	resume a paused job
-"\x1b\x09"	cancel the job (sent after a pause, like the front panel); the device resets
+"\x1b\x09"	cancel the paused job, discarding the buffered data
 </pre>
 
 The status request `"\x1b\x05"` then also answers `"3\x03"` (paused) and `"4\x03"` (cancelled).
+
+The device lifts the tool when it pauses. Wait for the paused status `"3"` before
+sending the cancel: cancelling while the device is still pausing leaves the tool down.
+After a cancel the head stays where it stopped, it is not parked.
 
 Kalibration Cut
 ---------------

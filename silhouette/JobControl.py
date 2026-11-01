@@ -115,6 +115,8 @@ class JobControlWindow(JobControl):
     except subprocess.TimeoutExpired:
       self.proc.kill()
       self.proc.wait(timeout=2)
+    self._reader.join(timeout=2)
+    self.proc.stdout.close()
 
 
 def _window_main(title):

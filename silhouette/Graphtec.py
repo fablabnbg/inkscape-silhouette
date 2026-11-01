@@ -876,7 +876,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         self._job_checkpoint(chunks[i-1][0], done, len(data))
       start = time.time()
       self.write(data = chunk, is_query = False)
-      self._wait_chunk_done(timeout=120, poll_interval=0.05)
+      self._wait_chunk_done(chunk, timeout=120, poll_interval=0.05)
       durations.append((time.time() - start, length))
       done += len(chunk)
     self.job_control.progress(len(data), len(data))
@@ -891,7 +891,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     """True if the device can pause / resume / cancel buffered data."""
     return self.product_id() in PRODUCT_LINE_CAMEO4
 
-  def _wait_chunk_done(self, timeout=120, poll_interval=0.05):
+  def _wait_chunk_done(self, chunk, timeout=120, poll_interval=0.05, pause_timeout=10):
     """wait_for_ready() for a chunk of a controlled job: while the device
        is still busy, pause / resume / cancel it with interrupt commands."""
     ctl = self.job_control
@@ -902,9 +902,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if interrupts and ctl.is_cancelled():
         if not paused:
           self.send_escape(CMD_PAUSE)
+        # The device lifts the tool when it pauses. Cancelling before the
+        # pause is complete leaves the tool down.
+        state = self._wait_for_state(('paused', 'ready'), timeout=pause_timeout,
+                                     poll_interval=poll_interval)
+        print("\nstatus before cancel: %s" % state, file=self.log)
+        if state == 'ready':
+          # The chunk was done before the pause: nothing left to abort.
+          self.send_escape(CMD_RESUME)
+          self._cancel_lift = self._lift_cmd(chunk)
+          raise JobCancelled("job cancelled while cutting")
         self.send_escape(CMD_CANCEL)
-        self._cancel_sent = True
-        print("\njob cancelled by interrupt", file=self.log)
+        print("job cancelled by interrupt", file=self.log)
         print("status after cancel: %s" % self.wait_for_ready(timeout=30, poll_interval=0.5),
               file=self.log)
         raise JobCancelled("job cancelled while cutting")
@@ -922,6 +931,16 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         return state
       time.sleep(poll_interval)
       busy += poll_interval
+
+  def _wait_for_state(self, states, timeout, poll_interval):
+    """Poll the status until it is one of states, or timeout seconds."""
+    waited = 0.0
+    state = self.status()
+    while state not in states and waited < timeout:
+      time.sleep(poll_interval)
+      waited += poll_interval
+      state = self.status()
+    return state
 
   @staticmethod
   def _distance_chunks(data, maxbytes, limit):
@@ -1767,13 +1786,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # potentially long command string needs extra care
     self._cancel_lift = None
-    self._cancel_sent = False
     try:
       self.safe_send_command(cmd_list)
     except JobCancelled:
-      if self._cancel_sent:
-        raise  # the device aborted the job itself
-      # Lift the tool and park the head like at the end of a normal job.
+      # Lift the tool (unless the device paused it already) and park the
+      # head like at the end of a normal job.
       if self._cancel_lift:
         self.send_command(self._cancel_lift)
       if not skip_reset:
