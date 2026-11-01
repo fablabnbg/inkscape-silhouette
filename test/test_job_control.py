@@ -36,22 +36,38 @@ class FakeTransport:
 
 class BusyTransport(FakeTransport):
     """Reports 'moving' for a few status polls after each chunk of data,
-       and calls on_status(n) for the n-th status poll."""
+       and calls on_status(n) for the n-th status poll. After a pause
+       interrupt it keeps 'moving' for pause_polls polls (lifting the tool),
+       then reports 'paused'."""
 
-    def __init__(self, on_status):
+    def __init__(self, on_status, pause_polls=2):
         FakeTransport.__init__(self)
         self.on_status = on_status
         self.polls = 0
         self.busy = 0
+        self.pause_polls = pause_polls
+        self.pausing = None
 
     def write_bytes(self, data, timeout):
         n = FakeTransport.write_bytes(self, data, timeout)
         if data == b"\x1b\x05":
             self.polls += 1
             self.on_status(self.polls)
-            if self.busy:
+            if self.pausing is not None and self.busy:
+                if self.pausing:
+                    self.pausing -= 1
+                    self.pending = b"1\x03"
+                else:
+                    self.pending = b"3\x03"
+            elif self.busy:
                 self.busy -= 1
                 self.pending = b"1\x03"
+        elif data == b"\x1b\x07":
+            self.pausing = self.pause_polls
+        elif data in (b"\x1b\x08", b"\x1b\x09"):
+            self.pausing = None
+            if data == b"\x1b\x09":
+                self.busy = 0
         elif not data.startswith(b"\x1b"):
             self.busy = 3
         return n
@@ -229,9 +245,11 @@ class DriverJobControlTest(unittest.TestCase):
 class InterruptTest(unittest.TestCase):
     """Pause / resume / cancel while the device is still busy with a chunk."""
 
-    def busy_cameo(self, ctl, actions, hardware="Silhouette_Cameo5_Alpha"):
+    def busy_cameo(self, ctl, actions, hardware="Silhouette_Cameo5_Alpha",
+                   **kwargs):
         dev = make_cameo(job_control=ctl, hardware=hardware)
-        dev.transport = BusyTransport(lambda n: actions.get(n, lambda: None)())
+        dev.transport = BusyTransport(
+            lambda n: actions.get(n, lambda: None)(), **kwargs)
         return dev
 
     def test_pause_and_resume_send_interrupts(self):
@@ -250,16 +268,59 @@ class InterruptTest(unittest.TestCase):
         self.assertNotIn(b"\x1b\x09", sent)
         self.assertEqual(cut_data(sent), cut_data(reference.transport.sent))
 
-    def test_cancel_sends_pause_then_cancel_and_stops(self):
+    def test_cancel_sends_pause_then_cancel_and_parks(self):
+        reference = make_cameo()
+        plot(reference)
         ctl = JobControl()
         dev = self.busy_cameo(ctl, {2: ctl.cancel})
         with self.assertRaises(JobCancelled):
             plot(dev)
         sent = dev.transport.sent
-        self.assertIn(b"\x1b\x07\x1b\x09", sent)
-        after = sent[sent.index(b"\x1b\x09") + 2:]
-        # nothing but status requests after the cancel: the device aborts itself
-        self.assertEqual(after.replace(b"\x1b\x05", b""), b"")
+        # the cancel waits until the device reports 'paused' (tool lifted)
+        pause, cancel = sent.index(b"\x1b\x07"), sent.index(b"\x1b\x09")
+        self.assertEqual(sent[pause + 2:cancel], b"\x1b\x05" * 3)
+        # after the cancel, only the regular end position: the head is parked
+        after = cut_data(sent[cancel + 2:])
+        self.assertEqual(after, [cut_data(reference.transport.sent)[-1]])
+        self.assertTrue(sent.endswith(b"SO0\x03"))
+
+    def test_cancel_while_paused_waits_for_pause(self):
+        ctl = JobControl()
+        dev = self.busy_cameo(ctl, {2: ctl.pause})
+        timer = threading.Timer(0.2, ctl.cancel)
+        timer.start()
+        with self.assertRaises(JobCancelled):
+            plot(dev)
+        timer.join()
+        sent = dev.transport.sent
+        self.assertEqual(sent.count(b"\x1b\x07"), 1)
+        pause, cancel = sent.index(b"\x1b\x07"), sent.index(b"\x1b\x09")
+        self.assertEqual(sent[pause + 2:cancel], b"\x1b\x05" * 3)
+
+    def test_cancel_when_device_already_done_lifts_and_parks(self):
+        reference = make_cameo()
+        plot(reference)
+        ctl = JobControl()
+        # the device finishes the chunk instead of pausing: no cancel needed
+        dev = self.busy_cameo(ctl, {2: ctl.cancel}, pause_polls=0)
+        dev.transport.pausing = None
+        orig = dev.transport.write_bytes
+
+        def finish_on_pause(data, timeout):
+            n = orig(data, timeout)
+            if data == b"\x1b\x07":
+                dev.transport.pausing = None
+                dev.transport.busy = 0
+            return n
+        dev.transport.write_bytes = finish_on_pause
+        with self.assertRaises(JobCancelled):
+            plot(dev)
+        sent = dev.transport.sent
+        self.assertNotIn(b"\x1b\x09", sent)
+        self.assertIn(b"\x1b\x07\x1b\x05\x1b\x08", sent)
+        got = cut_data(sent)
+        self.assertEqual(got[-2], b"M" + got[-3][1:])
+        self.assertEqual(got[-1], cut_data(reference.transport.sent)[-1])
 
     def test_older_models_get_no_interrupts(self):
         ctl = JobControl()
