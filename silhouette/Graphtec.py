@@ -31,6 +31,7 @@ import time
 
 from silhouette.Transport import USBTransport, BluetoothTransport
 from silhouette.BLETransport import BLETransport
+from silhouette.USBPrintTransport import USBPrintTransport
 
 usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
@@ -419,8 +420,10 @@ class SilhouetteCameo:
                dry_run=False, progress_cb=None, force_hardware=None,
                bluetooth_addr=None, bluetooth_channel=None,
                bluetooth_le=False, bluetooth_name=None,
-               bluetooth_identifier=None):
+               bluetooth_identifier=None, usbprint=False):
     """ This initializer simply finds the first known device.
+        usbprint=True explicitly selects the experimental Windows USBPRINT
+        transport for CAMEO 4 with the stock printer driver, instead of libusb.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
         Use setup() to specify your needs.
@@ -455,6 +458,11 @@ class SilhouetteCameo:
         The status_flags contain 't' when there was a (non-fatal) write timeout
         on the device.
     """
+    self.commands = cmdfile
+    self.transport = None
+    if usbprint and (bluetooth_addr is not None or bluetooth_le or
+                     bluetooth_name is not None or bluetooth_identifier is not None):
+      raise ValueError("USBPRINT cannot be combined with Bluetooth selectors")
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
     self.commands = cmdfile
@@ -472,7 +480,20 @@ class SilhouetteCameo:
     self.mock_response = None
     self.need_interface = False         # probably never needed, but harmful on some versions of usb.core
 
-    if (bluetooth_le or bluetooth_name is not None or
+    if usbprint:
+      # Explicit opt-in only. Keep the default libusb transport unchanged.
+      # Only the CAMEO 4 PID has native-backend hardware evidence so far.
+      if force_hardware not in (None, 'Silhouette_Cameo4'):
+        raise ValueError("USBPRINT currently supports only Silhouette_Cameo4")
+      try:
+        self.transport = USBPrintTransport.connect()
+      except OSError:
+        if not self.dry_run:
+          raise
+      self.hardware = next(hw for hw in DEVICE
+                           if hw['product_id'] == PRODUCT_ID_SILHOUETTE_CAMEO4)
+      print("Native Windows USBPRINT selected (experimental CAMEO 4 transport)", file=self.log)
+    elif (bluetooth_le or bluetooth_name is not None or
         bluetooth_identifier is not None):
       # Bluetooth Low Energy: discover by advertised name (portable) or by an
       # optional platform-local identifier.

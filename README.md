@@ -183,6 +183,11 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 
 ### Windows
 
+An opt-in [native USBPRINT transport](doc/windows-usbprint.md) is available for
+CAMEO 4 with the stock Windows printer driver. This integration is experimental
+and still needs physical Inkscape validation. The libusb instructions below
+remain applicable to the default USB connection.
+
 <details>
 <summary>Click to get steps</summary>
 
