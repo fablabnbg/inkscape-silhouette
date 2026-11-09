@@ -117,7 +117,7 @@ class TestRun(unittest.TestCase):
 
     def test_08cmd_file(self):
         try:
-            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--cmdfile=testcut_square_triangle_o.cmd", "--force_hardware=Silhouette SD 1", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+            result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--cmdfile=testcut_square_triangle_o.cmd", "--force_hardware=Silhouette_SD_1", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
             print(result.decode())
             filehandle = open("examples/testcut_square_triangle_o.cmd",'r')
             cmdref = filehandle.read()
