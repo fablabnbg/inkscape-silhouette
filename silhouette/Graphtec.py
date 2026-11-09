@@ -718,6 +718,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     CMD_ESC+CMD_ENQ: RESP_READY+CMD_ETX,
     QUERY_FIRMWARE_VERSION+CMD_ETX: b'None '+CMD_ETX
   }
+  # Registration mark searches carry the job's dimensions, so they are
+  # matched by prefix and answered as found:
+  mock_regmark_prefixes = (b'TB123,', b'TB124,', b'TB23,')
+  mock_regmark_response = b'    0'+CMD_ETX
 
   def product_id(self):
     return self.hardware['product_id'] if 'product_id' in self.hardware else None
@@ -737,6 +741,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.transport is None:
       if data in SilhouetteCameo.mock_responses:
         self.mock_response = SilhouetteCameo.mock_responses[data]
+      elif data.startswith(SilhouetteCameo.mock_regmark_prefixes):
+        self.mock_response = SilhouetteCameo.mock_regmark_response
       return None
 
     # If it is a dry run and not a query, we also do nothing:

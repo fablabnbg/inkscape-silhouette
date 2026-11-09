@@ -132,6 +132,26 @@ class TestRun(unittest.TestCase):
             self.assertEqual(e.returncode, 0)
             assert False
 
+    def test_08regmark_dry_run(self):
+        # Each registration search mode sends its own command; a dry run must
+        # get past the search and write the cut paths after it.
+        modes = {
+            "TB123,": ["--force_hardware=Silhouette_Portrait2", "--regsearch=True"],
+            "TB124,": ["--force_hardware=Silhouette_Cameo5_Alpha", "--regsearch=True", "--quadregmarks=True"],
+            "TB23,": ["--force_hardware=Silhouette_Portrait2", "--regsearch=False"],
+        }
+        for cmd, options in modes.items():
+            with self.subTest(cmd=cmd):
+                try:
+                    subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--cmdfile=regmark.cmd", "--regmark=True", "--regoriginx=10", "--regoriginy=10", "--regwidth=190", "--reglength=277"] + options + ["test/data/regmark_cut.svg"], stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as e:
+                    print(e.output.decode())
+                    self.fail(e)
+                with open("regmark.cmd", 'r') as filehandle:
+                    cmds = filehandle.read()
+                self.assertIn(cmd, cmds)
+                self.assertIn("\x03D", cmds[cmds.index(cmd):])
+
     def test_09dry_run(self):
         try:
             result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--strategy=matfree", "--logfile=silhouette.log", "examples/testcut_matfree.svg"], stderr=subprocess.STDOUT)
