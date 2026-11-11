@@ -36,10 +36,42 @@ This extension should work with the following devices:
 
 ## Installation
 
-### Ubuntu
+### Ubuntu 23.04 and newer
 
 <details>
-<summary>Click to get steps</summary>
+<summary>Click for Ubuntu 23.04 and newer steps</summary>
+
+WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
+Install Inkscape and other requirements
+
+```bash
+# Add inkscape dev team's PPA key to APT.
+# This project require minimum of inkscape V1.0+
+# But we want to always keep to latest inkscape version
+sudo add-apt-repository ppa:inkscape.dev/stable
+
+# Install Inkscape
+sudo apt-get update
+sudo apt install inkscape
+
+# Install Inkscape with newer version directly from inkscape dev team
+# even if newer than what Ubuntu's package management team is willing
+# to certify at the moment
+sudo apt-get --with-new-pkgs upgrade inkscape
+```
+
+Install inkscape-silhouette
+
+So now we shall install inkscape-silhouette, so scroll down the latest releases and head to the Assets section of releases and click on the *.deb file. You can then use sudo apt-get install ./*.deb where *.deb is the name of your newly downloaded file. This .deb will `apt install` the required python packages from Ubuntu's apt repository.
+
+    https://github.com/fablabnbg/inkscape-silhouette/releases
+
+</details>
+
+### Ubuntu 22.10 and older
+
+<details>
+<summary>Click for Ubuntu 22.10 and older steps</summary>
 
 WARNING: SNAP packages may cause issues. We use deb file shown later in this section.
 
