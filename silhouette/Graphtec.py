@@ -167,6 +167,7 @@ PRODUCT_LINE_CAMEO4 = [
 
 PRODUCT_LINE_CAMEO3_ON = PRODUCT_LINE_CAMEO4 + [PRODUCT_ID_SILHOUETTE_CAMEO3]
 PRODUCTS_WITH_TWO_TOOLS = [p for p in PRODUCT_LINE_CAMEO3_ON if p != PRODUCT_ID_SILHOUETTE_PORTRAIT3 and p != PRODUCT_ID_SILHOUETTE_PORTRAIT4]
+PRODUCTS_WITH_AUTOBLADE_DEPTH = PRODUCT_LINE_CAMEO3_ON + [PRODUCT_ID_SILHOUETTE_PORTRAIT2]
 
 # End Of Text - marks the end of a command
 CMD_ETX = b'\x03'
@@ -1264,7 +1265,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         else:
           self.send_command("FC%d" % _mm_2_SU(bladediameter))
 
-    if self.product_id() in PRODUCT_LINE_CAMEO3_ON:
+    if self.product_id() in PRODUCTS_WITH_AUTOBLADE_DEPTH:
       if autoblade and depth is not None:
         if current_tool not in (None, SILHOUETTE_CAMEO4_TOOL_AUTOBLADE, SILHOUETTE_CAMEO4_TOOL_EMPTY):
           print("Expected the tool to be an AutoBlade, found %s. Not setting depth." % (current_tool,), file=self.log)
@@ -1273,6 +1274,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         else:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
+          if self.product_id() == PRODUCT_ID_SILHOUETTE_PORTRAIT2:
+            # On a Portrait 2, TF alone left the blade at the wrong depth;
+            # J1 sent just before it set the requested depth.
+            self.send_command(tool.select())
           self.send_command(tool.depth(depth))
           print("depth: %d" % depth, file=self.log)
 
