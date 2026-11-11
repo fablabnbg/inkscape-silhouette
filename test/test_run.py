@@ -173,6 +173,12 @@ class TestRun(unittest.TestCase):
                     self.assertIn("TF1,1", cmds)
                 else:
                     self.assertNotIn("TF1,1", cmds)
+                if hardware == "Silhouette_Portrait2" and sends_depth:
+                    # The Portrait 2 needs the tool selected right before the depth.
+                    self.assertIn("J1\x03TF1,1\x03", cmds)
+                if hardware == "Silhouette_Cameo3":
+                    # The Cameo 3 selects the tool earlier in setup, not again here.
+                    self.assertNotIn("J1\x03TF1,1", cmds)
 
     def test_09dry_run(self):
         try:

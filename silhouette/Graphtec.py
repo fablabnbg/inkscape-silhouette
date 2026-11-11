@@ -1274,6 +1274,10 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         else:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
+          if self.product_id() == PRODUCT_ID_SILHOUETTE_PORTRAIT2:
+            # On a Portrait 2, TF alone left the blade at the wrong depth;
+            # J1 sent just before it set the requested depth.
+            self.send_command(tool.select())
           self.send_command(tool.depth(depth))
           print("depth: %d" % depth, file=self.log)
 
