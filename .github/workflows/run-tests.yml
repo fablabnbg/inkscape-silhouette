@@ -26,8 +26,11 @@ jobs:
           - { os: 'windows-latest', python-version: '3.12', inkscape-version: '1.3.0', continue-on-error: false }
           - { os: 'windows-latest', python-version: '3.11', inkscape-version: '1.2', continue-on-error: false }
           - { os: 'windows-latest', python-version: '3.10', inkscape-version: '1.1', continue-on-error: false }
-          - { os: 'ubuntu-latest', python-version: '3.12', inkscape-version: 'TRUNK', continue-on-error: true }
-          - { os: 'ubuntu-latest', python-version: 'native', inkscape-version: 'inkex', continue-on-error: false }  # native python to work around https://github.com/actions/runner-images/issues/10781
+          # The next two are pinned to ubuntu-24.04, because ubuntu-latest is now 26.04:
+          # - the inkscape.dev/trunk PPA has no inkscape-trunk package for 26.04
+          # - 26.04's native python is 3.14, and inkex 1.4.1 needs lxml<6, which has no wheel for 3.14
+          - { os: 'ubuntu-24.04', python-version: '3.12', inkscape-version: 'TRUNK', continue-on-error: true }
+          - { os: 'ubuntu-24.04', python-version: 'native', inkscape-version: 'inkex', continue-on-error: false }  # native python to work around https://github.com/actions/runner-images/issues/10781
           - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: '1.4.0', continue-on-error: false }
           - { os: 'ubuntu-latest', python-version: '3.14', inkscape-version: '1.4.0', continue-on-error: false }
 #          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
@@ -47,13 +50,13 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install inkscape umockdev
     - name: 🐧 install Inkscape TRUNK & umockdev
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.inkscape-version == 'TRUNK' }}
+      if: ${{ startsWith(matrix.os, 'ubuntu') && matrix.inkscape-version == 'TRUNK' }}
       run: |
         sudo add-apt-repository ppa:inkscape.dev/trunk -y  # inkscape DEV from https://launchpad.net/~inkscape.dev/+archive/ubuntu/trunk
         sudo apt-get update
         sudo apt-get -y install inkscape-trunk umockdev
     - name: 🐧 install Inkex standalone & umockdev
-      if: ${{ matrix.os == 'ubuntu-latest' && startsWith(matrix.inkscape-version, 'inkex') }}
+      if: ${{ startsWith(matrix.os, 'ubuntu') && startsWith(matrix.inkscape-version, 'inkex') }}
       run: |
         sudo apt-get update
         sudo apt-get -y install umockdev libgirepository1.0-dev
