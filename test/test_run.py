@@ -152,6 +152,28 @@ class TestRun(unittest.TestCase):
                 self.assertIn(cmd, cmds)
                 self.assertIn("\x03D", cmds[cmds.index(cmd):])
 
+    def test_08autoblade_depth_dry_run(self):
+        # The AutoBlade depth (TF) is sent to the Portrait 2 as well as the
+        # Cameo 3 on, and only when the AutoBlade tool is selected.
+        cases = [
+            ("Silhouette_Portrait2", "autoblade", True),
+            ("Silhouette_Portrait2", "cut", False),
+            ("Silhouette_Cameo3", "autoblade", True),
+        ]
+        for hardware, tool, sends_depth in cases:
+            with self.subTest(hardware=hardware, tool=tool):
+                try:
+                    subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--cmdfile=autoblade.cmd", "--force_hardware=" + hardware, "--tool=" + tool, "--depth=1", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as e:
+                    print(e.output.decode())
+                    self.fail(e)
+                with open("autoblade.cmd", 'r') as filehandle:
+                    cmds = filehandle.read()
+                if sends_depth:
+                    self.assertIn("TF1,1", cmds)
+                else:
+                    self.assertNotIn("TF1,1", cmds)
+
     def test_09dry_run(self):
         try:
             result = subprocess.check_output([sys.executable, "sendto_silhouette.py", "--dry_run=True", "--preview=False", "--strategy=matfree", "--logfile=silhouette.log", "examples/testcut_matfree.svg"], stderr=subprocess.STDOUT)
