@@ -139,17 +139,17 @@ PRODUCT_ID_CC200_20 = 0x110a
 PRODUCT_ID_CC300_20 = 0x111a
 PRODUCT_ID_SILHOUETTE_SD_1 = 0x111c
 PRODUCT_ID_SILHOUETTE_SD_2 = 0x111d
-PRODUCT_ID_SILHOUETTE_CAMEO =  0x1121
-PRODUCT_ID_SILHOUETTE_CAMEO2 =  0x112b
-PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
-PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
+PRODUCT_ID_SILHOUETTE_CAMEO = 0x1121
+PRODUCT_ID_SILHOUETTE_CAMEO2 = 0x112b
+PRODUCT_ID_SILHOUETTE_CAMEO3 = 0x112f
+PRODUCT_ID_SILHOUETTE_CAMEO4 = 0x1137
 PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
 PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
-PRODUCT_ID_SILHOUETTE_CAMEO5 =  0x1140                                      
-PRODUCT_ID_SILHOUETTE_CAMEO5PLUS =  0x1141
+PRODUCT_ID_SILHOUETTE_CAMEO5 = 0x1140
+PRODUCT_ID_SILHOUETTE_CAMEO5PLUS = 0x1141
 PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MK_II = 0x1146
-PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA =  0x0001
-PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS =  0x0002
+PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA = 0x0001
+PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS = 0x0002
 PRODUCT_ID_SILHOUETTE_PORTRAIT = 0x1123
 PRODUCT_ID_SILHOUETTE_PORTRAIT2 = 0x1132
 PRODUCT_ID_SILHOUETTE_PORTRAIT3 = 0x113a
@@ -160,8 +160,8 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
   PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,
   PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
-  PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
-  PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
+  PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list
+  PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list
   PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MK_II,
   PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA,
   PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS,
@@ -254,10 +254,10 @@ DEVICE = [
    'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5, 'name': 'Silhouette_Cameo5',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
-   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },  
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5PLUS, 'name': 'Silhouette_Cameo5_Plus',
    # Took these settings from Cameo 4 Plus, haven't noticed any performance issues.
-   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },                    
+   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_CAMEO5ALPHA, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA, 'name': 'Silhouette_Cameo5_Alpha',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
    'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
@@ -1039,7 +1039,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def set_boundary_mm(self, top_mm, left_mm, bottom_mm, right_mm):
     """ Sets boundary box """
     self.send_command([self.upper_left_mm_cmd(top_mm, left_mm), self.lower_right_mm_cmd(bottom_mm, right_mm)])
-    
+
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
 
@@ -1383,7 +1383,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def automatic_regmark_test_mm_cmd(self, height, width, top, left):
     """ TB123,h,w,t,l """
     return "TB123,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
-  
+
   # Cameo 5 Alpha
   def automatic_quad_regmark_test_mm_cmd(self, height, width, top, left):
     """ TB124,h,w,t,l """
@@ -1556,7 +1556,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     else:
       if type(offset) != type([]) and type(offset) != type(()):
         offset = (offset, 0)
-    
+
     if not 'quadregmarks' in self.hardware or self.hardware['quadregmarks'] == False:
       quadregmarks = False
 
