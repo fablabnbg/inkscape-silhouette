@@ -1034,7 +1034,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
-    self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
+    self.send_command([self.upper_left_mm_cmd(top, left), self.lower_right_mm_cmd(bottom, right)])
 
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
