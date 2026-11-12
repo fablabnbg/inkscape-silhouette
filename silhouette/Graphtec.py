@@ -1034,8 +1034,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
-    self.send_command([self.upper_left_mm_cmd(top, left), self.lower_right_mm_cmd(bottom, right)])
+    self.set_boundary_mm(top / 20, left / 20, bottom / 20, right / 20)
 
+  def set_boundary_mm(self, top_mm, left_mm, bottom_mm, right_mm):
+    """ Sets boundary box """
+    self.send_command([self.upper_left_mm_cmd(top_mm, left_mm), self.lower_right_mm_cmd(bottom_mm, right_mm)])
+    
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
 
@@ -1074,12 +1078,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # Note this does _not_ reproduce the \left,bot and Zright,top
       # commands emitted by Silhouette Studio (see ../Commands.md), although
       # it's close. Is that OK or are we creating potential (minor) problems?
-      self.set_boundary(
-        0, 0, _mm_2_SU(matparms[1]), _mm_2_SU(matparms[2]))
+      self.set_boundary_mm(0, 0, matparms[1], matparms[2])
     else:
-      bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
-      right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
-      self.set_boundary(0, 0, bottom, right)
+      bottom = self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight
+      right = self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth
+      self.set_boundary_mm(0, 0, bottom, right)
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0, skip_init=False):
     """Setup the Silhouette Device
