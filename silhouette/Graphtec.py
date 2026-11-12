@@ -119,16 +119,16 @@ MEDIA = [
 
 CAMEO_MATS = dict(
   no_mat=(0, False, False),
-  cameo_12x12=(1, 12, 12),
-  cameo_12x24=(2, 24, 12),
-  portrait_8x12=(3, 12, 8),
-  landscape_12x10_5=(4, 10.5, 12),
-  portrait_8x13_5=(5, 13.5, 8),
-  portrait_12x16=(6, 16, 12),
-  portrait_7_5x6=(7, 6, 7.5),
-  cameo_plus_15x15=(8, 15, 15),
-  cameo_pro_24x24=(9, 24, 24),
-  portrait_8_5x12=(11, 12, 8.5),
+  cameo_12x12=(1, 305, 305),
+  cameo_12x24=(2, 610, 305),
+  portrait_8x12=(3, 305, 206),
+  landscape_12x10_5=(4, 277, 305),
+  portrait_8x13_5=(5, 341, 206),
+  portrait_12x16=(6, 405, 305),
+  portrait_7_5x6=(7, 190.5, 202.4),
+  cameo_plus_15x15=(8, 381, 381),
+  cameo_pro_24x24=(9, 610, 610),
+  portrait_8_5x12=(11, 305, 216),
 )
 
 #  robocut/Plotter.h:53 ff
@@ -1075,7 +1075,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # commands emitted by Silhouette Studio (see ../Commands.md), although
       # it's close. Is that OK or are we creating potential (minor) problems?
       self.set_boundary(
-        0, 0, _inch_2_SU(matparms[1]), _inch_2_SU(matparms[2]))
+        0, 0, _mm_2_SU(matparms[1]), _mm_2_SU(matparms[2]))
     else:
       bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
       right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
