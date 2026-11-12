@@ -118,13 +118,17 @@ MEDIA = [
 ]
 
 CAMEO_MATS = dict(
-  no_mat=('0', False, False),
-  cameo_12x12=('1', 12, 12),
-  cameo_12x24=('2', 24, 12),
-  portrait_8x12=('3', 12, 8),
-  cameo_plus_15x15=('8', 15, 15),
-  cameo_pro_24x24=('9', 24, 24),
-  portrait_8_5x12=('11', 12, 8.5)
+  no_mat=(0, False, False),
+  cameo_12x12=(1, 12, 12),
+  cameo_12x24=(2, 24, 12),
+  portrait_8x12=(3, 12, 8),
+  landscape_12x10_5=(4, 10.5, 12),
+  portrait_8x13_5=(5, 13.5, 8),
+  portrait_12x16=(6, 16, 12),
+  portrait_7_5x6=(7, 6, 7.5),
+  cameo_plus_15x15=(8, 15, 15),
+  cameo_pro_24x24=(9, 24, 24),
+  portrait_8_5x12=(11, 12, 8.5),
 )
 
 #  robocut/Plotter.h:53 ff
@@ -1048,8 +1052,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       return
     mat_command = 'TG'
 
-    matparms = CAMEO_MATS.get(cuttingmat, ('0', False, False))
-    self.send_command(mat_command + matparms[0])
+    matparms = CAMEO_MATS.get(cuttingmat, (0, False, False))
+
+    if matparms[0] > 7 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      matparms = (0, False, False)
+
+    if matparms[0] > 8 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4PLUS:
+      matparms = (0, False, False)
+
+    if matparms[0] > 9 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4PRO:
+      matparms = (0, False, False)
+
+    self.send_command(mat_command + str(matparms[0]))
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
