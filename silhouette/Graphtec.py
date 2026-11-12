@@ -118,13 +118,17 @@ MEDIA = [
 ]
 
 CAMEO_MATS = dict(
-  no_mat=('0', False, False),
-  cameo_12x12=('1', 12, 12),
-  cameo_12x24=('2', 24, 12),
-  portrait_8x12=('3', 12, 8),
-  cameo_plus_15x15=('8', 15, 15),
-  cameo_pro_24x24=('9', 24, 24),
-  portrait_8_5x12=('11', 12, 8.5)
+  no_mat=(0, False, False),
+  cameo_12x12=(1, 305, 305),
+  cameo_12x24=(2, 610, 305),
+  portrait_8x12=(3, 305, 206),
+  landscape_12x10_5=(4, 277, 305),
+  portrait_8x13_5=(5, 341, 206),
+  portrait_12x16=(6, 405, 305),
+  portrait_7_5x6=(7, 190.5, 202.4),
+  cameo_plus_15x15=(8, 381, 381),
+  cameo_pro_24x24=(9, 610, 610),
+  portrait_8_5x12=(11, 305, 216),
 )
 
 #  robocut/Plotter.h:53 ff
@@ -1030,8 +1034,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
-    self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
+    self.set_boundary_mm(top / 20, left / 20, bottom / 20, right / 20)
 
+  def set_boundary_mm(self, top_mm, left_mm, bottom_mm, right_mm):
+    """ Sets boundary box """
+    self.send_command([self.upper_left_mm_cmd(top_mm, left_mm), self.lower_right_mm_cmd(bottom_mm, right_mm)])
+    
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
 
@@ -1048,8 +1056,18 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       return
     mat_command = 'TG'
 
-    matparms = CAMEO_MATS.get(cuttingmat, ('0', False, False))
-    self.send_command(mat_command + matparms[0])
+    matparms = CAMEO_MATS.get(cuttingmat, (0, False, False))
+
+    if matparms[0] > 7 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4:
+      matparms = (0, False, False)
+
+    if matparms[0] > 8 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4PLUS:
+      matparms = (0, False, False)
+
+    if matparms[0] > 9 and self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO4PRO:
+      matparms = (0, False, False)
+
+    self.send_command(mat_command + str(matparms[0]))
 
     #FNx, x = 0 seem to be some kind of reset, x = 1: plotter head moves to other
     # side of media (boundary check?), but next cut run will stall
@@ -1060,12 +1078,11 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # Note this does _not_ reproduce the \left,bot and Zright,top
       # commands emitted by Silhouette Studio (see ../Commands.md), although
       # it's close. Is that OK or are we creating potential (minor) problems?
-      self.set_boundary(
-        0, 0, _inch_2_SU(matparms[1]), _inch_2_SU(matparms[2]))
+      self.set_boundary_mm(0, 0, matparms[1], matparms[2])
     else:
-      bottom = _mm_2_SU(self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight)
-      right = _mm_2_SU(self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth)
-      self.set_boundary(0, 0, bottom, right)
+      bottom = self.hardware['length_mm'] if 'length_mm' in self.hardware else mediaheight
+      right = self.hardware['width_mm'] if 'width_mm' in self.hardware else mediawidth
+      self.set_boundary_mm(0, 0, bottom, right)
 
   def setup(self, media=132, speed=None, pressure=None, toolholder=None, pen=None, cuttingmat=None, sharpencorners=False, sharpencorners_start=0.1, sharpencorners_end=0.1, autoblade=False, depth=None, sw_clipping=True, clip_fuzz=0.05, trackenhancing=False, bladediameter=0.9, landscape=False, leftaligned=None, mediawidth=210.0, mediaheight=297.0, skip_init=False):
     """Setup the Silhouette Device
