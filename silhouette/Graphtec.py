@@ -274,6 +274,7 @@ DEVICE = [
 # Bluetooth connection resolves to the same hardware definition (and therefore
 # the same command behaviour) as the equivalent USB device.
 #
+# The names are regular expressions, searched in the upper-cased model string.
 # Order matters: more specific names must come first so that e.g.
 # "CAMEO 5 ALPHA PLUS" is matched before "CAMEO 5 ALPHA" before "CAMEO 5".
 BLUETOOTH_NAME_TO_PRODUCT_ID = [
@@ -285,10 +286,10 @@ BLUETOOTH_NAME_TO_PRODUCT_ID = [
   ("CAMEO 4 PLUS",       PRODUCT_ID_SILHOUETTE_CAMEO4PLUS),
   ("CAMEO 4 PRO",        PRODUCT_ID_SILHOUETTE_CAMEO4PRO),
   ("CAMEO 4",            PRODUCT_ID_SILHOUETTE_CAMEO4),
-  ("CAMEO3",             PRODUCT_ID_SILHOUETTE_CAMEO3),
+  (r"CAMEO ?3",          PRODUCT_ID_SILHOUETTE_CAMEO3),     # FG reply: "CAMEO 3 V1.60"
   ("PORTRAIT4",          PRODUCT_ID_SILHOUETTE_PORTRAIT4),
   ("PORTRAIT3",          PRODUCT_ID_SILHOUETTE_PORTRAIT3),
-  ("PORTRAIT2",          PRODUCT_ID_SILHOUETTE_PORTRAIT2),
+  (r"PORTRAIT ?2",       PRODUCT_ID_SILHOUETTE_PORTRAIT2),  # BLE name "Portrait2-...", FG reply "Portrait 2 V1.20"
 ]
 
 
@@ -311,7 +312,7 @@ def _match_bluetooth_hardware(model_string):
     return None
   needle = model_string.strip().upper()
   for name, product_id in BLUETOOTH_NAME_TO_PRODUCT_ID:
-    if needle.startswith(name) or name in needle:
+    if re.search(name, needle):
       return _hardware_by_product_id(product_id)
   return None
 
