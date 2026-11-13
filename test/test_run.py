@@ -132,6 +132,26 @@ class TestRun(unittest.TestCase):
             self.assertEqual(e.returncode, 0)
             assert False
 
+    def test_08testcut_dry_run(self):
+        # The test cut replaces the document: the log must hold the two test
+        # paths, triangle first, and nothing from the SVG that was passed in.
+        # The overcut option must leave the fixed paths as they are.
+        try:
+            subprocess.check_output([sys.executable, "sendto_silhouette.py", "--testcut=True", "--dry_run=True", "--preview=False", "--overcut=2", "--regmark=True", "--log_paths=True", "--logfile=silhouette.log", "--cmdfile=testcut.cmd", "--force_hardware=Silhouette_Portrait2", "examples/testcut_square_triangle_o.svg"], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode())
+            self.fail(e)
+        with open("silhouette.log", 'r') as filehandle:
+            log = filehandle.read()
+        self.assertIn("Logging 2 cut paths containing 13 points", log)
+        self.assertIn("[[(6.0, 4.577), (6.5, 3.711), (9.721, 9.289), (3.279, 9.289), (6.5, 3.711), (7.0, 4.577)], [(2.5, 1.5), (1.5, 1.5), (1.5, 11.5), (11.5, 11.5), (11.5, 1.5), (1.5, 1.5), (1.5, 2.5)]]", log)
+        with open("testcut.cmd", 'r') as filehandle:
+            cmd = filehandle.read()
+        # No registration mark search for a test cut, even when it was asked for.
+        self.assertNotIn("TB123,", cmd)
+        self.assertNotIn("TB23,", cmd)
+        self.assertEqual(cmd.count("\x03M"), 3)  # triangle, square, final move
+
     def test_08regmark_dry_run(self):
         # Each registration search mode sends its own command; a dry run must
         # get past the search and write the cut paths after it.

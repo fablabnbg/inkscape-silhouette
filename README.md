@@ -287,6 +287,10 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
   the bounding box instead of plotting all strokes.
   This can be used (with low pressure=1 or removed knive) to just
   check, where the plot would be.
+* Test cut. The "Test cut" option on the Options tab (`--testcut=True`) cuts
+  a 10 mm square with a triangle inside instead of the document, to check
+  pressure, speed and blade depth. It is cut 1.5 mm in from the position set
+  by the X and Y offsets, along the same path as Silhouette Studio's test cut.
 * The standalone script `arrow_test.py` can be used to test drive
   the `SilhoutteCameo` class.
 * Robust communication with the device. Small writes and timeouts are
@@ -309,8 +313,6 @@ This fails on win32/64 with 'module has no attribute 'version info' which then c
 * always plots all layers, even if hidden.
 
 ## TODO
-
-* Implement the triangle in a square test cut.
 
 * Test MatFree cutting strategy with the WC-Wunderbach-Wimpern font, which is especially
   well suited as a test-case.

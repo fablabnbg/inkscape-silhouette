@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import math
 import os
 import subprocess
 from unittest import mock
 
-from sendto_silhouette import SendtoSilhouette, __version__
+from sendto_silhouette import SendtoSilhouette, __version__, testcut_paths
 from render_silhouette_regmarks import InsertRegmark
 from inkex import Transform
 from inkex.tester import TestCase
@@ -587,3 +588,47 @@ class SyncDetectRegmarksCorrupted(SendtoSilhouetteTest):
         self.assertEqual(self.e.reg_origin_Y, 10.0)
         self.assertEqual(self.e.reg_width,   190.0)
         self.assertEqual(self.e.reg_length,  277.0)
+
+
+class TestCutPaths(SendtoSilhouetteTest):
+    def test_shape(self):
+        triangle, square = testcut_paths()
+
+        # The square: 10 mm, inset 1.5 mm from the origin. The path starts
+        # 1 mm before the first corner and visits all four corners.
+        self.assertEqual(square[1:5], [(1.5, 1.5), (1.5, 11.5), (11.5, 11.5), (11.5, 1.5)])
+        self.assertAlmostEqual(math.dist(square[0], square[1]), 1.0, places=3)
+
+        # The triangle: equilateral, bounding box centred in the square, apex
+        # towards y = 0. The path starts 1 mm before the apex.
+        corners = triangle[1:4]
+        for i in range(3):
+            self.assertAlmostEqual(math.dist(corners[i], corners[(i + 1) % 3]), 6.442, places=2)
+        xs = [p[0] for p in corners]
+        ys = [p[1] for p in corners]
+        self.assertAlmostEqual(min(xs) + max(xs), 13.0, places=3)
+        self.assertAlmostEqual(min(ys) + max(ys), 13.0, places=3)
+        self.assertEqual(corners[0][1], min(ys))
+        self.assertAlmostEqual(math.dist(triangle[0], triangle[1]), 1.0, places=3)
+
+    def test_outline_closes_then_runs_past_the_first_corner(self):
+        # Each path comes back to its first corner along the edge the lead-in
+        # is on, then ends 1 mm along the edge that follows. The paths stay
+        # open, and the overcut option therefore adds nothing to them.
+        for path in testcut_paths():
+            corner, second = path[1], path[2]
+            end = path[-1]
+            self.assertEqual(path[-2], corner)
+            last_corner = path[-3]
+            self.assertAlmostEqual(
+                math.dist(last_corner, path[0]) + math.dist(path[0], corner),
+                math.dist(last_corner, corner), places=3)
+            self.assertAlmostEqual(math.dist(corner, end), 1.0, places=3)
+            self.assertAlmostEqual(
+                math.dist(corner, end) + math.dist(end, second),
+                math.dist(corner, second), places=3)
+            self.assertFalse(SendtoSilhouette.is_closed_path(path))
+
+    def test_paths_are_fresh_copies(self):
+        testcut_paths()[0].reverse()
+        self.assertEqual(testcut_paths()[0][0], (6.0, 4.577))
