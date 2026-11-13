@@ -23,6 +23,7 @@
 # 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
 # 2025-06-30  Add Portrait4 and matching 8.5x12 cutting mat definition
 
+import math
 import os
 import re
 import socket
@@ -31,6 +32,7 @@ import time
 
 from silhouette.Transport import USBTransport, BluetoothTransport
 from silhouette.BLETransport import BLETransport
+from silhouette.JobControl import JobCancelled
 
 usb_reset_needed = False  # https://github.com/fablabnbg/inkscape-silhouette/issues/10
 
@@ -181,6 +183,11 @@ CMD_EOT = b'\x04'
 CMD_ENQ = b'\x05'
 # Negative Acnoledge - Returns device tool setup
 CMD_NAK = b'\x15'
+# Interrupts, executed immediately even with buffered data (Cameo 4 and later,
+# as used by Silhouette Studio's "action_interrupt" commands)
+CMD_PAUSE  = b'\x07'
+CMD_RESUME = b'\x08'
+CMD_CANCEL = b'\x09'
 
 ### Query codes
 QUERY_FIRMWARE_VERSION = b'FG'
@@ -189,10 +196,14 @@ QUERY_FIRMWARE_VERSION = b'FG'
 RESP_READY    = b'0'
 RESP_MOVING   = b'1'
 RESP_UNLOADED = b'2'
+RESP_PAUSED   = b'3'
+RESP_CANCELLED = b'4'
 RESP_DECODING = {
   RESP_READY:    'ready',
   RESP_MOVING:   'moving',
-  RESP_UNLOADED: 'unloaded'
+  RESP_UNLOADED: 'unloaded',
+  RESP_PAUSED:   'paused',
+  RESP_CANCELLED: 'cancelled'
 }
 
 SILHOUETTE_CAMEO4_TOOL_EMPTY = 0
@@ -421,7 +432,7 @@ class SilhouetteCameo:
                dry_run=False, progress_cb=None, force_hardware=None,
                bluetooth_addr=None, bluetooth_channel=None,
                bluetooth_le=False, bluetooth_name=None,
-               bluetooth_identifier=None):
+               bluetooth_identifier=None, job_control=None):
     """ This initializer simply finds the first known device.
         The default paper alignment is left hand side for devices with known width
         (currently Cameo and Portrait). Otherwise it is right hand side.
@@ -456,6 +467,11 @@ class SilhouetteCameo:
         int(strokes_done), int(strikes_total), str(status_flags)
         The status_flags contain 't' when there was a (non-fatal) write timeout
         on the device.
+
+        If job_control is specified (see silhouette.JobControl), the cut data
+        sent by plot() can be paused or cancelled between two chunks. The
+        chunks then cover at most job_chunk_mm of tool travel, so that the
+        device reacts quickly even on long strokes.
     """
     self.leftaligned = False            # True: only works for DEVICE with known hardware.width_mm
     self.log = log
@@ -463,6 +479,8 @@ class SilhouetteCameo:
     self.inc_queries = inc_queries
     self.dry_run = dry_run
     self.progress_cb = progress_cb
+    self.job_control = job_control
+    self.job_chunk_mm = 50.0
     dev = None
     self.margins_printed = None
 
@@ -843,6 +861,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
     # Silhouette Studio uses packet size of maximal 3k, 1k is default
     safemaxchunksz = 1024
+    if self.job_control is not None:
+      return self._controlled_write(data, safemaxchunksz)
     so = 0
     while so < len(data):
       safechunksz = min(safemaxchunksz, len(data)-so)
@@ -852,6 +872,147 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.write(data = safechunk, is_query = False)
       self.wait_for_ready(timeout=120, poll_interval=0.05)
       so += len(safechunk)
+
+  def _controlled_write(self, data, maxbytes):
+    """safe_write() honouring the job control between short chunks."""
+    limit = _mm_2_SU(self.job_chunk_mm) if self.job_chunk_mm else None
+    chunks = list(self._distance_chunks(data, maxbytes, limit))
+    durations = []
+    done = 0
+    for i, (chunk, length) in enumerate(chunks):
+      if i:
+        self._job_checkpoint(chunks[i-1][0], done, len(data))
+      start = time.time()
+      self.write(data = chunk, is_query = False)
+      self._wait_chunk_done(chunk, timeout=120, poll_interval=0.05)
+      durations.append((time.time() - start, length))
+      done += len(chunk)
+    self.job_control.progress(len(data), len(data))
+    if durations:
+      slowest = max(durations)
+      print("\nsent %d chunks (max %.0f mm each): %.2f s average, slowest %.2f s for %.0f mm"
+            % (len(durations), (limit or 0) / 20.0,
+               sum(d for d, _ in durations) / len(durations),
+               slowest[0], slowest[1] / 20.0), file=self.log)
+
+  def supports_interrupts(self):
+    """True if the device can pause / resume / cancel buffered data."""
+    return self.product_id() in PRODUCT_LINE_CAMEO4
+
+  def _wait_chunk_done(self, chunk, timeout=120, poll_interval=0.05, pause_timeout=10):
+    """wait_for_ready() for a chunk of a controlled job: while the device
+       is still busy, pause / resume / cancel it with interrupt commands."""
+    ctl = self.job_control
+    interrupts = self.supports_interrupts() and not self.dry_run
+    paused = False
+    busy = 0.0
+    while True:
+      if interrupts and ctl.is_cancelled():
+        if not paused:
+          self.send_escape(CMD_PAUSE)
+        # The device lifts the tool when it pauses. Cancelling before the
+        # pause is complete leaves the tool down.
+        state = self._wait_for_state(('paused', 'ready'), timeout=pause_timeout,
+                                     poll_interval=poll_interval)
+        print("\nstatus before cancel: %s" % state, file=self.log)
+        if state == 'ready':
+          # The chunk was done before the pause: nothing left to abort.
+          self.send_escape(CMD_RESUME)
+          self._cancel_lift = self._lift_cmd(chunk)
+          raise JobCancelled("job cancelled while cutting")
+        self.send_escape(CMD_CANCEL)
+        print("job cancelled by interrupt", file=self.log)
+        print("status after cancel: %s" % self.wait_for_ready(timeout=30, poll_interval=0.5),
+              file=self.log)
+        raise JobCancelled("job cancelled while cutting")
+      if interrupts and ctl.is_paused() != paused:
+        paused = ctl.is_paused()
+        self.send_escape(CMD_PAUSE if paused else CMD_RESUME)
+        print("\njob %s by interrupt" % ("paused" if paused else "resumed"), file=self.log)
+        if paused:
+          ctl.notify_paused()
+      if paused:
+        ctl.wait_while_paused(timeout=poll_interval)
+        continue
+      state = self.status()
+      if state == 'ready' or self.dry_run or busy >= timeout:
+        return state
+      time.sleep(poll_interval)
+      busy += poll_interval
+
+  def _wait_for_state(self, states, timeout, poll_interval):
+    """Poll the status until it is one of states, or timeout seconds."""
+    waited = 0.0
+    state = self.status()
+    while state not in states and waited < timeout:
+      time.sleep(poll_interval)
+      waited += poll_interval
+      state = self.status()
+    return state
+
+  @staticmethod
+  def _distance_chunks(data, maxbytes, limit):
+    """Split delimited commands into chunks of at most maxbytes bytes and
+       limit SU of tool travel. Longer M/D strokes are split into collinear
+       pieces. Yields (chunk, travel in SU)."""
+    chunk, travel, pos = b'', 0.0, None
+    for cmd in data.split(CMD_ETX)[:-1]:
+      pieces = [(cmd, 0.0)]
+      if cmd[:1] in (b'M', b'D'):
+        try:
+          y, x = (int(v) for v in cmd[1:].split(b','))
+        except ValueError:
+          y = x = None
+        if y is not None:
+          if pos is not None:
+            dist = math.hypot(y - pos[0], x - pos[1])
+            n = max(1, int(math.ceil(dist / limit))) if limit else 1
+            pieces = [(cmd[:1] + b'%d,%d' % (
+                         int(round(pos[0] + (y - pos[0]) * k / n)),
+                         int(round(pos[1] + (x - pos[1]) * k / n))),
+                       dist / n) for k in range(1, n + 1)]
+          pos = (y, x)
+      for piece, length in pieces:
+        piece += CMD_ETX
+        if chunk and (len(chunk) + len(piece) > maxbytes or
+                      (limit and travel + length > limit)):
+          yield chunk, travel
+          chunk, travel = b'', 0.0
+        chunk += piece
+        travel += length
+    if chunk:
+      yield chunk, travel
+
+  @staticmethod
+  def _lift_cmd(sent):
+    """Command lifting the tool where it is, if the last stroke left it down."""
+    cmds = sent.rstrip(CMD_ETX).split(CMD_ETX)
+    for cmd in reversed(cmds):
+      if cmd[:1] == b'D':
+        return b'M' + cmd[1:]
+      if cmd[:1] == b'M':
+        return None
+    return None
+
+  def _job_checkpoint(self, sent, done, total):
+    """Called between two chunks, while the device is idle:
+       honour pause and cancel requests of the job control."""
+    ctl = self.job_control
+    if ctl is None:
+      return
+    ctl.progress(done, total)
+    if ctl.is_paused() and not ctl.is_cancelled():
+      lift = self._lift_cmd(sent)
+      if lift:
+        self.send_command(lift)
+      print("\njob paused at %d%%" % (100.*done/total), file=self.log)
+      ctl.notify_paused()
+      ctl.wait_while_paused()
+      if not ctl.is_cancelled():
+        print("job resumed", file=self.log)
+    if ctl.is_cancelled():
+      self._cancel_lift = self._lift_cmd(sent)
+      raise JobCancelled("job cancelled at %d%%" % (100.*done/total))
 
   def send_command(self, cmd, is_query = False, timeout=10000):
     """ Sends a command or a list of commands """
@@ -1636,8 +1797,30 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         self.draw_mm_cmd(bbox['ury'], bbox['llx'])]
 
     # potentially long command string needs extra care
-    self.safe_send_command(cmd_list)
+    self._cancel_lift = None
+    try:
+      self.safe_send_command(cmd_list)
+    except JobCancelled:
+      # Lift the tool (unless the device paused it already) and park the
+      # head like at the end of a normal job.
+      if self._cancel_lift:
+        self.send_command(self._cancel_lift)
+      if not skip_reset:
+        self.send_command(self._end_position_cmds(bbox, endposition, end_paper_offset))
+      raise
 
+    new_home = self._end_position_cmds(bbox, endposition, end_paper_offset)
+    #new_home += b"FN0\x03TB50,0\x03"
+    if not skip_reset:
+      self.send_command(new_home)
+
+    return {
+        'bbox': bbox,
+        'unit' : 1,
+        'trailer': new_home
+      }
+
+  def _end_position_cmds(self, bbox, endposition, end_paper_offset):
     # Silhouette Cameo2 does not start new job if not properly parked on left side
     # Attention: This needs the media to not extend beyond the left stop
     if not 'llx' in bbox: bbox['llx'] = 0  # survive empty pathlist
@@ -1659,15 +1842,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       new_home = [
         self.move_mm_cmd(bbox['lly'] + end_paper_offset, 0),
         "SO0"]
-    #new_home += b"FN0\x03TB50,0\x03"
-    if not skip_reset:
-      self.send_command(new_home)
-
-    return {
-        'bbox': bbox,
-        'unit' : 1,
-        'trailer': new_home
-      }
+    return new_home
 
 
   def move_origin(self, feed_mm):
