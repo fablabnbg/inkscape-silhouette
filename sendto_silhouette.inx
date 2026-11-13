@@ -70,6 +70,8 @@
       <param name="autocrop" type="bool" gui-text="Trim margins">false</param> <label indent="2">Shift to the top lefthand corner, then do offsets.</label>
       <param name="bbox-only" type="bool" gui-text="Draft Bounding Box Only">false</param>
       <label indent="2">To see the used area, tick the checkmark above and use pressure=1 (or better remove tool)</label>
+      <param name="testcut" type="bool" gui-text="Test cut">false</param>
+      <label indent="2">Cut a 10 mm square with a triangle inside instead of the document, to check pressure, speed and blade depth. It is cut 1.5 mm in from the position set by the X and Y offsets. Overcut does not apply.</label>
       <param name="multipass" type="int" min="1" max="8" gui-text="Repeat each stroke">1</param>
       <param name="reversetoggle" type="bool" gui-text="Cut in opposite direction(s)">false</param>
       <param name="endposition" type="optiongroup" appearance="combo" gui-text="Position After Cutting">

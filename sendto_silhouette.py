@@ -89,6 +89,26 @@ REGMARK_BOTTOM_LEFT_ID = 'regmark-bl'
 REGMARK_SAFE_AREA_ID = 'regmark-safe-area'
 REGMARK_NOTES_ID = 'regmark-notes'
 
+# The test cut: a 10 mm square around an equilateral triangle with 6.442 mm
+# sides, inset 1.5 mm from the origin. The triangle's bounding box is centred
+# in the square and its apex points to the top of the page. Coordinates are
+# (x, y) in mm.
+#
+# These are the paths Silhouette Studio sends for its test cut. Each starts
+# 1 mm before a corner, goes round the outline back to that corner and ends
+# 1 mm past it, so the cut overlaps itself by 1 mm on both sides of the corner.
+TESTCUT_TRIANGLE = ((6.0, 4.577), (6.5, 3.711), (9.721, 9.289), (3.279, 9.289), (6.5, 3.711), (7.0, 4.577))
+TESTCUT_SQUARE = ((2.5, 1.5), (1.5, 1.5), (1.5, 11.5), (11.5, 11.5), (11.5, 1.5), (1.5, 1.5), (1.5, 2.5))
+
+
+def testcut_paths():
+    """Return the test cut as a new list of paths.
+
+    The triangle comes first, so it is cut while the square around it still
+    holds the material in place.
+    """
+    return [list(TESTCUT_TRIANGLE), list(TESTCUT_SQUARE)]
+
 class teeFile:
     def __init__(self, f1, f2):
         self.f1 = f1
@@ -211,6 +231,9 @@ class SendtoSilhouette(EffectExtension):
         pars.add_argument("-b", "--bbox", "--bbox-only", "--bbox_only",
                 dest = "bboxonly", type = Boolean, default = False,
                 help="draft the objects bounding box instead of the objects")
+        pars.add_argument("--testcut",
+                dest = "testcut", type = Boolean, default = False,
+                help="cut a 10 mm square with a triangle inside instead of the document, to check the blade settings")
         pars.add_argument("-c", "--bladediameter",
                 dest = "bladediameter", type = float, default = 0.9,
                 help="[0..2.3] diameter of the used blade [mm], default = 0.9")
@@ -1055,7 +1078,18 @@ class SendtoSilhouette(EffectExtension):
         self.initDocScale()
 
         # Build a list of paths for the document's graphical elements
-        if self.options.ids:
+        if self.options.testcut:
+            # The test cut replaces the document. Its paths and cut order are
+            # fixed, and it is placed by the offsets alone. The paths bring
+            # their own 1 mm overlap, so the overcut does not apply.
+            self.paths = testcut_paths()
+            self.path_page_indices = [None] * len(self.paths)
+            self.options.strategy = "zorder"
+            self.options.orient_paths = "natural"
+            self.options.regmark = False
+            self.options.autocrop = False
+            self.options.bboxonly = False
+        elif self.options.ids:
             # Traverse the selected objects
             for id in self.options.ids:
                 self.recursivelyTraverseSvg([self.svg.selected[id]])
