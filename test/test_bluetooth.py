@@ -99,6 +99,12 @@ class MatchBluetoothHardwareTest(unittest.TestCase):
             _match_bluetooth_hardware("CAMEO3 V1")["product_id"],
             PRODUCT_ID_SILHOUETTE_CAMEO3)
 
+    def test_cameo3_firmware_reply(self):
+        # The Cameo 3 answers FG with a space in the model name.
+        self.assertEqual(
+            _match_bluetooth_hardware("CAMEO 3 V1.60")["product_id"],
+            PRODUCT_ID_SILHOUETTE_CAMEO3)
+
     def test_portrait2_advertised_name(self):
         self.assertEqual(
             _match_bluetooth_hardware("Portrait2-000000")["name"],
