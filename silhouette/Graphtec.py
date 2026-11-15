@@ -22,6 +22,7 @@
 # 2021-06-03  Adding Cameo4 Pro
 # 2021-06-05  Allow commands to be transcribed to file, for later (re-)sending
 # 2025-06-30  Add Portrait4 and matching 8.5x12 cutting mat definition
+# 2026-11-15  Added additional cutting mats
 
 import os
 import re
@@ -1031,10 +1032,6 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
   def get_version(self):
     """Retrieve the firmware version string from the device."""
     return self.send_receive_command(QUERY_FIRMWARE_VERSION, rx_timeout = 10000)
-
-  def set_boundary(self, top, left, bottom, right):
-    """ Sets boundary box """
-    self.set_boundary_mm(top / 20, left / 20, bottom / 20, right / 20)
 
   def set_boundary_mm(self, top_mm, left_mm, bottom_mm, right_mm):
     """ Sets boundary box """
