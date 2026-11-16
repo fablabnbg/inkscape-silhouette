@@ -5,9 +5,13 @@ on:
   push:
     branches:
       - main
+      - dev
+      - feat*
   pull_request:
     branches:
       - main
+      - dev
+      - feat*
   schedule:
     - cron: '0 3 * * 5'
 
