@@ -74,9 +74,13 @@ try:
 
     if usb_vi < 1:
       print("Your python usb module appears to be "+usb_vi_str+" -- We need version 1.x", file=sys.stderr)
-      print("For Debian 8 try:\n  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main\n  apt-get update\n  apt-get -t jessie-backports install python-usb", file=sys.stderr)
+      print("""For Debian 8 try:
+  echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main
+  apt-get update
+  apt-get -t jessie-backports install python-usb""", file=sys.stderr)
       print("\n\n\n", file=sys.stderr)
-      print("For Ubuntu 14.04try:\n  pip install pyusb --upgrade", file=sys.stderr)
+      print("""For Ubuntu 14.04try:
+  pip install pyusb --upgrade""", file=sys.stderr)
       print("\n\n\n", file=sys.stderr)
       sys.exit(0)
 except NameError:
@@ -143,7 +147,7 @@ PRODUCT_ID_SILHOUETTE_CAMEO3 =  0x112f
 PRODUCT_ID_SILHOUETTE_CAMEO4 =  0x1137
 PRODUCT_ID_SILHOUETTE_CAMEO4PLUS = 0x1138
 PRODUCT_ID_SILHOUETTE_CAMEO4PRO = 0x1139
-PRODUCT_ID_SILHOUETTE_CAMEO5 =  0x1140                                      
+PRODUCT_ID_SILHOUETTE_CAMEO5 =  0x1140
 PRODUCT_ID_SILHOUETTE_CAMEO5PLUS =  0x1141
 PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MK_II = 0x1146
 PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA =  0x0001
@@ -158,8 +162,8 @@ PRODUCT_LINE_CAMEO4 = [
   PRODUCT_ID_SILHOUETTE_CAMEO4,
   PRODUCT_ID_SILHOUETTE_CAMEO4PLUS,
   PRODUCT_ID_SILHOUETTE_CAMEO4PRO,
-  PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
-  PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list                                       
+  PRODUCT_ID_SILHOUETTE_CAMEO5,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list
+  PRODUCT_ID_SILHOUETTE_CAMEO5PLUS,  #Given the similarities between Cameo 4 and Cameo 5, I added Cameo 5 to this list
   PRODUCT_ID_SILHOUETTE_CAMEO_PRO_MK_II,
   PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA,
   PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA_PLUS,
@@ -261,10 +265,10 @@ DEVICE = [
    'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5, 'name': 'Silhouette_Cameo5',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
-   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },  
+   'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
    { 'vendor_id': VENDOR_ID_GRAPHTEC, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5PLUS, 'name': 'Silhouette_Cameo5_Plus',
    # Took these settings from Cameo 4 Plus, haven't noticed any performance issues.
-   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },                    
+   'width_mm':  372, 'length_mm': 3000, 'margin_left_mm': 0.0, 'margin_top_mm': 0.0, 'regmark': True },
  { 'vendor_id': VENDOR_ID_CAMEO5ALPHA, 'product_id': PRODUCT_ID_SILHOUETTE_CAMEO5ALPHA, 'name': 'Silhouette_Cameo5_Alpha',
    # Took these settings from Cameo 4, haven't noticed any performance issues.
    'width_mm':  330.2, 'length_mm': 3000, 'margin_left_mm':0.0, 'margin_top_mm':0.0, 'regmark': True, 'quadregmarks': True, 'max_pressure': 40 },
@@ -397,35 +401,35 @@ class SilhouetteCameoTool:
 
   def select(self):
     """ select tool command """
-    return "J%d" % self.toolholder
+    return f"J{int(self.toolholder)}"
 
   def pressure(self, pressure):
     """ set pressure command """
-    return "FX%d,%d" % (pressure, self.toolholder)
+    return f"FX{int(pressure)},{int(self.toolholder)}"
 
   def speed(self, speed):
     """ set speed command """
-    return "!%d,%d" % (speed, self.toolholder)
+    return f"!{int(speed)},{int(self.toolholder)}"
 
   def depth(self, depth):
     """ set depth command """
-    return "TF%d,%d" % (depth, self.toolholder)
+    return f"TF{int(depth)},{int(self.toolholder)}"
 
   def cutter_offset(self, xmm, ymm):
     """ set cutter offset command using mm """
-    return "FC%d,%d,%d" % (_mm_2_SU(xmm), _mm_2_SU(ymm), self.toolholder)
+    return f"FC{_mm_2_SU(xmm)},{_mm_2_SU(ymm)},{int(self.toolholder)}"
 
   def lift(self, lift):
     """ set lift command """
     if lift:
-      return "FE1,%d" % self.toolholder
+      return f"FE1,{int(self.toolholder)}"
     else:
-      return "FE0,%d" % self.toolholder
+      return f"FE0,{int(self.toolholder)}"
 
   def sharpen_corners(self, start, end):
     return [
-      "FF%d,0,%d" % (start, self.toolholder),
-      "FF%d,%d,%d" % (start, end, self.toolholder)]
+      f"FF{int(start)},0,{int(self.toolholder)}",
+      f"FF{int(start)},{int(end)},{int(self.toolholder)}"]
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
@@ -554,7 +558,7 @@ class SilhouetteCameo:
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device' }
           if dev:
-            self.hardware['name'] += " 0x%04x" % dev.idProduct
+            self.hardware['name'] += f" 0x{dev.idProduct:04x}"
             self.hardware['product_id'] = dev.idProduct
             self.hardware['vendor_id'] = dev.idVendor
 
@@ -565,7 +569,7 @@ class SilhouetteCameo:
           dev = usb.core.find(idVendor=VENDOR_ID_GRAPHTEC)
           self.hardware = { 'name': 'Unknown Graphtec device ' }
           if dev:
-            self.hardware['name'] += " 0x%04x" % dev.idProduct
+            self.hardware['name'] += f" 0x{dev.idProduct:04x}"
             self.hardware['product_id'] = dev.idProduct
             self.hardware['vendor_id'] = dev.idVendor
       except usb.core.NoBackendError:
@@ -581,10 +585,12 @@ class SilhouetteCameo:
         msg = ''
         try:
             for dev in usb.core.find(find_all=True):
-              msg += "(%04x,%04x) " % (dev.idVendor, dev.idProduct)
+              msg += f"({dev.idVendor:04x},{dev.idProduct:04x}) "
         except NameError:
             msg += "unable to list devices on OS X"
-        raise ValueError('No Graphtec Silhouette devices found.\nCheck USB and Power.\nDevices: '+msg)
+        raise ValueError(f"""No Graphtec Silhouette devices found.
+Check USB and Power.
+Devices: {msg}""")
 
     try:
       dev_bus = dev.bus
@@ -596,7 +602,7 @@ class SilhouetteCameo:
     except:
       dev_addr = -1
 
-    print("%s found on usb bus=%d addr=%d" % (self.hardware['name'], dev_bus, dev_addr), file=self.log)
+    print(f"{self.hardware['name']!s} found on usb bus={int(dev_bus)} addr={int(dev_addr)}", file=self.log)
 
     if sys_platform.startswith('win'):
       print("device init under windows not implemented. Help adding code!", file=self.log)
@@ -615,15 +621,15 @@ class SilhouetteCameo:
       except usb.core.USBError as e:
         print("usb.core.USBError:", e, file=self.log)
         if e.errno == 13:
-          msg = """
+          msg = f"""
 If you are not running as root, this might be a udev issue.
 Try a file /etc/udev/rules.d/99-graphtec-silhouette.rules
 with the following example syntax:
-SUBSYSTEM=="usb", ATTR{idVendor}=="%04x", ATTR{idProduct}=="%04x", MODE="666"
+SUBSYSTEM=="usb", ATTR{{idVendor}}=="{self.hardware['vendor_id']:04x}", ATTR{{idProduct}}=="{self.hardware['product_id']:04x}", MODE="666"
 
 Then run 'sudo udevadm trigger' to load this file.
 
-Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.hardware['vendor_id'], self.hardware['product_id'])
+Alternatively, you can add yourself to group 'lp' and logout/login."""
           print(msg, file=self.log)
           print(msg, file=sys.stderr)
         sys.exit(0)
@@ -655,32 +661,29 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       self.transport = BluetoothTransport.connect(bluetooth_addr, bluetooth_channel)
     except Exception as e:
       if self.dry_run:
-        print("Bluetooth connect to %s failed (%s); continuing dry run with dummy device"
-              % (bluetooth_addr, e), file=self.log)
+        print(f"Bluetooth connect to {bluetooth_addr!s} failed ({e!s}); continuing dry run with dummy device", file=self.log)
         self.transport = None
         self.hardware = dict(name='Crashtest Dummy Device')
         return
-      raise ValueError("Could not open Bluetooth connection to %s: %s" % (bluetooth_addr, e))
+      raise ValueError(f"Could not open Bluetooth connection to {bluetooth_addr!s}: {e!s}")
 
     # Identify the model from the firmware version response, e.g. "CAMEO 5 ALPHA V1.02".
     model = None
     try:
       model = self.get_version()
     except Exception as e:
-      print("Bluetooth firmware version query failed: %s" % e, file=self.log)
+      print(f"Bluetooth firmware version query failed: {e!s}", file=self.log)
 
     hardware = _match_bluetooth_hardware(model)
     if hardware is not None:
       self.hardware = hardware
-      print("%s (firmware '%s') connected on %s"
-            % (self.hardware['name'], model, self.transport.location), file=self.log)
+      print(f"{self.hardware['name']!s} (firmware '{model!s}') connected on {self.transport.location!s}", file=self.log)
     else:
       self.hardware = { 'name': 'Unknown Bluetooth Graphtec device' }
       if model:
-        self.hardware['name'] += " (%s)" % model.strip()
-      print("Connected to unrecognized Bluetooth device (firmware '%s') on %s;\n"
-            "use --force_hardware to select the model."
-            % (model, self.transport.location), file=self.log)
+        self.hardware['name'] += f" ({model.strip()!s})"
+      print(f"""Connected to unrecognized Bluetooth device (firmware '{model!s}') on {self.transport.location!s};
+use --force_hardware to select the model.""", file=self.log)
 
   def _connect_bluetooth_le(self, bluetooth_name, bluetooth_identifier):
     """Open a BLE connection, setting self.transport and self.hardware.
@@ -698,34 +701,30 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         name_filter=lambda name: _match_bluetooth_hardware(name) is not None)
     except Exception as e:
       if self.dry_run:
-        print("Bluetooth LE connect to %s failed (%s); continuing dry run with dummy device"
-              % (selector, e), file=self.log)
+        print(f"Bluetooth LE connect to {selector!s} failed ({e!s}); continuing dry run with dummy device", file=self.log)
         self.transport = None
         self.hardware = dict(name='Crashtest Dummy Device')
         return
-      raise ValueError("Could not open Bluetooth LE connection to %s: %s"
-                       % (selector, e))
+      raise ValueError(f"Could not open Bluetooth LE connection to {selector!s}: {e!s}")
 
     model = None
     try:
       model = self.get_version()
     except Exception as e:
-      print("Bluetooth LE firmware version query failed: %s" % e,
+      print(f"Bluetooth LE firmware version query failed: {e!s}",
             file=self.log)
 
     hardware = _match_bluetooth_hardware(model)
     if hardware is not None:
       self.hardware = hardware
-      print("%s (firmware '%s') connected on %s"
-            % (self.hardware['name'], model, self.transport.location),
+      print(f"{self.hardware['name']!s} (firmware '{model!s}') connected on {self.transport.location!s}",
             file=self.log)
     else:
       self.hardware = { 'name': 'Unknown Bluetooth LE Graphtec device' }
       if model:
-        self.hardware['name'] += " (%s)" % model.strip()
-      print("Connected to unrecognized Bluetooth LE device (firmware '%s') on %s;\n"
-            "use --force_hardware to select the model."
-            % (model, self.transport.location), file=self.log)
+        self.hardware['name'] += f" ({model.strip()!s})"
+      print(f"""Connected to unrecognized Bluetooth LE device (firmware '{model!s}') on {self.transport.location!s};
+use --force_hardware to select the model.""", file=self.log)
 
   def __del__(self, *args):
     if getattr(self, 'transport', None) is not None:
@@ -773,7 +772,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       resp = self.read(timeout=10) # poll the inbound buffer
       if resp:
-        print("response before write('%s'): '%s'" % (data, resp), file=self.log)
+        print(f"response before write('{data!s}'): '{resp!s}'", file=self.log)
     except:
       pass
     endpoint = 0x01
@@ -787,17 +786,17 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if self.progress_cb:
           self.progress_cb(o,len(data),msg)
         elif self.log:
-          self.log.write(" %d%% %s\r" % (100.*o/len(data),msg))
+          self.log.write(f" {int(100.*o/len(data))}% {msg!s}\r")
           self.log.flush()
       chunk = data[o:o+chunksz]
       try:
         r = self.transport.write_bytes(chunk, timeout)
       except TypeError as te:
         # write() got an unexpected keyword argument 'interface'
-        raise TypeError("Write Exception: %s, %s transport=%s" % (type(te), te, type(self.transport)))
+        raise TypeError(f"Write Exception: {type(te)!s}, {te!s} transport={type(self.transport)!s}")
       except AttributeError as ae:
         # write() got an unexpected keyword argument 'interface'
-        raise TypeError("Write Exception: %s, %s transport=%s" % (type(ae), ae, type(self.transport)))
+        raise TypeError(f"Write Exception: {type(ae)!s}, {ae!s} transport={type(self.transport)!s}")
 
       except Exception as e:
         # raise USBError(_str_error[ret], ret, _libusb_errno[ret])
@@ -808,7 +807,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         try:
           is_etimedout = (e.errno == errno.ETIMEDOUT)
         except Exception as ee:
-          msg += "s.dev.write Error:  {}".format(ee)
+          msg += f"s.dev.write Error:  {ee!s}"
         if is_etimedout:
           # Bounded like the r==0 retry below: a persistently unresponsive
           # link (e.g. a flaky Bluetooth connection) must not retry forever
@@ -821,16 +820,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             continue
           else:
             raise ValueError(
-              'write %d bytes failed: repeated timeout (ETIMEDOUT) after '
-              '%d retries' % (len(chunk), retry))
+              f"write {int(len(chunk))} bytes failed: repeated timeout (ETIMEDOUT) after {int(retry)} retries")
         # Any other exception (e.g. BLETimeoutError/BLEDisconnectedError
         # from the BLE transport, neither of which sets errno==ETIMEDOUT)
         # must not fall through silently: without this raise, execution
         # continued past this block using a *stale* value of r from a
         # previous iteration, discarding the real exception and reporting
         # a meaningless "r=0"-style error instead of what actually failed.
-        raise ValueError('write %d bytes failed: %s: %s'
-                          % (len(chunk), type(e).__name__, e))
+        raise ValueError(f"write {int(len(chunk))} bytes failed: {type(e).__name__!s}: {e!s}")
       else:
         if len(msg):
           msg = ''
@@ -842,13 +839,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         retry += 1
         msg += 'r'
       elif r <= 0:
-        raise ValueError('write %d bytes failed: r=%d' % (len(chunk), r))
+        raise ValueError(f"write {int(len(chunk))} bytes failed: r={int(r)}")
       else:
         retry = 0
       o += r
 
     if o != len(data):
-      raise ValueError('write all %d bytes failed: o=%d' % (len(data), o))
+      raise ValueError(f"write all {int(len(data))} bytes failed: o={int(o)}")
 
   def safe_write(self, data):
     """
@@ -890,10 +887,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     self.job_control.progress(len(data), len(data))
     if durations:
       slowest = max(durations)
-      print("\nsent %d chunks (max %.0f mm each): %.2f s average, slowest %.2f s for %.0f mm"
-            % (len(durations), (limit or 0) / 20.0,
-               sum(d for d, _ in durations) / len(durations),
-               slowest[0], slowest[1] / 20.0), file=self.log)
+      print(f"\nsent {len(durations)} chunks (max {(limit or 0) / 20.0:.0f} mm each): "
+            f"{sum(d for d, _ in durations) / len(durations):.2f} s average, "
+            f"slowest {slowest[0]:.2f} s for {slowest[1] / 20.0:.0f} mm", file=self.log)
 
   def supports_interrupts(self):
     """True if the device can pause / resume / cancel buffered data."""
@@ -914,7 +910,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         # pause is complete leaves the tool down.
         state = self._wait_for_state(('paused', 'ready'), timeout=pause_timeout,
                                      poll_interval=poll_interval)
-        print("\nstatus before cancel: %s" % state, file=self.log)
+        print(f"\nstatus before cancel: {state!s}", file=self.log)
         if state == 'ready':
           # The chunk was done before the pause: nothing left to abort.
           self.send_escape(CMD_RESUME)
@@ -922,13 +918,13 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           raise JobCancelled("job cancelled while cutting")
         self.send_escape(CMD_CANCEL)
         print("job cancelled by interrupt", file=self.log)
-        print("status after cancel: %s" % self.wait_for_ready(timeout=30, poll_interval=0.5),
+        print(f"status after cancel: {self.wait_for_ready(timeout=30, poll_interval=0.5)!s}",
               file=self.log)
         raise JobCancelled("job cancelled while cutting")
       if interrupts and ctl.is_paused() != paused:
         paused = ctl.is_paused()
         self.send_escape(CMD_PAUSE if paused else CMD_RESUME)
-        print("\njob %s by interrupt" % ("paused" if paused else "resumed"), file=self.log)
+        print(f"\njob {'paused' if paused else 'resumed'} by interrupt", file=self.log)
         if paused:
           ctl.notify_paused()
       if paused:
@@ -967,9 +963,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           if pos is not None:
             dist = math.hypot(y - pos[0], x - pos[1])
             n = max(1, int(math.ceil(dist / limit))) if limit else 1
-            pieces = [(cmd[:1] + b'%d,%d' % (
-                         int(round(pos[0] + (y - pos[0]) * k / n)),
-                         int(round(pos[1] + (x - pos[1]) * k / n))),
+            pieces = [(cmd[:1] + (f"{int(round(pos[0] + (y - pos[0]) * k / n))},"
+                                  f"{int(round(pos[1] + (x - pos[1]) * k / n))}").encode('ascii'),
                        dist / n) for k in range(1, n + 1)]
           pos = (y, x)
       for piece, length in pieces:
@@ -1005,14 +1000,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       lift = self._lift_cmd(sent)
       if lift:
         self.send_command(lift)
-      print("\njob paused at %d%%" % (100.*done/total), file=self.log)
+      print(f"\njob paused at {int(100.*done/total)}%", file=self.log)
       ctl.notify_paused()
       ctl.wait_while_paused()
       if not ctl.is_cancelled():
         print("job resumed", file=self.log)
     if ctl.is_cancelled():
       self._cancel_lift = self._lift_cmd(sent)
-      raise JobCancelled("job cancelled at %d%%" % (100.*done/total))
+      raise JobCancelled(f"job cancelled at {int(100.*done/total)}%")
 
   def send_command(self, cmd, is_query = False, timeout=10000):
     """ Sends a command or a list of commands """
@@ -1053,7 +1048,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     ret=None
     try:
       ret = self.read(size=size,timeout=timeout)
-      print("try_read got: '%s'" % ret)
+      print(f"try_read got: '{ret!s}'")
     except:
       pass
     return ret
@@ -1082,7 +1077,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       print("read error in status():", e, file=self.log)
       pass
     if resp[-1] != CMD_ETX[0]:
-      raise ValueError('status response not terminated with 0x03: %s' % (resp[-1]))
+      raise ValueError(f"status response not terminated with 0x03: {resp[-1]!s}")
     return RESP_DECODING.get(bytes(resp[:-1]), bytes(resp[:-1]))
 
   def get_tool_setup(self):
@@ -1113,12 +1108,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       if (state == 'ready'): break
       if (state == 'None'):
         raise NotImplementedError("Waiting for ready but no device exists.")
-      if verbose: print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
+      if verbose: print(f" {int(i)}/{int(npolls)}: status={state!s}\r", end='', file=sys.stderr)
       if verbose == False:
         if state == 'unloaded':
-          print(" %d/%d: please load media ...\r" % (i, npolls), end='', file=sys.stderr)
+          print(f" {int(i)}/{int(npolls)}: please load media ...\r", end='', file=sys.stderr)
         elif i > npolls/3:
-          print(" %d/%d: status=%s\r" % (i, npolls, state), end='', file=sys.stderr)
+          print(f" {int(i)}/{int(npolls)}: status={state!s}\r", end='', file=sys.stderr)
       time.sleep(poll_interval)
       state = self.status()
     if verbose: print("",file=sys.stderr)
@@ -1131,10 +1126,12 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     try:
       self.send_escape(CMD_EOT)
     except Exception as e:
-      raise ValueError("Write Exception: %s, %s errno=%s\n\nFailed to write the first 3 bytes. Permissions? inf-wizard?" % (type(e), e, e.errno))
+      raise ValueError(f"""Write Exception: {type(e)!s}, {e!s} errno={e.errno!s}
+
+Failed to write the first 3 bytes. Permissions? inf-wizard?""")
 
     # Initial palaver
-    print("Device Version: '%s'" % self.get_version(), file=self.log)
+    print(f"Device Version: '{self.get_version()!s}'", file=self.log)
 
     # Additional commands seen in init by Silhouette Studio
     """
@@ -1172,19 +1169,19 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       resp = self.send_receive_command("TB71")
       if resp:
         # response '    0,    0' on portrait
-        print("TB71: '%s'" % resp, file=self.log)
+        print(f"TB71: '{resp!s}'", file=self.log)
       # Unknown: 2 five digit numbers. Probably machine stored calibration factors of carriage and roller (carriage, roller / unit 1/100% i.e. 0.0001)
       resp = self.send_receive_command("FA")
       if resp:
         # response '    0,    0' on portrait
-        print("FA: '%s'" % resp, file=self.log)
+        print(f"FA: '{resp!s}'", file=self.log)
 
     # Silhouette Studio does not appear to issue this command when using a cameo 4
     if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
       resp = self.send_receive_command("TC")
       if resp:
         # response '0,0'
-        print("TC: '%s'" % resp, file=self.log)
+        print(f"TC: '{resp!s}'", file=self.log)
 
   def get_version(self):
     """Retrieve the firmware version string from the device."""
@@ -1192,7 +1189,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def set_boundary(self, top, left, bottom, right):
     """ Sets boundary box """
-    self.send_command(["\\%d,%d" % (top, left), "Z%d,%d" % (bottom, right)])
+    self.send_command([f"\\{int(top)},{int(left)}", f"Z{int(bottom)},{int(right)}"])
 
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
@@ -1291,7 +1288,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       # Silhouette Studio does not appear to issue this command
       if self.product_id() not in PRODUCT_LINE_CAMEO3_ON and not skip_init:
-        self.send_command("FW%d" % media)
+        self.send_command(f"FW{int(media)}")
 
       if pen is None:
         if media == 113:
@@ -1300,7 +1297,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
           pen = False
       for i in MEDIA:
         if i[0] == media:
-          print("Media=%d, cap='%s', name='%s'" % (media, i[4], i[5]), file=self.log)
+          print(f"Media={int(media)}, cap='{i[4]!s}', name='{i[5]!s}'", file=self.log)
           if pressure is None: pressure = i[1]
           if speed is None:    speed = i[2]
           if depth is None:    depth = i[3]
@@ -1320,7 +1317,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     if self.product_id() in PRODUCTS_WITH_TWO_TOOLS:
       self.send_command(tool.select())
 
-    print("toolholder: %d" % toolholder, file=self.log)
+    print(f"toolholder: {int(toolholder)}", file=self.log)
 
     # cameo 4 sets some parameters two times (force, acceleration, Cutter offset)
     if self.product_id() in PRODUCT_LINE_CAMEO4:
@@ -1331,7 +1328,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         else:
           if pressure > 33: pressure = 33
         self.send_command(tool.pressure(pressure))
-        print("pressure: %d" % pressure, file=self.log)
+        print(f"pressure: {int(pressure)}", file=self.log)
 
         # on first connection acceleration is always set to 0
         self.send_command(self.acceleration_cmd(0))
@@ -1340,7 +1337,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if speed < 1: speed = 1
         if speed > 30: speed = 30
         self.send_command(tool.speed(speed))
-        print("speed: %d" % speed, file=self.log)
+        print(f"speed: {int(speed)}", file=self.log)
 
       # set cutter offset a first time (seems to always be 0mm x 0.05mm)
       self.send_command(tool.cutter_offset(0, 0.05))
@@ -1361,7 +1358,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if pressure <  1: pressure = 1
         if pressure > 33: pressure = 33
         self.send_command(tool.pressure(pressure))
-        print("pressure: %d" % pressure, file=self.log)
+        print(f"pressure: {int(pressure)}", file=self.log)
         self.send_command(self.acceleration_cmd(3))
 
       # set cutter offset a second time (this time with blade specific parameters)
@@ -1376,8 +1373,8 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
           self.send_command(tool.speed(speed))
         else:
-          self.send_command("!%d" % speed)
-        print("speed: %d" % speed, file=self.log)
+          self.send_command(f"!{int(speed)}")
+        print(f"speed: {int(speed)}", file=self.log)
 
       if pressure is not None:
         if pressure <  1: pressure = 1
@@ -1385,9 +1382,9 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
           self.send_command(tool.pressure(pressure))
         else:
-          self.send_command("FX%d" % pressure)
+          self.send_command(f"FX{int(pressure)}")
           # s.write(b"FX%d,0\x03" % pressure);       # oops, graphtecprint does it like this
-        print("pressure: %d" % pressure, file=self.log)
+        print(f"pressure: {int(pressure)}", file=self.log)
 
       if self.product_id() == PRODUCT_ID_SILHOUETTE_CAMEO3:
         if pen:
@@ -1425,14 +1422,14 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
         if pen:
           self.send_command("FC0")
         else:
-          self.send_command("FC%d" % _mm_2_SU(bladediameter))
+          self.send_command(f"FC{_mm_2_SU(bladediameter)}")
 
     if self.product_id() in PRODUCTS_WITH_AUTOBLADE_DEPTH:
       if autoblade and depth is not None:
         if current_tool not in (None, SILHOUETTE_CAMEO4_TOOL_AUTOBLADE, SILHOUETTE_CAMEO4_TOOL_EMPTY):
-          print("Expected the tool to be an AutoBlade, found %s. Not setting depth." % (current_tool,), file=self.log)
+          print(f"Expected the tool to be an AutoBlade, found {current_tool!s}. Not setting depth.", file=self.log)
         elif toolholder != 1:
-          print("AutoBlade depth can only be set for tool holder 1, not %s" % (toolholder,), file=self.log)
+          print(f"AutoBlade depth can only be set for tool holder 1, not {toolholder!s}", file=self.log)
         else:
           if depth < 0: depth = 0
           if depth > 10: depth = 10
@@ -1441,7 +1438,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
             # J1 sent just before it set the requested depth.
             self.send_command(tool.select())
           self.send_command(tool.depth(depth))
-          print("depth: %d" % depth, file=self.log)
+          print(f"depth: {int(depth)}", file=self.log)
 
     self.enable_sw_clipping = sw_clipping
     self.clip_fuzz = clip_fuzz
@@ -1507,36 +1504,36 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
   def acceleration_cmd(self, acceleration):
     """ TJa """
-    return "TJ%d" % acceleration
+    return f"TJ{int(acceleration)}"
 
   def move_mm_cmd(self, mmy, mmx):
     """ My,x """
-    return "M%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+    return f"M{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
   def draw_mm_cmd(self, mmy, mmx):
     """ Dy,x """
-    return "D%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+    return f"D{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
   def upper_left_mm_cmd(self, mmy, mmx):
     r""" \y,x """
-    return "\\%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+    return f"\\{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
   def lower_right_mm_cmd(self, mmy, mmx):
     """ Zy,x """
-    return "Z%d,%d" % (_mm_2_SU(mmy), _mm_2_SU(mmx))
+    return f"Z{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
   def automatic_regmark_test_mm_cmd(self, height, width, top, left):
     """ TB123,h,w,t,l """
-    return "TB123,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
-  
+    return f"TB123,{_mm_2_SU(height)},{_mm_2_SU(width)},{_mm_2_SU(top)},{_mm_2_SU(left)}"
+
   # Cameo 5 Alpha
   def automatic_quad_regmark_test_mm_cmd(self, height, width, top, left):
     """ TB124,h,w,t,l """
-    return "TB124,%d,%d,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width), _mm_2_SU(top), _mm_2_SU(left))
+    return f"TB124,{_mm_2_SU(height)},{_mm_2_SU(width)},{_mm_2_SU(top)},{_mm_2_SU(left)}"
 
   def manual_regmark_mm_cmd(self, height, width):
     """ TB23,h,w """
-    return "TB23,%d,%d" % (_mm_2_SU(height), _mm_2_SU(width))
+    return f"TB23,{_mm_2_SU(height)},{_mm_2_SU(width)}"
 
 
   def clip_point(self, x, y, bbox):
@@ -1685,7 +1682,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       # marginleft += s.hardware['width_mm'] - mediawidth  ## FIXME: does not work.
       mediawidth = self.hardware['width_mm']
 
-    print("mediabox: (%g,%g)-(%g,%g)" % (marginleft,margintop, mediawidth,mediaheight), file=self.log)
+    print(f"mediabox: ({marginleft:g},{margintop:g})-({mediawidth:g},{mediaheight:g})", file=self.log)
 
     width  = mediawidth
     height = mediaheight
@@ -1701,7 +1698,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
     else:
       if type(offset) != type([]) and type(offset) != type(()):
         offset = (offset, 0)
-    
+
     if not 'quadregmarks' in self.hardware or self.hardware['quadregmarks'] == False:
       quadregmarks = False
 
@@ -1712,7 +1709,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
       #print("bb llx=%g ury=%g" % (bb['llx'], bb['ury']), file=s.log)
       #regoriginx = bb['llx']
       #regoriginy = bb['ury']
-      print("bb regoriginx=%g regoriginy=%g" % (regoriginx, regoriginy), file=self.log)
+      print(f"bb regoriginx={regoriginx:g} regoriginy={regoriginy:g}", file=self.log)
       offset = (offset[0] - regoriginx, offset[1] - regoriginy)
 
       # Limit the cutting area inside cutting marks
@@ -1746,7 +1743,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login.""" % (self.h
 
       resp = self.read(timeout=40000) ## Allow 20s for reply...
       if resp != b"    0\x03":
-        raise ValueError("Couldn't find registration marks. %s" % str(resp))
+        raise ValueError(f"Couldn't find registration marks. {str(resp)!s}")
 
       ## Looks like if the reg marks work it gets 3 messages back (if it fails it times out because it only gets the first message)
       #resp = s.read(timeout=40000) ## Allow 20s for reply...
