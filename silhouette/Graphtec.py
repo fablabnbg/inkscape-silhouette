@@ -128,15 +128,15 @@ MEDIA = [
   (138,   30,   10,    1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
 ]
 
-CAMEO_MATS = dict(
-  no_mat=('0', False, False),
-  cameo_12x12=('1', 12, 12),
-  cameo_12x24=('2', 24, 12),
-  portrait_8x12=('3', 12, 8),
-  cameo_plus_15x15=('8', 15, 15),
-  cameo_pro_24x24=('9', 24, 24),
-  portrait_8_5x12=('11', 12, 8.5)
-)
+CAMEO_MATS = {
+  'no_mat':           ('0', False, False),
+  'cameo_12x12':      ('1',    12,    12),
+  'cameo_12x24':      ('2',    24,    12),
+  'portrait_8x12':    ('3',    12,     8),
+  'cameo_plus_15x15': ('8',    15,    15),
+  'cameo_pro_24x24':  ('9',    24,    24),
+  'portrait_8_5x12':  ('11',   12,   8.5)
+}
 
 #  robocut/Plotter.h:53 ff
 VENDOR_ID_GRAPHTEC = 0x0b4d
@@ -352,7 +352,7 @@ def _bbox_extend(bb, x, y):
 #   8.5 in = 4318 SU
 #  11   in = 5588 SU
 
-def _mm_2_SU(mm):
+def _mm_2_SU(mm:float) -> int:
   """Convert mm to SU (SilhuetteUnit) using round
 
   Parameters
@@ -365,7 +365,7 @@ def _mm_2_SU(mm):
       int
           output SU
   """
-  return int(round(mm * 20.0))
+  return round(mm * 20.0)
 
 def _inch_2_SU(inch):
   """Convert inch to SU (SilhuetteUnit) using round
@@ -380,15 +380,15 @@ def _inch_2_SU(inch):
       int
           output SU
   """
-  return int(round(inch * 508.0))
+  return round(inch * 508.0)
 
-def to_bytes(b_or_s):
+def to_bytes(b_or_s) -> bytes:
   """Ensure a value is bytes"""
   if isinstance(b_or_s, str): return b_or_s.encode()
   if isinstance(b_or_s, bytes): return b_or_s
   raise TypeError("Value must be a string or bytes.")
 
-def delimit_commands(cmd_or_list):
+def delimit_commands(cmd_or_list:str|list[str]) -> bytes:
   """
      Convert a command or list of commands into a properly
      delimited byte sequence.
@@ -399,42 +399,41 @@ def delimit_commands(cmd_or_list):
 
 
 class SilhouetteCameoTool:
-  def __init__(self, toolholder=1):
-    if toolholder is None:
-      toolholder = 1
+  toolholder:int
+  def __init__(self, toolholder:int=1):
     self.toolholder = toolholder
 
-  def select(self):
+  def select(self) -> str:
     """ select tool command """
-    return f"J{int(self.toolholder)}"
+    return f"J{self.toolholder}"
 
-  def pressure(self, pressure):
+  def pressure(self, pressure:int) -> str:
     """ set pressure command """
-    return f"FX{int(pressure)},{int(self.toolholder)}"
+    return f"FX{pressure},{self.toolholder}"
 
-  def speed(self, speed):
+  def speed(self, speed:int) -> str:
     """ set speed command """
-    return f"!{int(speed)},{int(self.toolholder)}"
+    return f"!{speed},{self.toolholder}"
 
-  def depth(self, depth):
+  def depth(self, depth:int) -> str:
     """ set depth command """
-    return f"TF{int(depth)},{int(self.toolholder)}"
+    return f"TF{depth},{self.toolholder}"
 
-  def cutter_offset(self, xmm, ymm):
+  def cutter_offset(self, xmm:float, ymm:float) -> str:
     """ set cutter offset command using mm """
-    return f"FC{_mm_2_SU(xmm)},{_mm_2_SU(ymm)},{int(self.toolholder)}"
+    return f"FC{_mm_2_SU(xmm)},{_mm_2_SU(ymm)},{self.toolholder}"
 
-  def lift(self, lift):
+  def lift(self, lift:bool) -> str:
     """ set lift command """
     if lift:
-      return f"FE1,{int(self.toolholder)}"
+      return f"FE1,{self.toolholder}"
     else:
-      return f"FE0,{int(self.toolholder)}"
+      return f"FE0,{self.toolholder}"
 
-  def sharpen_corners(self, start, end):
+  def sharpen_corners(self, start:int, end:int) -> list[str]:
     return [
-      f"FF{int(start)},0,{int(self.toolholder)}",
-      f"FF{int(start)},{int(end)},{int(self.toolholder)}"]
+      f"FF{start},0,{self.toolholder}",
+      f"FF{start},{end},{self.toolholder}"]
 
 class SilhouetteCameo:
   def __init__(self, log=sys.stderr, cmdfile=None, inc_queries=False,
@@ -494,8 +493,7 @@ class SilhouetteCameo:
     self.margins_printed = None
 
     if self.dry_run:
-      print("Dry run specified; no commands will be sent to cutter.",
-            file=self.log)
+      print("Dry run specified; no commands will be sent to cutter.", file=self.log)
 
     self.transport = None
     self.mock_response = None
@@ -519,8 +517,7 @@ class SilhouetteCameo:
 
     for hardware in DEVICE:
       if hardware["name"] == force_hardware:
-        print("NOTE: Overriding device from", self.hardware.get('name','None'),
-              "to", hardware['name'], file=self.log)
+        print(f"NOTE: Overriding device from {self.hardware.get('name','None')} to {hardware['name']}", file=self.log)
         self.hardware = hardware
         break
 
@@ -584,7 +581,7 @@ class SilhouetteCameo:
       if self.dry_run:
         print("No device detected; continuing dry run with dummy device",
               file=self.log)
-        self.hardware = dict(name='Crashtest Dummy Device')
+        self.hardware = {'name': 'Crashtest Dummy Device'}
         return None
       else:
         msg = ''
@@ -668,7 +665,7 @@ Alternatively, you can add yourself to group 'lp' and logout/login."""
       if self.dry_run:
         print(f"Bluetooth connect to {bluetooth_addr!s} failed ({e!s}); continuing dry run with dummy device", file=self.log)
         self.transport = None
-        self.hardware = dict(name='Crashtest Dummy Device')
+        self.hardware = {'name': 'Crashtest Dummy Device'}
         return
       raise ValueError(f"Could not open Bluetooth connection to {bluetooth_addr!s}: {e!s}")
 
@@ -708,7 +705,7 @@ use --force_hardware to select the model.""", file=self.log)
       if self.dry_run:
         print(f"Bluetooth LE connect to {selector!s} failed ({e!s}); continuing dry run with dummy device", file=self.log)
         self.transport = None
-        self.hardware = dict(name='Crashtest Dummy Device')
+        self.hardware = {'name': 'Crashtest Dummy Device'}
         return
       raise ValueError(f"Could not open Bluetooth LE connection to {selector!s}: {e!s}")
 
@@ -825,14 +822,14 @@ use --force_hardware to select the model.""", file=self.log)
             continue
           else:
             raise ValueError(
-              f"write {int(len(chunk))} bytes failed: repeated timeout (ETIMEDOUT) after {int(retry)} retries")
+              f"write {len(chunk)} bytes failed: repeated timeout (ETIMEDOUT) after {int(retry)} retries")
         # Any other exception (e.g. BLETimeoutError/BLEDisconnectedError
         # from the BLE transport, neither of which sets errno==ETIMEDOUT)
         # must not fall through silently: without this raise, execution
         # continued past this block using a *stale* value of r from a
         # previous iteration, discarding the real exception and reporting
         # a meaningless "r=0"-style error instead of what actually failed.
-        raise ValueError(f"write {int(len(chunk))} bytes failed: {type(e).__name__!s}: {e!s}")
+        raise ValueError(f"write {len(chunk)} bytes failed: {type(e).__name__!s}: {e!s}")
       else:
         if len(msg):
           msg = ''
@@ -844,13 +841,13 @@ use --force_hardware to select the model.""", file=self.log)
         retry += 1
         msg += 'r'
       elif r <= 0:
-        raise ValueError(f"write {int(len(chunk))} bytes failed: r={int(r)}")
+        raise ValueError(f"write {len(chunk)} bytes failed: r={int(r)}")
       else:
         retry = 0
       o += r
 
     if o != len(data):
-      raise ValueError(f"write all {int(len(data))} bytes failed: o={int(o)}")
+      raise ValueError(f"write all {len(data)} bytes failed: o={int(o)}")
 
   def safe_write(self, data):
     """
@@ -967,9 +964,9 @@ use --force_hardware to select the model.""", file=self.log)
         if y is not None:
           if pos is not None:
             dist = math.hypot(y - pos[0], x - pos[1])
-            n = max(1, int(math.ceil(dist / limit))) if limit else 1
-            pieces = [(cmd[:1] + (f"{int(round(pos[0] + (y - pos[0]) * k / n))},"
-                                  f"{int(round(pos[1] + (x - pos[1]) * k / n))}").encode('ascii'),
+            n = max(1, math.ceil(dist / limit)) if limit else 1
+            pieces = [(cmd[:1] + (f"{round(pos[0] + (y - pos[0]) * k / n)},"
+                                  f"{round(pos[1] + (x - pos[1]) * k / n)}").encode('ascii'),
                        dist / n) for k in range(1, n + 1)]
           pos = (y, x)
       for piece, length in pieces:
@@ -1121,7 +1118,7 @@ use --force_hardware to select the model.""", file=self.log)
           print(f" {int(i)}/{int(npolls)}: status={state!s}\r", end='', file=sys.stderr)
       time.sleep(poll_interval)
       state = self.status()
-    if verbose: print("",file=sys.stderr)
+    if verbose: print(file=sys.stderr)
     return state
 
   def initialize(self):
@@ -1192,9 +1189,9 @@ Failed to write the first 3 bytes. Permissions? inf-wizard?""")
     """Retrieve the firmware version string from the device."""
     return self.send_receive_command(QUERY_FIRMWARE_VERSION, rx_timeout = 10000)
 
-  def set_boundary(self, top, left, bottom, right):
+  def set_boundary(self, top:int, left:int, bottom:int, right:int):
     """ Sets boundary box """
-    self.send_command([f"\\{int(top)},{int(left)}", f"Z{int(bottom)},{int(right)}"])
+    self.send_command([f"\\{top},{left}", f"Z{bottom},{right}"])
 
   def set_cutting_mat(self, cuttingmat, mediawidth, mediaheight):
     """Setting Cutting mat only for Cameo 3 and 4
@@ -1308,10 +1305,10 @@ Failed to write the first 3 bytes. Permissions? inf-wizard?""")
           if depth is None:    depth = i[3]
           break
 
-    tool = SilhouetteCameoTool(toolholder)
-
     if toolholder is None:
       toolholder = 1
+
+    tool = SilhouetteCameoTool(toolholder)
 
     tool_setup = self.get_tool_setup()
     if tool_setup == 'none':
@@ -1322,7 +1319,7 @@ Failed to write the first 3 bytes. Permissions? inf-wizard?""")
     if self.product_id() in PRODUCTS_WITH_TWO_TOOLS:
       self.send_command(tool.select())
 
-    print(f"toolholder: {int(toolholder)}", file=self.log)
+    print(f"toolholder: {toolholder}", file=self.log)
 
     # cameo 4 sets some parameters two times (force, acceleration, Cutter offset)
     if self.product_id() in PRODUCT_LINE_CAMEO4:
@@ -1507,36 +1504,36 @@ Failed to write the first 3 bytes. Permissions? inf-wizard?""")
       new_cut.append(new_path)
     return new_cut
 
-  def acceleration_cmd(self, acceleration):
+  def acceleration_cmd(self, acceleration:int) -> str:
     """ TJa """
-    return f"TJ{int(acceleration)}"
+    return f"TJ{acceleration}"
 
-  def move_mm_cmd(self, mmy, mmx):
+  def move_mm_cmd(self, mmy:float, mmx:float) -> str:
     """ My,x """
     return f"M{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
-  def draw_mm_cmd(self, mmy, mmx):
+  def draw_mm_cmd(self, mmy:float, mmx:float) -> str:
     """ Dy,x """
     return f"D{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
-  def upper_left_mm_cmd(self, mmy, mmx):
+  def upper_left_mm_cmd(self, mmy:float, mmx:float) -> str:
     r""" \y,x """
     return f"\\{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
-  def lower_right_mm_cmd(self, mmy, mmx):
+  def lower_right_mm_cmd(self, mmy:float, mmx:float) -> str:
     """ Zy,x """
     return f"Z{_mm_2_SU(mmy)},{_mm_2_SU(mmx)}"
 
-  def automatic_regmark_test_mm_cmd(self, height, width, top, left):
+  def automatic_regmark_test_mm_cmd(self, height:float, width:float, top:float, left:float) -> str:
     """ TB123,h,w,t,l """
     return f"TB123,{_mm_2_SU(height)},{_mm_2_SU(width)},{_mm_2_SU(top)},{_mm_2_SU(left)}"
 
   # Cameo 5 Alpha
-  def automatic_quad_regmark_test_mm_cmd(self, height, width, top, left):
+  def automatic_quad_regmark_test_mm_cmd(self, height:float, width:float, top:float, left:float) -> str:
     """ TB124,h,w,t,l """
     return f"TB124,{_mm_2_SU(height)},{_mm_2_SU(width)},{_mm_2_SU(top)},{_mm_2_SU(left)}"
 
-  def manual_regmark_mm_cmd(self, height, width):
+  def manual_regmark_mm_cmd(self, height:float, width:float) -> str:
     """ TB23,h,w """
     return f"TB23,{_mm_2_SU(height)},{_mm_2_SU(width)}"
 
@@ -1859,7 +1856,7 @@ Failed to write the first 3 bytes. Permissions? inf-wizard?""")
     """ s is unused
     """
     data1234=None
-    for line in open(file,'r').readlines():
+    for line in open(file,'r'):
       if re.match(r'\s*\[', line):
         exec('data1234='+line)
         break
