@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.12']
+        python-version: ['3.14']
         inkscape-version: ['STABLE']
         continue-on-error: [false]
         include:
@@ -31,9 +31,8 @@ jobs:
           # - 26.04's native python is 3.14, and inkex 1.4.1 needs lxml<6, which has no wheel for 3.14
           - { os: 'ubuntu-24.04', python-version: '3.12', inkscape-version: 'TRUNK', continue-on-error: true }
           - { os: 'ubuntu-24.04', python-version: 'native', inkscape-version: 'inkex', continue-on-error: false }  # native python to work around https://github.com/actions/runner-images/issues/10781
-          - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: '1.4.0', continue-on-error: false }
-          - { os: 'ubuntu-latest', python-version: '3.14', inkscape-version: '1.4.0', continue-on-error: false }
-#          - { os: 'ubuntu-latest', python-version: '3.9', inkscape-version: 'inkex==1.0.1', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.13', inkscape-version: 'STABLE', continue-on-error: false }
+          - { os: 'ubuntu-latest', python-version: '3.15', inkscape-version: 'STABLE', continue-on-error: false }
     continue-on-error: ${{ matrix.continue-on-error }}
 
     steps:
