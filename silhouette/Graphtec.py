@@ -54,10 +54,12 @@ else:   # if sys_platform.startswith('linux'):
         try:
           import usb
         except Exception as e2:
-          print("The python usb module could not be found. Try", file=sys.stderr)
-          print("\t sudo zypper in python-usb \t\t# if you run SUSE", file=sys.stderr)
-          print("\t sudo apt-get install python-usb   \t\t# if you run Ubuntu", file=sys.stderr)
-          print("\n\n\n", file=sys.stderr)
+          print("""The python usb module could not be found. Try
+\t sudo zypper in python-usb \t\t# if you run SUSE
+\t sudo apt-get install python-usb   \t\t# if you run Ubuntu
+
+
+""", file=sys.stderr)
           raise e2
 
 try:
@@ -73,15 +75,18 @@ try:
 
 
     if usb_vi < 1:
-      print("Your python usb module appears to be "+usb_vi_str+" -- We need version 1.x", file=sys.stderr)
-      print("""For Debian 8 try:
+      print(f"""Your python usb module appears to be {usb_vi_str} -- We need version 1.x
+For Debian 8 try:
   echo > /etc/apt/sources.list.d/backports.list 'deb http://ftp.debian.org debian jessie-backports main
   apt-get update
-  apt-get -t jessie-backports install python-usb""", file=sys.stderr)
-      print("\n\n\n", file=sys.stderr)
-      print("""For Ubuntu 14.04try:
-  pip install pyusb --upgrade""", file=sys.stderr)
-      print("\n\n\n", file=sys.stderr)
+  apt-get -t jessie-backports install python-usb
+
+
+For Ubuntu 14.04try:
+  pip install pyusb --upgrade
+
+
+""", file=sys.stderr)
       sys.exit(0)
 except NameError:
     pass # on OS X usb.version_info[0] will always fail as libusb1 is being used
@@ -94,33 +99,33 @@ except NameError:
 MEDIA = [
 # CAUTION: keep in sync with sendto_silhouette.inx
 # media, pressure, speed, depth, cap-color, name
-  ( 300, None,   None,None,  "custom", "Custom"),
-  ( 100,   27,     10,   1,  "yellow", "Card without Craft Paper Backing"),
-  ( 101,   27,     10,   1,  "yellow", "Card with Craft Paper Backing"),
-  ( 102,   10,      5,   1,  "blue",   "Vinyl Sticker"),
-  ( 106,   14,     10,   1,  "blue",   "Film Labels"),
-  ( 111,   27,     10,   1,  "yellow", "Thick Media"),
-  ( 112,    2,     10,   1,  "blue",   "Thin Media"),
-  ( 113,   18,     10,None,  "pen",    "Pen"),
-  ( 120,   30,     10,   1,  "blue",   "Bond Paper 13-28 lbs (105g)"),
-  ( 121,   30,     10,   1,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
-  ( 122,   30,     10,   1,  "yellow", "Cardstock 40-60 lbs (90g)"),
-  ( 123,   30,     10,   1,  "yellow", "Cover 40-60 lbs (170g)"),
-  ( 124,    1,     10,   1,  "blue",   "Film, Double Matte Translucent"),
-  ( 125,    1,     10,   1,  "blue",   "Film, Vinyl With Adhesive Back"),
-  ( 126,    1,     10,   1,  "blue",   "Film, Window With Kling Adhesive"),
-  ( 127,   30,     10,   1,  "red",    "Index 90 lbs (165g)"),
-  ( 128,   20,     10,   1,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
-  ( 129,   27,     10,   1,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
-  ( 130,   30,      3,   1,  "red",    "Magnetic Sheet"),
-  ( 131,   30,     10,   1,  "blue",   "Offset 24-60 lbs (90g)"),
-  ( 132,    5,     10,   1,  "blue",   "Print Paper Light Weight"),
-  ( 133,   25,     10,   1,  "yellow", "Print Paper Medium Weight"),
-  ( 134,   20,     10,   1,  "blue",   "Sticker Sheet"),
-  ( 135,   20,     10,   1,  "red",    "Tag 100 lbs (275g)"),
-  ( 136,   30,     10,   1,  "blue",   "Text Paper 24-70 lbs (105g)"),
-  ( 137,   30,     10,   1,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
-  ( 138,   30,     10,   1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
+  (300, None, None, None,  "custom", "Custom"),
+  (100,   27,   10,    1,  "yellow", "Card without Craft Paper Backing"),
+  (101,   27,   10,    1,  "yellow", "Card with Craft Paper Backing"),
+  (102,   10,    5,    1,  "blue",   "Vinyl Sticker"),
+  (106,   14,   10,    1,  "blue",   "Film Labels"),
+  (111,   27,   10,    1,  "yellow", "Thick Media"),
+  (112,    2,   10,    1,  "blue",   "Thin Media"),
+  (113,   18,   10, None,  "pen",    "Pen"),
+  (120,   30,   10,    1,  "blue",   "Bond Paper 13-28 lbs (105g)"),
+  (121,   30,   10,    1,  "yellow", "Bristol Paper 57-67 lbs (145g)"),
+  (122,   30,   10,    1,  "yellow", "Cardstock 40-60 lbs (90g)"),
+  (123,   30,   10,    1,  "yellow", "Cover 40-60 lbs (170g)"),
+  (124,    1,   10,    1,  "blue",   "Film, Double Matte Translucent"),
+  (125,    1,   10,    1,  "blue",   "Film, Vinyl With Adhesive Back"),
+  (126,    1,   10,    1,  "blue",   "Film, Window With Kling Adhesive"),
+  (127,   30,   10,    1,  "red",    "Index 90 lbs (165g)"),
+  (128,   20,   10,    1,  "yellow", "Inkjet Photo Paper 28-44 lbs (70g)"),
+  (129,   27,   10,    1,  "red",    "Inkjet Photo Paper 45-75 lbs (110g)"),
+  (130,   30,    3,    1,  "red",    "Magnetic Sheet"),
+  (131,   30,   10,    1,  "blue",   "Offset 24-60 lbs (90g)"),
+  (132,    5,   10,    1,  "blue",   "Print Paper Light Weight"),
+  (133,   25,   10,    1,  "yellow", "Print Paper Medium Weight"),
+  (134,   20,   10,    1,  "blue",   "Sticker Sheet"),
+  (135,   20,   10,    1,  "red",    "Tag 100 lbs (275g)"),
+  (136,   30,   10,    1,  "blue",   "Text Paper 24-70 lbs (105g)"),
+  (137,   30,   10,    1,  "yellow", "Vellum Bristol 57-67 lbs (145g)"),
+  (138,   30,   10,    1,  "blue",   "Writing Paper 24-70 lbs (105g)"),
 ]
 
 CAMEO_MATS = dict(
